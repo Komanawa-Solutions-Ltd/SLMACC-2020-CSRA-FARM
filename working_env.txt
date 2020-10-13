@@ -1,0 +1,8 @@
+This file holds the current working environment for this project, please add to this if you need to install other packages etc.  
+The preference for a package manager is anaconda then pip.  At present we will simply use the below command for creating packages, but from time to time Matt Hanson will also 
+freeze the environment by creating an environment.yml file.   
+
+conda create  --channel conda-forge --name SLMMAC_20_CSRA python=3.7 numpy pandas matplotlib netcdf4 scipy pytables psutil xlrd geopandas
+
+The choice for python 3.7 is based on the changes made in 3.8 which makes it harder to work with DLLS. I need this functionallity to run the pasture growth model.
+If you have any concerns with regards to this environement, please contact Matt@komanawa.com
