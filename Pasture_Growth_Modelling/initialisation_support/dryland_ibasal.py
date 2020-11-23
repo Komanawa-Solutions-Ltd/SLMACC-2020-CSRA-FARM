@@ -1,0 +1,40 @@
+"""
+ Author: Matt Hanson
+ Created: 23/11/2020 11:06 AM
+ """
+import sys
+sys.path.append('C:/Users/Matt Hanson/python_projects/BASGRA_NZ_PY') #todo this is a shitty way to do this
+from supporting_functions.plotting import plot_multiple_results
+from check_basgra_python.support_for_tests import establish_org_input, get_lincoln_broadfield, get_woodward_weather, _clean_harvest
+from input_output_keys import _matrix_weather_keys_pet
+from basgra_python import run_basgra_nz
+
+def run_nonirr_lincoln_low_basil(IBASAL):
+    params, matrix_weather, days_harvest = establish_org_input('lincoln')
+
+    matrix_weather = get_lincoln_broadfield()
+    matrix_weather.loc[:, 'max_irr'] = 10
+    matrix_weather.loc[:, 'irr_trig'] = 0
+    matrix_weather.loc[:, 'irr_targ'] = 1
+
+    matrix_weather = matrix_weather.loc[:, _matrix_weather_keys_pet]
+
+    params['IRRIGF'] = 0  # no irrigation
+    params['doy_irr_start'] = 305  # start irrigating in Nov
+    params['doy_irr_end'] = 90  # finish at end of march
+    params['BASALI'] = IBASAL  # start at 20% basal
+
+    days_harvest = _clean_harvest(days_harvest,matrix_weather)
+
+    out = run_basgra_nz(params, matrix_weather, days_harvest, verbose=False)
+    out.loc[:,'per_fc'] = out.loc[:,'WAL']/out.loc[:,'WAFC']
+
+    return out
+
+if __name__ == '__main__':
+    ibasals = [0,0.1,0.15,.2,0.3]
+    data = {
+            'IBASAL:{}'.format(e): run_nonirr_lincoln_low_basil(e) for e in ibasals
+    }
+
+    plot_multiple_results(data, out_vars=['BASAL', 'DM', 'YIELD'])
