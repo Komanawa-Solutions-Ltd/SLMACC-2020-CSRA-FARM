@@ -14,14 +14,6 @@ from basgra_python import run_basgra_nz
 def run_nonirr_lincoln_low_basil(IBASAL):
     params, matrix_weather, days_harvest = establish_org_input('lincoln')
 
-    params['FWCWP'] = 0.40  # from smap Wakanui_6a.1 plus some manual adj to get 55mm PAW #todo dadb validate dryland
-    params['FWCFC'] = 0.80  # from smap Wakanui_6a.1 plus some manual adj to get 55mm PAW #todo dadb validate dryland
-    params['WCST'] = 0.46  # from smap Wakanui_6a.1 plus some manual adj to get 55mm PAW #todo dadb validate dryland
-    params['BD'] = 1.22  # from smap Wakanui_6a.1 #todo dadb validate dryland
-    params['fixed_removal'] = 0 #todo dadb validate dryland
-    params['opt_harvfrin'] = 1 #todo dadb validate dryland
-    params['IRRIGF'] = 0 #todo dadb validate dryland
-
     matrix_weather = get_lincoln_broadfield()
     matrix_weather.loc[:, 'max_irr'] = 10
     matrix_weather.loc[:, 'irr_trig'] = 0

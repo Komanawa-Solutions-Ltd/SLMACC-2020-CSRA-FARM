@@ -42,8 +42,8 @@ def vcsn_pull_single_site(lat, lon, year_min, year_max, use_vars='all', vcsn_dir
                  ('evspsblpot', 'pr', 'pradj', 'rsds', 'tasmax', 'tasmin')
     :return: data(pd.DataFrame), (use_lat, use_lon)
     """
-    # todo pr and pradj are weird, look into this and ask daithi.  Before 1997 pradj looks like a temp variable
-    all_vars = ('evspsblpot', 'pr', 'pradj', 'rsds', 'tasmax', 'tasmin')
+    # pradj excluded as it is weird, look into this and ask daithi.  Before 1997 pradj looks like a temp variable
+    all_vars = ('evspsblpot', 'pr', 'rsds', 'tasmax', 'tasmin')
     if use_vars == 'all':
         use_vars = all_vars
     else:

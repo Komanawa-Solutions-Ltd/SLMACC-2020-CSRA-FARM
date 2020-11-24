@@ -36,10 +36,10 @@ def get_org_data():
 
 def get_param_set(BASALI=0.25):
     params = get_woodward_mean_full_params('lincoln')
-    params['FWCWP'] = 0.40  # from smap Wakanui_6a.1 plus some manual adj to get 55mm PAW
-    params['FWCFC'] = 0.80  # from smap Wakanui_6a.1 plus some manual adj to get 55mm PAW
-    params['WCST'] = 0.46  # from smap Wakanui_6a.1 plus some manual adj to get 55mm PAW
-    params['BD'] = 1.22  # from smap Wakanui_6a.1
+    params['FWCWP'] = 0.325  # from smap Wakanui_6a.1 plus some manual adj to get 55mm PAW
+    params['FWCFC'] = 0.735 # from smap Wakanui_6a.1 plus some manual adj to get 55mm PAW
+    params['WCST'] = 0.40  # from smap Wakanui_6a.1 plus some manual adj to get 55mm PAW
+    params['BD'] = 1.09  # from smap Wakanui_6a.1
     params['fixed_removal'] = 0
     params['opt_harvfrin'] = 1
     params['IRRIGF'] = 0
@@ -47,7 +47,7 @@ def get_param_set(BASALI=0.25):
     params['LOG10CLVI'] = np.log10(4.2)  # set from a mid point value  # todo not important for percistance, but important to stop inital high yeild!
     params['LOG10CRESI'] = np.log10(0.8)  # set from a mid point value  # todo not important for percistance, but important to stop inital high yeild!
     params['LOG10CRTI'] = np.log10(36)  # set from a mid point value  # todo not important for percistance, but important to stop inital high yeild!
-    # params['HARVFRD'] = 0 # todo not importnat for percistance
+    # params['HARVFRD'] = 0 # todo not importnat for percistance, or anything else... it's fine to keep static
 
     return params
 
@@ -121,56 +121,11 @@ def run_inital_basgra(basali, weed_dm_frac, harv_targ, harv_trig, freq):
     temp.to_csv(r"C:\Users\Matt Hanson\Downloads\test_get_time.csv")
     plot_multiple_results(out, out_vars=['DM', 'YIELD', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'PAW', 'DMH','BASAL'])
 
-def run_nonirr_lincoln_low_basil(IBASAL, weed, harv_trig, harv_targ, freq):
-    params, matrix_weather, days_harvest = establish_org_input('lincoln')
-
-    params['FWCWP'] = 0.40  # from smap Wakanui_6a.1 plus some manual adj to get 55mm PAW #todo dadb validate dryland
-    params['FWCFC'] = 0.80  # from smap Wakanui_6a.1 plus some manual adj to get 55mm PAW #todo dadb validate dryland
-    params['WCST'] = 0.46  # from smap Wakanui_6a.1 plus some manual adj to get 55mm PAW #todo dadb validate dryland
-    params['BD'] = 1.22  # from smap Wakanui_6a.1 #todo dadb validate dryland
-    params['fixed_removal'] = 0 #todo dadb validate dryland
-    params['opt_harvfrin'] = 1 #todo dadb validate dryland
-    params['IRRIGF'] = 0 #todo dadb validate dryland
-    params['LOG10CLVI'] = np.log10(4.2)
-    params['LOG10CRESI'] = np.log10(0.8)
-    params['LOG10CRTI'] = np.log10(36)
-    params['CSTI']
-    params['LOG10LAII']
-    params['PHENI']
-    params['TILTOTI']
-    params['FRTILGI']
-    params['LT50I']
-
-    matrix_weather = get_lincoln_broadfield()
-    matrix_weather.loc[:, 'max_irr'] = 10
-    matrix_weather.loc[:, 'irr_trig'] = 0
-    matrix_weather.loc[:, 'irr_targ'] = 1
-
-    matrix_weather = matrix_weather.loc[:, matrix_weather_keys_pet]
-
-    params['IRRIGF'] = 0  # no irrigation
-    params['doy_irr_start'] = 305  # start irrigating in Nov
-    params['doy_irr_end'] = 90  # finish at end of march
-    params['BASALI'] = IBASAL  # start at 20% basal
-
-    days_harvest = _clean_harvest(days_harvest, matrix_weather)
-    days_harvest = get_harvest_data(weed, matrix_weather, harv_trig, harv_targ, freq)
-
-    out = run_basgra_nz(params, matrix_weather, days_harvest, verbose=False)
-    out.loc[:,'per_fc'] = out.loc[:,'WAL']/out.loc[:,'WAFC']
-    out.loc[:,'per_paw'] = out.loc[:,'PAW']/out.loc[:,'MXPAW']
-    temp = run_basgra_nz(params, matrix_weather, days_harvest, verbose=False)
-    out = {'temp': temp}
-    temp.to_csv(os.path.join(unbacked_dir, 'test_ibasal_out.csv'))
-    pd.Series(params).to_csv(os.path.join(unbacked_dir, 'test_ibasal_params.csv'))
-    plot_multiple_results(out, out_vars=['DM', 'YIELD', 'BASAL', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'PAW', 'DMH'])
-
 
 
 if __name__ == '__main__':
-    run_inital_basgra(basali=0.10, #todo dryland species do not seem stable under this optimisation... are they re-seeded?
+    run_inital_basgra(basali=0.10,
                       weed_dm_frac=.10,
                       harv_targ=600,
                       harv_trig=601,
                       freq=10)
-    #run_nonirr_lincoln_low_basil(IBASAL=0.3, weed=0.15, harv_trig=1001, harv_targ=1000, freq=25)

@@ -10,7 +10,7 @@ def calc_soil_temp():
     raise NotImplementedError  # todo hopefully pull from VCSN
 
 
-# todo I may also need to run soil moisture anomaly (https://niwa.co.nz/climate/nz-drought-monitor/droughtindicatormaps/soil-moisture-deficit-smd#:~:text=SMD%20is%20calculated%20based%20on,can%20use)%20of%20150%20mm. )
+# I also need to run soil moisture anomaly (https://niwa.co.nz/climate/nz-drought-monitor/droughtindicatormaps/soil-moisture-deficit-smd#:~:text=SMD%20is%20calculated%20based%20on,can%20use)%20of%20150%20mm. )
 def calc_smd(rain, pet, h2o_cap, h2o_start, a=0.0073,
              p=1):
     """
