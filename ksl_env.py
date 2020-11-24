@@ -12,6 +12,7 @@
 import os
 from socket import gethostname
 from getpass import getuser
+import sys
 
 hostname = gethostname()
 user = getuser()
@@ -68,3 +69,25 @@ def tempfiles(path):
         os.makedirs(host_nm_dict[hostname])
 
     return out
+
+
+def add_basgra_nz_path():
+    host_nm_dict = {
+        #'dickie': r"D:\temp_files",
+        'Healey': 'C:/Users/Matt Hanson/python_projects/BASGRA_NZ_PY',
+    }
+
+    if hostname not in host_nm_dict.keys():
+        raise ValueError('{} not in established hostnames: {}'.format(hostname, host_nm_dict.keys()))
+
+    sys.path.append(host_nm_dict[hostname])
+
+def get_vscn_dir():
+    host_nm_dict = {
+        'dickie': r"D:\VCSN",
+        'Healey':  r"D:\VCSN",
+    }
+
+    if hostname not in host_nm_dict.keys():
+        raise ValueError('{} not in established hostnames: {}'.format(hostname, host_nm_dict.keys()))
+    return host_nm_dict[hostname]

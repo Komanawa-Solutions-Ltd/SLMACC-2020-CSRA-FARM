@@ -15,10 +15,21 @@ def prob(x):
     out = np.nansum(x) / len(x)
     return np.round(out, 2)
 
+def get_vcsn_record():
+    data, use_cords = vcsn_pull_single_site(lat=-43.358,
+                                            lon=172.301,
+                                            year_min=1972,
+                                            year_max=2019,
+                                            use_vars=('evspsblpot','rsds','tasmax', 'tasmin' , 'pr'))
+    data.rename(columns={'evspsblpot': 'pet', 'pr': 'rain',
+                    'rsds': 'radn', 'tasmax': 'tmax', 'tasmin': 'tmin'}, inplace=True)
+    print(use_cords)
+    return data
+
+
 
 def calc_dry_recurance():
-    data, use_cords = vcsn_pull_single_site(r"D:\VCSN",
-                                            lat=-43.358,
+    data, use_cords = vcsn_pull_single_site(lat=-43.358,
                                             lon=172.301,
                                             year_min=1972,
                                             year_max=2019,
@@ -46,8 +57,9 @@ def calc_dry_recurance():
     out = grouped_data.groupby(['month']).aggregate(['mean', 'std', 'sum', 'count', prob])
     out.to_csv(r"C:\Users\Matt Hanson\Downloads\test_sma_monthly.csv")
 
+
 def calc_wet_recurance():
-    data, use_cords = vcsn_pull_single_site(r"D:\VCSN",
+    data, use_cords = vcsn_pull_single_site(
                                             lat=-43.358,
                                             lon=172.301,
                                             year_min=1972,
@@ -55,10 +67,9 @@ def calc_wet_recurance():
                                             use_vars=('evspsblpot', 'pradj', 'pr'))
     print(use_cords)
 
-
-    data.loc[:, 'd_rain_cond_10'] = data.loc[:, 'pr'] > 10 # more than 10 mm per day
-    data.loc[:, 'd_rain_cond_7'] = data.loc[:, 'pr'] > 7 # more than 7 mm per day
-    data.loc[:, 'd_rain_cond_5'] = data.loc[:, 'pr'] > 5 # more than 5 mm per day
+    data.loc[:, 'd_rain_cond_10'] = data.loc[:, 'pr'] > 10  # more than 10 mm per day
+    data.loc[:, 'd_rain_cond_7'] = data.loc[:, 'pr'] > 7  # more than 7 mm per day
+    data.loc[:, 'd_rain_cond_5'] = data.loc[:, 'pr'] > 5  # more than 5 mm per day
 
     grouped_data = data.loc[:, ['month', 'year',
                                 'd_rain_cond_10',
@@ -76,7 +87,7 @@ def calc_wet_recurance():
 
 
 def plot_vcsn_smd():
-    data, use_cords = vcsn_pull_single_site(r"D:\VCSN",
+    data, use_cords = vcsn_pull_single_site(
                                             lat=-43.358,
                                             lon=172.301,
                                             year_min=1972,
@@ -106,7 +117,7 @@ def plot_vcsn_smd():
 
 
 def check_vcns_data():
-    data, use_cords = vcsn_pull_single_site(r"D:\VCSN",
+    data, use_cords = vcsn_pull_single_site(
                                             lat=-43.358,
                                             lon=172.301,
                                             year_min=1972,

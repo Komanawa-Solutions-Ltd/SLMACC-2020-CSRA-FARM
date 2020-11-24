@@ -2,13 +2,13 @@
  Author: Matt Hanson
  Created: 23/11/2020 12:46 PM
  """
-import sys
-
-sys.path.append('C:/Users/Matt Hanson/python_projects/BASGRA_NZ_PY')
 import pandas as pd
 import numpy as np
 import os
 import ksl_env
+
+# add basgra nz functions
+ksl_env.add_basgra_nz_path()
 from check_basgra_python.support_for_tests import get_lincoln_broadfield
 from basgra_python import run_basgra_nz
 from supporting_functions.plotting import plot_multiple_results

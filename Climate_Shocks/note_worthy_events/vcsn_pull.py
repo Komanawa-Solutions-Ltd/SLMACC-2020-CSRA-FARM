@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import os
 import netCDF4 as nc
+import ksl_env
 import glob
 
 
@@ -29,7 +30,7 @@ def change_vcsn_units(data):
             continue
 
 
-def vcsn_pull_single_site(vcsn_dir, lat, lon, year_min, year_max, use_vars='all'):
+def vcsn_pull_single_site(lat, lon, year_min, year_max, use_vars='all', vcsn_dir=ksl_env.get_vscn_dir()):
     """
     pull vcsn data where all vars in each file, but each file is 1 year  return pandas dataframe
     :param vcsn_dir: where .nc files are
@@ -84,7 +85,7 @@ def vcsn_pull_single_site(vcsn_dir, lat, lon, year_min, year_max, use_vars='all'
 
 
 if __name__ == '__main__':
-    out, (use_lat, use_lon) = vcsn_pull_single_site(r"D:\VCSN",
+    out, (use_lat, use_lon) = vcsn_pull_single_site(
                                                     lat=-43.475,
                                                     lon=172.075,
                                                     year_min=2010,
