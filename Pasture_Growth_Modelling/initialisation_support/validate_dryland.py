@@ -43,11 +43,10 @@ def get_param_set(BASALI=0.25):
     params['fixed_removal'] = 0
     params['opt_harvfrin'] = 1
     params['IRRIGF'] = 0
-    params['BASALI'] = BASALI  # todo id correct start and replace
+    params['BASALI'] = BASALI
     params['LOG10CLVI'] = np.log10(4.2)  # set from a mid point value  # todo not important for percistance, but important to stop inital high yeild!
     params['LOG10CRESI'] = np.log10(0.8)  # set from a mid point value  # todo not important for percistance, but important to stop inital high yeild!
     params['LOG10CRTI'] = np.log10(36)  # set from a mid point value  # todo not important for percistance, but important to stop inital high yeild!
-    # params['HARVFRD'] = 0 # todo not importnat for percistance, or anything else... it's fine to keep static
 
     return params
 
@@ -57,11 +56,11 @@ def get_weather_data():
     # below is the lincoln farm, ryegrass percistance is not likely.
     #vcsn_data, use_coords = vcsn_pull_single_site(lat=-43.6333, lon=172.4666, year_min=2002, year_max=2011, use_vars='all')
 
-    # below is the oxford area, to test percistance #todo oxford are percistance, percistance looks possible in oxford
+    # below is the oxford area, to test percistance #todo oxford are percistance, percistance looks possible in oxford (9-12.6%)
     vcsn_data, use_coords = vcsn_pull_single_site(lat=-43.298068, lon=172.197276, year_min=2002, year_max=2011, use_vars='all')
 
-    # below is the percistance at eyrewell # todo is the presitance possible at eyrewell, seems so, check for full period!
-    vcsn_data, use_coords = vcsn_pull_single_site(lat=-43.355787, lon=172.324873, year_min=2002, year_max=2011, use_vars='all')
+    # below is the percistance at eyrewell # todo is the presitance possible at eyrewell, seems so (7.2-11.8%), check for full period!
+    #vcsn_data, use_coords = vcsn_pull_single_site(lat=-43.355787, lon=172.324873, year_min=2002, year_max=2011, use_vars='all')
 
 
     vcsn_data.to_csv(os.path.join(unbacked_dir,'vcsn.csv'))
