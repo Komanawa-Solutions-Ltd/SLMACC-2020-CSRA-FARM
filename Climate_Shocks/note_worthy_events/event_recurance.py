@@ -3,96 +3,156 @@
  Created: 3/11/2020 9:04 AM
  """
 
-from Climate_Shocks.note_worthy_events.vcsn_pull import vcsn_pull_single_site
-from Climate_Shocks.note_worthy_events.simple_smd_soilt import calc_smd, calc_sma_smd
-import pandas as pd
+from Climate_Shocks.vcsn_pull import vcsn_pull_single_site
+from Climate_Shocks.note_worthy_events.simple_smd_soilt import calc_sma_smd
+from Climate_Shocks.get_past_record import get_restriction_record, get_vcsn_record
+import ksl_env
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+
+
+backed_dir = ksl_env.shared_drives("SLMACC_2020\event_definition")
+unbacked_dir = ksl_env.mh_unbacked("SLMACC_2020\event_definition")
+
+if not os.path.exists(backed_dir):
+    os.makedirs(backed_dir)
+
+if not os.path.exists(unbacked_dir):
+    os.makedirs(unbacked_dir)
 
 
 def prob(x):
     out = np.nansum(x) / len(x)
     return np.round(out, 2)
 
-def get_vcsn_record():
-    data, use_cords = vcsn_pull_single_site(lat=-43.358,
-                                            lon=172.301,
-                                            year_min=1972,
-                                            year_max=2019,
-                                            use_vars=('evspsblpot','rsds','tasmax', 'tasmin' , 'pr'))
-    data.rename(columns={'evspsblpot': 'pet', 'pr': 'rain',
-                    'rsds': 'radn', 'tasmax': 'tmax', 'tasmin': 'tmin'}, inplace=True)
-    print(use_cords)
-    return data
-
-
 
 def calc_dry_recurance():
-    data, use_cords = vcsn_pull_single_site(lat=-43.358,
-                                            lon=172.301,
-                                            year_min=1972,
-                                            year_max=2019,
-                                            use_vars=('evspsblpot', 'pradj', 'pr'))
-    print(use_cords)
+    data = get_vcsn_record()
 
-    temp = calc_sma_smd(data['pr'], data['evspsblpot'], data.date, 150, 1)
+    temp = calc_sma_smd(data['rain'], data['pet'], data.date, 150, 1)
 
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
     data.loc[:, trans_cols] = temp.loc[:, trans_cols]
-    data.loc[:, 'd_smd_cond'] = data.loc[:, 'smd'] < -110
-    data.loc[:, 'd_sma_cond'] = data.loc[:, 'sma'] < -20
-    data.loc[:, 'd_sma_smd_cond'] = (data.loc[:, 'd_sma_cond']) & (data.loc[:, 'd_smd_cond'])
+    data.to_csv(os.path.join(backed_dir, 'dry_raw.csv'))
+
+    smd_thresholds = [0, -110, -110]
+    sma_thresholds = [-20, 0, -20]
+    ndays = [7, 10, 15]
+    out_keys = []
+    for smd_t, sma_t in zip(smd_thresholds, sma_thresholds):
+        k = 'd_smd{:03d}_sma{:02d}'.format(smd_t, sma_t)
+        data.loc[:, k] = (data.loc[:, 'smd'] <= smd_t) & (data.loc[:, 'sma'] <= sma_t)
+        out_keys.append(k)
 
     grouped_data = data.loc[:, ['month', 'year',
-                                'd_smd_cond',
-                                'd_sma_cond',
-                                'd_sma_smd_cond']
-                   ].groupby(['month', 'year']).sum().reset_index()
-    grouped_data.loc[:, 'm_smd_cond'] = grouped_data.loc[:, 'd_smd_cond'] >= 10
-    grouped_data.loc[:, 'm_sma_cond'] = grouped_data.loc[:, 'd_sma_cond'] >= 10
-    grouped_data.loc[:, 'm_sma_smd_cond'] = grouped_data.loc[:, 'd_sma_smd_cond'] >= 10
-    grouped_data.to_csv(r"C:\Users\Matt Hanson\Downloads\test_sma.csv")
+                                'smd', 'sma'] + out_keys].groupby(['month', 'year']).sum().reset_index()
 
-    out = grouped_data.groupby(['month']).aggregate(['mean', 'std', 'sum', 'count', prob])
-    out.to_csv(r"C:\Users\Matt Hanson\Downloads\test_sma_monthly.csv")
+    grouped_data.to_csv(os.path.join(backed_dir, 'dry_monthly_data.csv'))
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+                                                                                        'dry_monthly_data_desc.csv'))
+    out_keys2 = []
+    for nd in ndays:
+        for k in out_keys:
+            ok = '{:02d}d_{}'.format(nd, k)
+            out_keys2.append(ok)
+            grouped_data.loc[:, ok] = grouped_data.loc[:, k] >= nd
+
+    out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
+    out.to_csv(os.path.join(backed_dir, 'dry_prob.csv'))
 
 
 def calc_wet_recurance():
-    data, use_cords = vcsn_pull_single_site(
-                                            lat=-43.358,
-                                            lon=172.301,
-                                            year_min=1972,
-                                            year_max=2019,
-                                            use_vars=('evspsblpot', 'pradj', 'pr'))
-    print(use_cords)
+    data = get_vcsn_record()
+    data.to_csv(os.path.join(backed_dir, 'wet_raw.csv'))
 
-    data.loc[:, 'd_rain_cond_10'] = data.loc[:, 'pr'] > 10  # more than 10 mm per day
-    data.loc[:, 'd_rain_cond_7'] = data.loc[:, 'pr'] > 7  # more than 7 mm per day
-    data.loc[:, 'd_rain_cond_5'] = data.loc[:, 'pr'] > 5  # more than 5 mm per day
+    thresholds = [15, 10, 7, 5, 3, 1]
+    ndays = [1, 5, 7, 10]
+    out_keys = []
+    for thresh in thresholds:
+        k = 'd_rain_cond_{:02d}'.format(thresh)
+        data.loc[:, k] = data.loc[:, 'rain'] >= thresh  # more than 10 mm per day
+        out_keys.append(k)
 
-    grouped_data = data.loc[:, ['month', 'year',
-                                'd_rain_cond_10',
-                                'd_rain_cond_7',
-                                'd_rain_cond_5',
-                                ]
-                   ].groupby(['month', 'year']).sum().reset_index()
-    grouped_data.loc[:, 'm_rain_cond_10'] = grouped_data.loc[:, 'd_rain_cond_10'] >= 7
-    grouped_data.loc[:, 'm_rain_cond_7'] = grouped_data.loc[:, 'd_rain_cond_7'] >= 7
-    grouped_data.loc[:, 'm_rain_cond_5'] = grouped_data.loc[:, 'd_rain_cond_5'] >= 7
-    grouped_data.to_csv(r"C:\Users\Matt Hanson\Downloads\test_rain.csv")
+    grouped_data = data.loc[:, ['month', 'year', 'rain'] + out_keys].groupby(['month', 'year']).sum().reset_index()
 
-    out = grouped_data.groupby(['month']).aggregate(['mean', 'std', 'sum', 'count', prob])
-    out.to_csv(r"C:\Users\Matt Hanson\Downloads\test_rain_monthly.csv")
+    # make montly restriction anaomaloy - mean
+    temp = grouped_data.groupby('month').mean().loc[:, 'rain'].to_dict()
+    grouped_data.loc[:, 'rain_an_mean'] = grouped_data.loc[:, 'month']
+    grouped_data = grouped_data.replace({'rain_an_mean': temp})
+    grouped_data.loc[:, 'rain_an_mean'] = grouped_data.loc[:, 'rain'] - grouped_data.loc[:, 'rain_an_mean']
+
+    # make montly restriction anaomaloy - median
+    temp = grouped_data.groupby('month').median().loc[:, 'rain'].to_dict()
+    grouped_data.loc[:, 'rain_an_med'] = grouped_data.loc[:, 'month']
+    grouped_data = grouped_data.replace({'rain_an_med': temp})
+    grouped_data.loc[:, 'rain_an_med'] = grouped_data.loc[:, 'rain'] - grouped_data.loc[:, 'rain_an_med']
+
+    grouped_data.to_csv(os.path.join(backed_dir, 'wet_monthly_data.csv'))
+
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+                                                                                        'wet_monthly_data_desc.csv'))
+
+    # number of n days
+    out_keys2 = []
+    for nd in ndays:
+        for t, k in zip(thresholds, out_keys):
+            ok = '{:02d}d r{:02d}'.format(nd, t)
+            out_keys2.append(ok)
+            grouped_data.loc[:, ok] = grouped_data.loc[:, k] >= nd
+
+    out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
+    out.to_csv(os.path.join(backed_dir, 'wet_prob.csv'))
+
+
+def calc_restrict_recurance():
+    data = get_restriction_record()
+
+    thresholds = [0.001, 0.5, 0.75, 1]
+    tnames = ['any', 'half', '3/4', 'full']
+    ndays = [1, 5, 7, 10]
+    out_keys = []
+    for thresh, tname in zip(thresholds, tnames):
+        k = 'd_>{}_rest'.format(tname)
+        data.loc[:, k] = data.loc[:, 'f_rest'] >= thresh  # more than 10 mm per day
+        out_keys.append(k)
+
+    grouped_data = data.loc[:, ['month', 'year', 'f_rest'] + out_keys].groupby(['month', 'year']).sum().reset_index()
+
+    # make montly restriction anaomaloy - mean
+    temp = grouped_data.groupby('month').mean().loc[:, 'f_rest'].to_dict()
+    grouped_data.loc[:, 'f_rest_an_mean'] = grouped_data.loc[:, 'month']
+    grouped_data = grouped_data.replace({'f_rest_an_mean': temp})
+    grouped_data.loc[:, 'f_rest_an_mean'] = grouped_data.loc[:, 'f_rest'] - grouped_data.loc[:, 'f_rest_an_mean']
+
+    # make montly restriction anaomaloy
+    temp = grouped_data.groupby('month').median().loc[:, 'f_rest'].to_dict()
+    grouped_data.loc[:, 'f_rest_an_med'] = grouped_data.loc[:, 'month']
+    grouped_data = grouped_data.replace({'f_rest_an_med': temp})
+    grouped_data.loc[:, 'f_rest_an_med'] = grouped_data.loc[:, 'f_rest'] - grouped_data.loc[:, 'f_rest_an_med']
+
+    grouped_data.to_csv(os.path.join(backed_dir, 'rest_monthly_data.csv'))
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+                                                                                        'rest_monthly_data_desc.csv'))
+    # number of n days
+    out_keys2 = []
+    for nd in ndays:
+        for k in out_keys:
+            ok = '{:02d}d_{}'.format(nd, k)
+            out_keys2.append(ok)
+            grouped_data.loc[:, ok] = grouped_data.loc[:, k] >= nd
+
+    out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
+    out.to_csv(os.path.join(backed_dir, 'rest_prob.csv'))
 
 
 def plot_vcsn_smd():
     data, use_cords = vcsn_pull_single_site(
-                                            lat=-43.358,
-                                            lon=172.301,
-                                            year_min=1972,
-                                            year_max=2019,
-                                            use_vars=('evspsblpot', 'pradj', 'pr'))
+        lat=-43.358,
+        lon=172.301,
+        year_min=1972,
+        year_max=2019,
+        use_vars=('evspsblpot', 'pr'))
     print(use_cords)
 
     temp = calc_sma_smd(data['pr'], data['evspsblpot'], data.date, 150, 1)
@@ -118,11 +178,11 @@ def plot_vcsn_smd():
 
 def check_vcns_data():
     data, use_cords = vcsn_pull_single_site(
-                                            lat=-43.358,
-                                            lon=172.301,
-                                            year_min=1972,
-                                            year_max=2019,
-                                            use_vars='all')
+        lat=-43.358,
+        lon=172.301,
+        year_min=1972,
+        year_max=2019,
+        use_vars='all')
 
     print(use_cords)
     data.set_index('date', inplace=True)
@@ -134,6 +194,6 @@ def check_vcns_data():
 
 
 if __name__ == '__main__':
-    plot_vcsn_smd()
+    calc_restrict_recurance()
     calc_wet_recurance()
     calc_dry_recurance()
