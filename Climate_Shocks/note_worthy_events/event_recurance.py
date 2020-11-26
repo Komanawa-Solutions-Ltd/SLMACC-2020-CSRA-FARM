@@ -10,7 +10,7 @@ import ksl_env
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-
+import itertools
 
 backed_dir = ksl_env.shared_drives("SLMACC_2020\event_definition")
 unbacked_dir = ksl_env.mh_unbacked("SLMACC_2020\event_definition")
@@ -71,7 +71,7 @@ def calc_wet_recurance():
     out_keys = []
     for thresh in thresholds:
         k = 'd_rain_cond_{:02d}'.format(thresh)
-        data.loc[:, k] = data.loc[:, 'rain'] >= thresh  # more than 10 mm per day
+        data.loc[:, k] = data.loc[:, 'rain'] >= thresh
         out_keys.append(k)
 
     grouped_data = data.loc[:, ['month', 'year', 'rain'] + out_keys].groupby(['month', 'year']).sum().reset_index()
@@ -114,7 +114,7 @@ def calc_restrict_recurance():
     out_keys = []
     for thresh, tname in zip(thresholds, tnames):
         k = 'd_>{}_rest'.format(tname)
-        data.loc[:, k] = data.loc[:, 'f_rest'] >= thresh  # more than 10 mm per day
+        data.loc[:, k] = data.loc[:, 'f_rest'] >= thresh
         out_keys.append(k)
 
     grouped_data = data.loc[:, ['month', 'year', 'f_rest'] + out_keys].groupby(['month', 'year']).sum().reset_index()
@@ -144,6 +144,78 @@ def calc_restrict_recurance():
 
     out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
     out.to_csv(os.path.join(backed_dir, 'rest_prob.csv'))
+
+
+def calc_cold_recurance():
+    data = get_vcsn_record()
+    data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
+    data.to_csv(os.path.join(backed_dir, 'temp_raw.csv'))
+
+    thresholds = [0, 5, 7, 10, 12]
+    vars = ['tmin', 'tmean']
+    ndays = [3,5, 7, 10, 15]
+    out_keys = []
+    for thresh, v in itertools.product(thresholds, vars):
+        k = 'd_{}_{:02d}'.format(v, thresh)
+        data.loc[:, k] = data.loc[:, v] <= thresh
+        out_keys.append(k)
+
+    aggs = {e: 'sum' for e in out_keys}
+    aggs.update({e: 'mean' for e in vars})
+    grouped_data = data.loc[:, ['month', 'year'] + vars + out_keys].groupby(['month', 'year'])
+    grouped_data = grouped_data.aggregate(aggs).reset_index()
+
+    grouped_data.to_csv(os.path.join(backed_dir, 'cold_monthly_data.csv'))
+
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+                                                                                        'cold_monthly_data_desc.csv'))
+
+    # number of n days
+    out_keys2 = []
+    for nd in ndays:
+        for k in out_keys:
+            ok = '{:02d}d_{}'.format(nd, k)
+            out_keys2.append(ok)
+            grouped_data.loc[:, ok] = grouped_data.loc[:, k] >= nd
+
+    out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
+    out.to_csv(os.path.join(backed_dir, 'cold_prob.csv'))
+
+
+def calc_hot_recurance():
+    data = get_vcsn_record()
+    data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
+    data.to_csv(os.path.join(backed_dir, 'temp_raw.csv'))
+
+    thresholds = [20,25,28,30,35]
+    vars = ['tmax', 'tmean']
+    ndays = [3, 5, 7, 10, 15]
+    out_keys = []
+    for thresh, v in itertools.product(thresholds, vars):
+        k = 'd_{}_{:02d}'.format(v, thresh)
+        data.loc[:, k] = data.loc[:, v] >= thresh
+        out_keys.append(k)
+
+    aggs = {e: 'sum' for e in out_keys}
+    aggs.update({e: 'mean' for e in vars})
+    grouped_data = data.loc[:, ['month', 'year'] + vars + out_keys].groupby(['month', 'year'])
+    grouped_data = grouped_data.aggregate(aggs).reset_index()
+
+    grouped_data.to_csv(os.path.join(backed_dir, 'hot_monthly_data.csv'))
+
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+                                                                                        'hot_monthly_data_desc.csv'))
+
+    # number of n days
+    out_keys2 = []
+    for nd in ndays:
+        for k in out_keys:
+            ok = '{:02d}d_{}'.format(nd, k)
+            out_keys2.append(ok)
+            grouped_data.loc[:, ok] = grouped_data.loc[:, k] >= nd
+
+    out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
+    out.to_csv(os.path.join(backed_dir, 'hot_prob.csv'))
 
 
 def plot_vcsn_smd():
@@ -194,6 +266,8 @@ def check_vcns_data():
 
 
 if __name__ == '__main__':
+    calc_hot_recurance()
+    calc_cold_recurance()
     calc_restrict_recurance()
     calc_wet_recurance()
     calc_dry_recurance()
