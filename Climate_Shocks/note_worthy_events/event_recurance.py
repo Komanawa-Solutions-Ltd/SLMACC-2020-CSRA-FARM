@@ -38,7 +38,7 @@ def calc_dry_recurance():
 
     smd_thresholds = [0, -110, -110]
     sma_thresholds = [-20, 0, -20]
-    ndays = [7, 10, 15]
+    ndays = [5, 7, 10, 14]
     out_keys = []
     for smd_t, sma_t in zip(smd_thresholds, sma_thresholds):
         k = 'd_smd{:03d}_sma{:02d}'.format(smd_t, sma_t)
@@ -67,7 +67,7 @@ def calc_wet_recurance():
     data.to_csv(os.path.join(backed_dir, 'wet_raw.csv'))
 
     thresholds = [15, 10, 7, 5, 3, 1]
-    ndays = [1, 5, 7, 10]
+    ndays = [1, 5, 7, 10, 14]
     out_keys = []
     for thresh in thresholds:
         k = 'd_rain_cond_{:02d}'.format(thresh)
@@ -110,7 +110,7 @@ def calc_restrict_recurance():
 
     thresholds = [0.001, 0.5, 0.75, 1]
     tnames = ['any', 'half', '3/4', 'full']
-    ndays = [1, 5, 7, 10]
+    ndays = [1, 5, 7, 10, 14]
     out_keys = []
     for thresh, tname in zip(thresholds, tnames):
         k = 'd_>{}_rest'.format(tname)
@@ -153,7 +153,7 @@ def calc_cold_recurance():
 
     thresholds = [0, 5, 7, 10, 12]
     vars = ['tmin', 'tmean']
-    ndays = [3,5, 7, 10, 15]
+    ndays = [3, 5, 7, 10, 14]
     out_keys = []
     for thresh, v in itertools.product(thresholds, vars):
         k = 'd_{}_{:02d}'.format(v, thresh)
@@ -187,9 +187,9 @@ def calc_hot_recurance():
     data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
     data.to_csv(os.path.join(backed_dir, 'temp_raw.csv'))
 
-    thresholds = [20,25,28,30,35]
+    thresholds = [20, 25, 28, 30, 35]
     vars = ['tmax', 'tmean']
-    ndays = [3, 5, 7, 10, 15]
+    ndays = [3, 5, 7, 10, 14]
     out_keys = []
     for thresh, v in itertools.product(thresholds, vars):
         k = 'd_{}_{:02d}'.format(v, thresh)
