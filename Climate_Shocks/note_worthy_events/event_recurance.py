@@ -226,7 +226,7 @@ def calc_restrict_recurance():
     prob_data = pd.DataFrame(index=all_data.index)
 
     for rt, l, nd in itertools.product(tnames, con_days, ndays):
-        prob_data.loc[:, '{}d_{}con_{}tot'.format(l, rt, nd)] = ((all_data.loc[:, (rt, 'max_per_len')] >= l) &
+        prob_data.loc[:, '{}d_{}_{}tot'.format(l, rt, nd)] = ((all_data.loc[:, (rt, 'max_per_len')] >= l) &
                                                                  (all_data.loc[:, (rt, 'total_rest_days')] >= nd))
 
     out = prob_data.reset_index().groupby('month').agg(['sum', prob])
