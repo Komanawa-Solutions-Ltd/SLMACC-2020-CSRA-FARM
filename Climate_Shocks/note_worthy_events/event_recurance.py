@@ -80,9 +80,9 @@ def calc_wet_recurance():
 
     data.to_csv(os.path.join(backed_dir, 'smd_wet_raw.csv'))
 
-    thresholds_rain = [5, 3]
-    thresholds_smd = [0, -10, -20]
-    ndays = [5, 7, 10]
+    thresholds_rain = [5, 3, 1, 0]
+    thresholds_smd = [0, -5, -10]
+    ndays = [7, 10, 14]
     out_keys = []
     for t_r, t_smd in itertools.product(thresholds_rain, thresholds_smd):
         k = 'd_r{}_smd{}'.format(t_r, t_smd)
@@ -182,6 +182,9 @@ def calc_restrict_recurance():
 
     thresholds = [0.001, 0.5, 0.75, 1]
     tnames = ['any', 'half', '75rest', 'full']
+    con_days = [5, 7, 10]
+    ndays = [5, 7, 10, 15, 20]
+
     consecutive_data = {}
     for tnm, t in zip(tnames, thresholds):
         test_value = tnm
@@ -203,24 +206,31 @@ def calc_restrict_recurance():
         columns=pd.MultiIndex.from_product([tnames, out_columns]))
     all_data.loc[:] = np.nan
     for k, v in consecutive_data.items():
-        v.round(2).to_csv(os.path.join(backed_dir,'len_rest_{}_raw.csv'.format(k)))
+        v.round(2).to_csv(os.path.join(backed_dir, 'len_rest_{}_raw.csv'.format(k)))
         temp = v.groupby(['year', 'month']).agg({k: ['sum', 'count',
                                                      'mean', 'min', 'max']})
         temp = temp.rename(columns=rename_mapper, level=1)
         all_data = all_data.combine_first(temp)
 
-
     all_data = all_data.loc[:, (tnames, out_columns)]
     all_data.reset_index().astype(float).groupby('month').describe().round(2).to_csv(os.path.join(backed_dir,
-                                                                                         'len_rest_month_desc_no_zeros.csv'))
-    t = all_data['any']['num_per'].isna().reset_index().groupby('month').agg({'num_per':['sum',prob]})
-    t.to_csv(os.path.join(backed_dir,'len_rest_prob_no_rest.csv'))
+                                                                                                  'len_rest_month_desc_no_zeros.csv'))
+    t = all_data['any']['num_per'].isna().reset_index().groupby('month').agg({'num_per': ['sum', prob]})
+    t.to_csv(os.path.join(backed_dir, 'len_rest_prob_no_rest.csv'))
     all_data = all_data.fillna(0)
     all_data.round(2).to_csv(os.path.join(backed_dir, 'len_rest_monthly.csv'))
 
-    all_data.reset_index().groupby('month').describe().round(2).to_csv(os.path.join(backed_dir, 'len_rest_month_desc_with_zeros.csv'))
+    all_data.reset_index().groupby('month').describe().round(2).to_csv(
+        os.path.join(backed_dir, 'len_rest_month_desc_with_zeros.csv'))
 
-    # todo rest prob
+    prob_data = pd.DataFrame(index=all_data.index)
+
+    for rt, l, nd in itertools.product(tnames, con_days, ndays):
+        prob_data.loc[:, '{}d_{}con_{}tot'.format(l, rt, nd)] = ((all_data.loc[:, (rt, 'max_per_len')] >= l) &
+                                                                 (all_data.loc[:, (rt, 'total_rest_days')] >= nd))
+
+    out = prob_data.reset_index().groupby('month').agg(['sum', prob])
+    out.to_csv(os.path.join(backed_dir, 'len_rest_prob.csv'))
 
 
 def calc_cold_recurance():
@@ -354,10 +364,18 @@ def check_vcns_data():
     plt.show()
 
 
+def plot_restriction_record():
+    data = get_restriction_record()
+    fix, (ax) = plt.subplots()
+    ax.plot(pd.to_datetime(data['date']), data['f_rest'])
+    plt.show()
+
+
 if __name__ == '__main__':
+    plot_restriction_record()
+    calc_wet_recurance()
     calc_restrict_recurance()
     calc_cold_recurance()
-    calc_wet_recurance()
 
     calc_hot_recurance()
     calc_dry_recurance()
