@@ -8,6 +8,7 @@ from Climate_Shocks.note_worthy_events.simple_smd_soilt import calc_sma_smd
 from Climate_Shocks.get_past_record import get_restriction_record, get_vcsn_record
 import ksl_env
 import numpy as np
+import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import itertools
@@ -64,14 +65,28 @@ def calc_dry_recurance():
 
 def calc_wet_recurance():
     data = get_vcsn_record()
-    data.to_csv(os.path.join(backed_dir, 'wet_raw.csv'))
+    temp = calc_sma_smd(data['rain'], data['pet'], data.date, 150, 1)
 
-    thresholds = [15, 10, 7, 5, 3, 1]
-    ndays = [1, 5, 7, 10, 14]
+    trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
+    data.loc[:, trans_cols] = temp.loc[:, trans_cols]
+
+    temp = False
+    if temp:  # just to look at some plots
+        fig, (ax, ax2, ax3) = plt.subplots(3, sharex=True)
+        ax.plot(data.date, data.smd)
+        ax2.plot(data.date, data.drain)
+        ax3.plot(data.date, data.rain)
+        plt.show()
+
+    data.to_csv(os.path.join(backed_dir, 'smd_wet_raw.csv'))
+
+    thresholds_rain = [5, 3]
+    thresholds_smd = [0, -10, -20]
+    ndays = [5, 7, 10]
     out_keys = []
-    for thresh in thresholds:
-        k = 'd_rain_cond_{:02d}'.format(thresh)
-        data.loc[:, k] = data.loc[:, 'rain'] >= thresh
+    for t_r, t_smd in itertools.product(thresholds_rain, thresholds_smd):
+        k = 'd_r{}_smd{}'.format(t_r, t_smd)
+        data.loc[:, k] = (data.loc[:, 'rain'] >= t_r) & (data.loc[:, 'smd'] >= t_smd)
         out_keys.append(k)
 
     grouped_data = data.loc[:, ['month', 'year', 'rain'] + out_keys].groupby(['month', 'year']).sum().reset_index()
@@ -88,24 +103,32 @@ def calc_wet_recurance():
     grouped_data = grouped_data.replace({'rain_an_med': temp})
     grouped_data.loc[:, 'rain_an_med'] = grouped_data.loc[:, 'rain'] - grouped_data.loc[:, 'rain_an_med']
 
-    grouped_data.to_csv(os.path.join(backed_dir, 'wet_monthly_data.csv'))
+    grouped_data.round(2).to_csv(os.path.join(backed_dir, 'smd_wet_monthly_data.csv'))
 
-    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
-                                                                                        'wet_monthly_data_desc.csv'))
+    grouped_data.drop(columns=['year']).groupby('month').describe().round(2).to_csv(os.path.join(backed_dir,
+                                                                                                 'smd_wet_monthly_data_desc.csv'))
 
     # number of n days
     out_keys2 = []
     for nd in ndays:
-        for t, k in zip(thresholds, out_keys):
-            ok = '{:02d}d r{:02d}'.format(nd, t)
+        for k in out_keys:
+            ok = '{:02d}d_{}'.format(nd, k)
             out_keys2.append(ok)
             grouped_data.loc[:, ok] = grouped_data.loc[:, k] >= nd
 
-    out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
-    out.to_csv(os.path.join(backed_dir, 'wet_prob.csv'))
+    out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob]).round(2)
+    drop_keys = []
+    for k in out_keys2:
+        temp = (out.loc[:, k].loc[:, 'sum'] == 48).all() or (out.loc[:, k].loc[:, 'sum'] == 0).all()
+        if temp:
+            drop_keys.append(k)
+
+    out = out.drop(columns=drop_keys)
+
+    out.to_csv(os.path.join(backed_dir, 'smd_wet_prob.csv'))
 
 
-def calc_restrict_recurance():
+def old_calc_restrict_recurance():
     data = get_restriction_record()
 
     thresholds = [0.001, 0.5, 0.75, 1]
@@ -143,16 +166,72 @@ def calc_restrict_recurance():
             grouped_data.loc[:, ok] = grouped_data.loc[:, k] >= nd
 
     out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
+    drop_keys = []
+    for k in out_keys2:
+        temp = (out.loc[:, k].loc[:, 'sum'] == 48).all() or (
+                out.loc[:, k].loc[:, 'sum'] == 0).all()
+        if temp:
+            drop_keys.append(k)
+
+    out = out.drop(columns=drop_keys)
     out.to_csv(os.path.join(backed_dir, 'rest_prob.csv'))
+
+
+def calc_restrict_recurance():
+    data = get_restriction_record()
+
+    thresholds = [0.001, 0.5, 0.75, 1]
+    tnames = ['any', 'half', '75rest', 'full']
+    consecutive_data = {}
+    for tnm, t in zip(tnames, thresholds):
+        test_value = tnm
+        data.loc[:, test_value] = data.loc[:, 'f_rest'] >= t
+
+        data.loc[:, 'con_id'] = (data.loc[:, ['year',
+                                              'month',
+                                              test_value]].diff(1) != 0).any(axis=1).astype('int').cumsum().values
+
+        temp = data.loc[data[test_value]].groupby('con_id')
+        consecutive_data[tnm] = temp.agg({'year': 'mean', 'month': 'mean', test_value: 'size'}).reset_index()
+
+    out_columns = ['total_rest_days', 'num_per', 'mean_per_len', 'min_per_len', 'max_per_len']
+    rename_mapper = {'sum': 'total_rest_days', 'count': 'num_per',
+                     'mean': 'mean_per_len', 'min': 'min_per_len', 'max': 'max_per_len'}
+
+    all_data = pd.DataFrame(
+        index=pd.MultiIndex.from_product([set(data.year), set(data.month)], names=['year', 'month']),
+        columns=pd.MultiIndex.from_product([tnames, out_columns]))
+    all_data.loc[:] = np.nan
+    for k, v in consecutive_data.items():
+        v.round(2).to_csv(os.path.join(backed_dir,'len_rest_{}_raw.csv'.format(k)))
+        temp = v.groupby(['year', 'month']).agg({k: ['sum', 'count',
+                                                     'mean', 'min', 'max']})
+        temp = temp.rename(columns=rename_mapper, level=1)
+        all_data = all_data.combine_first(temp)
+
+
+    all_data = all_data.loc[:, (tnames, out_columns)]
+    all_data.reset_index().astype(float).groupby('month').describe().round(2).to_csv(os.path.join(backed_dir,
+                                                                                         'len_rest_month_desc_no_zeros.csv'))
+    t = all_data['any']['num_per'].isna().reset_index().groupby('month').agg({'num_per':['sum',prob]})
+    t.to_csv(os.path.join(backed_dir,'len_rest_prob_no_rest.csv'))
+    all_data = all_data.fillna(0)
+    all_data.round(2).to_csv(os.path.join(backed_dir, 'len_rest_monthly.csv'))
+
+    all_data.reset_index().groupby('month').describe().round(2).to_csv(os.path.join(backed_dir, 'len_rest_month_desc_with_zeros.csv'))
+
+    # todo rest prob
 
 
 def calc_cold_recurance():
     data = get_vcsn_record()
     data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
-    data.to_csv(os.path.join(backed_dir, 'temp_raw.csv'))
+    data.loc[:, 'tmean_raw'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
+    data.loc[:, 'tmean'] = data.loc[:, 'tmean'].rolling(3).mean()
+    data.round(2).to_csv(os.path.join(backed_dir, 'rolling_cold_raw.csv'))
 
     thresholds = [0, 5, 7, 10, 12]
-    vars = ['tmin', 'tmean']
+    vars = ['tmean']
     ndays = [3, 5, 7, 10, 14]
     out_keys = []
     for thresh, v in itertools.product(thresholds, vars):
@@ -165,10 +244,10 @@ def calc_cold_recurance():
     grouped_data = data.loc[:, ['month', 'year'] + vars + out_keys].groupby(['month', 'year'])
     grouped_data = grouped_data.aggregate(aggs).reset_index()
 
-    grouped_data.to_csv(os.path.join(backed_dir, 'cold_monthly_data.csv'))
+    grouped_data.round(2).to_csv(os.path.join(backed_dir, 'rolling_cold_monthly_data.csv'))
 
-    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
-                                                                                        'cold_monthly_data_desc.csv'))
+    grouped_data.drop(columns=['year']).groupby('month').describe().round(2).to_csv(os.path.join(backed_dir,
+                                                                                                 'rolling_cold_monthly_data_desc.csv'))
 
     # number of n days
     out_keys2 = []
@@ -179,7 +258,17 @@ def calc_cold_recurance():
             grouped_data.loc[:, ok] = grouped_data.loc[:, k] >= nd
 
     out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
-    out.to_csv(os.path.join(backed_dir, 'cold_prob.csv'))
+
+    drop_keys = []
+    for k in out_keys2:
+        temp = (out.loc[:, k].loc[:, 'sum'] == 48).all() or (
+                out.loc[:, k].loc[:, 'sum'] == 0).all()
+        if temp:
+            drop_keys.append(k)
+
+    out = out.drop(columns=drop_keys)
+
+    out.round(2).to_csv(os.path.join(backed_dir, 'rolling_cold_prob.csv'))
 
 
 def calc_hot_recurance():
@@ -266,8 +355,9 @@ def check_vcns_data():
 
 
 if __name__ == '__main__':
-    calc_hot_recurance()
-    calc_cold_recurance()
     calc_restrict_recurance()
+    calc_cold_recurance()
     calc_wet_recurance()
+
+    calc_hot_recurance()
     calc_dry_recurance()

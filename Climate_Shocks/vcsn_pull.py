@@ -85,10 +85,37 @@ def vcsn_pull_single_site(lat, lon, year_min, year_max, use_vars='all', vcsn_dir
 
 
 if __name__ == '__main__':
+    print('west eyreton')
+    lat, lon = -43.34104969510804, 172.32893676842548
     out, (use_lat, use_lon) = vcsn_pull_single_site(
-                                                    lat=-43.475,
-                                                    lon=172.075,
-                                                    year_min=2010,
+                                                    lat=lat,
+                                                    lon=lon,
+                                                    year_min=1972,
                                                     year_max=2019, )
+    out = out.groupby('year').sum()
     print(use_lat, use_lon)
-    out.to_csv(r"C:\Users\Matt Hanson\Downloads\vscn_pull_for_paul.csv")
+    print(out.pr.mean())
+    print(out.pr.std())
+
+    print('oxford')
+    lat, lon = -43.29259008790322, 172.19624253342405
+    out2, (use_lat, use_lon) = vcsn_pull_single_site(
+                                                    lat=lat,
+                                                    lon=lon,
+                                                    year_min=1972,
+                                                    year_max=2019, )
+    out2 = out2.groupby('year').sum()
+    print(out2.pr.mean())
+    print(out2.pr.std())
+    import matplotlib.pyplot as plt
+
+    fig, (ax, ax2) = plt.subplots(2, sharex=True)
+    ax.hist(out['pr'], color='r', bins=20)
+    ax.set_title('eyrewell')
+    ax2.hist(out2['pr'], color='b', bins=20)
+    ax2.set_title('oxford')
+    print('ttest')
+    from scipy.stats import ttest_ind
+    print(ttest_ind(out.pr,out2.pr))
+    plt.show()
+    pass
