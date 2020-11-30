@@ -28,7 +28,7 @@ def irrigation_restrictions(duration, restrict, rest, outdir, ttl_str):
     """
 
     out = {}
-    start_mod1, dates, params, matrix_weather, days_harvest = _base_restriction_data()
+    start_mod1, dates, params, matrix_weather, days_harvest, doy_irr = _base_restriction_data()
     print(start_mod1)
 
     stop_mod1 = start_mod1 + pd.DateOffset(days=duration)
@@ -36,16 +36,16 @@ def irrigation_restrictions(duration, restrict, rest, outdir, ttl_str):
     stop_mod2 = start_mod2 + pd.DateOffset(days=duration)
     idx = ((dates < stop_mod1) & (dates >= start_mod1)) | ((dates < stop_mod2) & (dates >= start_mod2))
 
-    out['no_rest'] = run_basgra_nz(params, matrix_weather, days_harvest, verbose=False)
+    out['no_rest'] = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
 
     matrix_weather_new = matrix_weather.copy(deep=True)
     matrix_weather_new.loc[idx, 'max_irr'] *= (1 - restrict)
 
-    out['partial_rest'] = run_basgra_nz(params, matrix_weather_new, days_harvest, verbose=False)
+    out['partial_rest'] = run_basgra_nz(params, matrix_weather_new, days_harvest, doy_irr, verbose=False)
 
     matrix_weather_new = matrix_weather.copy(deep=True)
     matrix_weather_new.loc[idx, 'max_irr'] = 0
-    out['full_rest'] = run_basgra_nz(params, matrix_weather_new, days_harvest, verbose=False)
+    out['full_rest'] = run_basgra_nz(params, matrix_weather_new, days_harvest, doy_irr, verbose=False)
 
     out['mixed_rest'] = out['full_rest'] * restrict + out['no_rest'] * (1 - restrict)
 
@@ -60,13 +60,12 @@ def _base_restriction_data():
     params = get_woodward_mean_full_params('lincoln')
     params['irr_frm_paw'] = 1
     params['IRRIGF'] = 1
-    params['doy_irr_start'] = 0
-    params['doy_irr_end'] = 366
+    doy_irr = list(range(1,367))
 
     matrix_weather = get_lincoln_broadfield()
     matrix_weather.drop(columns=['rain_def', 'rain_runoff'], inplace=True)
     matrix_weather.loc[:, 'max_irr'] = 5
-    matrix_weather.loc[:, 'irr_trig'] = .5
+    matrix_weather.loc[:, 'irr_trig'] = .75
     matrix_weather.loc[:, 'irr_targ'] = .9
     strs = ['{}-{:03d}'.format(e, f) for e, f in matrix_weather[['year', 'doy']].itertuples(False, None)]
     org_dates = pd.Series(pd.to_datetime(strs, format='%Y-%j'))
@@ -102,24 +101,26 @@ def _base_restriction_data():
     days_harvest.loc[idx, 'harv_trig'] = 1501
     days_harvest.loc[idx, 'harv_targ'] = 1500
 
-    return start_mod, dates, params, matrix_weather, days_harvest
+    return start_mod, dates, params, matrix_weather, days_harvest, doy_irr
 
 
 # I get a chunk of data (1 year) # append a non-restriction chuck infront of it, run a
 
 
 def _temp_basgra_run():
-    start_mod, dates, params, matrix_weather, days_harvest = _base_restriction_data()
+    start_mod, dates, params, matrix_weather, days_harvest, doy_irr = _base_restriction_data()
     print(start_mod)
-    temp = run_basgra_nz(params, matrix_weather, days_harvest, verbose=False)
+    temp = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
     out = {'temp': temp}
     temp.to_csv(r"C:\Users\Matt Hanson\Downloads\test_get_time.csv")
     plot_multiple_results(out, out_vars=['DM', 'YIELD', 'BASAL', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'PAW'])
 
 
 if __name__ == '__main__':
-    irrigation_restrictions(duration=20,
-                            restrict=.5,
-                            rest=20,
+    irrigation_restrictions(duration=10,
+                            restrict=1,
+                            rest=10,
                             outdir=None,
-                            ttl_str='')  # todo need to clarify how the irrigation systems work... I think irrigation will continue regardless of the trigger value... currently only adding 10% PAW with irrigation so irrigation is
+                            ttl_str='')
+    # todo need to clarify how the irrigation systems work... I think irrigation will continue regardless of the trigger value... currently only adding 10% PAW with irrigation so irrigation is
+    #todo for some reason restrictions do not seem to impact severly

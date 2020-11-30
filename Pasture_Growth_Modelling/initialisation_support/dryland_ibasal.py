@@ -12,7 +12,7 @@ from input_output_keys import matrix_weather_keys_pet
 from basgra_python import run_basgra_nz
 
 def run_nonirr_lincoln_low_basil(IBASAL):
-    params, matrix_weather, days_harvest = establish_org_input('lincoln')
+    params, matrix_weather, days_harvest, doy_irr = establish_org_input('lincoln')
 
     matrix_weather = get_lincoln_broadfield()
     matrix_weather.loc[:, 'max_irr'] = 10
@@ -22,13 +22,11 @@ def run_nonirr_lincoln_low_basil(IBASAL):
     matrix_weather = matrix_weather.loc[:, matrix_weather_keys_pet]
 
     params['IRRIGF'] = 0  # no irrigation
-    params['doy_irr_start'] = 305  # start irrigating in Nov
-    params['doy_irr_end'] = 90  # finish at end of march
     params['BASALI'] = IBASAL  # start at 20% basal
 
     days_harvest = _clean_harvest(days_harvest,matrix_weather)
 
-    out = run_basgra_nz(params, matrix_weather, days_harvest, verbose=False)
+    out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
     out.loc[:,'per_fc'] = out.loc[:,'WAL']/out.loc[:,'WAFC']
     out.loc[:,'per_paw'] = out.loc[:,'PAW']/out.loc[:,'MXPAW']
 

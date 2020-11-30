@@ -13,7 +13,7 @@ ksl_env.add_basgra_nz_path()
 from supporting_functions.woodward_2020_params import get_woodward_mean_full_params
 
 
-def get_params(mode):
+def get_params_doy_irr(mode):
     """
     get the parameter sets for all of the basgra modelling
     :param mode: 'dryland','irrigated'
@@ -36,14 +36,11 @@ def get_params(mode):
         # add irrigation parameters
         params['irr_frm_paw'] = 1
         params['IRRIGF'] = 1
-        params['doy_irr_start'] = 0  # todo update
-        params['doy_irr_end'] = 366  # todo update
+        doy_irr = list(range(245, 367)) + list(range(1, 122))
     elif mode == 'dryland':
         # add irrigation parameters
         params['irr_frm_paw'] = 1
         params['IRRIGF'] = 0
-        params['doy_irr_start'] = 0
-        params['doy_irr_end'] = 0
 
         # modify inital values for dryland
         # set from a mid point value
@@ -53,10 +50,11 @@ def get_params(mode):
         params['LOG10CLVI'] = np.log10(4.2)  # todo
         params['LOG10CRESI'] = np.log10(0.8)  # todo
         params['LOG10CRTI'] = np.log10(36)  # todo
+        doy_irr = [0]
     else:
         raise ValueError('unexpected mode: {}, values are "irrigated" or "dryland"'.format(mode))
 
-    return params
+    return params, doy_irr
 
 
 def create_days_harvest(mode, matrix_weather):  # todo
@@ -94,6 +92,12 @@ def create_days_harvest(mode, matrix_weather):  # todo
 
 
 # todo check everything
-def create_matrix_weather():
+def create_matrix_weather(mode, weather_data, restriction_data):
     # create from the outputs of greg's work and adds in the irrigation parameters if needed
-    raise NotImplementedError
+    if mode == 'irrigated':  # todo
+        raise NotImplementedError
+    elif mode == 'dryland':  # todo finalize
+        raise NotImplementedError
+    else:
+        raise ValueError('unexpected mode: {}, values are "irrigated" or "dryland"'.format(mode))
+

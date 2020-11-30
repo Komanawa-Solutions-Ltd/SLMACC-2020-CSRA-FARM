@@ -47,7 +47,8 @@ def get_param_set(BASALI=0.25):
     params['LOG10CRESI'] = np.log10(0.8)  # set from a mid point value  # todo not important for percistance, but important to stop inital high yeild!
     params['LOG10CRTI'] = np.log10(36)  # set from a mid point value  # todo not important for percistance, but important to stop inital high yeild!
 
-    return params
+    doy_irr = [0]
+    return params, doy_irr
 
 
 def get_weather_data():
@@ -98,10 +99,10 @@ def get_harvest_data(weed_dm_frac, matrix_weather, harv_trig, harv_targ, freq):
 
 
 def get_input_data(basali, weed_dm_frac, harv_trig, harv_targ, freq):
-    params = get_param_set(basali)
+    params, doy_irr = get_param_set(basali)
     matrix_weather = get_weather_data()
     days_harvest = get_harvest_data(weed_dm_frac=weed_dm_frac, matrix_weather=matrix_weather, harv_trig=harv_trig, harv_targ=harv_targ,freq=freq)
-    return params, matrix_weather, days_harvest
+    return params, matrix_weather, days_harvest, doy_irr
 
 
 def run_inital_basgra(basali, weed_dm_frac, harv_targ, harv_trig, freq):
@@ -111,10 +112,10 @@ def run_inital_basgra(basali, weed_dm_frac, harv_targ, harv_trig, freq):
     :param weed_dm_frac:
     :return:
     """
-    params, matrix_weather, days_harvest = get_input_data(basali, weed_dm_frac, harv_targ=harv_targ,
+    params, matrix_weather, days_harvest, doy_irr = get_input_data(basali, weed_dm_frac, harv_targ=harv_targ,
                                                           harv_trig=harv_trig, freq=freq)
 
-    temp = run_basgra_nz(params, matrix_weather, days_harvest, verbose=False)
+    temp = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
     out = {'temp': temp}
     temp.to_csv(r"C:\Users\Matt Hanson\Downloads\test_get_time.csv")
     plot_multiple_results(out, out_vars=['DM', 'YIELD', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'PAW', 'DMH','BASAL'])

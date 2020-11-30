@@ -18,16 +18,16 @@ from supporting_functions.plotting import plot_multiple_results
 
 
 def run_old_basgra():
-    params, matrix_weather, days_harvest = establish_org_input('lincoln')
+    params, matrix_weather, days_harvest, doy_irr = establish_org_input('lincoln')
 
     days_harvest = _clean_harvest(days_harvest, matrix_weather)
 
-    out = run_basgra_nz(params, matrix_weather, days_harvest, verbose=False)
+    out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
     return out
 
 
 def run_frequent_harvest(freq, trig, targ):
-    params, matrix_weather, days_harvest = establish_org_input('lincoln')
+    params, matrix_weather, days_harvest, doy_irr = establish_org_input('lincoln')
 
     strs = ['{}-{:03d}'.format(e, f) for e, f in matrix_weather[['year', 'doy']].itertuples(False, None)]
     days_harvest = pd.DataFrame({'year': matrix_weather.loc[:, 'year'],
@@ -44,7 +44,7 @@ def run_frequent_harvest(freq, trig, targ):
     days_harvest.loc[idx, 'harv_trig'] = trig
     days_harvest.loc[idx, 'harv_targ'] = targ
 
-    out = run_basgra_nz(params, matrix_weather, days_harvest, verbose=False)
+    out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
     return out
 
 
