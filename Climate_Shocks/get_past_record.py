@@ -6,6 +6,7 @@ from Climate_Shocks.vcsn_pull import vcsn_pull_single_site
 import ksl_env
 import os
 import pandas as pd
+import numpy as np
 
 
 def get_vcsn_record():
@@ -17,13 +18,16 @@ def get_vcsn_record():
     data.rename(columns={'evspsblpot': 'pet', 'pr': 'rain',
                          'rsds': 'radn', 'tasmax': 'tmax', 'tasmin': 'tmin'}, inplace=True)
     print(use_cords)
+    data = data.set_index('date')
     return data
 
 
 def get_restriction_record(recalc=False):
     data_path = ksl_env.shared_drives(r"SLMACC_2020\WIL data\restriction_record.csv")
     if not recalc and os.path.exists(data_path):
-        data = pd.read_csv(data_path, index_col=0)
+        data = pd.read_csv(data_path)
+        data.loc[:,'date'] = pd.to_datetime(data.loc[:,'date'])
+        data.set_index('date', inplace=True)
         return data
 
     raw_data_path = ksl_env.shared_drives(r"SLMACC_2020\WIL data\OSHB_WaimakRiverData_withRestrictionInfo.xlsx")
@@ -39,8 +43,20 @@ def get_restriction_record(recalc=False):
     data.loc[:, 'doy'] = data.date.dt.dayofyear
     data.loc[data.f_rest < 0.001, 'f_rest'] = 0
 
-    data = data.sort_values('date').reset_index()
+    data = data.set_index('date')
+    outdata = pd.DataFrame(index=pd.date_range('1972-01-01', '2019-12-31',name='date'), columns=['flow',
+                                                                                                 'take',
+                                                                                                 'day',
+                                                                                                 'month',
+                                                                                                 'year',
+                                                                                                 'f_rest'])
+    outdata.loc[:] = np.nan
+    outdata = outdata.combine_first(data)
 
-    data.to_csv(data_path)
-    return data
+    outdata = outdata.fillna(method='ffill')
 
+    outdata.to_csv(data_path)
+    return outdata
+
+if __name__ == '__main__':
+    get_restriction_record(True)
