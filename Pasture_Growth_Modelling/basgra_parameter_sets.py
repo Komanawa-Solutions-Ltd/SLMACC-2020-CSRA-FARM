@@ -37,6 +37,14 @@ def get_params_doy_irr(mode):
         params['irr_frm_paw'] = 1
         params['IRRIGF'] = 1
         doy_irr = list(range(245, 367)) + list(range(1, 122))
+
+        # modify inital
+        # params['BASALI'] = 0.1  # todo
+
+        # set from a mid point value not important for percistance, but important to stop inital high yeild!
+        # params['LOG10CLVI'] = np.log10(4.2)  # todo
+        # params['LOG10CRESI'] = np.log10(0.8)  # todo
+        # params['LOG10CRTI'] = np.log10(36)  # todo
     elif mode == 'dryland':
         # add irrigation parameters
         params['irr_frm_paw'] = 1
@@ -67,10 +75,12 @@ def create_days_harvest(mode, matrix_weather):  # todo
         trig = 1501  # kg harvestable dry matter
         targ = 1500  # kg harvestable dry matter
         freq = 10  # days
+        weed_frac = 0
     elif mode == 'dryland':  # todo finalize
         trig = 601  # kg harvestable dry matter
         targ = 600  # kg harvestable dry matter
         freq = 25  # days
+        weed_frac = 0.1  # todo when dryland work finishes
     else:
         raise ValueError('unexpected mode: {}, values are "irrigated" or "dryland"'.format(mode))
 
@@ -81,7 +91,7 @@ def create_days_harvest(mode, matrix_weather):  # todo
                                  'frac_harv': np.ones(len(matrix_weather)),  # set filler values
                                  'harv_trig': np.zeros(len(matrix_weather)) - 1,  # set flag to not harvest
                                  'harv_targ': np.zeros(len(matrix_weather)),  # set filler values
-                                 'weed_dm_frac': np.zeros(len(matrix_weather)),  # set filler values
+                                 'weed_dm_frac': np.zeros(len(matrix_weather)) + weed_frac,  # set filler values
                                  })
 
     # start harvesting at the same point
@@ -90,14 +100,76 @@ def create_days_harvest(mode, matrix_weather):  # todo
     days_harvest.loc[idx, 'harv_trig'] = trig
     days_harvest.loc[idx, 'harv_targ'] = targ
 
+    # set harvest on last day
+    idx = days_harvest.index.max()
+    days_harvest.loc[idx, 'harv_trig'] = trig
+    days_harvest.loc[idx, 'harv_targ'] = targ
+
+    return days_harvest
+
 
 # todo check everything
-def create_matrix_weather(mode, weather_data, restriction_data):
+def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest'):
+    """
+
+    :param mode: one of ['irrigated', 'dryland']
+    :param weather_data: weather data with datetime index named date, no missing days, and has at least the following
+                         keys: ['year', 'doy', 'radn', 'tmin', 'tmax', 'rain', 'pet']
+    :param restriction_data: if irrigated then None, otherwise restriction record with datetime index name date with
+                             no missing days and at least restriction fraction (rest_key)
+    :param rest_key: key to restriction fraction in restriction data
+    :return:
+    """
     # create from the outputs of greg's work and adds in the irrigation parameters if needed
     if mode == 'irrigated':  # todo
-        raise NotImplementedError
-    elif mode == 'dryland':  # todo finalize
-        raise NotImplementedError
+
+        assert (weather_data.index.name ==
+                restriction_data.index.name ==
+                'date'), 'expected input data to have index of date'
+        assert len(weather_data) == len(restriction_data), 'restriction and weather data must be the same length'
+        assert (weather_data.index ==
+                restriction_data.index).all(), 'restriction data and weather data must have identical dates'
+        assert (weather_data.index ==
+                pd.date_range(weather_data.index.min(),
+                              weather_data.index.max())).all(), 'weather and rest data must not be missing days'
+
+        weather_data = pd.merge(weather_data, restriction_data.loc[:, rest_key], left_index=True, right_index=True)
+        matrix_weather = weather_data.loc[:, ['year',
+                                              'doy',
+                                              'radn',
+                                              'tmin',
+                                              'tmax',
+                                              'rain',
+                                              'pet']]
+
+        matrix_weather.loc[:, 'max_irr'] = 5 * (1 - weather_data.loc[:, rest_key])
+        matrix_weather.loc[:, 'irr_trig'] = 0.60
+        matrix_weather.loc[:, 'irr_targ'] = 0.75
+
+        # set trig/targ for summer days
+        idx = np.in1d(weather_data.loc[:, 'month'], [12, 1, 2])
+        matrix_weather.loc[idx, 'irr_trig'] = 0.75
+        matrix_weather.loc[idx, 'irr_targ'] = 0.90
+
+    elif mode == 'dryland':
+        assert restriction_data is None, 'restriction data must be None in a dryland scenario'
+        assert (weather_data.index.name ==
+                'date'), 'expected input data to have index of date'
+        assert (weather_data.index ==
+                pd.date_range(weather_data.index.min(),
+                              weather_data.index.max())).all(), 'weather and rest data must not be missing days'
+
+        matrix_weather = weather_data.loc[:, ['year',
+                                              'doy',
+                                              'radn',
+                                              'tmin',
+                                              'tmax',
+                                              'rain',
+                                              'pet']]
+
+        matrix_weather.loc[:, 'max_irr'] = 0
+        matrix_weather.loc[:, 'irr_trig'] = 0
+        matrix_weather.loc[:, 'irr_targ'] = 0
     else:
         raise ValueError('unexpected mode: {}, values are "irrigated" or "dryland"'.format(mode))
-
+    return matrix_weather
