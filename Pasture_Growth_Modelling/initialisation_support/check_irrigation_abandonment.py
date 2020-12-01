@@ -62,7 +62,7 @@ def _base_restriction_data():
     params['IRRIGF'] = 1
     doy_irr = list(range(1,367))
 
-    matrix_weather = get_lincoln_broadfield()
+    matrix_weather = get_lincoln_broadfield() #todo change to section of our data.
     matrix_weather.drop(columns=['rain_def', 'rain_runoff'], inplace=True)
     matrix_weather.loc[:, 'max_irr'] = 5
     matrix_weather.loc[:, 'irr_trig'] = .75
@@ -124,3 +124,4 @@ if __name__ == '__main__':
                             ttl_str='')
     # todo need to clarify how the irrigation systems work... I think irrigation will continue regardless of the trigger value... currently only adding 10% PAW with irrigation so irrigation is
     #todo for some reason restrictions do not seem to impact severly
+    # perhaps make a series of 'dry months' rather than this random spread...
