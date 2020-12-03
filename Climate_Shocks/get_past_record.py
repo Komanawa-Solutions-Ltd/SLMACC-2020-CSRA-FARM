@@ -9,9 +9,18 @@ import pandas as pd
 import numpy as np
 
 
-def get_vcsn_record():
-    data, use_cords = vcsn_pull_single_site(lat=-43.358,
-                                            lon=172.301,
+def get_vcsn_record(site='eyrewell'):
+
+    if site == 'eyrewell':
+        lat,lon = -43.358, 172.301 #old
+        lat,lon = -43.372, 172.333
+    elif site == 'oxford':
+        lat,lon = -43.296, 172.192
+    else:
+        raise NotImplementedError('site: {} not implemented'.format(site))
+
+    data, use_cords = vcsn_pull_single_site(lat,
+                                            lon,
                                             year_min=1972,
                                             year_max=2019,
                                             use_vars=('evspsblpot', 'rsds', 'tasmax', 'tasmin', 'pr'))

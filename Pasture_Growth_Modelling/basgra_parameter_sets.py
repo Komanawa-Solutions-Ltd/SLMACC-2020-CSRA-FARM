@@ -38,6 +38,13 @@ def get_params_doy_irr(mode):
         params['IRRIGF'] = 1
         doy_irr = list(range(245, 367)) + list(range(1, 122))
 
+        # reseed parameteres # todo set?
+        params['reseed_harv_delay'] = 10
+        params['reseed_LAI'] = -1
+        params['reseed_TILG2'] = -1
+        params['reseed_TILG1'] = -1
+        params['reseed_TILV'] = -1
+
         # modify inital
         # params['BASALI'] = 0.1  # todo
 
@@ -49,16 +56,23 @@ def get_params_doy_irr(mode):
         # add irrigation parameters
         params['irr_frm_paw'] = 1
         params['IRRIGF'] = 0
+        doy_irr = [0]
 
         # modify inital values for dryland
         # set from a mid point value
         params['BASALI'] = 0.1  # todo
 
+        # reseed parameteres
+        params['reseed_harv_delay'] = 10
+        params['reseed_LAI'] = 0.2 #todo just playing, but seems important, consider setting to average at this time of year
+        params['reseed_TILG2'] = -1 #todo just playing, but always 0 at this time of year
+        params['reseed_TILG1'] = 0.01 #todo just playing, but might be important
+        params['reseed_TILV'] = 150 #todo just playing, but seems important
+
         # set from a mid point value not important for percistance, but important to stop inital high yeild!
         params['LOG10CLVI'] = np.log10(4.2)  # todo
         params['LOG10CRESI'] = np.log10(0.8)  # todo
         params['LOG10CRTI'] = np.log10(36)  # todo
-        doy_irr = [0]
     else:
         raise ValueError('unexpected mode: {}, values are "irrigated" or "dryland"'.format(mode))
 
@@ -76,11 +90,15 @@ def create_days_harvest(mode, matrix_weather):  # todo
         targ = 1500  # kg harvestable dry matter
         freq = 10  # days
         weed_frac = 0
+        reseed_trig = -1 #todo?
+        reseed_basal = 1 #todo?
     elif mode == 'dryland':  # todo finalize
         trig = 601  # kg harvestable dry matter
         targ = 600  # kg harvestable dry matter
         freq = 25  # days
-        weed_frac = 0.1  # todo when dryland work finishes
+        weed_frac = 0.0  # todo when dryland work finishes, is this better or just take the fraction anaumoly to eliminate bias
+        reseed_trig = 0.06 #todo
+        reseed_basal = 0.1 #todo
     else:
         raise ValueError('unexpected mode: {}, values are "irrigated" or "dryland"'.format(mode))
 
@@ -92,6 +110,8 @@ def create_days_harvest(mode, matrix_weather):  # todo
                                  'harv_trig': np.zeros(len(matrix_weather)) - 1,  # set flag to not harvest
                                  'harv_targ': np.zeros(len(matrix_weather)),  # set filler values
                                  'weed_dm_frac': np.zeros(len(matrix_weather)) + weed_frac,  # set filler values
+                                 'reseed_trig': np.zeros(len(matrix_weather)) - 1,  # set flag to not reseed
+                                 'reseed_basal': np.zeros(len(matrix_weather)),  # set filler values
                                  })
 
     # start harvesting at the same point
@@ -105,10 +125,14 @@ def create_days_harvest(mode, matrix_weather):  # todo
     days_harvest.loc[idx, 'harv_trig'] = trig
     days_harvest.loc[idx, 'harv_targ'] = targ
 
+    # set reseed dates
+    idx = dates.dayofyear == 152  #todo not confirmed, this is when harvest swiches over
+    days_harvest.loc[idx, 'reseed_trig'] = reseed_trig
+    days_harvest.loc[idx, 'reseed_basal'] = reseed_basal
+
     return days_harvest
 
 
-# todo check everything
 def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest'):
     """
 
