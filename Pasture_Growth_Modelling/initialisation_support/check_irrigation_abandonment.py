@@ -1,6 +1,8 @@
 """
  Author: Matt Hanson
  Created: 23/11/2020 12:46 PM
+
+ This was an intial approach, moved to looking at the full time period
  """
 import pandas as pd
 import numpy as np

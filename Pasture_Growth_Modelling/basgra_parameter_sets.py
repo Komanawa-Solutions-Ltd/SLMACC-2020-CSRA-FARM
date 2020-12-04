@@ -145,7 +145,7 @@ def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest
     :return:
     """
     # create from the outputs of greg's work and adds in the irrigation parameters if needed
-    if mode == 'irrigated':  # todo
+    if mode == 'irrigated':
 
         assert (weather_data.index.name ==
                 restriction_data.index.name ==

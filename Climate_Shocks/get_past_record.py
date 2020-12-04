@@ -8,11 +8,15 @@ import os
 import pandas as pd
 import numpy as np
 
+vcsn_keys = ('year', 'month', 'day', 'doy', 'pet', 'radn', 'tmax', 'tmin', 'rain')
+
+restriction_keys = ('day', 'doy', 'f_rest', 'flow', 'month', 'take', 'year')
+
+sites = ('eyrewell', 'oxford')
 
 def get_vcsn_record(site='eyrewell'):
 
     if site == 'eyrewell':
-        lat,lon = -43.358, 172.301 #old
         lat,lon = -43.372, 172.333
     elif site == 'oxford':
         lat,lon = -43.296, 172.192
@@ -68,4 +72,5 @@ def get_restriction_record(recalc=False):
     return outdata
 
 if __name__ == '__main__':
-    get_restriction_record(True)
+    print(get_restriction_record(False).keys())
+    print(get_vcsn_record().keys())

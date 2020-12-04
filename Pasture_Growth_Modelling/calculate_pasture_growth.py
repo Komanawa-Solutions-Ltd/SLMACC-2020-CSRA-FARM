@@ -59,7 +59,10 @@ def _resample_growth(in_data, ts_start, ts_stop, freq, resamp_fun):
     out.loc[:, 'pg'] *= 1 / out.loc[:, 'ndays']
 
     # resample
-    out = out.loc[:, 'pg'].resample(freq).agg(resamp_fun)
+    if freq =='1D':
+        out = out.loc[:,'pg']
+    else:
+        out = out.loc[:, 'pg'].resample(freq).agg(resamp_fun)
 
     return out
 
