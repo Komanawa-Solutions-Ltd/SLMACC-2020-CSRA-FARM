@@ -6,6 +6,7 @@
 from Climate_Shocks.vcsn_pull import vcsn_pull_single_site
 from Climate_Shocks.note_worthy_events.simple_smd_soilt import calc_sma_smd
 from Climate_Shocks.get_past_record import get_restriction_record, get_vcsn_record
+from Pasture_Growth_Modelling.initialisation_support.pasture_growth_deficit import calc_past_pasture_growth_anomaly
 import ksl_env
 import numpy as np
 import pandas as pd
@@ -13,7 +14,7 @@ import os
 import matplotlib.pyplot as plt
 import itertools
 
-backed_dir = ksl_env.shared_drives("SLMACC_2020\event_definition")
+backed_dir = ksl_env.shared_drives("SLMACC_2020\event_definition/v2")
 unbacked_dir = ksl_env.mh_unbacked("SLMACC_2020\event_definition")
 
 if not os.path.exists(backed_dir):
@@ -22,14 +23,42 @@ if not os.path.exists(backed_dir):
 if not os.path.exists(unbacked_dir):
     os.makedirs(unbacked_dir)
 
+irrigated_pga = calc_past_pasture_growth_anomaly('irrigated').reset_index()
+irrigated_pga.loc[:, 'year'] = irrigated_pga.date.dt.year
+irrigated_pga = irrigated_pga.set_index(['month', 'year'])
+
 
 def prob(x):
     out = np.nansum(x) / len(x)
     return np.round(out, 2)
 
 
+def add_pga(grouped_data, sim_keys, outdata):
+    grouped_data = grouped_data.set_index(['month', 'year'])
+    years = {}
+    for k in sim_keys:
+        idx = grouped_data.loc[grouped_data.loc[:, k], k]
+        assert idx.all()
+        idx = idx.index
+        years[k] = idx.values
+        temp = irrigated_pga.loc[idx].reset_index()
+        temp2 = temp.loc[:, ['month', 'pga_norm']].groupby('month').describe().loc[:,'pga_norm']
+        for k2 in temp2:
+            outdata.loc[:, (k, 'pga_{}'.format(k2))] = temp2.loc[:, k2]
+
+    mx_years = 48*12 + 1
+    out_years = pd.DataFrame(index=range(mx_years), columns=sim_keys)
+    for k in sim_keys:
+        missing_len = mx_years - len(years[k])
+        out_years.loc[:, k] = np.concatenate((years[k], np.zeros(missing_len) * np.nan))
+
+    outdata = outdata.sort_index(axis=1, level=0, sort_remaining=False)
+
+    return outdata, out_years
+
+
 def calc_dry_recurance():
-    data = get_vcsn_record()
+    data = get_vcsn_record().reset_index()
 
     temp = calc_sma_smd(data['rain'], data['pet'], data.date, 150, 1)
 
@@ -60,11 +89,20 @@ def calc_dry_recurance():
             grouped_data.loc[:, ok] = grouped_data.loc[:, k] >= nd
 
     out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
+    drop_keys = []
+    for k in out_keys2:
+        temp = (out.loc[:, k].loc[:, 'sum'] == 48).all() or (out.loc[:, k].loc[:, 'sum'] == 0).all()
+        if temp:
+            drop_keys.append(k)
+
+    out = out.drop(columns=drop_keys)
+    out, out_years = add_pga(grouped_data, set(out_keys2) - set(drop_keys), out)
     out.to_csv(os.path.join(backed_dir, 'dry_prob.csv'))
+    out_years.to_csv(os.path.join(backed_dir, 'dry_years.csv'))
 
 
 def calc_wet_recurance():
-    data = get_vcsn_record()
+    data = get_vcsn_record().reset_index()
     temp = calc_sma_smd(data['rain'], data['pet'], data.date, 150, 1)
 
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
@@ -124,8 +162,9 @@ def calc_wet_recurance():
             drop_keys.append(k)
 
     out = out.drop(columns=drop_keys)
-
+    out, out_years = add_pga(grouped_data, set(out_keys2) - set(drop_keys), out)
     out.to_csv(os.path.join(backed_dir, 'smd_wet_prob.csv'))
+    out_years.to_csv(os.path.join(backed_dir, 'smd_wet_years.csv'))
 
 
 def old_calc_restrict_recurance():
@@ -227,10 +266,21 @@ def calc_restrict_recurance():
 
     for rt, l, nd in itertools.product(tnames, con_days, ndays):
         prob_data.loc[:, '{}d_{}_{}tot'.format(l, rt, nd)] = ((all_data.loc[:, (rt, 'max_per_len')] >= l) &
-                                                                 (all_data.loc[:, (rt, 'total_rest_days')] >= nd))
+                                                              (all_data.loc[:, (rt, 'total_rest_days')] >= nd))
 
     out = prob_data.reset_index().groupby('month').agg(['sum', prob])
+    out_keys2 = set(out.columns.levels[0]) - {'year'}
+    drop_keys = []
+    for k in out_keys2:
+        temp = (out.loc[:, k].loc[:, 'sum'] == 48).all() or (
+                out.loc[:, k].loc[:, 'sum'] == 0).all()
+        if temp:
+            drop_keys.append(k)
+
+    out = out.drop(columns=drop_keys)
+    out, out_years = add_pga(prob_data.reset_index(), set(out_keys2) - set(drop_keys), out)
     out.to_csv(os.path.join(backed_dir, 'len_rest_prob.csv'))
+    out_years.to_csv(os.path.join(backed_dir, 'len_rest_years.csv'))
 
 
 def calc_cold_recurance():
@@ -277,8 +327,9 @@ def calc_cold_recurance():
             drop_keys.append(k)
 
     out = out.drop(columns=drop_keys)
-
-    out.round(2).to_csv(os.path.join(backed_dir, 'rolling_cold_prob.csv'))
+    out, out_years = add_pga(grouped_data, set(out_keys2) - set(drop_keys), out)
+    out.to_csv(os.path.join(backed_dir, 'rolling_cold_prob.csv'))
+    out_years.to_csv(os.path.join(backed_dir, 'rolling_cold_years.csv'))
 
 
 def calc_hot_recurance():
@@ -314,7 +365,17 @@ def calc_hot_recurance():
             grouped_data.loc[:, ok] = grouped_data.loc[:, k] >= nd
 
     out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
+    drop_keys = []
+    for k in out_keys2:
+        temp = (out.loc[:, k].loc[:, 'sum'] == 48).all() or (
+                out.loc[:, k].loc[:, 'sum'] == 0).all()
+        if temp:
+            drop_keys.append(k)
+
+    out = out.drop(columns=drop_keys)
+    out, out_years = add_pga(grouped_data, set(out_keys2) - set(drop_keys), out)
     out.to_csv(os.path.join(backed_dir, 'hot_prob.csv'))
+    out_years.to_csv(os.path.join(backed_dir, 'hot_years.csv'))
 
 
 def plot_vcsn_smd():
@@ -372,10 +433,9 @@ def plot_restriction_record():
 
 
 if __name__ == '__main__':
-    plot_restriction_record()
-    calc_wet_recurance()
     calc_restrict_recurance()
+    calc_dry_recurance()
+    calc_wet_recurance()
     calc_cold_recurance()
 
     calc_hot_recurance()
-    calc_dry_recurance()

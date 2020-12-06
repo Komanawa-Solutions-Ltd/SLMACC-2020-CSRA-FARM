@@ -14,12 +14,12 @@ restriction_keys = ('day', 'doy', 'f_rest', 'flow', 'month', 'take', 'year')
 
 sites = ('eyrewell', 'oxford')
 
-def get_vcsn_record(site='eyrewell'):
 
+def get_vcsn_record(site='eyrewell'):
     if site == 'eyrewell':
-        lat,lon = -43.372, 172.333
+        lat, lon = -43.372, 172.333
     elif site == 'oxford':
-        lat,lon = -43.296, 172.192
+        lat, lon = -43.296, 172.192
     else:
         raise NotImplementedError('site: {} not implemented'.format(site))
 
@@ -38,9 +38,19 @@ def get_vcsn_record(site='eyrewell'):
 def get_restriction_record(recalc=False):
     data_path = ksl_env.shared_drives(r"SLMACC_2020\WIL data\restriction_record.csv")
     if not recalc and os.path.exists(data_path):
-        data = pd.read_csv(data_path)
-        data.loc[:,'date'] = pd.to_datetime(data.loc[:,'date'])
+        int_keys = {
+            'day':int,
+            'doy':int,
+            'month':int,
+            'year':int,
+            'f_rest':float,
+            'flow':float,
+            'take':float,
+        }
+        data = pd.read_csv(data_path, dtype=int_keys)
+        data.loc[:, 'date'] = pd.to_datetime(data.loc[:, 'date'])
         data.set_index('date', inplace=True)
+
         return data
 
     raw_data_path = ksl_env.shared_drives(r"SLMACC_2020\WIL data\OSHB_WaimakRiverData_withRestrictionInfo.xlsx")
@@ -57,12 +67,12 @@ def get_restriction_record(recalc=False):
     data.loc[data.f_rest < 0.001, 'f_rest'] = 0
 
     data = data.set_index('date')
-    outdata = pd.DataFrame(index=pd.date_range('1972-01-01', '2019-12-31',name='date'), columns=['flow',
-                                                                                                 'take',
-                                                                                                 'day',
-                                                                                                 'month',
-                                                                                                 'year',
-                                                                                                 'f_rest'])
+    outdata = pd.DataFrame(index=pd.date_range('1972-01-01', '2019-12-31', name='date'), columns=['flow',
+                                                                                                  'take',
+                                                                                                  'day',
+                                                                                                  'month',
+                                                                                                  'year',
+                                                                                                  'f_rest'])
     outdata.loc[:] = np.nan
     outdata = outdata.combine_first(data)
 
@@ -71,6 +81,7 @@ def get_restriction_record(recalc=False):
     outdata.to_csv(data_path)
     return outdata
 
+
 if __name__ == '__main__':
-    print(get_restriction_record(False).keys())
+    print(get_restriction_record(False).head())
     print(get_vcsn_record().keys())
