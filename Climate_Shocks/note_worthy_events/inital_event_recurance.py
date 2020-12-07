@@ -213,7 +213,7 @@ def old_calc_restrict_recurance():
             drop_keys.append(k)
 
     out = out.drop(columns=drop_keys)
-    out.to_csv(os.path.join(backed_dir, 'rest_prob.csv'))
+    out.to_csv(os.path.join(backed_dir, 'rest_prob.csv')) #todo pull this back up/in
 
 
 def calc_restrict_recurance():
