@@ -64,10 +64,11 @@ def get_params_doy_irr(mode):
 
         # reseed parameteres
         params['reseed_harv_delay'] = 10
-        params['reseed_LAI'] = 0.2 #todo just playing, but seems important, consider setting to average at this time of year
-        params['reseed_TILG2'] = -1 #todo just playing, but always 0 at this time of year
-        params['reseed_TILG1'] = 0.01 #todo just playing, but might be important
-        params['reseed_TILV'] = 150 #todo just playing, but seems important
+        params[
+            'reseed_LAI'] = 0.2  # todo just playing, but seems important, consider setting to average at this time of year
+        params['reseed_TILG2'] = -1  # todo just playing, but always 0 at this time of year
+        params['reseed_TILG1'] = 0.01  # todo just playing, but might be important
+        params['reseed_TILV'] = 150  # todo just playing, but seems important
 
         # set from a mid point value not important for percistance, but important to stop inital high yeild!
         params['LOG10CLVI'] = np.log10(4.2)  # todo
@@ -86,21 +87,29 @@ def create_days_harvest(mode, matrix_weather):  # todo
     :return:
     """
     if mode == 'irrigated':
-        trig = 1501  # kg harvestable dry matter
-        targ = 1500  # kg harvestable dry matter
         freq = 10  # days
+        trig = {m: 1501 for m in range(1, 13)}  # kg harvestable dry matter by month
+        targ = {m: 1500 for m in range(1, 13)}  # kg harvestable dry matter by month
         weed_frac = 0
-        reseed_trig = -1 #todo?
-        reseed_basal = 1 #todo?
+        reseed_trig = -1  # todo?
+        reseed_basal = 1  # todo?
     elif mode == 'dryland':  # todo finalize
-        trig = 601  # kg harvestable dry matter
-        targ = 600  # kg harvestable dry matter
         freq = 25  # days
-        weed_frac = 0.0  # todo when dryland work finishes, is this better or just take the fraction anaumoly to eliminate bias
-        reseed_trig = 0.06 #todo
-        reseed_basal = 0.1 #todo
+        trig = {m: 601 for m in range(4, 12)}  # kg harvestable dry matter
+        targ = {m: 600 for m in range(4, 12)}  # kg harvestable dry matter
+
+        # set trig/targ higher for summer months
+        trig.update({m: 801 for m in [12, 1, 2, 3]})  # kg harvestable dry matter
+        targ.update({m: 800 for m in [12, 1, 2, 3]})  # kg harvestable dry matter
+
+        weed_frac = 0.05  # todo when dryland work finishes, is this better or just take the fraction anaumoly to eliminate bias
+        reseed_trig = 0.06  # todo
+        reseed_basal = 0.1  # todo
     else:
         raise ValueError('unexpected mode: {}, values are "irrigated" or "dryland"'.format(mode))
+
+    assert (np.in1d(list(range(1,13)),list(trig.keys())).all() and
+            np.in1d(list(range(1,13)),list(targ.keys())).all()), 'trig and targ must have all months defined'
 
     strs = ['{}-{:03d}'.format(e, f) for e, f in matrix_weather[['year', 'doy']].itertuples(False, None)]
     dates = pd.to_datetime(strs, format='%Y-%j')
@@ -116,19 +125,20 @@ def create_days_harvest(mode, matrix_weather):  # todo
 
     # start harvesting at the same point
     harv_days = pd.date_range(start=dates.min() + pd.DateOffset(days=5), end=dates.max(), freq='{}D'.format(freq))
-    idx = np.in1d(dates, harv_days)
-    days_harvest.loc[idx, 'harv_trig'] = trig
-    days_harvest.loc[idx, 'harv_targ'] = targ
+    set_trig = [trig[m] for m in harv_days.month]
+    set_targ = [targ[m] for m in harv_days.month]
+    days_harvest.loc[harv_days, 'harv_trig'] = set_trig
+    days_harvest.loc[harv_days, 'harv_targ'] = set_targ
 
     # set harvest on last day
-    idx = days_harvest.index.max()
-    days_harvest.loc[idx, 'harv_trig'] = trig
-    days_harvest.loc[idx, 'harv_targ'] = targ
+    harv_days = days_harvest.index.max()
+    days_harvest.loc[harv_days, 'harv_trig'] = trig[harv_days.month]
+    days_harvest.loc[harv_days, 'harv_targ'] = targ[harv_days.month]
 
     # set reseed dates
-    idx = dates.dayofyear == 152  #todo not confirmed, this is when harvest swiches over
-    days_harvest.loc[idx, 'reseed_trig'] = reseed_trig
-    days_harvest.loc[idx, 'reseed_basal'] = reseed_basal
+    harv_days = dates.dayofyear == 152  # set to end of june as this is the end of the yield period.
+    days_harvest.loc[harv_days, 'reseed_trig'] = reseed_trig
+    days_harvest.loc[harv_days, 'reseed_basal'] = reseed_basal
 
     return days_harvest
 

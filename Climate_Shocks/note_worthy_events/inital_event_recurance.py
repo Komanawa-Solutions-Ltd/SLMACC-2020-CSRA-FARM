@@ -170,8 +170,8 @@ def calc_wet_recurance():
 def old_calc_restrict_recurance():
     data = get_restriction_record()
 
-    thresholds = [0.001, 0.5, 0.75, 1]
-    tnames = ['any', 'half', '3/4', 'full']
+    thresholds = [0.5, 0.75, 1]
+    tnames = ['half', '3/4', 'full']
     ndays = [1, 5, 7, 10, 14]
     out_keys = []
     for thresh, tname in zip(thresholds, tnames):
@@ -213,7 +213,11 @@ def old_calc_restrict_recurance():
             drop_keys.append(k)
 
     out = out.drop(columns=drop_keys)
-    out.to_csv(os.path.join(backed_dir, 'rest_prob.csv')) #todo pull this back up/in
+    out, out_years = add_pga(grouped_data, set(out_keys2) - set(drop_keys), out)
+    out.to_csv(os.path.join(backed_dir, 'rest_prob.csv'))
+    out_years.to_csv(os.path.join(backed_dir, 'rest_years.csv'))
+
+    out.to_csv(os.path.join(backed_dir, 'rest_prob.csv'))
 
 
 def calc_restrict_recurance():

@@ -15,20 +15,21 @@ def calc_pasture_growth(basgra_out, basgra_harvest, mode, freq, resamp_fun):
     :param basgra_out: the outputs from BASGRA (with datetime date index, standard with basgra output)
     :param basgra_harvest: input harvest data with date datetime index
     :param mode: allows multiple versions
-    :param freq: the frequency to return data
+    :param freq: the frequency to return data, month does a groupby on month
     :param resamp_fun: function to resample on
     :return: time series of pasture growth
     """
     # todo test to esure that frequency is greather than or equal daily
 
-    mode_list = (
-        'from_yeild',
+    mode_dict = {
+        'from_yeild': _calc_pasture_from_yeild_regular,
+        'from_dmh': _calc_pasture_from_dhm,
 
-    )
-    if mode == 'from_yeild_regular':
-        out = _calc_pasture_from_yeild_regular(basgra_out, basgra_harvest, freq, resamp_fun)
+    }
+    if mode in mode_dict.keys():
+        out = mode_dict[mode](basgra_out, basgra_harvest, freq, resamp_fun)
     else:
-        raise ValueError('unexpected mode: {},\nexpected one of:{}'.format(mode, mode_list))
+        raise ValueError('unexpected mode: {},\nexpected one of:{}'.format(mode, mode_dict.keys()))
 
     return out
 
@@ -58,9 +59,23 @@ def _resample_growth(in_data, ts_start, ts_stop, freq, resamp_fun):
     out = out.replace({'ndays': replace_dict})
     out.loc[:, 'pg'] *= 1 / out.loc[:, 'ndays']
 
+    # make month and year
+    out.loc[:, 'month'] = out.index.month
+    out.loc[:, 'year'] = out.index.year
     # resample
-    if freq =='1D':
-        out = out.loc[:,'pg']
+    if freq == '1D':
+        out = out.loc[:, 'pg']
+    elif freq == 'month':
+        out = out.groupby(['year', 'month']).agg({'pg': resamp_fun}).reset_index()
+        strs = ['{}-{:02d}-01'.format(y, m) for y, m in out.loc[:, ['year', 'month']].itertuples(False, None)]
+        out.loc[:, 'date'] = pd.to_datetime(strs)
+        out = out.set_index('date').loc[:, 'pg']
+    elif freq == 'year':
+        out = out.groupby(['year']).agg({'pg': resamp_fun}).reset_index()
+        strs = ['{}-01-01'.format(y) for y in out.loc[:, 'year'].itertuples(False, None)]
+        out.loc[:, 'date'] = pd.to_datetime(strs)
+        out = out.set_index('date').loc[:, 'pg']
+
     else:
         out = out.loc[:, 'pg'].resample(freq).agg(resamp_fun)
 
@@ -79,10 +94,25 @@ def _calc_pasture_from_yeild_regular(basgra_out, basgra_harvest, freq, resamp_fu
                            resamp_fun=resamp_fun)
     return out
 
+def _calc_pasture_from_dhm(basgra_out, basgra_harvest, freq, resamp_fun):
+    # basgra harvest kept to keep all of the inputs for these methods identical
+    pg = basgra_out.copy(deep=True)
+    pg.loc[:, 'dmh_dif'] = pg.loc[:, 'DMH'].diff(1)
+
+    # add back in the removed data when it is greater than 0
+    rmed = (pg.loc[:,'DM_RYE_RM'] + pg.loc[:,'DM_WEED_RM']).values[0:-1]
+    pg.loc[:,'dmh_dif'] += np.concatenate([[0],rmed])
+
+    out = _resample_growth(pg.loc[:, 'dmh_dif'],
+                           ts_start=pg.index.min(),
+                           ts_stop=pg.index.max(), freq=freq,
+                           resamp_fun=resamp_fun)
+    return out
+
 
 if __name__ == '__main__':
     from Pasture_Growth_Modelling.initialisation_support.inital_long_term_runs import run_past_basgra_irrigated
 
     out, (params, doy_irr, matrix_weather, days_harvest) = run_past_basgra_irrigated(True)
-    test = calc_pasture_growth(out, days_harvest, mode='from_yeild_regular', freq='10D', resamp_fun='mean')
+    test = calc_pasture_growth(out, days_harvest, mode='from_yeild', freq='10D', resamp_fun='mean')
     pass
