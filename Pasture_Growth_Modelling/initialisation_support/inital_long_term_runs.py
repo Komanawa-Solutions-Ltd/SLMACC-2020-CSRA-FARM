@@ -68,8 +68,7 @@ def run_past_basgra_dryland(return_inputs=False, site='eyrewell', reseed=True):
 
 
 if __name__ == '__main__':
-    #todo review with water strategies, but this is about what I'd expect.
-    #todo review
+    #todo review and look at a bit more
     data = {
         'irrigated_eyrewell': run_past_basgra_irrigated(),
         'irrigated_oxford': run_past_basgra_irrigated(site='oxford'),
