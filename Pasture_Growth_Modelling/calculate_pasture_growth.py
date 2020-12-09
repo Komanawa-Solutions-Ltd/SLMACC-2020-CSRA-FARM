@@ -7,7 +7,21 @@ import pandas as pd
 import numpy as np
 
 
-# todo calculate pasture growth from the outputs of BASGRA
+
+def calc_pasture_growth_anomaly(basgra_out, an_per='month', fun='mean'):
+    if an_per=='month':
+        basgra_out.loc[:, 'month'] = pd.Series(basgra_out.index, index=basgra_out.index).dt.month
+        basgra_out.loc[:, 'pg_normal'] = basgra_out.loc[:, 'month']
+        mapper = basgra_out.groupby('month').agg({'pg': fun}).loc[:, 'pg'].to_dict()
+        basgra_out = basgra_out.replace({'pg_normal': mapper})
+        basgra_out.loc[:, 'pga'] = basgra_out.loc[:, 'pg'] - basgra_out.loc[:, 'pg_normal']
+        basgra_out.loc[:, 'pga_norm'] = basgra_out.loc[:, 'pga'] / basgra_out.loc[:, 'pg_normal']
+    else:
+        raise NotImplementedError
+
+    return basgra_out
+
+
 
 def calc_pasture_growth(basgra_out, basgra_harvest, mode, freq, resamp_fun):
     """
@@ -22,7 +36,7 @@ def calc_pasture_growth(basgra_out, basgra_harvest, mode, freq, resamp_fun):
     # todo test to esure that frequency is greather than or equal daily
 
     mode_dict = {
-        'from_yeild': _calc_pasture_from_yeild_regular,
+        'from_yield': _calc_pasture_from_yeild_regular,
         'from_dmh': _calc_pasture_from_dhm,
 
     }

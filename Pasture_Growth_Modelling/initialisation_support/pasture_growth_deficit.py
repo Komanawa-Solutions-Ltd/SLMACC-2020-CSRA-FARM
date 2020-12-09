@@ -8,11 +8,11 @@ from Pasture_Growth_Modelling.initialisation_support.inital_long_term_runs impor
 import pandas as pd
 
 
-def calc_past_pasture_growth_anomaly(mode='irrigated', pg_mode='from_yeild', freq='1D', fun='mean'):
+def calc_past_pasture_growth_anomaly(mode='irrigated', pg_mode='from_yield', freq='1D', fun='mean', site='oxford'):
     if mode == 'irrigated':
-        out, (params, doy_irr, matrix_weather, days_harvest) = run_past_basgra_irrigated(True)
+        out, (params, doy_irr, matrix_weather, days_harvest) = run_past_basgra_irrigated(True, site=site)
     elif mode == 'dryland':
-        out, (params, doy_irr, matrix_weather, days_harvest) = run_past_basgra_dryland(True)
+        out, (params, doy_irr, matrix_weather, days_harvest) = run_past_basgra_dryland(True, site=site)
     else:
         raise ValueError('unexpected mode')
 

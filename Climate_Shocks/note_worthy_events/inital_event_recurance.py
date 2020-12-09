@@ -26,6 +26,9 @@ if not os.path.exists(unbacked_dir):
 irrigated_pga = calc_past_pasture_growth_anomaly('irrigated').reset_index()
 irrigated_pga.loc[:, 'year'] = irrigated_pga.date.dt.year
 irrigated_pga = irrigated_pga.set_index(['month', 'year'])
+dryland_pga = calc_past_pasture_growth_anomaly('dryland').reset_index()
+dryland_pga.loc[:, 'year'] = dryland_pga.date.dt.year
+dryland_pga = dryland_pga.set_index(['month', 'year'])
 
 
 def prob(x):
@@ -41,10 +44,13 @@ def add_pga(grouped_data, sim_keys, outdata):
         assert idx.all()
         idx = idx.index
         years[k] = idx.values
-        temp = irrigated_pga.loc[idx].reset_index()
-        temp2 = temp.loc[:, ['month', 'pga_norm']].groupby('month').describe().loc[:,'pga_norm']
-        for k2 in temp2:
-            outdata.loc[:, (k, 'pga_{}'.format(k2))] = temp2.loc[:, k2]
+        temp_irr = irrigated_pga.loc[idx].reset_index()
+        temp_irr2 = temp_irr.loc[:, ['month', 'pga_norm']].groupby('month').describe().loc[:,'pga_norm']
+        temp_dry = dryland_pga.loc[idx].reset_index()
+        temp_dry2 = temp_dry.loc[:, ['month', 'pga_norm']].groupby('month').describe().loc[:,'pga_norm']
+        for k2 in temp_irr2:
+            outdata.loc[:, (k, 'pga_irr_{}'.format(k2))] = temp_irr2.loc[:, k2]
+            outdata.loc[:, (k, 'pga_dry_{}'.format(k2))] = temp_dry2.loc[:, k2]
 
     mx_years = 48*12 + 1
     out_years = pd.DataFrame(index=range(mx_years), columns=sim_keys)
@@ -437,7 +443,9 @@ def plot_restriction_record():
 
 
 if __name__ == '__main__':
+    #todo ensure that dryland was added appropriately, this includes making sure the long term runs are as we expect!
     calc_restrict_recurance()
+    old_calc_restrict_recurance()
     calc_dry_recurance()
     calc_wet_recurance()
     calc_cold_recurance()

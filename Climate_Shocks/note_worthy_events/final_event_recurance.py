@@ -12,7 +12,7 @@ hot = '07d_d_tmax_25'  # todo confirm
 cold = '10d_d_tmean_07'  # todo confirm
 dry = '10d_d_smd000_sma-20'  # todo confirm
 wet = '10d_d_r0_smd-5'  # todo confirm
-rest = '7d_half_7tot'  # todo confirm, update
+rest = '7d_half_7tot'  # todo confirm, update as we need to move back to number of days only
 
 events = [
     ('hot', hot),
