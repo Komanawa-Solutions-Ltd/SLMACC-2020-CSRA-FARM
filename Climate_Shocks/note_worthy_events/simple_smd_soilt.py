@@ -7,7 +7,7 @@ import pandas as pd
 
 
 def calc_soil_temp():
-    raise NotImplementedError  # todo hopefully pull from VCSN
+    raise NotImplementedError  # hopefully pull from VCSN, could pull from VCSN but did not need to
 
 
 # I also need to run soil moisture anomaly (https://niwa.co.nz/climate/nz-drought-monitor/droughtindicatormaps/soil-moisture-deficit-smd#:~:text=SMD%20is%20calculated%20based%20on,can%20use)%20of%20150%20mm. )

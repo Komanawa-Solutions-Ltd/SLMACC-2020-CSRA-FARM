@@ -8,6 +8,8 @@ import os
 from Climate_Shocks.note_worthy_events.inital_event_recurance import backed_dir
 from Pasture_Growth_Modelling.initialisation_support.pasture_growth_deficit import calc_past_pasture_growth_anomaly
 
+#todo PGA_norm?
+
 hot = '07d_d_tmax_25'  # todo confirm
 cold = '10d_d_tmean_07'  # todo confirm
 dry = '10d_d_smd000_sma-20'  # todo confirm

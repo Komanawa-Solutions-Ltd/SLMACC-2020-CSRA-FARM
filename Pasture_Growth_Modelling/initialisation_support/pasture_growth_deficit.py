@@ -20,7 +20,7 @@ def calc_past_pasture_growth_anomaly(mode='irrigated', pg_mode='from_yield', fre
 
     pg.loc[:, 'month'] = pd.Series(pg.index, index=pg.index).dt.month
     pg.loc[:, 'pg_normal'] = pg.loc[:, 'month']
-    mapper = pg.groupby('month').mean().loc[:, 'pg'].to_dict() #todo make this the same function
+    mapper = pg.groupby('month').agg({'pg':fun}).loc[:, 'pg'].to_dict()
     pg = pg.replace({'pg_normal': mapper})
     pg.loc[:, 'pga'] = pg.loc[:, 'pg'] - pg.loc[:, 'pg_normal']
     pg.loc[:, 'pga_norm'] = pg.loc[:, 'pga'] / pg.loc[:, 'pg_normal']

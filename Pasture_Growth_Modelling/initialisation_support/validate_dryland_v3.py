@@ -30,7 +30,7 @@ def run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_
     rest = None
     params, doy_irr = get_params_doy_irr(mode)
     matrix_weather = create_matrix_weather(mode, weather, rest)
-    days_harvest = create_days_harvest(mode, matrix_weather)
+    days_harvest = create_days_harvest(mode, matrix_weather, site)
     if not reseed:
         days_harvest.loc[:, 'reseed_trig'] = -1
     else:
@@ -49,9 +49,6 @@ def run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_
     return out
 
 
-# todo look at ibasal eyrewell v oxford
-# todo look at yeilds
-# todo look at percistance.
 
 if __name__ == '__main__':
     fun = 'mean'
@@ -68,12 +65,16 @@ if __name__ == '__main__':
                    10: 0.3,
                    11: 0.8,
                    12: 0.65,
-                   }  # todo this looks ok ish, consider making something a bit better in future.
+                   }  # this looks ok ish, consider making something a bit better in future, accepted
 
     data = {
-        'weed: special': run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_yield',
+        'weed: special1': run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_yield',
                                                  fun='mean', reseed_trig=0.06, reseed_basal=0.1, basali=0.15,
                                                  weed_dm_frac=weed_dict_1),
+
+        'weed: special2': run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_yield',
+                                                 fun='mean', reseed_trig=0.06, reseed_basal=0.1, basali=0.15,
+                                                 weed_dm_frac=weed_dict_2),
 
     }
 
@@ -85,4 +86,3 @@ if __name__ == '__main__':
                           main_kwargs={'alpha': 0.2},
                           show=False)
     plot_multiple_results(data=data2, out_vars=['pg'], show=True)
-    # todo I am reasonably happy with this.

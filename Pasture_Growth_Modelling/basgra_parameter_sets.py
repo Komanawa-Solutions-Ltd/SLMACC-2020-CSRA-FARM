@@ -13,6 +13,7 @@ ksl_env.add_basgra_nz_path()
 from supporting_functions.woodward_2020_params import get_woodward_mean_full_params
 
 
+# todo check initals for SWG data
 def get_params_doy_irr(mode):
     """
     get the parameter sets for all of the basgra modelling
@@ -38,20 +39,25 @@ def get_params_doy_irr(mode):
         params['IRRIGF'] = 1
         doy_irr = list(range(245, 367)) + list(range(1, 122))
 
-        # reseed parameteres # todo set?
-        params['reseed_harv_delay'] = 10
-        params['reseed_LAI'] = -1
-        params['reseed_TILG2'] = -1
-        params['reseed_TILG1'] = -1
-        params['reseed_TILV'] = -1
+        # reseed parameteres, set as mean of long term runs in june!
+        params['reseed_harv_delay'] = 15
+        params['reseed_LAI'] = 1.840256e+00
+        params['reseed_TILG2'] = 2.194855e+00
+        params['reseed_TILG1'] = 4.574009e+00
+        params['reseed_TILV'] = 6.949611e+03
+        params['reseed_CLV'] = 5.226492e+01
+        params['reseed_CRES'] = 9.727732e+00
+        params['reseed_CST'] = 1.677470e-01
+        params['reseed_CSTUB'] = 0
 
         # modify inital
-        # params['BASALI'] = 0.1  # todo
+        params['BASALI'] = 0.75
 
         # set from a mid point value not important for percistance, but important to stop inital high yeild!
-        # params['LOG10CLVI'] = np.log10(4.2)  # todo
-        # params['LOG10CRESI'] = np.log10(0.8)  # todo
-        # params['LOG10CRTI'] = np.log10(36)  # todo
+        # todo set to start of simulation month average
+        params['LOG10CLVI'] = np.log10(60.458220669768934)
+        params['LOG10CRESI'] = np.log10(9.401460874116669)
+        params['LOG10CRTI'] = np.log10(129.31409472684638)
     elif mode == 'dryland':
         # add irrigation parameters
         params['irr_frm_paw'] = 1
@@ -60,27 +66,31 @@ def get_params_doy_irr(mode):
 
         # modify inital values for dryland
         # set from a mid point value
-        params['BASALI'] = 0.15  # todo
+        params['BASALI'] = 0.15
 
-        # reseed parameteres
-        params['reseed_harv_delay'] = 10
-        params[
-            'reseed_LAI'] = 0.2  # todo just playing, but seems important, consider setting to average at this time of year
-        params['reseed_TILG2'] = -1  # todo just playing, but always 0 at this time of year
-        params['reseed_TILG1'] = 0.01  # todo just playing, but might be important
-        params['reseed_TILV'] = 150  # todo just playing, but seems important
+        # reseed parameteres, set as mean of long term runs in june
+        params['reseed_harv_delay'] = 30
+        params['reseed_LAI'] = 1.436825e-01
+        params['reseed_TILG2'] = 0
+        params['reseed_TILG1'] = 8.329094e-01
+        params['reseed_TILV'] = 2.187792e+03
+        params['reseed_CLV'] = 3.744545e+00
+        params['reseed_CRES'] = 7.042976e-01
+        params['reseed_CST'] = 0
+        params['reseed_CSTUB'] = 4.305489e-04
 
-        # set from a mid point value not important for percistance, but important to stop inital high yeild!
-        params['LOG10CLVI'] = np.log10(4.2)  # todo
-        params['LOG10CRESI'] = np.log10(0.8)  # todo
-        params['LOG10CRTI'] = np.log10(36)  # todo
+        # set from a mid point value not important for persistence, but important to stop initial high yield!,
+        # todo set to start of simulation month average
+        params['LOG10CLVI'] = np.log10(6.05755204792593)
+        params['LOG10CRESI'] = np.log10(0.5756279931949703)
+        params['LOG10CRTI'] = np.log10(13.195940769384178)
     else:
         raise ValueError('unexpected mode: {}, values are "irrigated" or "dryland"'.format(mode))
 
     return params, doy_irr
 
-# todo update carbon values for reseed module
-def create_days_harvest(mode, matrix_weather):
+
+def create_days_harvest(mode, matrix_weather, site):
     """
     get the days harvest data
     :param mode: 'dryland' or 'irrigated'
@@ -91,9 +101,17 @@ def create_days_harvest(mode, matrix_weather):
         trig = {m: 1501 for m in range(1, 13)}  # kg harvestable dry matter by month
         targ = {m: 1500 for m in range(1, 13)}  # kg harvestable dry matter by month
         weed_dm_frac = 0
-        reseed_trig = 0.65  # todo discuss site_specific?
-        reseed_basal = 0.70  # todo discuss site_specific?
-    elif mode == 'dryland':  # todo finalize
+        if site == 'eyrewell':
+            reseed_trig = 0.65
+            reseed_basal = 0.70
+
+        elif site == 'oxford':
+            reseed_trig = 0.63
+            reseed_basal = 0.68
+
+        else:
+            raise NotImplementedError()
+    elif mode == 'dryland':
         freq = 25  # days
         trig = {m: 601 for m in range(4, 12)}  # kg harvestable dry matter
         targ = {m: 600 for m in range(4, 12)}  # kg harvestable dry matter
@@ -102,28 +120,28 @@ def create_days_harvest(mode, matrix_weather):
         trig.update({m: 801 for m in [12, 1, 2, 3]})  # kg harvestable dry matter
         targ.update({m: 800 for m in [12, 1, 2, 3]})  # kg harvestable dry matter
 
-        reseed_trig = 0.06  # todo
-        reseed_basal = 0.1  # todo
+        reseed_trig = 0.06
+        reseed_basal = 0.1
 
         weed_dm_frac = {1: 0.45,
-                       2: 0.25,
-                       3: 0.25,
-                       4: 0.3,
-                       5: 0.4,
-                       6: 0.6,
-                       7: 0.5,
-                       8: 0.4,
-                       9: 0.3,
-                       10: 0.3,
-                       11: 0.8,
-                       12: 0.65,
-                       }  # todo this looks ok ish, consider making something a bit better in future.
+                        2: 0.25,
+                        3: 0.25,
+                        4: 0.3,
+                        5: 0.4,
+                        6: 0.6,
+                        7: 0.5,
+                        8: 0.4,
+                        9: 0.3,
+                        10: 0.3,
+                        11: 0.8,
+                        12: 0.65,
+                        }
 
     else:
         raise ValueError('unexpected mode: {}, values are "irrigated" or "dryland"'.format(mode))
 
-    assert (np.in1d(list(range(1,13)),list(trig.keys())).all() and
-            np.in1d(list(range(1,13)),list(targ.keys())).all()), 'trig and targ must have all months defined'
+    assert (np.in1d(list(range(1, 13)), list(trig.keys())).all() and
+            np.in1d(list(range(1, 13)), list(targ.keys())).all()), 'trig and targ must have all months defined'
 
     if not isinstance(weed_dm_frac, dict):
         weed_dm_frac = {e: weed_dm_frac for e in range(1, 13)}

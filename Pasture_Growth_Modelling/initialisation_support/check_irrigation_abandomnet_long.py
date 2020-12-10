@@ -28,7 +28,7 @@ def create_irrigation_abandomnet_data(base_name, params, reseed_trig=-1, reseed_
     restrict = 1 - matrix_weather.loc[:, 'max_irr'] / 5
 
     matrix_weather.loc[:, 'max_irr'] = 5
-    days_harvest = create_days_harvest(mode, matrix_weather)
+    days_harvest = create_days_harvest(mode, matrix_weather, site)
 
     # set reseed days harvest
     idx = days_harvest.doy == 152
@@ -67,7 +67,7 @@ def create_irrigation_abandomnet_data(base_name, params, reseed_trig=-1, reseed_
                                               out['{}_no_rest'.format(base_name)].transpose() *
                                               (1 - restrict.values)).transpose()
 
-    # todo paddock level restrictions
+    # paddock level restrictions
     levels = np.arange(5, 110, 5) / 100
     temp_out = []
     for ll, lu in zip(levels[0:-1], levels[1:]):
@@ -96,6 +96,7 @@ def create_irrigation_abandomnet_data(base_name, params, reseed_trig=-1, reseed_
 
 
 if __name__ == '__main__':
+    #todo run some stats on paddock vs poor irrigation
     params, doy = get_params_doy_irr(mode)
     out = create_irrigation_abandomnet_data('baseline', params, reseed_trig=0.65, reseed_basal=0.70, site='eyrewell')
     out_vars = ['DM', 'YIELD', 'BASAL', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'per_PAW', 'pgr', 'f_rest']

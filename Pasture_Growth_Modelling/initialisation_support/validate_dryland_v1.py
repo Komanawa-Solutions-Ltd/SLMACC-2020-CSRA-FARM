@@ -4,6 +4,7 @@
  work through a validation of basgra for dryland crops at lincoln
  data from mills et all 2015
  https://drive.google.com/open?id=1H1Bo-CFrmZcNbLt9kzyVTOzoNB7DE-Zp&authuser=matt%40komanawa.com&usp=drive_fs
+ superceeded by v2 and then v3
  """
 
 import ksl_env
@@ -43,9 +44,9 @@ def get_param_set(BASALI=0.25):
     params['opt_harvfrin'] = 1
     params['IRRIGF'] = 0
     params['BASALI'] = BASALI
-    params['LOG10CLVI'] = np.log10(4.2)  # set from a mid point value  # todo not important for percistance, but important to stop inital high yeild!
-    params['LOG10CRESI'] = np.log10(0.8)  # set from a mid point value  # todo not important for percistance, but important to stop inital high yeild!
-    params['LOG10CRTI'] = np.log10(36)  # set from a mid point value  # todo not important for percistance, but important to stop inital high yeild!
+    params['LOG10CLVI'] = np.log10(4.2)  # set from a mid point value
+    params['LOG10CRESI'] = np.log10(0.8)  # set from a mid point value
+    params['LOG10CRTI'] = np.log10(36)  # set from a mid point value
 
     doy_irr = [0]
     return params, doy_irr
@@ -56,10 +57,10 @@ def get_weather_data():
     # below is the lincoln farm, ryegrass percistance is not likely.
     #vcsn_data, use_coords = vcsn_pull_single_site(lat=-43.6333, lon=172.4666, year_min=2002, year_max=2011, use_vars='all')
 
-    # below is the oxford area, to test percistance #todo oxford are percistance, percistance looks possible in oxford (9-12.6%)
+    # below is the oxford area, to test percistance #oxford are percistance, percistance looks possible in oxford (9-12.6%)
     vcsn_data, use_coords = vcsn_pull_single_site(lat=-43.298068, lon=172.197276, year_min=2002, year_max=2011, use_vars='all')
 
-    # below is the percistance at eyrewell # todo is the presitance possible at eyrewell, seems so (7.2-11.8%), check for full period!
+    # below is the percistance at eyrewell # is the presitance possible at eyrewell, seems so (7.2-11.8%), check for full period!
     #vcsn_data, use_coords = vcsn_pull_single_site(lat=-43.355787, lon=172.324873, year_min=2002, year_max=2011, use_vars='all')
 
 

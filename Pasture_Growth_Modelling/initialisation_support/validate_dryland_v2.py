@@ -1,6 +1,7 @@
 """
  Author: Matt Hanson
  Created: 9/12/2020 11:24 AM
+ superceeded by v3
  """
 import pandas as pd
 import numpy as np
@@ -27,7 +28,7 @@ def calc_past_mean(fun, pg_mode, return_norm=True, freq='month'):
     rest = None
     params, doy_irr = get_params_doy_irr(mode)
     matrix_weather = create_matrix_weather(mode, weather, rest)
-    days_harvest = create_days_harvest(mode, matrix_weather)
+    days_harvest = create_days_harvest(mode, matrix_weather, site)
     out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
     out.loc[:, 'per_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
 
@@ -48,7 +49,6 @@ def calc_past_mean(fun, pg_mode, return_norm=True, freq='month'):
 
 
 if __name__ == '__main__':
-    # todo something is weird here... make datetimes, and check against pasture growth deficiit calc...
 
     data = {
         'hororata': get_horarata_data_old(),

@@ -444,6 +444,7 @@ def plot_restriction_record():
 
 if __name__ == '__main__':
     #todo ensure that dryland was added appropriately, this includes making sure the long term runs are as we expect!
+    # todo PGA_norm?
     calc_restrict_recurance()
     old_calc_restrict_recurance()
     calc_dry_recurance()

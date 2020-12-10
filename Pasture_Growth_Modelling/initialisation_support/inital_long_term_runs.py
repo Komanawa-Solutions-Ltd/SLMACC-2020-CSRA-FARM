@@ -16,7 +16,9 @@ from Climate_Shocks.get_past_record import get_restriction_record, get_vcsn_reco
 from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, create_days_harvest, \
     create_matrix_weather
 from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growth, calc_pasture_growth_anomaly
-from Pasture_Growth_Modelling.initialisation_support.comparison_support import make_mean_comparison, get_horarata_data_old
+from Pasture_Growth_Modelling.initialisation_support.comparison_support import make_mean_comparison, \
+    get_horarata_data_old
+
 
 def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True):
     mode = 'irrigated'
@@ -25,7 +27,7 @@ def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True)
     rest = get_restriction_record()
     params, doy_irr = get_params_doy_irr(mode)
     matrix_weather = create_matrix_weather(mode, weather, rest)
-    days_harvest = create_days_harvest(mode, matrix_weather)
+    days_harvest = create_days_harvest(mode, matrix_weather, site)
 
     if not reseed:
         days_harvest.loc[:, 'reseed_trig'] = -1
@@ -36,7 +38,6 @@ def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True)
     pg = pd.DataFrame(calc_pasture_growth(out, days_harvest, mode='from_yield', resamp_fun='mean', freq='1d'))
     out.loc[:, 'pg'] = pg.loc[:, 'pg']
     out = calc_pasture_growth_anomaly(out, fun='mean')
-
 
     if return_inputs:
         return out, (params, doy_irr, matrix_weather, days_harvest)
@@ -50,7 +51,7 @@ def run_past_basgra_dryland(return_inputs=False, site='eyrewell', reseed=True):
     rest = None
     params, doy_irr = get_params_doy_irr(mode)
     matrix_weather = create_matrix_weather(mode, weather, rest)
-    days_harvest = create_days_harvest(mode, matrix_weather)
+    days_harvest = create_days_harvest(mode, matrix_weather, site)
     if not reseed:
         days_harvest.loc[:, 'reseed_trig'] = -1
 
@@ -65,23 +66,43 @@ def run_past_basgra_dryland(return_inputs=False, site='eyrewell', reseed=True):
     return out
 
 
-
-
 if __name__ == '__main__':
-    #todo review and look at a bit more
+    outdir = ksl_env.shared_drives(r"SLMACC_2020\pasture_growth_modelling\historical_runs")
+    save = False
     data = {
         'irrigated_eyrewell': run_past_basgra_irrigated(),
         'irrigated_oxford': run_past_basgra_irrigated(site='oxford'),
-        'dryland_eyrewell_reseed': run_past_basgra_dryland(),
-        'dryland_oxford_reseed': run_past_basgra_dryland(site='oxford'),
+        'dryland_eyrewell': run_past_basgra_dryland(),
+        'dryland_oxford': run_past_basgra_dryland(site='oxford'),
     }
-    out_vars = ['DM', 'YIELD', 'BASAL', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'RAIN', 'EVAP', 'TRAN', 'per_PAW', 'pg',
-                'pg_norm']
+    for i, k in enumerate(data.keys()):
+        data[k].loc[:, 'RESEEDED'] += i
+
     data2 = {e: make_mean_comparison(v, 'mean') for e, v in data.items()}
     data2['horoata'] = get_horarata_data_old()
-    out_vars = ['DM', 'YIELD', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'RAIN', 'EVAP', 'TRAN', 'per_PAW', 'pg', 'RESEEDED',
+
+    out_vars = ['DM', 'DMH', 'YIELD', 'DMH_RYE', 'DM_RYE_RM', 'DMH_WEED', 'DM_WEED_RM', 'IRRIG', 'RAIN', 'EVAP', 'TRAN',
+                'per_PAW', 'pg', 'RESEEDED',
                 'pga_norm', 'BASAL']
+
+    data3 = {e: v.groupby('month').mean() for e, v in data.items()}
+    plt_outdir_sim = None
+    plt_outdir_aver_yr = None
+    if save:
+        plt_outdir_sim = os.path.join(outdir, 'plots', 'full_hist')
+        plt_outdir_aver_yr = os.path.join(outdir, 'plots', 'aver_yr')
+        for d in [plt_outdir_aver_yr, plt_outdir_sim]:
+            if not os.path.exists(d):
+                os.makedirs(d)
+        for k, v in data.items():
+            v.to_csv(os.path.join(outdir, '{}_raw.csv'.format(k)))
+            v.resample('10D').mean().to_csv(os.path.join(outdir, '{}_10daily.csv'.format(k)))
+            v.resample('M').mean().to_csv(os.path.join(outdir, '{}_monthly.csv'.format(k)))
+
     plot_multiple_results(data=data, out_vars=out_vars, rolling=90, label_rolling=True, label_main=False,
                           main_kwargs={'alpha': 0.2},
-                          show=False)
-    plot_multiple_results(data=data2, out_vars=['pg'], show=True)
+                          show=False, outdir=plt_outdir_sim, title_str='historical_')
+    plot_multiple_results(data=data3, out_vars=out_vars, show=False, outdir=plt_outdir_aver_yr,
+                          title_str='average_year_')
+    plot_multiple_results(data=data2, out_vars=['pg'], show=(not save), outdir=plt_outdir_aver_yr,
+                          title_str='cumulative_average_year_')
