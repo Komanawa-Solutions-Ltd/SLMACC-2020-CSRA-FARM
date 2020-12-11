@@ -8,13 +8,11 @@ import os
 from Climate_Shocks.note_worthy_events.inital_event_recurance import backed_dir
 from Pasture_Growth_Modelling.initialisation_support.pasture_growth_deficit import calc_past_pasture_growth_anomaly
 
-#todo PGA_norm?
-
-hot = '07d_d_tmax_25'  # todo confirm
-cold = '10d_d_tmean_07'  # todo confirm
-dry = '10d_d_smd000_sma-20'  # todo confirm
-wet = '10d_d_r0_smd-5'  # todo confirm
-rest = '7d_half_7tot'  # todo confirm, update as we need to move back to number of days only
+hot = '07d_d_tmax_25'  # todo confirm with WS
+cold = '10d_d_tmean_07'  # todo confirm with WS
+dry = '10d_d_smd000_sma-20'  # todo confirm with WS
+wet = '10d_d_r0_smd-5'  # todo confirm with WS
+rest = 'eqliklyd_rest'  # todo confirm with WS, this need much more discussion.
 
 events = [
     ('hot', hot),
@@ -26,26 +24,36 @@ events = [
 ]
 
 event_names = ['hot', 'cold', 'dry', 'wet', 'rest']
-desc_names = ['prob', 'count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max']
-_describe_names = ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max']
+_org_describe_names = ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max']
+_describe_names = []
+_describe_names.extend(['{}_irr'.format(e) for e in _org_describe_names])
+_describe_names.extend(['{}_dry'.format(e) for e in _org_describe_names])
 
-irrigated_pga = calc_past_pasture_growth_anomaly('irrigated').reset_index()
+irrigated_pga = calc_past_pasture_growth_anomaly('irrigated', site='eyrewell').reset_index()
+
 irrigated_pga.loc[:, 'year'] = irrigated_pga.date.dt.year
 irrigated_pga = irrigated_pga.set_index(['month', 'year'])
+dryland_pga = calc_past_pasture_growth_anomaly('dryland').reset_index()
+dryland_pga.loc[:, 'year'] = dryland_pga.date.dt.year
+dryland_pga = dryland_pga.set_index(['month', 'year'])
 
 
 def add_pga(idx):
     idx = idx.dropna()
-    temp = irrigated_pga.loc[idx].reset_index()
-    temp2 = temp.loc[:, ['month', 'pga_norm']].groupby('month').describe().loc[:, 'pga_norm']
-    return pd.DataFrame(temp2).round(3)
+    irr_temp = irrigated_pga.loc[idx].reset_index()
+    irr_temp2 = irr_temp.loc[:, ['month', 'pga_norm']].groupby('month').describe().loc[:, 'pga_norm']
+    dry_temp = irrigated_pga.loc[idx].reset_index()
+    dry_temp2 = irr_temp.loc[:, ['month', 'pga_norm']].groupby('month').describe().loc[:, 'pga_norm']
+
+    temp3 = pd.merge(irr_temp2, dry_temp2, left_index=True, right_index=True, suffixes=('_irr', '_dry'))
+    return pd.DataFrame(temp3)
 
 
 def make_prob(in_series):
     in_series = in_series.dropna()
     data = pd.DataFrame(np.atleast_2d(list(in_series.values)), columns=['month', 'year'])
     out_series = data.groupby('month').count() / 48
-    return pd.DataFrame(out_series).round(2)
+    return pd.DataFrame(out_series)
 
 
 def get_org_data():
@@ -55,7 +63,8 @@ def get_org_data():
     ]
     use_data = []
     for d in data:
-        use_data.append(pd.Series([np.nan if isinstance(t,float) else tuple(int(e) for e in t.strip('()').split(',')) for t in d]))
+        use_data.append(
+            pd.Series([np.nan if isinstance(t, float) else tuple(int(e) for e in t.strip('()').split(',')) for t in d]))
 
     data = pd.concat(use_data, axis=1)
     data.columns = event_names
@@ -77,15 +86,16 @@ def make_prob_impact_data():
     full_event_names = event_names + ['{}_unique'.format(e) for e in event_names]
 
     outdata = pd.DataFrame(index=pd.Series(range(1, 13), name='month'),
-                           columns=pd.MultiIndex.from_product((full_event_names, desc_names), names=['event',
-                                                                                                     'pga_desc']))
+                           columns=pd.MultiIndex.from_product((full_event_names,
+                                                               (['prob'] + _describe_names))
+                                                              , names=['event', 'pga_desc']), dtype=float)
     org_data = get_org_data()
     # make base data
     print('making base data')
     for en in event_names:
         temp = make_prob(org_data.loc[:, en])
-        outdata.loc[temp.index, (en, 'prob')] = temp.values[:,0]
-        temp =  add_pga(org_data.loc[:, en])
+        outdata.loc[temp.index, (en, 'prob')] = temp.values[:, 0]
+        temp = add_pga(org_data.loc[:, en])
         outdata.loc[temp.index, (en, _describe_names)] = temp.values
 
     # make unique data
@@ -94,8 +104,8 @@ def make_prob_impact_data():
         en_u = '{}_unique'.format(en)
         idx = make_unique_idx(en, org_data)
         temp = make_prob(idx)
-        outdata.loc[temp.index, (en_u, 'prob')] = temp.values[:,0]
-        temp =  add_pga(idx)
+        outdata.loc[temp.index, (en_u, 'prob')] = temp.values[:, 0]
+        temp = add_pga(idx)
         outdata.loc[temp.index, (en_u, _describe_names)] = temp.values
 
     outdata = outdata.sort_index(axis=1, level=0, sort_remaining=False)
@@ -104,5 +114,9 @@ def make_prob_impact_data():
 
 if __name__ == '__main__':
     # todo check and then finalize events
-    test = make_prob_impact_data()
-    test.to_csv(os.path.join(backed_dir, 'current_choice.csv'))
+    out = make_prob_impact_data()
+
+    t = pd.Series([' '.join(e) for e in out.columns])
+    idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
+    out.loc[:, out.columns[idx]] *= 100
+    out.to_csv(os.path.join(backed_dir, 'current_choice.csv'), float_format='%.1f%%')

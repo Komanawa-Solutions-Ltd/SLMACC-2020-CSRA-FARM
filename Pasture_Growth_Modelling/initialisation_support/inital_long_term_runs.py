@@ -11,13 +11,13 @@ import ksl_env
 # add basgra nz functions
 ksl_env.add_basgra_nz_path()
 from basgra_python import run_basgra_nz
-from supporting_functions.plotting import plot_multiple_results
+from supporting_functions.plotting import plot_multiple_results, plot_multiple_monthly_results
 from Climate_Shocks.get_past_record import get_restriction_record, get_vcsn_record
 from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, create_days_harvest, \
     create_matrix_weather
 from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growth, calc_pasture_growth_anomaly
 from Pasture_Growth_Modelling.initialisation_support.comparison_support import make_mean_comparison, \
-    get_horarata_data_old
+    get_horarata_data_old, get_indicative_irrigated
 
 
 def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True):
@@ -68,7 +68,7 @@ def run_past_basgra_dryland(return_inputs=False, site='eyrewell', reseed=True):
 
 if __name__ == '__main__':
     outdir = ksl_env.shared_drives(r"SLMACC_2020\pasture_growth_modelling\historical_runs")
-    save = False
+    save = True
     data = {
         'irrigated_eyrewell': run_past_basgra_irrigated(),
         'irrigated_oxford': run_past_basgra_irrigated(site='oxford'),
@@ -76,10 +76,15 @@ if __name__ == '__main__':
         'dryland_oxford': run_past_basgra_dryland(site='oxford'),
     }
     for i, k in enumerate(data.keys()):
-        data[k].loc[:, 'RESEEDED'] += i
+        data[k].loc[:, 'RESEEDED'] += i #todo any more fo these to raise up?
 
     data2 = {e: make_mean_comparison(v, 'mean') for e, v in data.items()}
-    data2['horoata'] = get_horarata_data_old()
+    data2['Horoata'] = get_horarata_data_old()
+    data2['indicative_irr'] = get_indicative_irrigated()
+
+    for k, v in data2.items():
+        v.loc[:,'month'] = v.index.month
+        v.set_index('month', inplace=True)
 
     out_vars = ['DM', 'DMH', 'YIELD', 'DMH_RYE', 'DM_RYE_RM', 'DMH_WEED', 'DM_WEED_RM', 'IRRIG', 'RAIN', 'EVAP', 'TRAN',
                 'per_PAW', 'pg', 'RESEEDED',
@@ -98,11 +103,14 @@ if __name__ == '__main__':
             v.to_csv(os.path.join(outdir, '{}_raw.csv'.format(k)))
             v.resample('10D').mean().to_csv(os.path.join(outdir, '{}_10daily.csv'.format(k)))
             v.resample('M').mean().to_csv(os.path.join(outdir, '{}_monthly.csv'.format(k)))
+            v.groupby('month').mean().to_csv(os.path.join(outdir, '{}_average_year.csv'.format(k)))
+
+    # shift to jan in the middle for average year
 
     plot_multiple_results(data=data, out_vars=out_vars, rolling=90, label_rolling=True, label_main=False,
                           main_kwargs={'alpha': 0.2},
                           show=False, outdir=plt_outdir_sim, title_str='historical_')
-    plot_multiple_results(data=data3, out_vars=out_vars, show=False, outdir=plt_outdir_aver_yr,
-                          title_str='average_year_')
-    plot_multiple_results(data=data2, out_vars=['pg'], show=(not save), outdir=plt_outdir_aver_yr,
-                          title_str='cumulative_average_year_')
+    plot_multiple_monthly_results(data=data3, out_vars=out_vars, show=False, outdir=plt_outdir_aver_yr,
+                          title_str='average_year_',  main_kwargs={'marker':'o'})
+    plot_multiple_monthly_results(data=data2, out_vars=['pg'], show=(not save), outdir=plt_outdir_aver_yr,
+                          title_str='cumulative_average_year_', main_kwargs={'marker':'o'})

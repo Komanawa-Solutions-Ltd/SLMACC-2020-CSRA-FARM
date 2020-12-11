@@ -70,3 +70,18 @@ def get_horarata_data_old():
 
 
     return out_sum
+
+def get_indicative_irrigated():
+    data = pd.read_csv(ksl_env.shared_drives(r"SLMACC_2020\pasture_growth_modelling\SamSBPastureGrowth_irrigated.csv"),
+                       index_col=0).to_dict()
+    out_sum = pd.DataFrame(index=pd.date_range('2011-01-01', '2011-12-31',name='date'), columns=['pg'],dtype=int)
+    out_sum.loc[:, 'pg'] = pd.to_numeric(out_sum.index.month)
+    out_sum = out_sum.replace(data)
+    out_sum.loc[:, 'month'] = out_sum.index.month
+    out_sum = pd.DataFrame(out_sum.groupby('month').sum().loc[:, 'pg'])
+
+    strs = ['2011-{:02d}-15'.format(e) for e in out_sum.index]
+    out_sum.loc[:,'date'] = pd.to_datetime(strs)
+    out_sum.set_index('date',inplace=True)
+    return out_sum
+
