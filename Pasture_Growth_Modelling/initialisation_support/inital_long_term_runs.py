@@ -76,14 +76,14 @@ if __name__ == '__main__':
         'dryland_oxford': run_past_basgra_dryland(site='oxford'),
     }
     for i, k in enumerate(data.keys()):
-        data[k].loc[:, 'RESEEDED'] += i #todo any more fo these to raise up?
+        data[k].loc[:, 'RESEEDED'] += i  # todo any more fo these to raise up?
 
     data2 = {e: make_mean_comparison(v, 'mean') for e, v in data.items()}
     data2['Horoata'] = get_horarata_data_old()
     data2['indicative_irr'] = get_indicative_irrigated()
 
     for k, v in data2.items():
-        v.loc[:,'month'] = v.index.month
+        v.loc[:, 'month'] = v.index.month
         v.set_index('month', inplace=True)
 
     out_vars = ['DM', 'DMH', 'YIELD', 'DMH_RYE', 'DM_RYE_RM', 'DMH_WEED', 'DM_WEED_RM', 'IRRIG', 'RAIN', 'EVAP', 'TRAN',
@@ -99,18 +99,27 @@ if __name__ == '__main__':
         for d in [plt_outdir_aver_yr, plt_outdir_sim]:
             if not os.path.exists(d):
                 os.makedirs(d)
+        _org_describe_names = ['count', 'mean', 'std', 'min', '5%', '25%', '50%', '75%', '95%', 'max']
+        outkeys = ['pga', 'pga_norm']
+        outdata = pd.DataFrame(index=pd.Series(range(1, 13), name='month'),
+                               columns=pd.MultiIndex.from_product([data.keys(),
+                                                                   ['pga', 'pga_norm'],
+                                                                   _org_describe_names]), dtype=float)
         for k, v in data.items():
+            temp = v.groupby('month').describe(percentiles=[0.05, 0.25, 0.5, 0.75, 0.95])
+            outdata.loc[:, (k, outkeys, _org_describe_names)] = temp.loc[:, (outkeys, _org_describe_names)].values
             v.to_csv(os.path.join(outdir, '{}_raw.csv'.format(k)))
             v.resample('10D').mean().to_csv(os.path.join(outdir, '{}_10daily.csv'.format(k)))
             v.resample('M').mean().to_csv(os.path.join(outdir, '{}_monthly.csv'.format(k)))
             v.groupby('month').mean().to_csv(os.path.join(outdir, '{}_average_year.csv'.format(k)))
+        outdata = outdata.loc[:, (data.keys(),outkeys, _org_describe_names)]
+        outdata.round(3).to_csv(os.path.join(outdir, 'all_sim_pga_pganorm_desc.csv'))
 
-    # shift to jan in the middle for average year
-
+    # make plots
     plot_multiple_results(data=data, out_vars=out_vars, rolling=90, label_rolling=True, label_main=False,
                           main_kwargs={'alpha': 0.2},
                           show=False, outdir=plt_outdir_sim, title_str='historical_')
     plot_multiple_monthly_results(data=data3, out_vars=out_vars, show=False, outdir=plt_outdir_aver_yr,
-                          title_str='average_year_',  main_kwargs={'marker':'o'})
+                                  title_str='average_year_', main_kwargs={'marker': 'o'})
     plot_multiple_monthly_results(data=data2, out_vars=['pg'], show=(not save), outdir=plt_outdir_aver_yr,
-                          title_str='cumulative_average_year_', main_kwargs={'marker':'o'})
+                                  title_str='cumulative_average_year_', main_kwargs={'marker': 'o'})
