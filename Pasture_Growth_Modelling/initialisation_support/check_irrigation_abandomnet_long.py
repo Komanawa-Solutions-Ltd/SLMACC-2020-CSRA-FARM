@@ -70,6 +70,7 @@ def create_irrigation_abandomnet_data(base_name, params, reseed_trig=-1, reseed_
 
     # paddock level restrictions
     levels = np.arange(5, 110, 5) / 100
+    padock_values = {}
     temp_out = []
     for ll, lu in zip(levels[0:-1], levels[1:]):
         matrix_weather_new = matrix_weather.copy(deep=True)
@@ -81,6 +82,10 @@ def create_irrigation_abandomnet_data(base_name, params, reseed_trig=-1, reseed_
 
         temp = run_basgra_nz(params, matrix_weather_new, days_harvest, doy_irr, verbose=False)
         temp_out.append(temp.values)
+        temp.loc[:, 'per_PAW'] = temp.loc[:, 'PAW'] / temp.loc[:, 'MXPAW']
+        temp.loc[:, 'pg'] = calc_pasture_growth(temp, days_harvest, 'from_yield', '1D', resamp_fun='mean')
+        temp.loc[:, 'f_rest'] = restrict
+        padock_values['l:{} u:{}'.format(ll, lu)] = temp
     temp = np.mean(temp_out, axis=0)
 
     temp2 = out['{}_mixed_rest'.format(base_name)].copy(deep=True).drop(columns=['f_rest', 'pg'])
@@ -93,17 +98,16 @@ def create_irrigation_abandomnet_data(base_name, params, reseed_trig=-1, reseed_
     for k in out:
         out[k].loc[:, 'per_PAW'] = out[k].loc[:, 'PAW'] / out[k].loc[:, 'MXPAW']
 
-    return out
+    return out, padock_values
 
 
 if __name__ == '__main__':
-    # todo run some stats on paddock vs poor irrigation
     save = False
     params, doy = get_params_doy_irr(mode)
     outdir = ksl_env.shared_drives(r"SLMACC_2020\pasture_growth_modelling\irrigation_tuning")
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    out = create_irrigation_abandomnet_data('b', params, reseed_trig=0.65, reseed_basal=0.70, site='eyrewell')
+    out, paddock_values = create_irrigation_abandomnet_data('b', params, reseed_trig=0.65, reseed_basal=0.70, site='eyrewell')
 
     # run some stats
     outkeys = ['BASAL', 'f_rest', 'IRRIG', 'per_PAW', 'pg']
@@ -163,6 +167,9 @@ if __name__ == '__main__':
         fig.savefig(os.path.join(outdir, 'monthly_dif.png'.format(k)), dpi=500)
 
     out_vars = ['DM', 'YIELD', 'BASAL', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'per_PAW', 'pg', 'f_rest']
+    plot_multiple_results(paddock_values, out_vars=out_vars, show=True, rolling=30, main_kwargs={'alpha': 0.2},
+                          label_main=False,
+                          label_rolling=True)
     plot_multiple_results(out, out_vars=out_vars, rolling=30, main_kwargs={'alpha': 0.2}, label_main=False,
                           label_rolling=True)
     plt.show()
