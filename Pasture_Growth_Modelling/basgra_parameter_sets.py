@@ -39,7 +39,7 @@ def get_params_doy_irr(mode):
         params['IRRIGF'] = 1
         doy_irr = list(range(245, 367)) + list(range(1, 122))
 
-        # reseed parameteres, set as mean of long term runs in june!
+        # reseed parameteres, set as mean of long term runs in june
         params['reseed_harv_delay'] = 15
         params['reseed_LAI'] = 1.840256e+00
         params['reseed_TILG2'] = 2.194855e+00
@@ -50,7 +50,7 @@ def get_params_doy_irr(mode):
         params['reseed_CST'] = 1.677470e-01
         params['reseed_CSTUB'] = 0
 
-        # modify inital
+        # modify inital #todo set from start of sumulation month mean
         params['BASALI'] = 0.75
 
         # set from a mid point value not important for percistance, but important to stop inital high yeild!
@@ -220,7 +220,7 @@ def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest
         matrix_weather.loc[:, 'irr_targ'] = 0.75
 
         # set trig/targ for summer days
-        idx = np.in1d(weather_data.loc[:, 'month'], [12, 1, 2])
+        idx = np.in1d(weather_data.loc[:, 'month'], [12, 1, 2]) #todo set to DOY_IRR
         matrix_weather.loc[idx, 'irr_trig'] = 0.75
         matrix_weather.loc[idx, 'irr_targ'] = 0.90
 
