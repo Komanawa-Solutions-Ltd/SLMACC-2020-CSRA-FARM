@@ -98,7 +98,7 @@ def create_irrigation_abandomnet_data(base_name, params, reseed_trig=-1, reseed_
 
 if __name__ == '__main__':
     # todo run some stats on paddock vs poor irrigation
-    save = True
+    save = False
     params, doy = get_params_doy_irr(mode)
     outdir = ksl_env.shared_drives(r"SLMACC_2020\pasture_growth_modelling\irrigation_tuning")
     if not os.path.exists(outdir):
@@ -165,3 +165,4 @@ if __name__ == '__main__':
     out_vars = ['DM', 'YIELD', 'BASAL', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'per_PAW', 'pg', 'f_rest']
     plot_multiple_results(out, out_vars=out_vars, rolling=30, main_kwargs={'alpha': 0.2}, label_main=False,
                           label_rolling=True)
+    plt.show()
