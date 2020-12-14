@@ -15,13 +15,23 @@ restriction_keys = ('day', 'doy', 'f_rest', 'flow', 'month', 'take', 'year')
 sites = ('eyrewell', 'oxford')
 
 
-def get_vcsn_record(site='eyrewell'):
+def get_vcsn_record(site='eyrewell', recalc=False):
     if site == 'eyrewell':
         lat, lon = -43.372, 172.333
     elif site == 'oxford':
         lat, lon = -43.296, 172.192
     else:
         raise NotImplementedError('site: {} not implemented'.format(site))
+    key = 'weather_data'
+    data_path = ksl_env.shared_drives(r"SLMACC_2020\weather_date\{}.hdf".format(site))
+    if not os.path.exists(os.path.dirname(data_path)):
+        os.makedirs(os.path.dirname(data_path))
+
+    if os.path.exists(data_path) and not recalc:
+        data = pd.read_hdf(data_path, key=key)
+        return data
+
+
 
     data, use_cords = vcsn_pull_single_site(lat,
                                             lon,
@@ -32,6 +42,7 @@ def get_vcsn_record(site='eyrewell'):
                          'rsds': 'radn', 'tasmax': 'tmax', 'tasmin': 'tmin'}, inplace=True)
     print(use_cords)
     data = data.set_index('date')
+    data.to_hdf(data_path, key=key, mode='w')
     return data
 
 
@@ -81,7 +92,10 @@ def get_restriction_record(recalc=False):
     outdata.to_csv(data_path)
     return outdata
 
+def recalc_sites():
+    for site in sites:
+        get_vcsn_record(site, recalc=True)
+
 
 if __name__ == '__main__':
-    print(get_restriction_record(False).head())
-    print(get_vcsn_record().keys())
+    recalc_sites()

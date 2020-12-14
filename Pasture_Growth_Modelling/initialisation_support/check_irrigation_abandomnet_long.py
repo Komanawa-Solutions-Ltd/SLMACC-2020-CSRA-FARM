@@ -109,41 +109,58 @@ if __name__ == '__main__':
     outkeys = ['BASAL', 'f_rest', 'IRRIG', 'per_PAW', 'pg']
     for k, v in out.items():
         v.loc[:, 'month'] = v.index.month
-    if save:
-        rest = get_restriction_record()
-        rest = rest.groupby(['year', 'month']).sum()
-        idxs = pd.MultiIndex.from_product([pd.unique(out['b_paddock_rest'].loc[:, 'year']),
-                                           pd.unique(out['b_paddock_rest'].loc[:, 'month'])], names=['year', 'month'])
+    rest = get_restriction_record()
+    rest = rest.groupby(['year', 'month']).sum()
+    idxs = pd.MultiIndex.from_product([pd.unique(out['b_paddock_rest'].loc[:, 'year']),
+                                       pd.unique(out['b_paddock_rest'].loc[:, 'month'])], names=['year', 'month'])
 
-        outdata = pd.DataFrame(index=idxs,
-                               columns=pd.MultiIndex.from_product([out.keys(), outkeys]))
-        for k, v in out.items():
-            temp = v.loc[:, outkeys + ['year', 'month']].groupby(['year', 'month']).mean()
-            outdata.loc[:, (k, outkeys)] = temp.values
+    outdata = pd.DataFrame(index=idxs,
+                           columns=pd.MultiIndex.from_product([out.keys(), outkeys]))
+    for k, v in out.items():
+        temp = v.loc[:, outkeys + ['year', 'month']].groupby(['year', 'month']).mean()
+        outdata.loc[:, (k, outkeys)] = temp.values
+
+    if save:
         outdata.round(3).to_csv(os.path.join(outdir, 'yearly_irrigation_comparison.csv'))
 
-        dif_data = pd.DataFrame(columns=['pg_dif', 'irrig_dif', 'monthly_rest', 'season_rest'], dtype=float)
-        dif_data.loc[:, 'pg_dif'] = outdata.loc[:, ('b_paddock_rest', 'pg')] - outdata.loc[:, ('b_mixed_rest', 'pg')]
-        dif_data.loc[:, 'irrig_dif'] = outdata.loc[:, ('b_paddock_rest', 'IRRIG')] - outdata.loc[:, ('b_mixed_rest',
-                                                                                                     'IRRIG')]
-        dif_data.loc[:, 'monthly_rest'] = rest.loc[:, 'f_rest']
-        dif_data.loc[:, '6month_sum'] = dif_data.loc[:, 'monthly_rest'].rolling(6).sum()
-        dif_data.loc[:, '2month_sum'] = dif_data.loc[:, 'monthly_rest'].rolling(2).sum()
-        dif_data.loc[:, '3month_sum'] = dif_data.loc[:, 'monthly_rest'].rolling(3).sum()
-        dif_data.loc[:, '12month_sum'] = dif_data.loc[:, 'monthly_rest'].rolling(12).sum()
+    dif_data = pd.DataFrame(columns=['pg_dif', 'irrig_dif', 'monthly_rest', 'season_rest'], dtype=float)
+    dif_data.loc[:, 'pg_dif'] = outdata.loc[:, ('b_paddock_rest', 'pg')] - outdata.loc[:, ('b_mixed_rest', 'pg')]
+    dif_data.loc[:, 'irrig_dif'] = outdata.loc[:, ('b_paddock_rest', 'IRRIG')] - outdata.loc[:, ('b_mixed_rest',
+                                                                                                 'IRRIG')]
+    dif_data.loc[:, 'monthly_rest'] = rest.loc[:, 'f_rest']
+    dif_data.loc[:, '6month_sum'] = dif_data.loc[:, 'monthly_rest'].rolling(6).sum()
+    dif_data.loc[:, '2month_sum'] = dif_data.loc[:, 'monthly_rest'].rolling(2).sum()
+    dif_data.loc[:, '3month_sum'] = dif_data.loc[:, 'monthly_rest'].rolling(3).sum()
+    dif_data.loc[:, '12month_sum'] = dif_data.loc[:, 'monthly_rest'].rolling(12).sum()
+    if save:
         dif_data.round(3).to_csv(os.path.join(outdir, 'paddock_mixed_diff.csv'))
-        dif_data = dif_data.reset_index()
-        for k in ['monthly_rest', '6month_sum', '2month_sum', '3month_sum', '12month_sum', ]:
-            fig, ax = plt.subplots()
-            temp = ax.scatter(dif_data.loc[:, k], dif_data.loc[:, 'pg_dif'], c=dif_data.month)
-            fig.colorbar(temp)
-            ax.set_title(k)
-            ax.set_xlabel(k)
-            ax.set_ylabel('pg_dif (paddock-partial)')
+    dif_data = dif_data.reset_index()
+    for k in ['monthly_rest', '6month_sum', '2month_sum', '3month_sum', '12month_sum', ]:
+        fig, ax = plt.subplots()
+        temp = ax.scatter(dif_data.loc[:, k], dif_data.loc[:, 'pg_dif'], c=dif_data.month)
+        fig.colorbar(temp)
+        ax.set_title(k)
+        ax.set_xlabel(k)
+        ax.set_ylabel('pg_dif (paddock-partial)')
+        if save:
             fig.savefig(os.path.join(outdir,'{}_dif.png'.format(k)))
 
+    if save:
         dif_data.groupby('month').describe().round(3).to_csv(os.path.join(outdir,
                                                                           'paddock_mixed_diff_month_desc.csv'))
+
+    strs = ['{}-{:02d}-15'.format(int(e), int(f)) for e, f in dif_data[['year', 'month']].itertuples(False, None)]
+    dif_data.loc[:,'date'] = pd.to_datetime(strs)
+    dif_data.set_index('date', inplace=True)
+
+    fig, (ax,ax2) = plt.subplots(2, sharex=True)
+    ax.plot(dif_data.index, dif_data.pg_dif)
+    ax.set_ylabel('pg_dif (paddock-partial)')
+    ax.axhline(0, linestyle='--')
+    ax2.plot(dif_data.index, dif_data.monthly_rest)
+    ax2.set_ylabel('monthly days restrictions')
+    if save:
+        fig.savefig(os.path.join(outdir, 'monthly_dif.png'.format(k)), dpi=500)
 
     out_vars = ['DM', 'YIELD', 'BASAL', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'per_PAW', 'pg', 'f_rest']
     plot_multiple_results(out, out_vars=out_vars, rolling=30, main_kwargs={'alpha': 0.2}, label_main=False,
