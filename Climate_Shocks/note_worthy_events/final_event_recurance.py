@@ -8,11 +8,12 @@ import os
 from Climate_Shocks.note_worthy_events.inital_event_recurance import backed_dir
 from Pasture_Growth_Modelling.initialisation_support.pasture_growth_deficit import calc_past_pasture_growth_anomaly
 
-hot = '07d_d_tmax_25'  # todo confirm with WS
-cold = '10d_d_tmean_07'  # todo confirm with WS
-dry = '10d_d_smd000_sma-20'  # todo confirm with WS
-wet = '10d_d_r0_smd-5'  # todo confirm with WS
-rest = 'eqliklyd_rest'  # todo confirm with WS, this need much more discussion.
+# todo final check with Water Strategies
+hot = '07d_d_tmax_25'
+cold = '10d_d_tmean_07'
+dry = '10d_d_smd000_sma-20'
+wet = '10d_d_r0_smd0'
+rest = 'eqliklyd_rest'
 
 events = [
     ('hot', hot),
@@ -26,8 +27,8 @@ events = [
 event_names = ['hot', 'cold', 'dry', 'wet', 'rest']
 _org_describe_names = ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max']
 _describe_names = []
-_describe_names.extend(['{}_irr'.format(e) for e in _org_describe_names])
-_describe_names.extend(['{}_dry'.format(e) for e in _org_describe_names])
+for e in _org_describe_names:
+    _describe_names.extend(['{}_irr'.format(e), '{}_dry'.format(e)])
 
 irrigated_pga = calc_past_pasture_growth_anomaly('irrigated', site='eyrewell').reset_index()
 
@@ -42,8 +43,8 @@ def add_pga(idx):
     idx = idx.dropna()
     irr_temp = irrigated_pga.loc[idx].reset_index()
     irr_temp2 = irr_temp.loc[:, ['month', 'pga_norm']].groupby('month').describe().loc[:, 'pga_norm']
-    dry_temp = irrigated_pga.loc[idx].reset_index()
-    dry_temp2 = irr_temp.loc[:, ['month', 'pga_norm']].groupby('month').describe().loc[:, 'pga_norm']
+    dry_temp = dryland_pga.loc[idx].reset_index()
+    dry_temp2 = dry_temp.loc[:, ['month', 'pga_norm']].groupby('month').describe().loc[:, 'pga_norm']
 
     temp3 = pd.merge(irr_temp2, dry_temp2, left_index=True, right_index=True, suffixes=('_irr', '_dry'))
     return pd.DataFrame(temp3)
@@ -96,7 +97,7 @@ def make_prob_impact_data():
         temp = make_prob(org_data.loc[:, en])
         outdata.loc[temp.index, (en, 'prob')] = temp.values[:, 0]
         temp = add_pga(org_data.loc[:, en])
-        outdata.loc[temp.index, (en, _describe_names)] = temp.values
+        outdata.loc[temp.index, (en, _describe_names)] = temp.loc[:, _describe_names].values
 
     # make unique data
     print('making unique data')
@@ -106,7 +107,7 @@ def make_prob_impact_data():
         temp = make_prob(idx)
         outdata.loc[temp.index, (en_u, 'prob')] = temp.values[:, 0]
         temp = add_pga(idx)
-        outdata.loc[temp.index, (en_u, _describe_names)] = temp.values
+        outdata.loc[temp.index, (en_u, _describe_names)] = temp.loc[:, _describe_names].values
 
     outdata = outdata.sort_index(axis=1, level=0, sort_remaining=False)
     return outdata

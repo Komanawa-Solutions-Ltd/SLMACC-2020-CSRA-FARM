@@ -14,7 +14,7 @@ import os
 import matplotlib.pyplot as plt
 import itertools
 
-backed_dir = ksl_env.shared_drives("SLMACC_2020\event_definition/v3")
+backed_dir = ksl_env.shared_drives("SLMACC_2020\event_definition/v4")
 unbacked_dir = ksl_env.mh_unbacked("SLMACC_2020\event_definition")
 
 if not os.path.exists(backed_dir):
@@ -259,7 +259,7 @@ def calc_restrict_cumulative_recurance():
             11: 5,
             12: 7,
             }
-    ndays['eqlikly'] = temp #todo note don't use prob in this!
+    ndays['eqlikly'] = temp  # note don't use 'prob' in this name!
 
     grouped_data = data.loc[:, ['month', 'year', 'f_rest']].groupby(['month', 'year']).sum().reset_index()
 
