@@ -40,7 +40,7 @@ def get_params_doy_irr(mode):
         doy_irr = list(range(245, 367)) + list(range(1, 122))
 
         # reseed parameteres, set as mean of long term runs in june
-        params['reseed_harv_delay'] = 15
+        params['reseed_harv_delay'] = 20
         params['reseed_LAI'] = 1.840256e+00
         params['reseed_TILG2'] = 2.194855e+00
         params['reseed_TILG1'] = 4.574009e+00
@@ -69,7 +69,7 @@ def get_params_doy_irr(mode):
         params['BASALI'] = 0.15
 
         # reseed parameteres, set as mean of long term runs in june
-        params['reseed_harv_delay'] = 30
+        params['reseed_harv_delay'] = 40
         params['reseed_LAI'] = 1.436825e-01
         params['reseed_TILG2'] = 0
         params['reseed_TILG1'] = 8.329094e-01
@@ -97,22 +97,23 @@ def create_days_harvest(mode, matrix_weather, site):
     :return:
     """
     if mode == 'irrigated':
-        freq = 10  # days
+        freq = '15D'  # days
         trig = {m: 1501 for m in range(1, 13)}  # kg harvestable dry matter by month
         targ = {m: 1500 for m in range(1, 13)}  # kg harvestable dry matter by month
+
         weed_dm_frac = 0
         if site == 'eyrewell':
-            reseed_trig = 0.65
-            reseed_basal = 0.70
+            reseed_trig = 0.696
+            reseed_basal = 0.727
 
         elif site == 'oxford':
-            reseed_trig = 0.63
-            reseed_basal = 0.68
+            reseed_trig = 0.678
+            reseed_basal = 0.704
 
         else:
             raise NotImplementedError()
     elif mode == 'dryland':
-        freq = 25  # days
+        freq = 'M'  # end of each month
         trig = {m: 601 for m in range(4, 12)}  # kg harvestable dry matter
         targ = {m: 600 for m in range(4, 12)}  # kg harvestable dry matter
 
@@ -120,22 +121,23 @@ def create_days_harvest(mode, matrix_weather, site):
         trig.update({m: 801 for m in [12, 1, 2, 3]})  # kg harvestable dry matter
         targ.update({m: 800 for m in [12, 1, 2, 3]})  # kg harvestable dry matter
 
-        reseed_trig = 0.06
-        reseed_basal = 0.1
+        reseed_trig = 0.059
+        reseed_basal = 0.090
 
-        weed_dm_frac = {1: 0.45,
-                        2: 0.25,
-                        3: 0.25,
-                        4: 0.3,
-                        5: 0.4,
-                        6: 0.6,
-                        7: 0.5,
-                        8: 0.4,
-                        9: 0.3,
-                        10: 0.3,
-                        11: 0.8,
-                        12: 0.65,
-                        }
+        weed_dm_frac = {
+            1: 0.42,
+            2: 0.30,
+            3: 0.33,
+            4: 0.32,
+            5: 0.46,
+            6: 0.59,
+            7: 0.70,
+            8: 0.57,
+            9: 0.33,
+            10: 0.37,
+            11: 0.62,
+            12: 0.62,
+        }
 
     else:
         raise ValueError('unexpected mode: {}, values are "irrigated" or "dryland"'.format(mode))
@@ -159,7 +161,7 @@ def create_days_harvest(mode, matrix_weather, site):
                                  })
 
     # start harvesting at the same point
-    harv_days = pd.date_range(start=dates.min() + pd.DateOffset(days=5), end=dates.max(), freq='{}D'.format(freq))
+    harv_days = pd.date_range(start=dates.min() + pd.DateOffset(days=5), end=dates.max(), freq=freq)
     set_trig = [trig[m] for m in harv_days.month]
     set_targ = [targ[m] for m in harv_days.month]
     days_harvest.loc[harv_days, 'harv_trig'] = set_trig
@@ -220,7 +222,7 @@ def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest
         matrix_weather.loc[:, 'irr_targ'] = 0.75
 
         # set trig/targ for summer days
-        idx = np.in1d(weather_data.loc[:, 'month'], [12, 1, 2]) #todo set to DOY_IRR
+        idx = np.in1d(weather_data.loc[:, 'month'], [12, 1, 2])  # todo set to DOY_IRR
         matrix_weather.loc[idx, 'irr_trig'] = 0.75
         matrix_weather.loc[idx, 'irr_targ'] = 0.90
 

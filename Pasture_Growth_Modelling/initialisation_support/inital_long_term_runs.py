@@ -22,7 +22,7 @@ from Pasture_Growth_Modelling.initialisation_support.comparison_support import m
 
 def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True):
     mode = 'irrigated'
-    print('running: {}, {}, {}'.format(mode, site, reseed))
+    print('running: {}, {}, reseed: {}'.format(mode, site, reseed))
     weather = get_vcsn_record(site)
     rest = get_restriction_record()
     params, doy_irr = get_params_doy_irr(mode)
@@ -67,12 +67,11 @@ def run_past_basgra_dryland(return_inputs=False, site='eyrewell', reseed=True):
 
 
 if __name__ == '__main__':
-    outdir = ksl_env.shared_drives(r"SLMACC_2020\pasture_growth_modelling\historical_runs")
+    outdir = ksl_env.shared_drives(r"SLMACC_2020\pasture_growth_modelling\historical_runs_v2")
     save = True
     data = {
         'irrigated_eyrewell': run_past_basgra_irrigated(),
         'irrigated_oxford': run_past_basgra_irrigated(site='oxford'),
-        'dryland_eyrewell': run_past_basgra_dryland(),
         'dryland_oxford': run_past_basgra_dryland(site='oxford'),
     }
     for i, k in enumerate(data.keys()):
@@ -81,10 +80,6 @@ if __name__ == '__main__':
     data2 = {e: make_mean_comparison(v, 'mean') for e, v in data.items()}
     data2['Horoata'] = get_horarata_data_old()
     data2['indicative_irr'] = get_indicative_irrigated()
-
-    for k, v in data2.items():
-        v.loc[:, 'month'] = v.index.month
-        v.set_index('month', inplace=True)
 
     out_vars = ['DM', 'DMH', 'YIELD', 'DMH_RYE', 'DM_RYE_RM', 'DMH_WEED', 'DM_WEED_RM', 'IRRIG', 'RAIN', 'EVAP', 'TRAN',
                 'per_PAW', 'pg', 'RESEEDED',
@@ -121,5 +116,5 @@ if __name__ == '__main__':
                           show=False, outdir=plt_outdir_sim, title_str='historical_')
     plot_multiple_monthly_results(data=data3, out_vars=out_vars, show=False, outdir=plt_outdir_aver_yr,
                                   title_str='average_year_', main_kwargs={'marker': 'o'})
-    plot_multiple_monthly_results(data=data2, out_vars=['pg'], show=(not save), outdir=plt_outdir_aver_yr,
+    plot_multiple_monthly_results(data=data2, out_vars=['pg', 'pgr'], show=(not save), outdir=plt_outdir_aver_yr,
                                   title_str='cumulative_average_year_', main_kwargs={'marker': 'o'})

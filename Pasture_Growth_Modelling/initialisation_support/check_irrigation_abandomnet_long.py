@@ -69,22 +69,23 @@ def create_irrigation_abandomnet_data(base_name, params, reseed_trig=-1, reseed_
                                               (1 - restrict.values)).transpose()
 
     # paddock level restrictions
-    levels = np.arange(5, 110, 5) / 100
+    levels = np.arange(0, 125, 25) / 100
     padock_values = {}
     temp_out = []
-    for ll, lu in zip(levels[0:-1], levels[1:]):
+    for i, (ll, lu) in enumerate(zip(levels[0:-1], levels[1:])):
         matrix_weather_new = matrix_weather.copy(deep=True)
 
         matrix_weather_new.loc[restrict <= ll, 'max_irr'] = 5
         matrix_weather_new.loc[restrict >= lu, 'max_irr'] = 0
         idx = (restrict > ll) & (restrict < lu)
-        matrix_weather_new.loc[idx, 'max_irr'] = 5 * ((restrict.loc[idx] - ll) / 0.05)
+        matrix_weather_new.loc[idx, 'max_irr'] = 5 * ((restrict.loc[idx] - ll) / 0.25)
 
         temp = run_basgra_nz(params, matrix_weather_new, days_harvest, doy_irr, verbose=False)
         temp_out.append(temp.values)
         temp.loc[:, 'per_PAW'] = temp.loc[:, 'PAW'] / temp.loc[:, 'MXPAW']
         temp.loc[:, 'pg'] = calc_pasture_growth(temp, days_harvest, 'from_yield', '1D', resamp_fun='mean')
         temp.loc[:, 'f_rest'] = restrict
+        temp.loc[:, 'RESEEDED'] += i
         padock_values['l:{} u:{}'.format(ll, lu)] = temp
     temp = np.mean(temp_out, axis=0)
 
@@ -107,7 +108,8 @@ if __name__ == '__main__':
     outdir = ksl_env.shared_drives(r"SLMACC_2020\pasture_growth_modelling\irrigation_tuning")
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    out, paddock_values = create_irrigation_abandomnet_data('b', params, reseed_trig=0.65, reseed_basal=0.70, site='eyrewell')
+    out, paddock_values = create_irrigation_abandomnet_data('b', params, reseed_trig=0.691, reseed_basal=0.722,
+                                                            site='eyrewell')
 
     # run some stats
     outkeys = ['BASAL', 'f_rest', 'IRRIG', 'per_PAW', 'pg']
@@ -147,17 +149,17 @@ if __name__ == '__main__':
         ax.set_xlabel(k)
         ax.set_ylabel('pg_dif (paddock-partial)')
         if save:
-            fig.savefig(os.path.join(outdir,'{}_dif.png'.format(k)))
+            fig.savefig(os.path.join(outdir, '{}_dif.png'.format(k)))
 
     if save:
         dif_data.groupby('month').describe().round(3).to_csv(os.path.join(outdir,
                                                                           'paddock_mixed_diff_month_desc.csv'))
 
     strs = ['{}-{:02d}-15'.format(int(e), int(f)) for e, f in dif_data[['year', 'month']].itertuples(False, None)]
-    dif_data.loc[:,'date'] = pd.to_datetime(strs)
+    dif_data.loc[:, 'date'] = pd.to_datetime(strs)
     dif_data.set_index('date', inplace=True)
 
-    fig, (ax,ax2) = plt.subplots(2, sharex=True)
+    fig, (ax, ax2) = plt.subplots(2, sharex=True)
     ax.plot(dif_data.index, dif_data.pg_dif)
     ax.set_ylabel('pg_dif (paddock-partial)')
     ax.axhline(0, linestyle='--')
@@ -166,8 +168,8 @@ if __name__ == '__main__':
     if save:
         fig.savefig(os.path.join(outdir, 'monthly_dif.png'.format(k)), dpi=500)
 
-    out_vars = ['DM', 'YIELD', 'BASAL', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'per_PAW', 'pg', 'f_rest']
-    plot_multiple_results(paddock_values, out_vars=out_vars, show=True, rolling=30, main_kwargs={'alpha': 0.2},
+    out_vars = ['DM', 'YIELD', 'BASAL', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'per_PAW', 'pg', 'f_rest', 'RESEEDED']
+    plot_multiple_results(paddock_values, out_vars=out_vars, show=False, rolling=30, main_kwargs={'alpha': 0.2},
                           label_main=False,
                           label_rolling=True)
     plot_multiple_results(out, out_vars=out_vars, rolling=30, main_kwargs={'alpha': 0.2}, label_main=False,
