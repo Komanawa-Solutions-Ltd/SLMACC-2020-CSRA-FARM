@@ -185,6 +185,136 @@ def calc_wet_recurance():
     out_years.to_csv(os.path.join(backed_dir, 'smd_wet_years.csv'))
 
 
+def calc_wet_recurance_ndays():
+    ndays = {
+        'org': {
+            5: 14,
+            6: 11,
+            7: 11,
+            8: 13,
+            9: 13,
+        }
+    }
+    for v in ndays.values():
+        v.update({
+            1: 99,
+            2: 99,
+            3: 99,
+            4: 99,
+            10: 99,
+            11: 99,
+            12: 99,
+        })
+
+    data = get_vcsn_record().reset_index()
+    temp = calc_sma_smd(data['rain'], data['pet'], data.date, 150, 1)
+
+    trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
+    data.loc[:, trans_cols] = temp.loc[:, trans_cols]
+    data.loc[:, 'ndays_rain'] = (data.loc[:, 'rain'] > 0.01).astype(float)
+    data.to_csv(os.path.join(backed_dir, 'ndays_wet_raw.csv'))
+
+    grouped_data = data.loc[:, ['month', 'year', 'rain', 'ndays_rain']].groupby(['month', 'year']).sum().reset_index()
+
+    grouped_data.to_csv(os.path.join(backed_dir, 'ndays_wet_monthly_data.csv'))
+
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+                                                                                        'ndays_wet_monthly_data_desc.csv'))
+
+    # number of n days
+    out_keys2 = []
+    for k, val in ndays.items():
+        ok = '{}'.format(k)
+        out_keys2.append(ok)
+        grouped_data.loc[:, 'limit'] = grouped_data.loc[:, 'month']
+        grouped_data = grouped_data.replace({'limit': val})
+        grouped_data.loc[:, ok] = grouped_data.loc[:, 'ndays_rain'] >= grouped_data.loc[:, 'limit']
+
+    out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
+    drop_keys = []
+    for k in out_keys2:
+        temp = (out.loc[:, k].loc[:, 'sum'] == 48).all() or (out.loc[:, k].loc[:, 'sum'] == 0).all()
+        if temp:
+            drop_keys.append(k)
+
+    out = out.drop(columns=drop_keys)
+    out, out_years = add_pga(grouped_data, set(out_keys2) - set(drop_keys), out)
+    t = pd.Series([' '.join(e) for e in out.columns])
+    idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
+    out.loc[:, out.columns[idx]] *= 100
+
+    out.to_csv(os.path.join(backed_dir, 'ndays_wet_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'ndays_wet_prob_only_prob.csv'), float_format='%.1f%%')
+
+    out_years.to_csv(os.path.join(backed_dir, 'ndays_wet_years.csv'))
+
+
+def calc_dry_recurance_ndays():
+    ndays = {
+        'lower_q': { # based on the sma -20 10days
+            1: 31,  # lower quartile of normal
+            2: 45,  # lower quartile of normal
+            3: 38,  # lower quartile of normal
+
+            4: 46,  # todo this is not good for dry
+            5: 37,  # todo this is not good for dry
+            8: 25,  # todo this is not good for dry
+            9: 20,  # todo this is not good for dry
+
+            10: 53,  # lower quartile of normal
+            11: 43,  # lower quartile of normal
+            12: 47,  # lower quartile of normal
+        }
+    }
+    for v in ndays.values():
+        v.update({
+            6: -1,
+            7: -1,
+        })
+
+    data = get_vcsn_record().reset_index()
+    temp = calc_sma_smd(data['rain'], data['pet'], data.date, 150, 1)
+
+    trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
+    data.loc[:, trans_cols] = temp.loc[:, trans_cols]
+    data.loc[:, 'ndays_rain'] = (data.loc[:, 'rain'] > 0.01).astype(float)
+    data.to_csv(os.path.join(backed_dir, 'ndays_dry_raw.csv'))
+
+    grouped_data = data.loc[:, ['month', 'year', 'rain', 'ndays_rain']].groupby(['month', 'year']).sum().reset_index()
+
+    grouped_data.to_csv(os.path.join(backed_dir, 'ndays_dry_monthly_data.csv'))
+
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+                                                                                        'ndays_dry_monthly_data_desc.csv'))
+
+    # number of n days
+    out_keys2 = []
+    for k, val in ndays.items():
+        ok = '{}'.format(k)
+        out_keys2.append(ok)
+        grouped_data.loc[:, 'limit'] = grouped_data.loc[:, 'month']
+        grouped_data = grouped_data.replace({'limit': val})
+        grouped_data.loc[:, ok] = grouped_data.loc[:, 'rain'] <= grouped_data.loc[:, 'limit']
+
+    out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
+    drop_keys = []
+    for k in out_keys2:
+        temp = (out.loc[:, k].loc[:, 'sum'] == 48).all() or (out.loc[:, k].loc[:, 'sum'] == 0).all()
+        if temp:
+            drop_keys.append(k)
+
+    out = out.drop(columns=drop_keys)
+    out, out_years = add_pga(grouped_data, set(out_keys2) - set(drop_keys), out)
+    t = pd.Series([' '.join(e) for e in out.columns])
+    idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
+    out.loc[:, out.columns[idx]] *= 100
+
+    out.to_csv(os.path.join(backed_dir, 'ndays_dry_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'ndays_dry_prob_only_prob.csv'), float_format='%.1f%%')
+
+    out_years.to_csv(os.path.join(backed_dir, 'ndays_dry_years.csv'))
+
+
 def old_calc_restrict_recurance():
     data = get_restriction_record()
 
@@ -544,9 +674,11 @@ def plot_restriction_record():
 
 
 if __name__ == '__main__':
-    calc_restrict_cumulative_recurance()
-    calc_dry_recurance()
-    calc_wet_recurance()
-    calc_cold_recurance()
-
-    calc_hot_recurance()
+    calc_dry_recurance_ndays()
+    # calc_wet_recurance_ndays()
+    # calc_restrict_cumulative_recurance()
+    # calc_dry_recurance()
+    # calc_wet_recurance()
+    # calc_cold_recurance()
+#
+# calc_hot_recurance()
