@@ -67,7 +67,7 @@ def run_past_basgra_dryland(return_inputs=False, site='eyrewell', reseed=True):
 
 
 if __name__ == '__main__':
-    outdir = ksl_env.shared_drives(r"SLMACC_2020\pasture_growth_modelling\historical_runs_v2")
+    outdir = ksl_env.shared_drives(r"Z2003_SLMACC\pasture_growth_modelling\historical_runs_v2")
     save = True
     data = {
         'irrigated_eyrewell': run_past_basgra_irrigated(),

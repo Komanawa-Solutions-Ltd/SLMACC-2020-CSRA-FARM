@@ -47,7 +47,7 @@ def get_vcsn_record(site='eyrewell', recalc=False):
 
 
 def get_restriction_record(recalc=False):
-    data_path = ksl_env.shared_drives(r"SLMACC_2020\WIL data\restriction_record.csv")
+    data_path = ksl_env.shared_drives(r"Z2003_SLMACC\WIL data\restriction_record.csv")
     if not recalc and os.path.exists(data_path):
         int_keys = {
             'day':int,
@@ -64,7 +64,7 @@ def get_restriction_record(recalc=False):
 
         return data
 
-    raw_data_path = ksl_env.shared_drives(r"SLMACC_2020\WIL data\OSHB_WaimakRiverData_withRestrictionInfo.xlsx")
+    raw_data_path = ksl_env.shared_drives(r"Z2003_SLMACC\WIL data\OSHB_WaimakRiverData_withRestrictionInfo.xlsx")
     data = pd.read_excel(raw_data_path).loc[:, ['OHB flow m3/s', 'Take rate', 'Day', 'Month', 'Year']]
     data = data.rename(
         columns={'OHB flow m3/s': 'flow', 'Take rate': 'take', 'Day': 'day', 'Month': 'month', 'Year': 'year'})

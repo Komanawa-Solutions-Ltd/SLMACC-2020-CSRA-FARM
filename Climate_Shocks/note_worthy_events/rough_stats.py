@@ -10,7 +10,7 @@ from sklearn.feature_selection import mutual_info_classif, mutual_info_regressio
 from Climate_Shocks.note_worthy_events.final_event_recurance import get_org_data, backed_dir
 from Climate_Shocks.get_past_record import get_restriction_record
 
-outdir = ksl_env.shared_drives(r"SLMACC_2020\event_definition\mutual_info")
+outdir = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\mutual_info")
 if not os.path.exists(outdir):
     os.makedirs(outdir)
 

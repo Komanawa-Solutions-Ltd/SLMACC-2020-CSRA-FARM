@@ -14,8 +14,8 @@ import os
 import matplotlib.pyplot as plt
 import itertools
 
-backed_dir = ksl_env.shared_drives("SLMACC_2020\event_definition/v4")
-unbacked_dir = ksl_env.mh_unbacked("SLMACC_2020\event_definition")
+backed_dir = ksl_env.shared_drives("Z2003_SLMACC\event_definition/v4")
+unbacked_dir = ksl_env.mh_unbacked("Z2003_SLMACC\event_definition")
 
 if not os.path.exists(backed_dir):
     os.makedirs(backed_dir)
@@ -256,10 +256,10 @@ def calc_dry_recurance_ndays():
             2: 45,  # lower quartile of normal
             3: 38,  # lower quartile of normal
 
-            4: 46,  # todo this is not good for dry
-            5: 37,  # todo this is not good for dry
-            8: 25,  # todo this is not good for dry
-            9: 20,  # todo this is not good for dry
+            4: 46,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
+            5: 37,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
+            8: 35,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
+            9: 30,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
 
             10: 53,  # lower quartile of normal
             11: 43,  # lower quartile of normal
@@ -313,6 +313,47 @@ def calc_dry_recurance_ndays():
     out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'ndays_dry_prob_only_prob.csv'), float_format='%.1f%%')
 
     out_years.to_csv(os.path.join(backed_dir, 'ndays_dry_years.csv'))
+
+def calc_hot_recurance_variable():
+    var_to_use = {
+        1: 'tmax',
+        2: 'tmax',
+        3: 'tmax',
+        4: 'tmean',
+        5: 'tmean',
+        6: 'tmax',
+        7: 'tmax',
+        8: 'tmean', # to use in conjunction with
+        9: 'tmean', # to use in conjunction with
+        10: 'tmax',
+        11: 'tmax',
+        12: 'tmax',
+
+    }
+    ndays = {
+        'lower_q': { # based on the sma -20 10days
+
+            4: 46,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
+            5: 37,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
+            8: 35,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
+            9: 30,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
+
+        }
+    }
+    for v in ndays.values():
+        v.update({
+            1: 31,  # lower quartile of normal
+            2: 45,  # lower quartile of normal
+            3: 38,  # lower quartile of normal
+            6: -1,
+            7: -1,
+            10: 53,  # lower quartile of normal
+            11: 43,  # lower quartile of normal
+            12: 47,  # lower quartile of normal
+        })
+
+    data = get_vcsn_record().reset_index()
+    data.loc[:,'tmean']
 
 
 def old_calc_restrict_recurance():

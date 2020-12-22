@@ -20,8 +20,8 @@ from supporting_functions.plotting import plot_multiple_results
 from supporting_functions.woodward_2020_params import get_woodward_mean_full_params
 from input_output_keys import matrix_weather_keys_pet
 
-backed_dir = ksl_env.shared_drives("SLMACC_2020\pasture_growth_modelling\dryland tuning")
-unbacked_dir = ksl_env.mh_unbacked("SLMACC_2020\pasture_growth_modelling\dryland tuning")
+backed_dir = ksl_env.shared_drives("Z2003_SLMACC\pasture_growth_modelling\dryland tuning")
+unbacked_dir = ksl_env.mh_unbacked("Z2003_SLMACC\pasture_growth_modelling\dryland tuning")
 
 if not os.path.exists(backed_dir):
     os.makedirs(backed_dir)
