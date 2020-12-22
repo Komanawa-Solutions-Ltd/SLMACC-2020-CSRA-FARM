@@ -23,7 +23,7 @@ def get_vcsn_record(site='eyrewell', recalc=False):
     else:
         raise NotImplementedError('site: {} not implemented'.format(site))
     key = 'weather_data'
-    data_path = ksl_env.shared_drives(r"SLMACC_2020\weather_date\{}.hdf".format(site))
+    data_path = ksl_env.shared_drives(r"Z2003_SLMACC\weather_date\{}.hdf".format(site))
     if not os.path.exists(os.path.dirname(data_path)):
         os.makedirs(os.path.dirname(data_path))
 
