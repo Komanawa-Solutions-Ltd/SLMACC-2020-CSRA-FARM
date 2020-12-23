@@ -12,14 +12,14 @@ from Pasture_Growth_Modelling.initialisation_support.pasture_growth_deficit impo
 hot = '07d_d_tmax_25'
 cold = '10d_d_tmean_07'
 dry = '10d_d_smd000_sma-20'
-wet = '10d_d_r0_smd0'
+wet = 'org'  # move wet to n days with rain in month
 rest = 'eqliklyd_rest'
 
 events = [
     ('hot', hot),
     ('rolling_cold', cold),
     ('dry', dry),
-    ('smd_wet', wet),
+    ('ndays_wet', wet),
     ('rest', rest),
 
 ]
@@ -120,4 +120,4 @@ if __name__ == '__main__':
     t = pd.Series([' '.join(e) for e in out.columns])
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
-    out.to_csv(os.path.join(backed_dir, 'current_choice.csv'), float_format='%.1f%%')
+    out.to_csv(os.path.join(backed_dir, 'current_choice_v2.csv'), float_format='%.1f%%')

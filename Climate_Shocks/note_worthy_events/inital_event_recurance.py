@@ -35,6 +35,7 @@ def prob(x):
     out = np.nansum(x) / len(x)
     return out
 
+
 def add_pga_from_idx(idx):
     idx = idx.dropna()
     irr_temp = irrigated_pga.loc[idx].reset_index()
@@ -44,6 +45,7 @@ def add_pga_from_idx(idx):
 
     temp3 = pd.merge(irr_temp2, dry_temp2, left_index=True, right_index=True, suffixes=('_irr', '_dry'))
     return pd.DataFrame(temp3)
+
 
 def add_pga(grouped_data, sim_keys, outdata):
     grouped_data = grouped_data.set_index(['month', 'year'])
@@ -196,7 +198,7 @@ def calc_wet_recurance():
 
 def calc_wet_recurance_ndays():
     ndays = {
-        'org': {
+        'org': {  # todo this is the best value!
             5: 14,
             6: 11,
             7: 11,
@@ -258,8 +260,112 @@ def calc_wet_recurance_ndays():
     out_years.to_csv(os.path.join(backed_dir, 'ndays_wet_years.csv'))
 
 
+def calc_dry_rolling():
+    bulk_ndays = [5, 10, 15, 20]
+    ndays = {}
+    for bnd in bulk_ndays:
+        ndays['ndays{}'.format(bnd)] = {k:bnd for k in range(1,13)}
+
+    thresholds = {  # todo start here
+        'first': {
+            4: 15,
+            5: 10,
+            8: 5,
+            9: 10,
+        },
+        'first-3': {
+            4: 15-3,
+            5: 10-3,
+            8: 5-3,
+            9: 10-3,
+        },
+        'first-5': {
+            4: 15-5,
+            5: 10-5,
+            8: 5-5,
+            9: 10-5,
+        },
+        'first-10': {
+            4: 15-10,
+            5: 10-10,
+            8: 5-10,
+            9: 10-10,
+        },
+        'zero': {
+            4: 0,
+            5: 0,
+            8: 0,
+            9: 0,
+        },
+        'one': {
+            4: 1,
+            5: 1,
+            8: 1,
+            9: 1,
+        },
+        'first-7': {
+            4: 15-7,
+            5: 10-7,
+            8: 5-7,
+            9: 10-7,
+        },
+    }
+    for v in thresholds.values():
+        v.update({
+            1: -1,
+            2: -1,
+            3: -1,
+            6: -1,
+            7: -1,
+
+            10: -1,
+            11: -1,
+            12: -1,
+        })
+
+    data = get_vcsn_record().reset_index()
+    data.loc[:, 'roll_rain_10'] = data.loc[:, 'rain'].rolling(10).sum()
+
+    out_keys = []
+    outdata = pd.DataFrame(
+        index=pd.MultiIndex.from_product([range(1, 13), range(1972, 2020)], names=['month', 'year']))
+    for nd, thresh in itertools.product(ndays.keys(), thresholds.keys()):
+        temp_data = data.copy(deep=True)
+        ok = '{}_{}'.format(thresh, nd)
+        out_keys.append(ok)
+        for m in range(1, 13):
+            idx = data.month == m
+            temp_data.loc[idx, ok] = temp_data.loc[idx, 'roll_rain_10'] <= thresholds[thresh][m]
+            temp_data.loc[idx, 'ndays'] = ndays[nd][m]
+        temp_data = temp_data.groupby(['month', 'year']).agg({ok: 'sum', 'ndays': 'mean'})
+        outdata.loc[:, ok] = temp_data.loc[:, ok] >= temp_data.loc[:, 'ndays']
+
+    outdata.to_csv(os.path.join(backed_dir, 'rolling_dry_monthly.csv'))
+    outdata = outdata.reset_index()
+
+    out = outdata.loc[:, ['month'] + out_keys].groupby(['month']).aggregate(['sum', prob])
+    drop_keys = []
+    for k in out_keys:
+        temp = (out.loc[:, k].loc[:, 'sum'] == 48).all() or (out.loc[:, k].loc[:, 'sum'] == 0).all()
+        if temp:
+            drop_keys.append(k)
+
+    out = out.drop(columns=drop_keys)
+    out, out_years = add_pga(outdata, set(out_keys) - set(drop_keys), out)
+    t = pd.Series([' '.join(e) for e in out.columns])
+    idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
+    out.loc[:, out.columns[idx]] *= 100
+
+    out.to_csv(os.path.join(backed_dir, 'rolling_dry_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'variable_hot_prob_only_prob.csv'),
+                                        float_format='%.1f%%')
+
+    out_years.to_csv(os.path.join(backed_dir, 'rolling_dry_years.csv'))
+    return list(set(out_keys) - set(drop_keys)), out
+
+
 def calc_dry_recurance_ndays():
-    ndays = {
+    ndays = {  # todo happy with this value other than middle ones
         'lower_q': {  # based on the sma -20 10days
             1: 31,  # lower quartile of normal
             2: 45,  # lower quartile of normal
@@ -297,6 +403,20 @@ def calc_dry_recurance_ndays():
             5: 37 - 5,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
             8: 35 - 5,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
             9: 30 - 5,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
+
+            10: 53,  # lower quartile of normal
+            11: 43,  # lower quartile of normal
+            12: 47,  # lower quartile of normal
+        },
+        'down_7': {  # based on the sma -20 10days
+            1: 31,  # lower quartile of normal
+            2: 45,  # lower quartile of normal
+            3: 38,  # lower quartile of normal
+
+            4: 46 - 7,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
+            5: 37 - 7,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
+            8: 35 - 7,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
+            9: 30 - 7,  # lower quartile of normal, pair with 'hot' as pet is imporant in this month
 
             10: 53,  # lower quartile of normal
             11: 43,  # lower quartile of normal
@@ -369,6 +489,12 @@ def calc_hot_recurance_variable():
 
     }
     ndays = {
+        '5day': {
+            4: 5,
+            5: 5,
+            8: 5,
+            9: 5,
+        },
         '7day': {
             4: 7,
             5: 7,
@@ -392,18 +518,34 @@ def calc_hot_recurance_variable():
     thresholds = {
         'upper_q': {  # based on the sma -20 10days
 
-            4: 12.54,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
-            5: 9.69,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
-            8: 7.8,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
-            9: 9.99,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+            4: 18,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+            5: 15,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+            8: 13,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+            9: 15,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
 
         },
-        'median': {  # based on the sma -20 10days
+        '2_less': {  # based on the sma -20 10days
 
-            4: 12.06,  # median of normal, pair with 'hot' as pet is imporant in this month
-            5: 9.1,  # median of normal, pair with 'hot' as pet is imporant in this month
-            8: 7.07,  # median of normal, pair with 'hot' as pet is imporant in this month
-            9: 9.29,  # median of normal, pair with 'hot' as pet is imporant in this month
+            4: 18 - 2,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+            5: 15 - 2,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+            8: 13 - 2,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+            9: 15 - 2,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+
+        },
+        '5_less': {  # based on the sma -20 10days
+
+            4: 18 - 5,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+            5: 15 - 5,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+            8: 13 - 5,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+            9: 15 - 5,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+
+        },
+        '7_less': {  # based on the sma -20 10days
+
+            4: 18 - 7,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+            5: 15 - 7,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+            8: 13 - 7,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
+            9: 15 - 7,  # upper quartile of normal, pair with 'hot' as pet is imporant in this month
 
         }
     }
@@ -472,7 +614,7 @@ def calc_hot_recurance_variable():
 def joint_hot_dry():
     hot = pd.read_csv(os.path.join(backed_dir, 'variable_hot_years.csv'), index_col=0)
     hot_keys = list(hot.keys())
-    dry = pd.read_csv(os.path.join(backed_dir, 'ndays_dry_years.csv'), index_col=0)
+    dry = pd.read_csv(os.path.join(backed_dir, 'rolling_dry_years.csv'), index_col=0)
     dry_keys = list(dry.keys())
     data = pd.merge(hot, dry, left_index=True, right_index=True)
     use_data = []
@@ -487,7 +629,7 @@ def joint_hot_dry():
     _describe_names = []
     for e in _org_describe_names:
         _describe_names.extend(['{}_irr'.format(e), '{}_dry'.format(e)])
-    full_event_names = ['{}_{}'.format(h, d) for h, d in itertools.product(hot_keys, dry_keys)]
+    full_event_names = ['hot:{}_dry:{}'.format(h, d) for h, d in itertools.product(hot_keys, dry_keys)]
     outdata = pd.DataFrame(index=pd.Series(range(1, 13), name='month'),
                            columns=pd.MultiIndex.from_product((full_event_names,
                                                                (['prob'] + _describe_names))
@@ -495,8 +637,10 @@ def joint_hot_dry():
     # make base data
     print('making base data')
     for hot_nm, dry_nm in itertools.product(hot_keys, dry_keys):
-        en = '{}_{}'.format(hot_nm, dry_nm)
+        en = 'hot:{}_dry:{}'.format(hot_nm, dry_nm)
         joint_event = pd.Series(list(set(use_data.loc[:, hot_nm]).intersection(set(use_data.loc[:, dry_nm]))))
+        if joint_event.dropna().empty:
+            continue
         temp = make_prob(joint_event)
         outdata.loc[temp.index, (en, 'prob')] = temp.values[:, 0]
         temp = add_pga_from_idx(joint_event)
@@ -509,12 +653,11 @@ def joint_hot_dry():
 
     idx = t.str.contains('prob')
     outdata.loc[:, outdata.columns[idx]].to_csv(os.path.join(backed_dir, 'joint_hot_dry_prob_only_prob.csv'),
-                                        float_format='%.1f%%')
+                                                float_format='%.1f%%')
     idx = t.str.contains('mean')
     outdata.loc[:, outdata.columns[idx]].to_csv(os.path.join(backed_dir, 'joint_hot_dry_mean_impact.csv'),
-                                        float_format='%.1f%%')
+                                                float_format='%.1f%%')
     return full_event_names, outdata
-
 
 
 def make_prob(in_series):

@@ -50,7 +50,7 @@ def make_data(save=False, restrict_cat=True):
         data.loc[:, 'prev_{}'.format(k)] = data.loc[:, k].shift(1)
 
     if save:
-        path = os.path.join(backed_dir, 'annual_event_data.csv')
+        path = os.path.join(backed_dir, 'annual_event_data_v2.csv')
         with open(path, 'w') as f:
             f.write('0=normal temp: -1=cold; ; 1=hot; Precip: -1=wet; 1=dry; rest: 1=anomalous restrictions. '
                     'prev_{} = previous months data  \n')
@@ -160,5 +160,6 @@ def run_stats2():
 
 
 if __name__ == '__main__':
-    run_stats2()
+    make_data(True)
+
     pass
