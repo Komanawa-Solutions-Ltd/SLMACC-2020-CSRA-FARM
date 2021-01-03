@@ -5,14 +5,14 @@
 import pandas as pd
 import numpy as np
 import os
-from Climate_Shocks.note_worthy_events.inital_event_recurance import backed_dir
+from Climate_Shocks.climate_shocks_env import event_def_dir as backed_dir
 from Pasture_Growth_Modelling.initialisation_support.pasture_growth_deficit import calc_past_pasture_growth_anomaly
 
 # todo final check with Water Strategies
 hot = '07d_d_tmax_25'
 cold = '10d_d_tmean_07'
 dry = '10d_d_smd000_sma-20'
-wet = 'org'  # move wet to n days with rain in month
+wet = 'org'  # moved wet to n days with rain in month
 rest = 'eqliklyd_rest'
 
 events = [

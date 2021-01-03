@@ -7,7 +7,8 @@ import numpy as np
 import os
 import ksl_env
 from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
-from Climate_Shocks.note_worthy_events.final_event_recurance import get_org_data, backed_dir
+from Climate_Shocks.note_worthy_events.final_event_recurance import get_org_data
+from Climate_Shocks.climate_shocks_env import event_def_dir as backed_dir
 from Climate_Shocks.get_past_record import get_restriction_record
 
 outdir = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\mutual_info")

@@ -4,7 +4,7 @@
  """
 
 from Climate_Shocks.vcsn_pull import vcsn_pull_single_site
-from Climate_Shocks.note_worthy_events.simple_smd_soilt import calc_sma_smd
+from Climate_Shocks.note_worthy_events.simple_soil_moisture import calc_sma_smd
 from Climate_Shocks.get_past_record import get_restriction_record, get_vcsn_record
 from Pasture_Growth_Modelling.initialisation_support.pasture_growth_deficit import calc_past_pasture_growth_anomaly
 import ksl_env
@@ -13,13 +13,9 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import itertools
+from Climate_Shocks.climate_shocks_env import event_def_dir
 
-backed_dir = ksl_env.shared_drives("Z2003_SLMACC\event_definition/v4")
 unbacked_dir = ksl_env.mh_unbacked("Z2003_SLMACC\event_definition")
-
-if not os.path.exists(backed_dir):
-    os.makedirs(backed_dir)
-
 if not os.path.exists(unbacked_dir):
     os.makedirs(unbacked_dir)
 
@@ -81,7 +77,7 @@ def calc_dry_recurance():
 
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
     data.loc[:, trans_cols] = temp.loc[:, trans_cols]
-    data.to_csv(os.path.join(backed_dir, 'dry_raw.csv'))
+    data.to_csv(os.path.join(event_def_dir, 'dry_raw.csv'))
 
     smd_thresholds = [0, -110, -110]
     sma_thresholds = [-20, 0, -20]
@@ -95,8 +91,8 @@ def calc_dry_recurance():
     grouped_data = data.loc[:, ['month', 'year',
                                 'smd', 'sma'] + out_keys].groupby(['month', 'year']).sum().reset_index()
 
-    grouped_data.to_csv(os.path.join(backed_dir, 'dry_monthly_data.csv'))
-    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+    grouped_data.to_csv(os.path.join(event_def_dir, 'dry_monthly_data.csv'))
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(event_def_dir,
                                                                                         'dry_monthly_data_desc.csv'))
     out_keys2 = []
     for nd in ndays:
@@ -118,10 +114,10 @@ def calc_dry_recurance():
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
 
-    out.to_csv(os.path.join(backed_dir, 'dry_prob.csv'), float_format='%.1f%%')
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'dry_prob_only_prob.csv'), float_format='%.1f%%')
+    out.to_csv(os.path.join(event_def_dir, 'dry_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'dry_prob_only_prob.csv'), float_format='%.1f%%')
 
-    out_years.to_csv(os.path.join(backed_dir, 'dry_years.csv'))
+    out_years.to_csv(os.path.join(event_def_dir, 'dry_years.csv'))
 
 
 def calc_wet_recurance():
@@ -139,7 +135,7 @@ def calc_wet_recurance():
         ax3.plot(data.date, data.rain)
         plt.show()
 
-    data.to_csv(os.path.join(backed_dir, 'smd_wet_raw.csv'))
+    data.to_csv(os.path.join(event_def_dir, 'smd_wet_raw.csv'))
 
     thresholds_rain = [5, 3, 1, 0]
     thresholds_smd = [0, -5, -10]
@@ -164,9 +160,9 @@ def calc_wet_recurance():
     grouped_data = grouped_data.replace({'rain_an_med': temp})
     grouped_data.loc[:, 'rain_an_med'] = grouped_data.loc[:, 'rain'] - grouped_data.loc[:, 'rain_an_med']
 
-    grouped_data.to_csv(os.path.join(backed_dir, 'smd_wet_monthly_data.csv'))
+    grouped_data.to_csv(os.path.join(event_def_dir, 'smd_wet_monthly_data.csv'))
 
-    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(event_def_dir,
                                                                                         'smd_wet_monthly_data_desc.csv'))
 
     # number of n days
@@ -190,10 +186,10 @@ def calc_wet_recurance():
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
 
-    out.to_csv(os.path.join(backed_dir, 'smd_wet_prob.csv'), float_format='%.1f%%')
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'smd_wet_prob_only_prob.csv'), float_format='%.1f%%')
+    out.to_csv(os.path.join(event_def_dir, 'smd_wet_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'smd_wet_prob_only_prob.csv'), float_format='%.1f%%')
 
-    out_years.to_csv(os.path.join(backed_dir, 'smd_wet_years.csv'))
+    out_years.to_csv(os.path.join(event_def_dir, 'smd_wet_years.csv'))
 
 
 def calc_wet_recurance_ndays():
@@ -223,13 +219,13 @@ def calc_wet_recurance_ndays():
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
     data.loc[:, trans_cols] = temp.loc[:, trans_cols]
     data.loc[:, 'ndays_rain'] = (data.loc[:, 'rain'] > 0.01).astype(float)
-    data.to_csv(os.path.join(backed_dir, 'ndays_wet_raw.csv'))
+    data.to_csv(os.path.join(event_def_dir, 'ndays_wet_raw.csv'))
 
     grouped_data = data.loc[:, ['month', 'year', 'rain', 'ndays_rain']].groupby(['month', 'year']).sum().reset_index()
 
-    grouped_data.to_csv(os.path.join(backed_dir, 'ndays_wet_monthly_data.csv'))
+    grouped_data.to_csv(os.path.join(event_def_dir, 'ndays_wet_monthly_data.csv'))
 
-    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(event_def_dir,
                                                                                         'ndays_wet_monthly_data_desc.csv'))
 
     # number of n days
@@ -254,10 +250,10 @@ def calc_wet_recurance_ndays():
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
 
-    out.to_csv(os.path.join(backed_dir, 'ndays_wet_prob.csv'), float_format='%.1f%%')
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'ndays_wet_prob_only_prob.csv'), float_format='%.1f%%')
+    out.to_csv(os.path.join(event_def_dir, 'ndays_wet_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'ndays_wet_prob_only_prob.csv'), float_format='%.1f%%')
 
-    out_years.to_csv(os.path.join(backed_dir, 'ndays_wet_years.csv'))
+    out_years.to_csv(os.path.join(event_def_dir, 'ndays_wet_years.csv'))
 
 
 def calc_dry_rolling():
@@ -340,7 +336,7 @@ def calc_dry_rolling():
         temp_data = temp_data.groupby(['month', 'year']).agg({ok: 'sum', 'ndays': 'mean'})
         outdata.loc[:, ok] = temp_data.loc[:, ok] >= temp_data.loc[:, 'ndays']
 
-    outdata.to_csv(os.path.join(backed_dir, 'rolling_dry_monthly.csv'))
+    outdata.to_csv(os.path.join(event_def_dir, 'rolling_dry_monthly.csv'))
     outdata = outdata.reset_index()
 
     out = outdata.loc[:, ['month'] + out_keys].groupby(['month']).aggregate(['sum', prob])
@@ -356,11 +352,11 @@ def calc_dry_rolling():
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
 
-    out.to_csv(os.path.join(backed_dir, 'rolling_dry_prob.csv'), float_format='%.1f%%')
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'variable_hot_prob_only_prob.csv'),
+    out.to_csv(os.path.join(event_def_dir, 'rolling_dry_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'variable_hot_prob_only_prob.csv'),
                                         float_format='%.1f%%')
 
-    out_years.to_csv(os.path.join(backed_dir, 'rolling_dry_years.csv'))
+    out_years.to_csv(os.path.join(event_def_dir, 'rolling_dry_years.csv'))
     return list(set(out_keys) - set(drop_keys)), out
 
 
@@ -435,13 +431,13 @@ def calc_dry_recurance_ndays():
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
     data.loc[:, trans_cols] = temp.loc[:, trans_cols]
     data.loc[:, 'ndays_rain'] = (data.loc[:, 'rain'] > 0.01).astype(float)
-    data.to_csv(os.path.join(backed_dir, 'ndays_dry_raw.csv'))
+    data.to_csv(os.path.join(event_def_dir, 'ndays_dry_raw.csv'))
 
     grouped_data = data.loc[:, ['month', 'year', 'rain', 'ndays_rain']].groupby(['month', 'year']).sum().reset_index()
 
-    grouped_data.to_csv(os.path.join(backed_dir, 'ndays_dry_monthly_data.csv'))
+    grouped_data.to_csv(os.path.join(event_def_dir, 'ndays_dry_monthly_data.csv'))
 
-    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(event_def_dir,
                                                                                         'ndays_dry_monthly_data_desc.csv'))
 
     # number of n days
@@ -466,10 +462,10 @@ def calc_dry_recurance_ndays():
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
 
-    out.to_csv(os.path.join(backed_dir, 'ndays_dry_prob.csv'), float_format='%.1f%%')
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'ndays_dry_prob_only_prob.csv'), float_format='%.1f%%')
+    out.to_csv(os.path.join(event_def_dir, 'ndays_dry_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'ndays_dry_prob_only_prob.csv'), float_format='%.1f%%')
 
-    out_years.to_csv(os.path.join(backed_dir, 'ndays_dry_years.csv'))
+    out_years.to_csv(os.path.join(event_def_dir, 'ndays_dry_years.csv'))
 
 
 def calc_hot_recurance_variable():
@@ -588,7 +584,7 @@ def calc_hot_recurance_variable():
         temp_data = temp_data.groupby(['month', 'year']).agg({ok: 'sum', 'ndays': 'mean'})
         outdata.loc[:, ok] = temp_data.loc[:, ok] >= temp_data.loc[:, 'ndays']
 
-    outdata.to_csv(os.path.join(backed_dir, 'variable_hot_monthly.csv'))
+    outdata.to_csv(os.path.join(event_def_dir, 'variable_hot_monthly.csv'))
     outdata = outdata.reset_index()
 
     out = outdata.loc[:, ['month'] + out_keys].groupby(['month']).aggregate(['sum', prob])
@@ -604,17 +600,17 @@ def calc_hot_recurance_variable():
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
 
-    out.to_csv(os.path.join(backed_dir, 'variable_hot_prob.csv'), float_format='%.1f%%')
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'variable_hot_prob_only_prob.csv'),
+    out.to_csv(os.path.join(event_def_dir, 'variable_hot_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'variable_hot_prob_only_prob.csv'),
                                         float_format='%.1f%%')
 
-    out_years.to_csv(os.path.join(backed_dir, 'variable_hot_years.csv'))
+    out_years.to_csv(os.path.join(event_def_dir, 'variable_hot_years.csv'))
 
 
 def joint_hot_dry():
-    hot = pd.read_csv(os.path.join(backed_dir, 'variable_hot_years.csv'), index_col=0)
+    hot = pd.read_csv(os.path.join(event_def_dir, 'variable_hot_years.csv'), index_col=0)
     hot_keys = list(hot.keys())
-    dry = pd.read_csv(os.path.join(backed_dir, 'rolling_dry_years.csv'), index_col=0)
+    dry = pd.read_csv(os.path.join(event_def_dir, 'rolling_dry_years.csv'), index_col=0)
     dry_keys = list(dry.keys())
     data = pd.merge(hot, dry, left_index=True, right_index=True)
     use_data = []
@@ -649,13 +645,13 @@ def joint_hot_dry():
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     outdata.loc[:, outdata.columns[idx]] *= 100
     outdata = outdata.sort_index(axis=1, level=0, sort_remaining=False)
-    outdata.to_csv(os.path.join(backed_dir, 'joint_hot_dry_prob.csv'), float_format='%.1f%%')
+    outdata.to_csv(os.path.join(event_def_dir, 'joint_hot_dry_prob.csv'), float_format='%.1f%%')
 
     idx = t.str.contains('prob')
-    outdata.loc[:, outdata.columns[idx]].to_csv(os.path.join(backed_dir, 'joint_hot_dry_prob_only_prob.csv'),
+    outdata.loc[:, outdata.columns[idx]].to_csv(os.path.join(event_def_dir, 'joint_hot_dry_prob_only_prob.csv'),
                                                 float_format='%.1f%%')
     idx = t.str.contains('mean')
-    outdata.loc[:, outdata.columns[idx]].to_csv(os.path.join(backed_dir, 'joint_hot_dry_mean_impact.csv'),
+    outdata.loc[:, outdata.columns[idx]].to_csv(os.path.join(event_def_dir, 'joint_hot_dry_mean_impact.csv'),
                                                 float_format='%.1f%%')
     return full_event_names, outdata
 
@@ -693,8 +689,8 @@ def old_calc_restrict_recurance():
     grouped_data = grouped_data.replace({'f_rest_an_med': temp})
     grouped_data.loc[:, 'f_rest_an_med'] = grouped_data.loc[:, 'f_rest'] - grouped_data.loc[:, 'f_rest_an_med']
 
-    grouped_data.to_csv(os.path.join(backed_dir, 'rest_monthly_data.csv'))
-    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+    grouped_data.to_csv(os.path.join(event_def_dir, 'rest_monthly_data.csv'))
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(event_def_dir,
                                                                                         'rest_monthly_data_desc.csv'))
     # number of n days
     out_keys2 = []
@@ -714,13 +710,13 @@ def old_calc_restrict_recurance():
 
     out = out.drop(columns=drop_keys)
     out, out_years = add_pga(grouped_data, set(out_keys2) - set(drop_keys), out)
-    out_years.to_csv(os.path.join(backed_dir, 'rest_years.csv'))
+    out_years.to_csv(os.path.join(event_def_dir, 'rest_years.csv'))
 
     t = pd.Series([' '.join(e) for e in out.columns])
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
-    out.to_csv(os.path.join(backed_dir, 'old_rest_prob.csv'), float_format='%.1f%%')
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'old_rest_prob_only_prob.csv'), float_format='%.1f%%')
+    out.to_csv(os.path.join(event_def_dir, 'old_rest_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'old_rest_prob_only_prob.csv'), float_format='%.1f%%')
 
 
 def calc_restrict_cumulative_recurance():
@@ -757,8 +753,8 @@ def calc_restrict_cumulative_recurance():
     grouped_data = grouped_data.replace({'f_rest_an_med': temp})
     grouped_data.loc[:, 'f_rest_an_med'] = grouped_data.loc[:, 'f_rest'] - grouped_data.loc[:, 'f_rest_an_med']
 
-    grouped_data.to_csv(os.path.join(backed_dir, 'rest_monthly_data.csv'))
-    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+    grouped_data.to_csv(os.path.join(event_def_dir, 'rest_monthly_data.csv'))
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(event_def_dir,
                                                                                         'rest_monthly_data_desc.csv'))
     # number of n days
     out_keys2 = []
@@ -783,14 +779,14 @@ def calc_restrict_cumulative_recurance():
 
     out = out.drop(columns=drop_keys)
     out, out_years = add_pga(grouped_data, set(out_keys2) - set(drop_keys), out)
-    out_years.to_csv(os.path.join(backed_dir, 'rest_years.csv'))
+    out_years.to_csv(os.path.join(event_def_dir, 'rest_years.csv'))
 
     t = pd.Series([' '.join(e) for e in out.columns])
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
-    out.to_csv(os.path.join(backed_dir, 'rest_prob.csv'), float_format='%.1f%%')
+    out.to_csv(os.path.join(event_def_dir, 'rest_prob.csv'), float_format='%.1f%%')
     idx = (t.str.contains('prob') | t.str.contains('sum'))
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'rest_prob_only_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'rest_prob_only_prob.csv'), float_format='%.1f%%')
 
 
 def calc_restrict_recurance():
@@ -822,22 +818,22 @@ def calc_restrict_recurance():
         columns=pd.MultiIndex.from_product([tnames, out_columns]))
     all_data.loc[:] = np.nan
     for k, v in consecutive_data.items():
-        v.to_csv(os.path.join(backed_dir, 'len_rest_{}_raw.csv'.format(k)))
+        v.to_csv(os.path.join(event_def_dir, 'len_rest_{}_raw.csv'.format(k)))
         temp = v.groupby(['year', 'month']).agg({k: ['sum', 'count',
                                                      'mean', 'min', 'max']})
         temp = temp.rename(columns=rename_mapper, level=1)
         all_data = all_data.combine_first(temp)
 
     all_data = all_data.loc[:, (tnames, out_columns)]
-    all_data.reset_index().astype(float).groupby('month').describe().to_csv(os.path.join(backed_dir,
+    all_data.reset_index().astype(float).groupby('month').describe().to_csv(os.path.join(event_def_dir,
                                                                                          'len_rest_month_desc_no_zeros.csv'))
     t = all_data['any']['num_per'].isna().reset_index().groupby('month').agg({'num_per': ['sum', prob]})
-    t.to_csv(os.path.join(backed_dir, 'len_rest_prob_no_rest.csv'))
+    t.to_csv(os.path.join(event_def_dir, 'len_rest_prob_no_rest.csv'))
     all_data = all_data.fillna(0)
-    all_data.to_csv(os.path.join(backed_dir, 'len_rest_monthly.csv'))
+    all_data.to_csv(os.path.join(event_def_dir, 'len_rest_monthly.csv'))
 
     all_data.reset_index().groupby('month').describe().to_csv(
-        os.path.join(backed_dir, 'len_rest_month_desc_with_zeros.csv'))
+        os.path.join(event_def_dir, 'len_rest_month_desc_with_zeros.csv'))
 
     prob_data = pd.DataFrame(index=all_data.index)
 
@@ -859,9 +855,9 @@ def calc_restrict_recurance():
     t = pd.Series([' '.join(e) for e in out.columns])
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
-    out.to_csv(os.path.join(backed_dir, 'len_rest_prob.csv'), float_format='%.1f%%')
-    out_years.to_csv(os.path.join(backed_dir, 'len_rest_years.csv'))
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'len_rest_prob_only_prob.csv'), float_format='%.1f%%')
+    out.to_csv(os.path.join(event_def_dir, 'len_rest_prob.csv'), float_format='%.1f%%')
+    out_years.to_csv(os.path.join(event_def_dir, 'len_rest_years.csv'))
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'len_rest_prob_only_prob.csv'), float_format='%.1f%%')
 
 
 def calc_cold_recurance():
@@ -869,7 +865,7 @@ def calc_cold_recurance():
     data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
     data.loc[:, 'tmean_raw'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
     data.loc[:, 'tmean'] = data.loc[:, 'tmean'].rolling(3).mean()
-    data.to_csv(os.path.join(backed_dir, 'rolling_cold_raw.csv'))
+    data.to_csv(os.path.join(event_def_dir, 'rolling_cold_raw.csv'))
 
     thresholds = [0, 5, 7, 10, 12]
     vars = ['tmean']
@@ -885,9 +881,9 @@ def calc_cold_recurance():
     grouped_data = data.loc[:, ['month', 'year'] + vars + out_keys].groupby(['month', 'year'])
     grouped_data = grouped_data.aggregate(aggs).reset_index()
 
-    grouped_data.to_csv(os.path.join(backed_dir, 'rolling_cold_monthly_data.csv'))
+    grouped_data.to_csv(os.path.join(event_def_dir, 'rolling_cold_monthly_data.csv'))
 
-    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(event_def_dir,
                                                                                         'rolling_cold_monthly_data_desc.csv'))
 
     # number of n days
@@ -913,16 +909,16 @@ def calc_cold_recurance():
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
 
-    out.to_csv(os.path.join(backed_dir, 'rolling_cold_prob.csv'), float_format='%.1f%%')
-    out_years.to_csv(os.path.join(backed_dir, 'rolling_cold_years.csv'))
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'rolling_cold_prob_only_prob.csv'),
+    out.to_csv(os.path.join(event_def_dir, 'rolling_cold_prob.csv'), float_format='%.1f%%')
+    out_years.to_csv(os.path.join(event_def_dir, 'rolling_cold_years.csv'))
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'rolling_cold_prob_only_prob.csv'),
                                         float_format='%.1f%%')
 
 
 def calc_hot_recurance():
     data = get_vcsn_record()
     data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
-    data.to_csv(os.path.join(backed_dir, 'temp_raw.csv'))
+    data.to_csv(os.path.join(event_def_dir, 'temp_raw.csv'))
 
     thresholds = [20, 25, 28, 30, 35]
     vars = ['tmax', 'tmean']
@@ -938,9 +934,9 @@ def calc_hot_recurance():
     grouped_data = data.loc[:, ['month', 'year'] + vars + out_keys].groupby(['month', 'year'])
     grouped_data = grouped_data.aggregate(aggs).reset_index()
 
-    grouped_data.to_csv(os.path.join(backed_dir, 'hot_monthly_data.csv'))
+    grouped_data.to_csv(os.path.join(event_def_dir, 'hot_monthly_data.csv'))
 
-    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(backed_dir,
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(event_def_dir,
                                                                                         'hot_monthly_data_desc.csv'))
 
     # number of n days
@@ -965,10 +961,10 @@ def calc_hot_recurance():
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
 
-    out.to_csv(os.path.join(backed_dir, 'hot_prob.csv'), float_format='%.1f%%')
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(backed_dir, 'hot_prob_only_prob.csv'), float_format='%.1f%%')
+    out.to_csv(os.path.join(event_def_dir, 'hot_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'hot_prob_only_prob.csv'), float_format='%.1f%%')
 
-    out_years.to_csv(os.path.join(backed_dir, 'hot_years.csv'))
+    out_years.to_csv(os.path.join(event_def_dir, 'hot_years.csv'))
 
 
 def plot_vcsn_smd():

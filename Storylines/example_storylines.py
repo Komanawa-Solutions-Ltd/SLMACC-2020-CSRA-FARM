@@ -54,7 +54,7 @@ def build_example_storylines_for_greg(outdir):
         try:
             ensure_no_impossible_events(storyline)
         except Exception as val:
-            print('{} raised: {}'.format(k, val))
+            print('{} raised:\n {}'.format(k, val))
 
         storyline.to_csv(os.path.join(outdir,'{}.csv'.format(k)), index=False)
 
