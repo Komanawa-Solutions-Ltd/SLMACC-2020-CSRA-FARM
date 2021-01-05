@@ -87,4 +87,5 @@ if __name__ == '__main__':
     # should be ok... best to use just the internal water year starting 2017-07-01
     # todo look through many months and get a sense of the daily distributions for SMA
     # todo kinda looks like it does not have runoff..., or similar.
+    # todo is there any reason that we should not just run the PET as this looks to have radiation.
     # check soil moisture units, I think they are kg/m2 or mm, yep
