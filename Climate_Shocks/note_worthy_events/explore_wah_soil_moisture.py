@@ -66,17 +66,14 @@ def plot_sims(sim_paths, vars, lat=lat, lon=lon):
 
 
 if __name__ == '__main__':
-    paths = [
-        r"C:\Users\Matt Hanson\Downloads\w@h for matt-20210105T205116Z-001\w@h for matt\wah2_anz50_a0d7_201612_20_793_011761121_2.nc",
-        r"C:\Users\Matt Hanson\Downloads\w@h for matt-20210105T205116Z-001\w@h for matt\wah2_anz50_a0d9_201612_20_793_011761123_0.nc",
-    ]
     paths = glob.glob(
-        r"C:\Users\Matt Hanson\Downloads\w@h for matt-20210105T205116Z-001\w@h for matt\*.nc"
+        r"C:\Users\Matt Hanson\Downloads\wathome_for_matt\*.nc"
     )
     vars = [
         # 'wind_speed',
         # 'rh_max',
         # 'tmax',
+        'sw_flux',
         'precipitation',
         'soil_moisture',
 

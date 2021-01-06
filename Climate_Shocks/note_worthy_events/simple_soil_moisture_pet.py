@@ -6,13 +6,12 @@ import numpy as np
 import pandas as pd
 
 
-# I also need to run soil moisture anomaly (https://niwa.co.nz/climate/nz-drought-monitor/droughtindicatormaps/soil-moisture-deficit-smd#:~:text=SMD%20is%20calculated%20based%20on,can%20use)%20of%20150%20mm. )
 def calc_smd(rain, pet, h2o_cap, h2o_start, a=0.0073,
              p=1):
     """
     calculate the soil moisture deficit from aet,
-    :param rain: array of rain fall amounts, mm
-    :param pet: array of pet amounts, mm
+    :param rain: array of rain fall amounts, mm, shape = (time, *other dimensions (if needed))
+    :param pet: array of pet amounts, mm, shape = (time, *other dimensions (if needed))
     :param h2o_cap: maximum soil water capacity, mm, niwa uses 150mm as a standard
     :param h2o_start: fraction of the soil water capacity to start at, fraction 0-1
     :param a: "readily available" water coefficient (d mm-1)
@@ -23,7 +22,7 @@ def calc_smd(rain, pet, h2o_cap, h2o_start, a=0.0073,
     """
     rain = np.atleast_1d(rain)
     pet = np.atleast_1d(pet)
-    assert rain.shape == pet.shape, 'rain and PET must be same length'
+    assert rain.shape == pet.shape, 'rain and PET must be same shape'
     assert h2o_start <= 1 and h2o_start >= 0, 'h2o start must be the fraction, between 0-1'
 
     smd = np.zeros(pet.shape, float)
@@ -110,3 +109,52 @@ def calc_sma_smd(rain, pet, date, h2o_cap, h2o_start, average_start_year=1981, a
     outdata.loc[:, 'sma'] = outdata.loc[:, 'smd'] - outdata.loc[:, 'mean_doy_smd']
 
     return outdata
+
+
+def calc_peyman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=None, elevation=None):  # todo check!
+    """
+    calculate peyman-monteith pet, works with either numeric values or with an np.ndarray.
+    :param rad: radiation mj/m2/day
+    :param temp: mean temperature degrees C
+    :param rh: relative humidity (percent)
+    :param wind_10: 10 m wind speed (m2) or None, one of (wind_10, wind_2) must be passed,
+                    this is converted to 2m windspeed internally
+    :param wind_2: 2 m wind speed (m2) or None, one of (wind_10, wind_2) must be passed
+    :return:
+    """
+    # check inputs
+    assert (wind_10 is not None) and (wind_2 is not None), 'either wind_10 or wind_2 must not be None'
+    assert (wind_10 is None) or (wind_2 is None), 'only one of wind_10 and wind_2 may not be None'
+    assert (psurf is not None) and (mslp is not None), 'either psurf or mslp must not be None'
+    assert (psurf is None) or (mslp is None), 'only one of psurf and mslp may not be None'
+
+    # calc psurf if necessary
+    if psurf is None:
+        assert elevation is not None, 'if mslp is passed instead of psurf elevation must also be passed'
+        psurf = mslp * (1 - 0.0065 * elevation / temp) ** 5.26
+
+    # get the correct wind speed
+    if wind_2 is not None:
+        wind = wind_2
+    elif wind_10 is not None:
+        wind = wind_10 * (4.87 / (np.log(67.8 * 10 - 5.42)))
+    else:
+        raise ValueError('should not get here')
+
+    h_vap = 02.501 - 0.00236 * temp  # latent heat of vaporisation
+
+    tmp = 4098 * (0.6108 * np.e ** ((17.27 * temp) / (temp + 237.3)))
+    delt = tmp / (temp + 237.3) ** 2  # gradient of the vapour pressure curve Based on equation 13 in Allen et al (1998)
+
+    soil = 0  # soil heat flux (set to zero by niwa)
+    y = (1.1013 * psurf) / (0.622 * h_vap)  # piesometric constant
+    es = 0.61094 * np.e ** (17.625 * temp / (243.04 + temp))
+    ed = rh * es / 100
+
+    pet = (h_vap ** -1 * delt * (rad - soil) + y * (900 / (temp + 273)) * wind * (es - ed)) / (
+            delt + y * (1 + 0.34 * wind))
+    return pet
+
+if __name__ == '__main__':
+    # rough testing #todo
+    pass

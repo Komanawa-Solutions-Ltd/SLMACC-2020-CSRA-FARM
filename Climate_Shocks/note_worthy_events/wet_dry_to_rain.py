@@ -11,7 +11,7 @@ import itertools
 import os
 from Climate_Shocks.note_worthy_events.final_event_recurance import get_org_data
 from Climate_Shocks.climate_shocks_env import event_def_dir as backed_dir
-from Climate_Shocks.note_worthy_events.simple_soil_moisture import calc_sma_smd
+from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_sma_smd
 from Climate_Shocks.get_past_record import get_vcsn_record
 
 
