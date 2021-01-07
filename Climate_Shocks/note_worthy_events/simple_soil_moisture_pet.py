@@ -112,18 +112,18 @@ def calc_sma_smd(rain, pet, date, h2o_cap, h2o_start, average_start_year=1981, a
 
 
 def calc_penman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=None,
-                    elevation=None):  # todo check!, something looks wrong against niwa data
+                    elevation=None):
     """
     calculate peyman-monteith pet, works with either numeric values or with an np.ndarray.
-    :param rad: radiation mj/m2/day
+    :param rad: radiation mJ/m2/day
     :param temp: mean temperature degrees C
     :param rh: relative humidity (percent)
-    :param wind_10: 10 m wind speed (m2) or None, one of (wind_10, wind_2) must be passed,
+    :param wind_10: 10 m wind speed (m/s) or None, one of (wind_10, wind_2) must be passed,
                     this is converted to 2m windspeed internally
-    :param wind_2: 2 m wind speed (m2) or None, one of (wind_10, wind_2) must be passed
-    :param psurf: surface pressure (hpa) or None, one of psurf, mslp must be passed
-    :param mslp: mean sea level pressure (hpa) or None, one of psurf, mslp must be passed
-    :param elevation: elevation of the point or None, needed only if mslp passed
+    :param wind_2: 2 m wind speed (m/s) or None, one of (wind_10, wind_2) must be passed
+    :param psurf: surface pressure (kpa) or None, one of psurf, mslp must be passed
+    :param mslp: mean sea level pressure (kpa) or None, one of psurf, mslp must be passed
+    :param elevation: elevation (m) of the point or None, needed only if mslp passed
     :return:
     """
     # check inputs
@@ -151,7 +151,7 @@ def calc_penman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=N
     delt = tmp / (temp + 237.3) ** 2  # gradient of the vapour pressure curve Based on equation 13 in Allen et al (1998)
 
     soil = 0  # soil heat flux (set to zero by niwa)
-    y = (1.1013 * psurf) / (0.622 * h_vap)  # piesometric constant
+    y = (1.1013 * psurf) / (0.622 * h_vap * 1000) # piesometric constant
     es = 0.61094 * np.e ** (17.625 * temp / (243.04 + temp))
     ed = rh * es / 100
 
@@ -161,35 +161,39 @@ def calc_penman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=N
 
 
 if __name__ == '__main__':
-    # rough testing #todo
+    # rough testing, looks good enough, and matches external
     import matplotlib.pyplot as plt
     from Climate_Shocks.note_worthy_events.fao import fao56_penman_monteith, delta_svp, svp_from_t, psy_const, \
         avp_from_rhmean
 
-    data = pd.read_csv(r"C:\Users\Matt Hanson\Downloads\hamilton_weather.csv").set_index(['year', 'doy'])
-    temp = pd.read_csv(r"C:\Users\Matt Hanson\Downloads\penman.csv").set_index(['year', 'doy'])
+    data = pd.read_csv(r"M:\Shared drives\Z2003_SLMACC\event_definition\hamilton_weather.csv").set_index(
+        ['year', 'doy'])
+    temp = pd.read_csv(r"M:\Shared drives\Z2003_SLMACC\event_definition\penman.csv").set_index(['year', 'doy'])
     data.loc[temp.index, 'penman'] = temp.loc[:, 'penman']
-    data.loc[:, 'penman_calc'] = calc_penman_pet(rad=data['radn'].values,
-                                                 temp=(data['tmin'].values + data['tmax'].values) / 2,
-                                                 rh=data['rh'].values,
-                                                 wind_2=data['wind'].values,
-                                                 mslp=data['pmsl'].values,
-                                                 elevation=45
-                                                 )
     for i in data.index:
-        t = (data.loc[i, 'tmin'] + data.loc[i,'tmax']) / 2 + 273
-        svp = svp_from_t(t)
+        t = (data.loc[i, 'tmin'] + data.loc[i, 'tmax']) / 2 + 273
+        svp = svp_from_t(t - 273)
         data.loc[i, 'penman_calc_ext'] = fao56_penman_monteith(
             net_rad=data.loc[i, 'radn'],
             t=t,
             ws=data.loc[i, 'wind'],
             svp=svp,
             avp=avp_from_rhmean(svp, svp, data.loc[i, 'rh']),
-            delta_svp=delta_svp(t),
-            psy=psy_const(data.loc[i, 'pmsl']/1000),
+            delta_svp=delta_svp(t - 273),
+            psy=psy_const(data.loc[i, 'pmsl'] / 10),
         )
 
-    data.plot(y=['penman', 'penman_calc', 'penman_calc_ext']) #todo they are all different!
+    # my pet
+    data.loc[:, 'penman_calc'] = calc_penman_pet(rad=data['radn'].values,
+                                                 temp=(data['tmin'].values + data['tmax'].values) / 2,
+                                                 rh=data['rh'].values,
+                                                 wind_2=data['wind'].values,
+                                                 mslp=data['pmsl'].values / 10,
+                                                 elevation=45
+                                                 )
+
+    data = data.rolling(10).mean()
+    data.plot(y=['penman', 'penman_calc', 'penman_calc_ext'])
     # plt.scatter(data['pet'], data['peyman_pet'])
     plt.show()
     pass
