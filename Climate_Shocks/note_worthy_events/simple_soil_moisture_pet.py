@@ -206,7 +206,7 @@ def calc_smd_sma_wah(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv)
     calculate soil moisture deficit, soil moisture anomaly, and pet for weather at home data.  this is a convenience
     function for Bodeker Scientific.  the expected inputs which are nd arrays are expected to be 2d arrays of
     shape (365, num of sims) the goal soil moisture anomaly is calculated against the mean(axis=1) of the soil moisture
-    deficit array.  The units should be in the same format as weather at home.
+    deficit array.  The units should be in the same format as weather at home. assumes no input data contains nan values
     SMD assumes a starting soil moisture of 75mm and a water holding capacity of 150mm
     :param rain: precipitation (kg m-2 s-1), np.ndarray
     :param radn: radiation (W m-2), np.ndarray
@@ -224,8 +224,9 @@ def calc_smd_sma_wah(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv)
     assert (expected_shape[0] == 366 or
             expected_shape[0] == 365), 'axis 0 must be days and it is expected to be a full year (365 or 366 days)'
     assert len(expected_shape) == 2, 'expected 2d array (day of year, simulation number)'
-    for k in ['radn', 'tmax', 'tmin', 'rh_min', 'rh_max', 'wind_10', 'mslp']:
+    for k in ['radn', 'rain', 'tmax', 'tmin', 'rh_min', 'rh_max', 'wind_10', 'mslp']:
         assert eval(k).shape == expected_shape, '{} does not match rain shape'.format(k)
+        assert np.isfinite(eval(k)).all(), 'nan values passed in {}, please remove otherwise they will impact the sma'.format(k)
 
     # make mean values and convert units
     temp = (tmax + tmin) / 2 - 273.15  # to C
