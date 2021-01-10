@@ -7,9 +7,9 @@ import pandas as pd
 
 
 def calc_smd(rain, pet, h2o_cap, h2o_start, a=0.0073,
-             p=1):
+             p=1, return_drn_aet=False):
     """
-    calculate the soil moisture deficit from aet,
+    calculate the soil moisture deficit from aet, assuems that if these are arrays axis 0 is time
     :param rain: array of rain fall amounts, mm, shape = (time, *other dimensions (if needed))
     :param pet: array of pet amounts, mm, shape = (time, *other dimensions (if needed))
     :param h2o_cap: maximum soil water capacity, mm, niwa uses 150mm as a standard
@@ -18,31 +18,63 @@ def calc_smd(rain, pet, h2o_cap, h2o_start, a=0.0073,
               default value from woodward 2010
     :param p: proportion of readilay avalible water (RAW) abe to be extracted in one day (d-1)
               default value from woodward, 2010
+    :param return_drn_aet: boolean, if True return AET and drainage
     :return: (soil moisture deficit, mm), (drainage, mm), (aet, mm)
     """
-    rain = np.atleast_1d(rain)
-    pet = np.atleast_1d(pet)
+    # make this work if float/ndarray passed
+    if pd.api.types.is_number(pet):
+        array_d = 0  # float or other number, return numeric data
+    elif np.atleast_1d(pet).ndim == 1:
+        array_d = 1  # 1d array or list, return 1d data
+    else:
+        array_d = 2  # 2 or more dimensions return without modification
+    pet = np.atleast_2d(pet)
+    rain = np.atleast_2d(rain)
     assert rain.shape == pet.shape, 'rain and PET must be same shape'
     assert h2o_start <= 1 and h2o_start >= 0, 'h2o start must be the fraction, between 0-1'
 
     smd = np.zeros(pet.shape, float)
-    drain = np.zeros(pet.shape, float)
-    aet_out = np.zeros(pet.shape, float)
+    if return_drn_aet:
+        drain = np.zeros(pet.shape, float)
+        aet_out = np.zeros(pet.shape, float)
 
-    soil_mois = h2o_cap * h2o_start
+    iter_shp = pet.shape[1:]
+    soil_mois = np.zeros((iter_shp)) + h2o_cap * h2o_start
 
     for i, (r, pe) in enumerate(zip(rain, pet)):
         aet = calc_aet(pe, p=p, a=a, AWHC=h2o_cap, W=soil_mois - h2o_cap)
-        soil_mois = max(0, soil_mois + r - aet)
-        d = 0
-        if soil_mois > h2o_cap:
-            d = soil_mois - h2o_cap
-            soil_mois = h2o_cap
 
-        drain[i] = d
+        soil_mois = soil_mois + r - aet
+        soil_mois[soil_mois < 0] = 0
+
+        d = np.zeros((iter_shp))
+
+        idx = soil_mois > h2o_cap
+        d[idx] = soil_mois[idx] - h2o_cap
+        soil_mois[idx] = h2o_cap
+
         smd[i] = (soil_mois - h2o_cap)
-        aet_out[i] = aet
-    return smd, drain, aet_out
+
+        if return_drn_aet:
+            drain[i] = d
+            aet_out[i] = aet
+
+    # manage shape and return data
+    if array_d == 0:
+        smd = smd[0, 0]
+        if return_drn_aet:
+            drain = drain[0, 0]
+            aet_out = aet_out[0, 0]
+    elif array_d == 1:
+        smd = smd[:, 0]
+        if return_drn_aet:
+            drain = drain[:, 0]
+            aet_out = aet_out[:, 0]
+
+    if return_drn_aet:
+        return smd, drain, aet_out
+    else:
+        return smd
 
 
 def calc_aet(PET, AWHC, W, p=1, a=0.0073):
@@ -59,15 +91,17 @@ def calc_aet(PET, AWHC, W, p=1, a=0.0073):
     :return:
     """
 
-    RAW = a * PET * (AWHC + W)
+    RAW = a * PET * (AWHC + W) * p
 
-    AET = min(PET, p * RAW)
+    AET = PET
+    AET[AET > RAW] = RAW[AET > RAW]
 
     return AET
 
 
-def calc_sma_smd(rain, pet, date, h2o_cap, h2o_start, average_start_year=1981, average_stop_year=2010, a=0.0073,
-                 p=1):
+def calc_sma_smd_historical(rain, pet, date, h2o_cap, h2o_start, average_start_year=1981, average_stop_year=2010,
+                            a=0.0073,
+                            p=1):
     """
     calculate the soil moisture deficit from aet,
     :param rain: array of precip amounts, mm
@@ -135,7 +169,8 @@ def calc_penman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=N
     # calc psurf if necessary
     if psurf is None:
         assert elevation is not None, 'if mslp is passed instead of psurf elevation must also be passed'
-        psurf = mslp * (1 - 0.0065 * elevation / temp) ** 5.26
+        # from https://keisan.casio.com/keisan/image/Convertpressure.pdf
+        psurf = mslp * (1 - 0.0065 * elevation / (temp + 273 + 0.0065*elevation)) ** 5.257
 
     # get the correct wind speed
     if wind_2 is not None:
@@ -145,13 +180,19 @@ def calc_penman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=N
     else:
         raise ValueError('should not get here')
 
+    # assure it is the correct size etc.
+    err_mess = ('non-matching shapes, [rad, temp, rh, wind_10 | wind_2=None, psurf| mslp] must be the same shape, '
+                'problem with temp and {}')
+    for v in ['rad', 'wind', 'rh', 'psurf']:
+        assert np.atleast_1d(temp).shape == np.atleast_1d(eval(v)).shape, err_mess.format(v)
+
     h_vap = 02.501 - 0.00236 * temp  # latent heat of vaporisation
 
     tmp = 4098 * (0.6108 * np.e ** ((17.27 * temp) / (temp + 237.3)))
     delt = tmp / (temp + 237.3) ** 2  # gradient of the vapour pressure curve Based on equation 13 in Allen et al (1998)
 
     soil = 0  # soil heat flux (set to zero by niwa)
-    y = (1.1013 * psurf) / (0.622 * h_vap * 1000) # piesometric constant
+    y = (1.1013 * psurf) / (0.622 * h_vap * 1000)  # piesometric constant
     es = 0.61094 * np.e ** (17.625 * temp / (243.04 + temp))
     ed = rh * es / 100
 
@@ -160,7 +201,48 @@ def calc_penman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=N
     return pet
 
 
-if __name__ == '__main__':
+def calc_smd_sma_wah(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv):
+    """
+    calculate soil moisture deficit, soil moisture anomaly, and pet for weather at home data.  this is a convenience
+    function for Bodeker Scientific.  the expected inputs which are nd arrays are expected to be 2d arrays of
+    shape (365, num of sims) the goal soil moisture anomaly is calculated against the mean(axis=1) of the soil moisture
+    deficit array.  The units should be in the same format as weather at home.
+    :param rain: precipitation (kg m-2 s-1), np.ndarray
+    :param radn: radiation (W m-2), np.ndarray
+    :param tmax: maximum temperature (k), np.ndarray
+    :param tmin: minimum temperature (k), np.ndarray
+    :param rh_min: maximum relative humidity (%), np.ndarray
+    :param rh_max: minimum relative humidity (%), np.ndarray
+    :param wind_10: 10m wind speed (m/s), np.ndarray
+    :param mslp: mean sea level pressure (Pa), np.ndarray
+    :param elv: elevation at site (m), float
+    :return: smd, sma, pet
+    """
+    # check inputs
+    expected_shape = rain.shape
+    assert (expected_shape[0] == 366 or
+            expected_shape[0] == 365), 'axis 0 must be days and it is expected to be a full year (365 or 366 days)'
+    assert len(expected_shape) == 2, 'expected 2d array (day of year, simulation number)'
+    for k in ['radn', 'tmax', 'tmin', 'rh_min', 'rh_max', 'wind_10', 'mslp']:
+        assert eval(k).shape == expected_shape, '{} does not match rain shape'.format(k)
+
+    # make mean values and convert units
+    temp = (tmax + tmin) / 2 - 273.15  # to C
+    rh = (rh_min + rh_max) / 2
+    rain = rain * 86400  # kg/m2/s to mm/day
+    radn = radn * 86400 * 1e-6  # from w/m2 to mj/m2/day
+    mslp = mslp / 1000 # Pa to kpa
+
+    # run SMD/SMA
+    pet = calc_penman_pet(rad=radn, temp=temp, rh=rh, wind_10=wind_10, wind_2=None, psurf=None, mslp=mslp,
+                          elevation=elv)
+    smd = calc_smd(rain=rain, pet=pet, h2o_cap=150, h2o_start=0.5, a=0.0073,
+                   p=1, return_drn_aet=False)
+    sma = smd - smd.mean(axis=1)[:, np.newaxis]
+    return smd, sma, pet
+
+
+def rough_testing_of_pet():
     # rough testing, looks good enough, and matches external
     import matplotlib.pyplot as plt
     from Climate_Shocks.note_worthy_events.fao import fao56_penman_monteith, delta_svp, svp_from_t, psy_const, \
@@ -182,7 +264,12 @@ if __name__ == '__main__':
             delta_svp=delta_svp(t - 273),
             psy=psy_const(data.loc[i, 'pmsl'] / 10),
         )
-
+        data.loc[i, 'iter_penman'] = calc_penman_pet(rad=data.loc[i, 'radn'],
+                                                     temp=t - 273,
+                                                     rh=data.loc[i, 'rh'],
+                                                     wind_2=data.loc[i, 'wind'],
+                                                     mslp=data.loc[i, 'pmsl'] / 10,
+                                                     elevation=45)
     # my pet
     data.loc[:, 'penman_calc'] = calc_penman_pet(rad=data['radn'].values,
                                                  temp=(data['tmin'].values + data['tmax'].values) / 2,
@@ -193,7 +280,20 @@ if __name__ == '__main__':
                                                  )
 
     data = data.rolling(10).mean()
-    data.plot(y=['penman', 'penman_calc', 'penman_calc_ext'])
+    data.plot(y=['penman', 'penman_calc', 'penman_calc_ext', 'iter_penman'])
     # plt.scatter(data['pet'], data['peyman_pet'])
     plt.show()
     pass
+
+
+def test_calc_smd():
+    # todo write testing regime in the future. I'm confident it is working correctly
+    # float
+    # 1d
+    # 2d
+    # 3d
+    raise NotImplementedError
+
+
+if __name__ == '__main__':
+    rough_testing_of_pet()

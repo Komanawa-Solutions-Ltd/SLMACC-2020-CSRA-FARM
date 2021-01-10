@@ -11,7 +11,7 @@ import itertools
 import os
 from Climate_Shocks.note_worthy_events.final_event_recurance import get_org_data
 from Climate_Shocks.climate_shocks_env import event_def_dir as backed_dir
-from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_sma_smd
+from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_sma_smd_historical
 from Climate_Shocks.get_past_record import get_vcsn_record
 
 
@@ -91,7 +91,7 @@ def plt_data3():
     data = get_vcsn_record().reset_index()
     data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
 
-    temp = calc_sma_smd(data['rain'], data['pet'], data.date, 150, 1)
+    temp = calc_sma_smd_historical(data['rain'], data['pet'], data.date, 150, 1)
 
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
     data.loc[:, trans_cols] = temp.loc[:, trans_cols]
@@ -114,7 +114,7 @@ def plt_data4():
     data = get_vcsn_record().reset_index()
     data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
 
-    temp = calc_sma_smd(data['rain'], data['pet'], data.date, 150, 1)
+    temp = calc_sma_smd_historical(data['rain'], data['pet'], data.date, 150, 1)
 
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
     data.loc[:, trans_cols] = temp.loc[:, trans_cols]

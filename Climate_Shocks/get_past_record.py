@@ -98,4 +98,5 @@ def recalc_sites():
 
 
 if __name__ == '__main__':
-    recalc_sites()
+    test = get_vcsn_record()
+    pass

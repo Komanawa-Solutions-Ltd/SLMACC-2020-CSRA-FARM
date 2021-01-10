@@ -4,7 +4,7 @@
  """
 
 from Climate_Shocks.vcsn_pull import vcsn_pull_single_site
-from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_sma_smd
+from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_sma_smd_historical
 from Climate_Shocks.get_past_record import get_restriction_record, get_vcsn_record
 from Pasture_Growth_Modelling.initialisation_support.pasture_growth_deficit import calc_past_pasture_growth_anomaly
 import ksl_env
@@ -73,7 +73,7 @@ def add_pga(grouped_data, sim_keys, outdata):
 def calc_dry_recurance():
     data = get_vcsn_record().reset_index()
 
-    temp = calc_sma_smd(data['rain'], data['pet'], data.date, 150, 1)
+    temp = calc_sma_smd_historical(data['rain'], data['pet'], data.date, 150, 1)
 
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
     data.loc[:, trans_cols] = temp.loc[:, trans_cols]
@@ -122,7 +122,7 @@ def calc_dry_recurance():
 
 def calc_wet_recurance():
     data = get_vcsn_record().reset_index()
-    temp = calc_sma_smd(data['rain'], data['pet'], data.date, 150, 1)
+    temp = calc_sma_smd_historical(data['rain'], data['pet'], data.date, 150, 1)
 
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
     data.loc[:, trans_cols] = temp.loc[:, trans_cols]
@@ -214,7 +214,7 @@ def calc_wet_recurance_ndays():
         })
 
     data = get_vcsn_record().reset_index()
-    temp = calc_sma_smd(data['rain'], data['pet'], data.date, 150, 1)
+    temp = calc_sma_smd_historical(data['rain'], data['pet'], data.date, 150, 1)
 
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
     data.loc[:, trans_cols] = temp.loc[:, trans_cols]
@@ -426,7 +426,7 @@ def calc_dry_recurance_ndays():
         })
 
     data = get_vcsn_record().reset_index()
-    temp = calc_sma_smd(data['rain'], data['pet'], data.date, 150, 1)
+    temp = calc_sma_smd_historical(data['rain'], data['pet'], data.date, 150, 1)
 
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
     data.loc[:, trans_cols] = temp.loc[:, trans_cols]
@@ -976,7 +976,7 @@ def plot_vcsn_smd():
         use_vars=('evspsblpot', 'pr'))
     print(use_cords)
 
-    temp = calc_sma_smd(data['pr'], data['evspsblpot'], data.date, 150, 1)
+    temp = calc_sma_smd_historical(data['pr'], data['evspsblpot'], data.date, 150, 1)
 
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
     data.loc[:, trans_cols] = temp.loc[:, trans_cols]

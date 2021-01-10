@@ -14,7 +14,7 @@ import os
 lat, lon = -43.372, 172.333
 
 
-def get_sim(sim_path, lat=lat, lon=lon):
+def get_sim(sim_path, lat=lat, lon=lon, rain_mm=True):
     variables = [
         'pstar',
         'sw_flux',
@@ -48,7 +48,10 @@ def get_sim(sim_path, lat=lat, lon=lon):
     )
     for v in variables:
         outdata.loc[:, v] = np.array(data.variables[v][:, 0, lat_idx, lon_idx])
-    outdata.loc[:, 'precipitation'] *= 86400
+
+    if rain_mm:
+        outdata.loc[:, 'precipitation'] *= 86400
+
     return outdata
 
 
@@ -67,8 +70,9 @@ def plot_sims(sim_paths, vars, lat=lat, lon=lon):
 
 if __name__ == '__main__':
     paths = glob.glob(
-        r"C:\Users\Matt Hanson\Downloads\wathome_for_matt\*.nc"
+        r"C:\matt_modelling_unbackedup\Z2003_SLMACC\wathome_for_matt\*.nc"
     )
+    data = get_sim(paths[0])
     vars = [
         # 'wind_speed',
         # 'rh_max',
