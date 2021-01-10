@@ -12,6 +12,11 @@ from Climate_Shocks.note_worthy_events.explore_wah_soil_moisture import get_sim
 
 
 def make_exploritory_data(number=None):
+    """
+    get the internal year of the wah data and calculate smd, sma, pet.  convert rain to mm/day
+    :param number: number of sims to load
+    :return: dates, rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, smd, sma, pet
+    """
     paths = list(glob.glob(
         r"C:\matt_modelling_unbackedup\Z2003_SLMACC\wathome_for_matt\*.nc"
     ))
@@ -57,6 +62,13 @@ def make_exploritory_data(number=None):
 
 
 def plot_exlploritory_data(number, num_to_plot=20, vars_to_plot=['rain', 'pet', 'smd', 'sma']):
+    """
+    quick plotting to visually check results
+    :param number:
+    :param num_to_plot:
+    :param vars_to_plot:
+    :return:
+    """
     dates, rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, smd, sma, pet = make_exploritory_data(number)
     fig, axs = plt.subplots(nrows=len(vars_to_plot), sharex=True)
     idxs = np.random.choice(np.arange(rain.shape[1]), (num_to_plot))

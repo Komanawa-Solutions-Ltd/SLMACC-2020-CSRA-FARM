@@ -19,7 +19,7 @@ def calc_smd(rain, pet, h2o_cap, h2o_start, a=0.0073,
     :param p: proportion of readilay avalible water (RAW) abe to be extracted in one day (d-1)
               default value from woodward, 2010
     :param return_drn_aet: boolean, if True return AET and drainage
-    :return: (soil moisture deficit, mm), (drainage, mm), (aet, mm)
+    :return: (soil moisture deficit, mm) or (soil moisture deficit, mm), (drainage, mm), (aet, mm)
     """
     # make this work if float/ndarray passed
     if pd.api.types.is_number(pet):
@@ -148,7 +148,7 @@ def calc_sma_smd_historical(rain, pet, date, h2o_cap, h2o_start, average_start_y
 def calc_penman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=None,
                     elevation=None):
     """
-    calculate peyman-monteith pet, works with either numeric values or with an np.ndarray.
+    calculate penman-monteith pet, works with either numeric values or with an np.ndarray.
     :param rad: radiation mJ/m2/day
     :param temp: mean temperature degrees C
     :param rh: relative humidity (percent)
@@ -158,7 +158,7 @@ def calc_penman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=N
     :param psurf: surface pressure (kpa) or None, one of psurf, mslp must be passed
     :param mslp: mean sea level pressure (kpa) or None, one of psurf, mslp must be passed
     :param elevation: elevation (m) of the point or None, needed only if mslp passed
-    :return:
+    :return: pet (mm/day)
     """
     # check inputs
     assert (wind_10 is not None) or (wind_2 is not None), 'either wind_10 or wind_2 must not be None'
@@ -207,6 +207,7 @@ def calc_smd_sma_wah(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv)
     function for Bodeker Scientific.  the expected inputs which are nd arrays are expected to be 2d arrays of
     shape (365, num of sims) the goal soil moisture anomaly is calculated against the mean(axis=1) of the soil moisture
     deficit array.  The units should be in the same format as weather at home.
+    SMD assumes a starting soil moisture of 75mm and a water holding capacity of 150mm
     :param rain: precipitation (kg m-2 s-1), np.ndarray
     :param radn: radiation (W m-2), np.ndarray
     :param tmax: maximum temperature (k), np.ndarray
@@ -216,7 +217,7 @@ def calc_smd_sma_wah(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv)
     :param wind_10: 10m wind speed (m/s), np.ndarray
     :param mslp: mean sea level pressure (Pa), np.ndarray
     :param elv: elevation at site (m), float
-    :return: smd, sma, pet
+    :return: smd(mm), sma(mm), pet(mm/day)
     """
     # check inputs
     expected_shape = rain.shape
