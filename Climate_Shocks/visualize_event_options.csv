@@ -1,0 +1,13 @@
+month,Cold-Wet,Cold-Average,Cold-Dry,Average-Wet,Average-Average,Average-Dry,Hot-Wet,Hot-Average,Hot-Dry
+1,,,,,True,True,,True,True
+2,,,,,True,True,,True,True
+3,,,,,True,True,,True,True
+4,,,,,True,True,,,
+5,True,True,True,,True,True,,,
+6,True,True,,,True,,,,
+7,True,True,,,,,,,
+8,True,True,True,True,True,,,,
+9,True,,,True,True,True,,,
+10,,,,,True,True,,,
+11,,,,,True,True,,,True
+12,,,,,True,True,,True,True

@@ -4,6 +4,7 @@
  """
 import pandas as pd
 import numpy as np
+import os
 from Climate_Shocks.climate_shocks_env import event_def_path
 import itertools
 
@@ -49,7 +50,15 @@ def ensure_no_impossible_events(storyline):
 
 
 if __name__ == '__main__':
-    for k, v in get_acceptable_events().items():
+    data_path = os.path.join(os.path.dirname(event_def_path), 'visualize_event_options.csv')
+    acceptable = get_acceptable_events()
+    out_data = pd.DataFrame(index=pd.Index(range(1, 13), name='month'))
+    for k, v in acceptable.items():
+        k = k.replace('C', 'Cold').replace('A', 'Average').replace('H', 'Hot')
+        k = k.replace('W', 'Wet').replace('D', 'Dry')
+        out_data.loc[np.in1d(out_data.index, v), k] = True
         print(k)
         print(v)
         print('\n')
+    print(out_data)
+    out_data.to_csv(data_path)

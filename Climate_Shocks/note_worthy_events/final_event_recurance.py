@@ -5,8 +5,9 @@
 import pandas as pd
 import numpy as np
 import os
-from Climate_Shocks.climate_shocks_env import event_def_dir as backed_dir
 from Pasture_Growth_Modelling.initialisation_support.pasture_growth_deficit import calc_past_pasture_growth_anomaly
+from Climate_Shocks.note_worthy_events.rough_stats import make_data
+from Climate_Shocks.climate_shocks_env import event_def_dir, event_def_path
 
 # todo final check with Water Strategies
 hot = '07d_d_tmax_25'
@@ -59,7 +60,7 @@ def make_prob(in_series):
 
 def get_org_data():
     data = [
-        pd.read_csv(os.path.join(backed_dir, '{}_years.csv'.format(f))).loc[:, k] for (f, k) in events
+        pd.read_csv(os.path.join(event_def_dir, '{}_years.csv'.format(f))).loc[:, k] for (f, k) in events
 
     ]
     use_data = []
@@ -115,9 +116,14 @@ def make_prob_impact_data():
 
 if __name__ == '__main__':
     # todo check and then finalize events
+    # initial events recurrence must be run first. then this creates, the final events.
+    # visualied_events.csv come from Storylines.check_storyline
     out = make_prob_impact_data()
 
     t = pd.Series([' '.join(e) for e in out.columns])
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
-    out.to_csv(os.path.join(backed_dir, 'current_choice_v2.csv'), float_format='%.1f%%')
+    out.to_csv(os.path.join(event_def_dir, 'current_choice.csv'), float_format='%.1f%%')
+    out.to_csv(os.path.join(os.path.dirname(event_def_path),
+                            'event_historical_prob_impact.csv'), float_format='%.1f%%')
+    make_data(get_org_data(), save=True)

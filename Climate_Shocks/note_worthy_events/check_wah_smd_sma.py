@@ -82,5 +82,5 @@ def plot_exlploritory_data(number, num_to_plot=20, vars_to_plot=['rain', 'pet', 
 
 
 if __name__ == '__main__':
-    plot_exlploritory_data(5,2)
+    plot_exlploritory_data(10, 2)
     plt.show()

@@ -22,14 +22,12 @@ def calc_smd(rain, pet, h2o_cap, h2o_start, a=0.0073,
     :return: (soil moisture deficit, mm) or (soil moisture deficit, mm), (drainage, mm), (aet, mm)
     """
     # make this work if float/ndarray passed
-    if pd.api.types.is_number(pet):
-        array_d = 0  # float or other number, return numeric data
-    elif np.atleast_1d(pet).ndim == 1:
+    if np.atleast_1d(pet).ndim == 1:
         array_d = 1  # 1d array or list, return 1d data
+        pet = np.atleast_1d(pet[:, np.newaxis])
+        rain = np.atleast_1d(rain[:, np.newaxis])
     else:
         array_d = 2  # 2 or more dimensions return without modification
-    pet = np.atleast_2d(pet)
-    rain = np.atleast_2d(rain)
     assert rain.shape == pet.shape, 'rain and PET must be same shape'
     assert h2o_start <= 1 and h2o_start >= 0, 'h2o start must be the fraction, between 0-1'
 
@@ -60,12 +58,7 @@ def calc_smd(rain, pet, h2o_cap, h2o_start, a=0.0073,
             aet_out[i] = aet
 
     # manage shape and return data
-    if array_d == 0:
-        smd = smd[0, 0]
-        if return_drn_aet:
-            drain = drain[0, 0]
-            aet_out = aet_out[0, 0]
-    elif array_d == 1:
+    if array_d == 1:
         smd = smd[:, 0]
         if return_drn_aet:
             drain = drain[:, 0]
@@ -125,7 +118,7 @@ def calc_sma_smd_historical(rain, pet, date, h2o_cap, h2o_start, average_start_y
 
     assert date.shape == pet.shape == rain.shape, 'date, pet, rain must be same shape'
 
-    smd, drain, aet_out = calc_smd(rain, pet, h2o_cap, h2o_start, a, p)
+    smd, drain, aet_out = calc_smd(rain, pet, h2o_cap, h2o_start, a, p, return_drn_aet=True)
 
     outdata = pd.DataFrame(data={'date': date, 'doy': doy, 'pet': pet, 'rain': rain, 'smd': smd, 'drain': drain,
                                  'aet_out': aet_out},
@@ -170,7 +163,7 @@ def calc_penman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=N
     if psurf is None:
         assert elevation is not None, 'if mslp is passed instead of psurf elevation must also be passed'
         # from https://keisan.casio.com/keisan/image/Convertpressure.pdf
-        psurf = mslp * (1 - 0.0065 * elevation / (temp + 273 + 0.0065*elevation)) ** 5.257
+        psurf = mslp * (1 - 0.0065 * elevation / (temp + 273 + 0.0065 * elevation)) ** 5.257
 
     # get the correct wind speed
     if wind_2 is not None:
@@ -226,14 +219,15 @@ def calc_smd_sma_wah(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv)
     assert len(expected_shape) == 2, 'expected 2d array (day of year, simulation number)'
     for k in ['radn', 'rain', 'tmax', 'tmin', 'rh_min', 'rh_max', 'wind_10', 'mslp']:
         assert eval(k).shape == expected_shape, '{} does not match rain shape'.format(k)
-        assert np.isfinite(eval(k)).all(), 'nan values passed in {}, please remove otherwise they will impact the sma'.format(k)
+        assert np.isfinite(
+            eval(k)).all(), 'nan values passed in {}, please remove otherwise they will impact the sma'.format(k)
 
     # make mean values and convert units
     temp = (tmax + tmin) / 2 - 273.15  # to C
     rh = (rh_min + rh_max) / 2
     rain = rain * 86400  # kg/m2/s to mm/day
     radn = radn * 86400 * 1e-6  # from w/m2 to mj/m2/day
-    mslp = mslp / 1000 # Pa to kpa
+    mslp = mslp / 1000  # Pa to kpa
 
     # run SMD/SMA
     pet = calc_penman_pet(rad=radn, temp=temp, rh=rh, wind_10=wind_10, wind_2=None, psurf=None, mslp=mslp,

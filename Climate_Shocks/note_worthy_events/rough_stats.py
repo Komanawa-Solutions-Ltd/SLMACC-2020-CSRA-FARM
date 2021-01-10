@@ -7,9 +7,9 @@ import numpy as np
 import os
 import ksl_env
 from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
-from Climate_Shocks.note_worthy_events.final_event_recurance import get_org_data
 from Climate_Shocks.climate_shocks_env import event_def_dir as backed_dir
 from Climate_Shocks.get_past_record import get_restriction_record
+from Climate_Shocks.climate_shocks_env import event_def_path_drive, event_def_path
 
 outdir = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\mutual_info")
 if not os.path.exists(outdir):
@@ -23,19 +23,25 @@ event_months = {
     'rest': list(range(9, 13)) + list(range(1, 5))}
 
 
-def make_data(save=False, restrict_cat=True):
-    temp_data = get_org_data()
+def make_data(org_data, save=False, restrict_cat=True):
+    """
+    make the final data for greg
+    :param org_data: from final_event_recurance import get_org_data
+    :param save:
+    :param restrict_cat:
+    :return:
+    """
     data = pd.DataFrame(index=pd.MultiIndex.from_product([range(1, 13), range(1972, 2020)], names=['month', 'year']),
                         columns=['temp', 'precip', 'rest', 'rest_cum'], dtype=float)
     rest_rec = get_restriction_record().groupby(['month', 'year']).sum().loc[:, 'f_rest']
 
     data.loc[:, :] = 0
     data.loc[rest_rec.index, 'rest_cum'] = rest_rec
-    data.loc[temp_data.loc[pd.notna(temp_data.hot)].hot, 'temp'] = 1
-    data.loc[temp_data.loc[pd.notna(temp_data.cold)].cold, 'temp'] = -1
-    data.loc[temp_data.loc[pd.notna(temp_data.dry)].dry, 'precip'] = 1
-    data.loc[temp_data.loc[pd.notna(temp_data.wet)].wet, 'precip'] = -1
-    data.loc[temp_data.loc[pd.notna(temp_data.rest)].rest, 'rest'] = 1
+    data.loc[org_data.loc[pd.notna(org_data.hot)].hot, 'temp'] = 1
+    data.loc[org_data.loc[pd.notna(org_data.cold)].cold, 'temp'] = -1
+    data.loc[org_data.loc[pd.notna(org_data.dry)].dry, 'precip'] = 1
+    data.loc[org_data.loc[pd.notna(org_data.wet)].wet, 'precip'] = -1
+    data.loc[org_data.loc[pd.notna(org_data.rest)].rest, 'rest'] = 1
 
     # re-order data
     data = data.reset_index().sort_values(['year', 'month'])
@@ -51,11 +57,11 @@ def make_data(save=False, restrict_cat=True):
         data.loc[:, 'prev_{}'.format(k)] = data.loc[:, k].shift(1)
 
     if save:
-        path = os.path.join(backed_dir, 'annual_event_data_v2.csv')
-        with open(path, 'w') as f:
-            f.write('0=normal temp: -1=cold; ; 1=hot; Precip: -1=wet; 1=dry; rest: 1=anomalous restrictions. '
-                    'prev_{} = previous months data  \n')
-        data.to_csv(path, mode='a', index=False)
+        for path in [event_def_path, event_def_path_drive]:
+            with open(path, 'w') as f:
+                f.write('0=normal temp: -1=cold; ; 1=hot; Precip: -1=wet; 1=dry; rest: 1=anomalous restrictions. '
+                        'prev_{} = previous months data  \n')
+            data.to_csv(path, mode='a', index=False)
     if restrict_cat:
         return data.drop(columns=['rest_cum', 'prev_rest_cum'])
     else:
