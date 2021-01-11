@@ -33,7 +33,6 @@ def calc_pasture_growth(basgra_out, basgra_harvest, mode, freq, resamp_fun):
     :param resamp_fun: function to resample on
     :return: time series of pasture growth
     """
-    # todo test to esure that frequency is greather than or equal daily
 
     mode_dict = {
         'from_yield': _calc_pasture_from_yeild_regular,

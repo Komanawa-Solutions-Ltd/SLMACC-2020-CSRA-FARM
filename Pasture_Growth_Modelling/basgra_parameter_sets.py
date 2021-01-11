@@ -222,7 +222,7 @@ def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest
         matrix_weather.loc[:, 'irr_targ'] = 0.75
 
         # set trig/targ for summer days
-        idx = np.in1d(weather_data.loc[:, 'month'], [12, 1, 2])  # todo set to DOY_IRR
+        idx = np.in1d(weather_data.loc[:, 'month'], [12, 1, 2])  # set to DOY_IRR
         matrix_weather.loc[idx, 'irr_trig'] = 0.75
         matrix_weather.loc[idx, 'irr_targ'] = 0.90
 

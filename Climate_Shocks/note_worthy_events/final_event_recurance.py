@@ -9,7 +9,6 @@ from Pasture_Growth_Modelling.initialisation_support.pasture_growth_deficit impo
 from Climate_Shocks.note_worthy_events.rough_stats import make_data
 from Climate_Shocks.climate_shocks_env import event_def_dir, event_def_path
 
-# todo final check with Water Strategies
 hot = '07d_d_tmax_25'
 cold = '10d_d_tmean_07'
 dry = '10d_d_smd000_sma-20'
@@ -115,7 +114,6 @@ def make_prob_impact_data():
 
 
 if __name__ == '__main__':
-    # todo check and then finalize events
     # initial events recurrence must be run first. then this creates, the final events.
     # visualied_events.csv come from Storylines.check_storyline
     out = make_prob_impact_data()

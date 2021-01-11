@@ -194,7 +194,7 @@ def calc_wet_recurance():
 
 def calc_wet_recurance_ndays():
     ndays = {
-        'org': {  # todo this is the best value!
+        'org': {  # this is the best value!
             5: 14,
             6: 11,
             7: 11,
@@ -262,7 +262,7 @@ def calc_dry_rolling():
     for bnd in bulk_ndays:
         ndays['ndays{}'.format(bnd)] = {k:bnd for k in range(1,13)}
 
-    thresholds = {  # todo start here
+    thresholds = {  # this did not end up getting used
         'first': {
             4: 15,
             5: 10,
@@ -361,7 +361,7 @@ def calc_dry_rolling():
 
 
 def calc_dry_recurance_ndays():
-    ndays = {  # todo happy with this value other than middle ones
+    ndays = {  # happy with this value other than middle ones; this did not end up getting used
         'lower_q': {  # based on the sma -20 10days
             1: 31,  # lower quartile of normal
             2: 45,  # lower quartile of normal
@@ -1022,7 +1022,7 @@ def plot_restriction_record():
 
 
 if __name__ == '__main__':
-    #todo setup final run
+    # final run set up
     calc_hot_recurance()
     calc_cold_recurance()
     calc_dry_recurance()

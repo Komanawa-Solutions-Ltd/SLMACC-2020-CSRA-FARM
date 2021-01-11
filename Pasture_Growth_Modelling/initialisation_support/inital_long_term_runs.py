@@ -75,7 +75,7 @@ if __name__ == '__main__':
         'dryland_oxford': run_past_basgra_dryland(site='oxford'),
     }
     for i, k in enumerate(data.keys()):
-        data[k].loc[:, 'RESEEDED'] += i  # todo any more fo these to raise up?
+        data[k].loc[:, 'RESEEDED'] += i  # any more fo these to raise up to see with multiple runs
 
     data2 = {e: make_mean_comparison(v, 'mean') for e, v in data.items()}
     data2['Horoata'] = get_horarata_data_old()
