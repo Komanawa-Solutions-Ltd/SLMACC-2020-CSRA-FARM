@@ -59,8 +59,16 @@ def calc_doy_per_from_historical():
             per, err = inverse_percentile(temp2, thresholds[k], bootstrap=False)
             outdata.loc[d, '{}_per'.format(k)] = per
             outdata.loc[d, '{}_err'.format(k)] = err
-    outdata.loc[:, 'date'] = pd.to_datetime(['2000-{:03d}'.format(e) for e in outdata.index], format='%Y-%j')
+    outdata.loc[:, 'date'] = pd.to_datetime(['2001-{:03d}'.format(e) for e in outdata.index], format='%Y-%j')
+    outdata.loc[:,'month'] = outdata.date.dt.month
+
+    # get rid of hangers on from leap years
+    for k, k2 in zip(use_keys, use_keys2):
+        outdata.loc[~np.in1d(outdata.month, events[k2]), '{}_per'.format(k)] = np.nan
+        outdata.loc[~np.in1d(outdata.month, events[k2]), '{}_err'.format(k)] = np.nan
+
     outdata.set_index('date', inplace=True, append=True)
+
     return outdata
 
 
