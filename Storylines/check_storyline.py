@@ -9,6 +9,22 @@ from Climate_Shocks.climate_shocks_env import event_def_path
 import itertools
 
 
+def get_months_with_events():
+    events = pd.read_csv(event_def_path, skiprows=1)
+    temps = ['C', 'tA', 'H']
+    precips = ['W', 'pA', 'D']
+    _vals = [-1, 0, 1]
+    events_out = {}
+    for (tkey, tval) in zip(temps, _vals):
+        temp = events.loc[np.isclose(events.temp, tval)].month.unique()
+        events_out['{}'.format(tkey)] = temp
+    for (pkey, pval) in zip(precips, _vals):
+        temp = events.loc[np.isclose(events.precip, pval)].month.unique()
+        events_out['{}'.format(pkey)] = temp
+
+    return events_out
+
+
 def get_acceptable_events():
     events = pd.read_csv(event_def_path, skiprows=1)
     temps = ['C', 'A', 'H']
