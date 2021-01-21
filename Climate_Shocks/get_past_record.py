@@ -2,11 +2,12 @@
  Author: Matt Hanson
  Created: 26/11/2020 1:05 PM
  """
-from Climate_Shocks.vcsn_pull import vcsn_pull_single_site
+from Climate_Shocks.vcsn_pull import vcsn_pull_single_site, change_vcsn_units
 import ksl_env
 import os
 import pandas as pd
 import numpy as np
+from Climate_Shocks.climate_shocks_env import event_def_path
 
 vcsn_keys = ('year', 'month', 'day', 'doy', 'pet', 'radn', 'tmax', 'tmin', 'rain')
 
@@ -14,8 +15,31 @@ restriction_keys = ('day', 'doy', 'f_rest', 'flow', 'month', 'take', 'year')
 
 sites = ('eyrewell', 'oxford')
 
+def _get_eyrewell_detrended():
+    """
+    quick funcation to support reading detrended data to calculate percentiles!
+    :return:
+    """
+    data = pd.read_csv(os.path.join(os.path.dirname(event_def_path), 'detrended_vcsn_for_matt.csv'),
+                       skiprows=3)
+    data.loc[:,'date'] = pd.to_datetime(data.loc[:,'date'])
+    data.set_index('date', inplace=True)
+    data.sort_index(0, inplace=True)
+    change_vcsn_units(data)
+    data.rename(columns={'evspsblpot': 'pet', 'pr': 'rain',
+                                            'rsds': 'radn', 'tasmax': 'tmax', 'tasmin': 'tmin'}, inplace=True)
 
-def get_vcsn_record(site='eyrewell', recalc=False):
+    return data
+
+
+def get_vcsn_record(version='trended', site='eyrewell', recalc=False):
+    if version =='trended':
+        pass
+    elif version =='detrended' and site =='eyrewell' :
+        return _get_eyrewell_detrended()
+    else:
+        raise ValueError('incorrect {} for version'.format(version))
+
     if site == 'eyrewell':
         lat, lon = -43.372, 172.333
     elif site == 'oxford':

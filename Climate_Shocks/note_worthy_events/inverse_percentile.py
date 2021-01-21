@@ -28,8 +28,8 @@ def inverse_percentile(a, value, bootstrap=True):
     return per, err
 
 
-def calc_doy_per_from_historical():
-    data = get_vcsn_record().reset_index()
+def calc_doy_per_from_historical(version='trended'):
+    data = get_vcsn_record(version).reset_index()
     data.loc[:, 'doy'] = data.date.dt.dayofyear
     data.loc[:, 'cold'] = ((data.loc[:, 'tmin'] + data.loc[:, 'tmax']) / 2).rolling(3).mean()
     data.loc[:, 'hot'] = data.loc[:, 'tmax']
@@ -73,5 +73,7 @@ def calc_doy_per_from_historical():
 
 
 if __name__ == '__main__':
+    data = calc_doy_per_from_historical('detrended')
+    data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles_detrended.csv')) #todo debug, run, and check.
     data = calc_doy_per_from_historical()
     data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles.csv'))
