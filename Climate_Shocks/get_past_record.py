@@ -23,6 +23,8 @@ def _get_eyrewell_detrended():
     data = pd.read_csv(os.path.join(os.path.dirname(event_def_path), 'detrended_vcsn_for_matt.csv'),
                        skiprows=3)
     data.loc[:,'date'] = pd.to_datetime(data.loc[:,'date'])
+    data.loc[:,'month'] = data.loc[:,'date'].dt.month
+    data.loc[:,'doy'] = data.loc[:,'date'].dt.dayofyear
     data.set_index('date', inplace=True)
     data.sort_index(0, inplace=True)
     change_vcsn_units(data)
