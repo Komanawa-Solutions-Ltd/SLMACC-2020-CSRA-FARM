@@ -15,15 +15,22 @@ restriction_keys = ('day', 'doy', 'f_rest', 'flow', 'month', 'take', 'year')
 
 sites = ('eyrewell', 'oxford')
 
-def _get_eyrewell_detrended():
+def _get_eyrewell_detrended(version):
     """
     quick funcation to support reading detrended data to calculate percentiles!
     :return:
     """
-    data = pd.read_csv(os.path.join(os.path.dirname(event_def_path), 'detrended_vcsn_for_matt.csv'),
-                       skiprows=3)
+    if version ==1:
+        data = pd.read_csv(os.path.join(os.path.dirname(event_def_path), 'detrended_vcsn_for_matt.csv'),
+                           skiprows=3)
+    elif version ==2:
+        data = pd.read_csv(os.path.join(os.path.dirname(event_def_path), 'detrended_vcsn_for_matt_v2.csv'),
+                           skiprows=3)
+    else:
+        raise NotImplementedError()
     data.loc[:,'date'] = pd.to_datetime(data.loc[:,'date'])
     data.loc[:,'month'] = data.loc[:,'date'].dt.month
+    data.loc[:,'year'] = data.loc[:,'date'].dt.year
     data.loc[:,'doy'] = data.loc[:,'date'].dt.dayofyear
     data.set_index('date', inplace=True)
     data.sort_index(0, inplace=True)
@@ -38,7 +45,9 @@ def get_vcsn_record(version='trended', site='eyrewell', recalc=False):
     if version =='trended':
         pass
     elif version =='detrended' and site =='eyrewell' :
-        return _get_eyrewell_detrended()
+        return _get_eyrewell_detrended(1)
+    elif version =='detrended2' and site =='eyrewell' :
+        return _get_eyrewell_detrended(2)
     else:
         raise ValueError('incorrect {} for version'.format(version))
 

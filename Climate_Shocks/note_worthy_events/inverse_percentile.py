@@ -53,7 +53,11 @@ def calc_doy_per_from_historical(version='trended'):
         print(k)
         temp = data.loc[np.in1d(data.month, events[k2])]
         for d in range(1, 366):
-            temp2 = temp.loc[temp.doy == d, k]
+            days = np.arange(d-5, d+6)
+            days[days <= 0] += 365
+            days[days > 365] += -365
+
+            temp2 = temp.loc[np.in1d(temp.doy, days), k]
             if temp2.empty:
                 continue
             per, err = inverse_percentile(temp2, thresholds[k], bootstrap=False)
@@ -74,6 +78,10 @@ def calc_doy_per_from_historical(version='trended'):
 
 if __name__ == '__main__':
     data = calc_doy_per_from_historical('detrended')
-    data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles_detrended.csv')) #todo debug, run, and check.
+    data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles_detrended.csv'))
+
+    data = calc_doy_per_from_historical('detrended2') #this should be the one used, others are for investigation
+    data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles_detrended_v2.csv'))
+
     data = calc_doy_per_from_historical()
     data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles.csv'))
