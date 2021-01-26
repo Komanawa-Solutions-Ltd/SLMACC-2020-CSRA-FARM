@@ -8,6 +8,8 @@ import scipy.stats
 # 2 make sythetic flow data and translate to restriction
 # 3 make sytheic restriction data by creating autocorrelated data...
 
+# either make the data directly or make a large set that covers all restriction options and then sample from that.
+
 
 # todo this is incredible https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2014WR016827
 #todo this is an option: https://github.com/julianneq/Kirsch-Nowak_Streamflow_Generator
