@@ -38,7 +38,7 @@ def plot_vcsn_for_step_change(data, rolling_window, **kwargs):
     plt.show()
 
 def make_annual_vcsn_res_data(site, agg_per):
-    weather_data = get_vcsn_record(site)
+    weather_data = get_vcsn_record(site=site)
     rest_data = get_restriction_record().loc[:, ['f_rest']]
     annual_data = pd.merge(weather_data, rest_data, right_index=True, left_index=True).reset_index()
     annual_data = annual_data.groupby(agg_per).agg(agg_dict)

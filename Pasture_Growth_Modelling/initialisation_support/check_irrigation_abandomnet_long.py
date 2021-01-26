@@ -22,7 +22,7 @@ mode = 'irrigated'
 
 def create_irrigation_abandomnet_data(base_name, params, reseed_trig=-1, reseed_basal=1, site='eyrewell'):
     out = {}
-    weather = get_vcsn_record(site)
+    weather = get_vcsn_record(site=site)
     rest = get_restriction_record()
     p, doy_irr = get_params_doy_irr(mode)
     matrix_weather = create_matrix_weather(mode, weather, rest)

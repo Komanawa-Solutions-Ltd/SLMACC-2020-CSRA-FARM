@@ -290,6 +290,9 @@ def test_calc_smd():
     # 3d
     raise NotImplementedError
 
+def test_penman_pet():
+    #todo write a testing regime in the future I am confidnet that it is working appropriately
+    raise NotImplementedError
 
 if __name__ == '__main__':
     rough_testing_of_pet()

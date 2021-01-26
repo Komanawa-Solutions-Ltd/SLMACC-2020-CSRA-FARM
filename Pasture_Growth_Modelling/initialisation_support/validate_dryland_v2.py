@@ -24,7 +24,7 @@ from Pasture_Growth_Modelling.initialisation_support.comparison_support import m
 def calc_past_mean(fun, pg_mode, return_norm=True, freq='month'):
     site = 'oxford'
     mode = 'dryland'
-    weather = get_vcsn_record(site)
+    weather = get_vcsn_record(site=site)
     rest = None
     params, doy_irr = get_params_doy_irr(mode)
     matrix_weather = create_matrix_weather(mode, weather, rest)

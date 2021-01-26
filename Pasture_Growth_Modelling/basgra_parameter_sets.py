@@ -13,7 +13,7 @@ ksl_env.add_basgra_nz_path()
 from supporting_functions.woodward_2020_params import get_woodward_mean_full_params
 
 
-# todo check initals for SWG data
+# todo check initals for SWG data, consider setting to mean of start month of 'average' conditions
 def get_params_doy_irr(mode):
     """
     get the parameter sets for all of the basgra modelling
@@ -50,14 +50,14 @@ def get_params_doy_irr(mode):
         params['reseed_CST'] = 1.677470e-01
         params['reseed_CSTUB'] = 0
 
-        # modify inital #todo set from start of sumulation month mean
-        params['BASALI'] = 0.75
+        # modify inital  # set from start of simulation month (7) mean
+        params['BASALI'] = 73.843861
 
         # set from a mid point value not important for percistance, but important to stop inital high yeild!
-        # todo set to start of simulation month average
-        params['LOG10CLVI'] = np.log10(60.458220669768934)
-        params['LOG10CRESI'] = np.log10(9.401460874116669)
-        params['LOG10CRTI'] = np.log10(129.31409472684638)
+        # set to start of simulation start month(7) average
+        params['LOG10CLVI'] = np.log10(51.998000)
+        params['LOG10CRESI'] = np.log10(9.627059)
+        params['LOG10CRTI'] = np.log10(125.966156)
     elif mode == 'dryland':
         # add irrigation parameters
         params['irr_frm_paw'] = 1
@@ -65,7 +65,7 @@ def get_params_doy_irr(mode):
         doy_irr = [0]
 
         # modify inital values for dryland
-        # set from a mid point value
+        # set from a mid point value, left as it is part of the dryland 'optimisation' process
         params['BASALI'] = 0.15
 
         # reseed parameteres, set as mean of long term runs in june
@@ -80,10 +80,10 @@ def get_params_doy_irr(mode):
         params['reseed_CSTUB'] = 4.305489e-04
 
         # set from a mid point value not important for persistence, but important to stop initial high yield!,
-        # todo set to start of simulation month average
-        params['LOG10CLVI'] = np.log10(6.05755204792593)
-        params['LOG10CRESI'] = np.log10(0.5756279931949703)
-        params['LOG10CRTI'] = np.log10(13.195940769384178)
+        # set to start of simulation month (7) average
+        params['LOG10CLVI'] = np.log10(3.072320)
+        params['LOG10CRESI'] = np.log10(0.586423)
+        params['LOG10CRTI'] = np.log10(13.773034)
     else:
         raise ValueError('unexpected mode: {}, values are "irrigated" or "dryland"'.format(mode))
 

@@ -28,7 +28,7 @@ def run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_
         weed_dm_frac = {e: weed_dm_frac for e in range(1, 13)}
     mode = 'dryland'
     print('running: {}, {}, reseed: {}'.format(mode, site, reseed))
-    weather = get_vcsn_record(site)
+    weather = get_vcsn_record(site=site)
     rest = None
     params, doy_irr = get_params_doy_irr(mode)
     matrix_weather = create_matrix_weather(mode, weather, rest)
