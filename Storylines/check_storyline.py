@@ -46,8 +46,8 @@ def ensure_no_impossible_events(storyline):
     assert storyline.rest.max() <= 1, 'unexpected values for restrictions'
     assert storyline.rest.min() >= 0, 'unexpected values for restrictions'
     assert set(storyline.month) == set(np.arange(1, 13))
-    # todo ensure that the months are reasonable and continious
-
+    # todo ensure that the months are reasonable and continious, storylines will take place in range(2025, 2028) which has no leap years
+    # check against daterange for index.
     assert (storyline.loc[np.in1d(storyline.month,
                                   [5, 6, 7, 8]), 'rest'] == 0).all(), 'irrigation rest in months without irr'
 

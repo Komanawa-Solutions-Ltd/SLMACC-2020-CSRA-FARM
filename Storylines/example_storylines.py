@@ -7,11 +7,12 @@ from Storylines.check_storyline import ensure_no_impossible_events
 import ksl_env
 import os
 
+
 def build_example_storylines_for_greg(outdir):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     data = pd.read_excel(ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\example_story_lines.xlsx"),
-                         header=[0,1],
+                         header=[0, 1],
                          skiprows=1
                          )
 
@@ -30,35 +31,34 @@ def build_example_storylines_for_greg(outdir):
         12: 31,
     }
     rest_vals = {1: 10,
-            2: 17,
-            3: 17,
-            4: 10,
-            5: 7,
-            6: 10,
-            7: 10,
-            8: 10,
-            9: 7,
-            10: 5,
-            11: 5,
-            12: 7,
-            }
+                 2: 17,
+                 3: 17,
+                 4: 10,
+                 5: 7,
+                 6: 10,
+                 7: 10,
+                 8: 10,
+                 9: 7,
+                 10: 5,
+                 11: 5,
+                 12: 7,
+                 }
 
-    rest_vals = {k: rest_vals[k]/ndays[k] for k in range(1,13)}
+    rest_vals = {k: rest_vals[k] / ndays[k] for k in range(1, 13)}
 
     for k in data.columns.levels[0]:
-        storyline = data.loc[:,k].dropna()
-        storyline.loc[:,'month'] = storyline.loc[:,'month'].astype(int)
-        storyline.loc[:,'year'] = storyline.loc[:,'year'].astype(int)
-        storyline.loc[storyline.rest>0,'rest'] = storyline.loc[:, 'month'].replace(rest_vals)
+        storyline = data.loc[:, k].dropna()
+        storyline.loc[:, 'month'] = storyline.loc[:, 'month'].astype(int)
+        storyline.loc[:, 'year'] = storyline.loc[:, 'year'].astype(int) + 2024
+        storyline.loc[storyline.rest > 0, 'rest'] = storyline.loc[:, 'month'].replace(rest_vals)
 
         try:
             ensure_no_impossible_events(storyline)
         except Exception as val:
             print('{} raised:\n {}'.format(k, val))
 
-        storyline.to_csv(os.path.join(outdir,'{}.csv'.format(k)), index=False)
+        storyline.to_csv(os.path.join(outdir, '{}.csv'.format(k)), index=False)
+
 
 if __name__ == '__main__':
     build_example_storylines_for_greg(ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\example_storys_for_greg"))
-
-
