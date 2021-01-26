@@ -45,8 +45,15 @@ def ensure_no_impossible_events(storyline):
     assert set(storyline.precip_class.unique()).issubset(['W', 'A', 'D']), 'unexpected classes for precip_class'
     assert storyline.rest.max() <= 1, 'unexpected values for restrictions'
     assert storyline.rest.min() >= 0, 'unexpected values for restrictions'
+
+    # check dates
     assert set(storyline.month) == set(np.arange(1, 13))
-    # todo ensure that the months are reasonable and continious, storylines will take place in range(2025, 2028) which has no leap years
+    assert storyline.month.iloc[0] == 7, 'all storylines must start in july'
+    years = storyline.year.unique()
+    expected_dates = pd.date_range('{}-07-01'.format(min(years)), '{}-06-01'.format(max(years)), freq='MS')
+    assert isinstance(storyline.index, pd.DatetimeIndex), 'storyline index must be datetime index'
+    idx = storyline.index == expected_dates
+    assert idx.all(), 'expected full years bad values are {}'.format(storyline.index[idx])
     # check against daterange for index.
     assert (storyline.loc[np.in1d(storyline.month,
                                   [5, 6, 7, 8]), 'rest'] == 0).all(), 'irrigation rest in months without irr'
