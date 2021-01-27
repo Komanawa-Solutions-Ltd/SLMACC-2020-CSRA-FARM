@@ -15,38 +15,39 @@ restriction_keys = ('day', 'doy', 'f_rest', 'flow', 'month', 'take', 'year')
 
 sites = ('eyrewell', 'oxford')
 
+
 def _get_eyrewell_detrended(version):
     """
     quick funcation to support reading detrended data to calculate percentiles!
     :return:
     """
-    if version ==1:
+    if version == 1:
         data = pd.read_csv(os.path.join(os.path.dirname(event_def_path), 'detrended_vcsn_for_matt.csv'),
                            skiprows=3)
-    elif version ==2:
+    elif version == 2:
         data = pd.read_csv(os.path.join(os.path.dirname(event_def_path), 'detrended_vcsn_for_matt_v2.csv'),
                            skiprows=3)
     else:
         raise NotImplementedError()
-    data.loc[:,'date'] = pd.to_datetime(data.loc[:,'date'])
-    data.loc[:,'month'] = data.loc[:,'date'].dt.month
-    data.loc[:,'year'] = data.loc[:,'date'].dt.year
-    data.loc[:,'doy'] = data.loc[:,'date'].dt.dayofyear
+    data.loc[:, 'date'] = pd.to_datetime(data.loc[:, 'date'])
+    data.loc[:, 'month'] = data.loc[:, 'date'].dt.month
+    data.loc[:, 'year'] = data.loc[:, 'date'].dt.year
+    data.loc[:, 'doy'] = data.loc[:, 'date'].dt.dayofyear
     data.set_index('date', inplace=True)
     data.sort_index(0, inplace=True)
     change_vcsn_units(data)
     data.rename(columns={'evspsblpot': 'pet', 'pr': 'rain',
-                                            'rsds': 'radn', 'tasmax': 'tmax', 'tasmin': 'tmin'}, inplace=True)
+                         'rsds': 'radn', 'tasmax': 'tmax', 'tasmin': 'tmin'}, inplace=True)
 
     return data
 
 
 def get_vcsn_record(version='trended', site='eyrewell', recalc=False):
-    if version =='trended':
+    if version == 'trended':
         pass
-    elif version =='detrended' and site =='eyrewell' :
+    elif version == 'detrended' and site == 'eyrewell':
         return _get_eyrewell_detrended(1)
-    elif version =='detrended2' and site =='eyrewell' :
+    elif version == 'detrended2' and site == 'eyrewell':
         return _get_eyrewell_detrended(2)
     else:
         raise ValueError('incorrect {} for version'.format(version))
@@ -66,8 +67,6 @@ def get_vcsn_record(version='trended', site='eyrewell', recalc=False):
         data = pd.read_hdf(data_path, key=key)
         return data
 
-
-
     data, use_cords = vcsn_pull_single_site(lat,
                                             lon,
                                             year_min=1972,
@@ -81,21 +80,32 @@ def get_vcsn_record(version='trended', site='eyrewell', recalc=False):
     return data
 
 
-def get_restriction_record(recalc=False):
-    data_path = ksl_env.shared_drives(r"Z2003_SLMACC\WIL data\restriction_record.csv")
+def get_restriction_record(version='trended', recalc=False):
+    if version == 'trended':
+        data_path = os.path.join(os.path.dirname(event_def_path), 'restriction_record.csv')
+        dt_format = '%Y-%m-%d'
+    elif version =='detrended':
+        if recalc:
+            raise NotImplementedError('detrending happened at Bodeker Scientific, cant be recalculated')
+        dt_format = '%d/%m/%Y'
+        data_path = os.path.join(os.path.dirname(event_def_path), 'restriction_record_detrend.csv')
+    else:
+        raise ValueError('unexpected argument for version {} expected either trended or detrended'.format(version))
+
     if not recalc and os.path.exists(data_path):
         int_keys = {
-            'day':int,
-            'doy':int,
-            'month':int,
-            'year':int,
-            'f_rest':float,
-            'flow':float,
-            'take':float,
+            'day': int,
+            'doy': int,
+            'month': int,
+            'year': int,
+            'f_rest': float,
+            'flow': float,
+            'take': float,
         }
         data = pd.read_csv(data_path, dtype=int_keys)
-        data.loc[:, 'date'] = pd.to_datetime(data.loc[:, 'date'])
+        data.loc[:, 'date'] = pd.to_datetime(data.loc[:, 'date'],format=dt_format)
         data.set_index('date', inplace=True)
+        data.sort_index(inplace=True)
 
         return data
 
@@ -126,6 +136,7 @@ def get_restriction_record(recalc=False):
 
     outdata.to_csv(data_path)
     return outdata
+
 
 def recalc_sites():
     for site in sites:

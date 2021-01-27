@@ -11,4 +11,4 @@ if not os.path.exists(event_def_dir):
     os.makedirs(event_def_dir)
 
 event_def_path_drive = os.path.join(event_def_dir, 'event_definition_data.csv') # in google drive
-event_def_path = os.path.join(os.path.dirname(__file__), 'event_definition_data.csv') # in git repo
+event_def_path = os.path.join(os.path.dirname(__file__), 'supporting_data', 'event_definition_data.csv')  # in git repo
