@@ -1,0 +1,17 @@
+# This file was created by https://github.com/bodekerscientific/weather-gen/blob/main/probability%20drive/SLMACC_prob_calc_w%40h.py
+# This is a transition probability matrix for month of Jan using weather@home batch 793 at latitude=--43.28907140062721 and longitude=172.20701767025588
+# monthly classified data retreived from 1_bias_corrected_all_months_classified.csv 
+# The columns represent class for the month of Jan 
+# The rows represent the class for the next month 
+# The values represent the probability of that transition, with the column being the initial state and the row being the next state 
+# Column and row labels represent all the possible combinations of temp and precip classes (H,D,AT) and (W,D,AP) 
+,"AT,AP","AT,D","AT,W","C,AP","C,D","C,W","H,AP","H,D","H,W"
+"AT,AP",0.4143302180685358,0.42857142857142855,0.0,0.0,0.0,0.0,0.27927927927927926,0.24477611940298508,0.0
+"AT,D",0.018691588785046728,0.07142857142857142,0.0,0.0,0.0,0.0,0.012012012012012012,0.056716417910447764,0.0
+"AT,W",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"C,AP",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"C,D",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"C,W",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"H,AP",0.43302180685358255,0.2857142857142857,0.0,0.0,0.0,0.0,0.38288288288288286,0.21492537313432836,0.0
+"H,D",0.13395638629283488,0.21428571428571427,0.0,0.0,0.0,0.0,0.3258258258258258,0.4835820895522388,0.0
+"H,W",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
