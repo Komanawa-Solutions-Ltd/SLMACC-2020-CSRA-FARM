@@ -10,8 +10,8 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from warnings import warn
 
-# todo test
 
+# todo test
 
 
 class MovingBlockBootstrapGenerator(object):
@@ -19,7 +19,7 @@ class MovingBlockBootstrapGenerator(object):
     mean, std, clip_min, clip_max, nblocksize = None, None, None, None, None
     block_array = None
 
-    def __init__(self, input_data, blocktype, block, nsims, data_base_path, sim_len=None, nblocksize=None,
+    def __init__(self, input_data, blocktype, block, nsims, data_base_path=None, sim_len=None, nblocksize=None,
                  save_to_nc=True):
         """
 
@@ -46,7 +46,6 @@ class MovingBlockBootstrapGenerator(object):
             self.keys = input_data.keys()
             self.key = None
             for k, v in input_data.items():
-
                 t = np.atleast_1d(v)
                 assert t.ndim == 1, 'input data values must be a 1d array'
                 self.input_data[k] = deepcopy(t)
@@ -59,7 +58,7 @@ class MovingBlockBootstrapGenerator(object):
 
         for k in self.keys:
             if sim_len is None:
-                self.sim_len[k] = len(t)
+                self.sim_len[k] = len(self.input_data[k])
             elif isinstance(sim_len, int):
                 self.sim_len[k] = sim_len
             elif isinstance(sim_len, dict):
@@ -68,8 +67,9 @@ class MovingBlockBootstrapGenerator(object):
                 raise ValueError('{} not an acceptable argument for sim len'.format(sim_len))
 
         self.save_to_nc = save_to_nc
-        if not os.path.exists(data_base_path):
-            os.makedirs(data_base_path)
+        if save_to_nc:
+            if not os.path.exists(data_base_path):
+                os.makedirs(data_base_path)
         self.data_base_path = data_base_path
 
         assert isinstance(nsims, int)
@@ -113,13 +113,13 @@ class MovingBlockBootstrapGenerator(object):
         self.blocktype = blocktype
         self.datapath = os.path.join(self.data_base_path, '{}.nc'.format(self.data_id))
 
-        if not os.path.exists(self.datapath):
-            self._make_data()
-
         if save_to_nc:
+            if not os.path.exists(self.datapath):
+                self._make_data()
             self.dataset = nc.Dataset(self.datapath)
         else:
             self.dataset = {}
+            self._make_data()
 
     def _make_data(self):
         """
@@ -145,23 +145,31 @@ class MovingBlockBootstrapGenerator(object):
 
         for k in self.keys:
             out = np.zeros((self.nsims, self.sim_len[k])) * np.nan
-            l = self.nsims // self.nblocksize
+            n = self.nsims // self.nblocksize
             for i, b in enumerate(blocks):
-                out[i * l:(i + 1) * l] = self._make_moving_sample(b, l)
+                out[i * n:(i + 1) * n] = self._make_moving_sample(k, b, n)
 
             if self.save_to_nc:
                 nd_data.createDimension('sim_len_{}'.format(k), self.sim_len[k])
                 t = nd_data.createVariable(k, float, ('sim_len_{}'.format(k), 'sim_num'))
-                t[:] = out.transpose()
+                t[:] = out.transpose()  # this is backwards to manage quick reading
                 t = nd_data.createVariable('{}_mean'.format(k), float, ('sim_num',))
                 t[:] = out.mean(axis=1)
             else:
                 self.dataset[k] = out
                 self.dataset['{}_mean'.format(k)] = out.mean(axis=1)
 
-    def _make_moving_sample(self, block, nsamples):
-        #todo
-        raise NotImplementedError
+    def _make_moving_sample(self, key, blocksize, nsamples):  # todo step through and test
+        usable_len = len(self.input_data[key]) - blocksize
+        possible_idxs = range(usable_len)
+
+        num_per_sample = -(-self.sim_len[key] // blocksize)
+        start_idxs = np.random.choice(possible_idxs, nsamples * num_per_sample)
+        num_select = num_per_sample * blocksize
+        idxs = np.array([np.arange(e, e + blocksize) for e in start_idxs]).flatten()
+        out = self.input_data[key][idxs].reshape((nsamples, num_select))
+        out = out[:, self.sim_len[key]]
+        return out
 
     def plot_auto_correlation(self, nsims, lags, key=None):
         if key is None:
@@ -186,7 +194,7 @@ class MovingBlockBootstrapGenerator(object):
         assert key in self.keys
         data = self.get_data('{}_mean'.format(key), 10000, 'any', warn_level=1)
         fig, ax = plt.subplots()
-        if bins =='freedman':
+        if bins == 'freedman':
             bins = 2 * (np.percentile(data, 75) - np.percentile(data, 25)) / 10000 ** 1 / 3
         ax.hist(data, bins=bins)
         if show:
@@ -194,7 +202,7 @@ class MovingBlockBootstrapGenerator(object):
         else:
             return fig, ax
 
-    def get_data(self,  nsims, key=None, mean='any', tolerance=None, warn_level=0.1):
+    def get_data(self, nsims, key=None, mean='any', tolerance=None, warn_level=0.1):
         """
         pull simulations from the dataset, samples bootstrap simulations with replacement.
         :param key: data key to pull from, (if None set to self.key),
@@ -215,7 +223,7 @@ class MovingBlockBootstrapGenerator(object):
         if mean == 'any':
             idxs = np.random.choice(range(self.nsims), (nsims,))
             if self.save_to_nc:
-                out = np.array(self.dataset.variables[key][:, idxs])
+                out = np.array(self.dataset.variables[key][:, idxs]).transpose()
                 return out
             else:
                 out = self.dataset[idxs]
@@ -229,7 +237,7 @@ class MovingBlockBootstrapGenerator(object):
                     warn('selecting {} from {} unique simulations, less than '
                          'warn_level: {} of repetition'.format(nsims, len(idxs), warn_level))
                 idxs = np.random.choice(idxs, nsims)
-                out = np.array(self.dataset.variables[key][:, idxs])
+                out = np.array(self.dataset.variables[key][:, idxs]).transpose()
                 return out
             else:
                 means = self.dataset['{}_mean'.format(key)]
