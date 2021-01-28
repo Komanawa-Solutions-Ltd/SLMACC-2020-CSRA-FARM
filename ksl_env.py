@@ -141,3 +141,5 @@ def get_vscn_dir():
         raise ValueError('{} not in established users for host {}'.format(user, host))
 
     return host[user]
+
+slmmac_dir = shared_drives('Z2003_SLMACC')

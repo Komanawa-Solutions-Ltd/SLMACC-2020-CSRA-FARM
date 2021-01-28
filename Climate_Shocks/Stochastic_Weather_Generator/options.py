@@ -19,6 +19,8 @@ import scipy.stats
 #todo https://www.researchgate.net/publication/222797906_A_nonparametric_stochastic_approach_for_multisite_disaggregation_of_annual_to_daily_streamflow
 #todo https://www.mdpi.com/2306-5338/5/4/66/htm
 #todo https://www.sciencedirect.com/science/article/pii/S1364815219307133
+
+
 # below from
 #https://stackoverflow.com/questions/33898665/python-generate-array-of-specific-autocorrelation
 
