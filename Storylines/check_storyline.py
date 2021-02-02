@@ -7,12 +7,14 @@ import numpy as np
 import os
 from Climate_Shocks.climate_shocks_env import event_def_path
 import itertools
+import ksl_env
+import glob
 
 
 def get_months_with_events():
     events = pd.read_csv(event_def_path, skiprows=1)
-    temps = ['C', 'tA', 'H']
-    precips = ['W', 'pA', 'D']
+    temps = ['C', 'AT', 'H']
+    precips = ['W', 'AP', 'D']
     _vals = [-1, 0, 1]
     events_out = {}
     for (tkey, tval) in zip(temps, _vals):
@@ -27,7 +29,7 @@ def get_months_with_events():
 
 def get_acceptable_events():
     events = pd.read_csv(event_def_path, skiprows=1)
-    temps = ['C', 'A', 'H']
+    temps = ['C', 'A', 'H'] #todo add t and p and map through everything else
     precips = ['W', 'A', 'D']
     _vals = [-1, 0, 1]
     acceptable_events = {}
@@ -36,6 +38,18 @@ def get_acceptable_events():
         acceptable_events['{}-{}'.format(tkey, pkey)] = temp
 
     return acceptable_events
+
+
+def get_past_event_frequency():
+    events = pd.read_csv(event_def_path, skiprows=1)
+    temps = ['C', 'AT', 'H']
+    precips = ['W', 'AP', 'D']
+    _vals = [-1, 0, 1]
+    events.loc[:, 'precip'] = events.loc[:, 'precip'].replace({k: v for k, v in zip(_vals, precips)})
+    events.loc[:, 'temp'] = events.loc[:, 'temp'].replace({k: v for k, v in zip(_vals, temps)})
+    events.loc[:, 'state'] = ['{}-{}'.format(t, p) for t, p in zip(events.temp, events.precip)]
+    events = events.groupby(['month', 'state']).count()
+    return events
 
 
 def ensure_no_impossible_events(storyline):
@@ -72,7 +86,69 @@ def ensure_no_impossible_events(storyline):
         raise ValueError('\n '.join(messages))
 
 
+def get_all_zero_prob_transitions():
+    trans_prob_dir = os.path.join(ksl_env.slmmac_dir,
+                                  r"BS_code\BS_Project_Final\IID\TransitionProbabilities")
+    trans = _read_trans(glob.glob(os.path.join(trans_prob_dir, '*_transitions.csv')))
+    events = {e: [] for e in range(1, 13)}
+    acceptable = get_acceptable_events()
+    for k, v in acceptable.items():
+        for m in v:
+            t, p = k.split('-')
+            t = t.replace('A', 'AT')
+            p = p.replace('A', 'AP')
+            events[m].append('{}-{}'.format(t, p))
+    out_zero = {e: [] for e in range(1, 13)}
+    out_not_zero = {e: [] for e in range(1, 13)}
+    missing_data = {e: [] for e in range(1, 13)}
+    for m in range(1, 13):
+        if m == 12:
+            m2 = 1
+        else:
+            m2 = m + 1
+        current_m = events[m]
+        next_m = events[m2]
+
+        for state1, state2 in itertools.product(current_m, next_m):
+            if trans[m].loc[state2, state1] == 0:
+                out_zero[m].append('{} to {} is zero'.format(state1, state2))
+            else:
+                out_not_zero[m].append('{} to {} is NOT zero'.format(state1, state2))
+            if (trans[m].loc[:, state1] == 0).all():
+                missing_data[m].append(state1) #todo following up on missing states with BS.
+    return out_zero, out_not_zero
+
+
+def _read_trans(paths):
+    out = {}
+    for path in paths:
+        month = months[os.path.basename(path).split('_')[0].lower()]
+        t = pd.read_csv(path,
+                        skiprows=7, index_col=0)
+        t.index = t.index.str.replace(',', '-')
+        t.columns = t.columns.str.replace(',', '-')
+        out[month] = t
+    return out
+
+
+months = {
+    'jan': 1,
+    'feb': 2,
+    'mar': 3,
+    'apr': 4,
+    'may': 5,
+    'jun': 6,
+    'jul': 7,
+    'aug': 8,
+    'sep': 9,
+    'oct': 10,
+    'nov': 11,
+    'dec': 12,
+}
+
 if __name__ == '__main__':
+    temp = get_past_event_frequency()
+    get_all_zero_prob_transitions()
     data_path = os.path.join(os.path.dirname(event_def_path), 'visualize_event_options.csv')
     acceptable = get_acceptable_events()
     out_data = pd.DataFrame(index=pd.Index(range(1, 13), name='month'))
