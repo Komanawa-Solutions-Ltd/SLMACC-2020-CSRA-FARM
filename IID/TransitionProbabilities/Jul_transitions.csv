@@ -1,5 +1,5 @@
 # This file was created by https://github.com/bodekerscientific/weather-gen/blob/main/probability%20drive/SLMACC_prob_calc_w%40h.py
-# This is a transition probability matrix for month of Jul using weather@home batch 793 at latitude=--43.28907140062721 and longitude=172.20701767025588
+# This is a transition probability matrix for month of Jul using weather@home batch 793 at [-43.372, 172.333]
 # monthly classified data retreived from 1_bias_corrected_all_months_classified.csv 
 # The columns represent class for the month of Jul 
 # The rows represent the class for the next month 
