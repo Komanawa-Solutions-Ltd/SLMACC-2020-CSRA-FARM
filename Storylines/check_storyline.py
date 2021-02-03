@@ -29,8 +29,8 @@ def get_months_with_events():
 
 def get_acceptable_events():
     events = pd.read_csv(event_def_path, skiprows=1)
-    temps = ['C', 'A', 'H'] #todo add t and p and map through everything else
-    precips = ['W', 'A', 'D']
+    temps = ['C', 'AT', 'H']
+    precips = ['W', 'AP', 'D']
     _vals = [-1, 0, 1]
     acceptable_events = {}
     for (tkey, tval), (pkey, pval) in itertools.product(zip(temps, _vals), zip(precips, _vals)):
@@ -55,8 +55,8 @@ def get_past_event_frequency():
 def ensure_no_impossible_events(storyline):
     assert isinstance(storyline, pd.DataFrame)
     assert set(storyline.columns) == {'year', 'month', 'temp_class', 'precip_class', 'rest'}
-    assert set(storyline.temp_class.unique()).issubset(['C', 'A', 'H']), 'unexpected classes for temp_class'
-    assert set(storyline.precip_class.unique()).issubset(['W', 'A', 'D']), 'unexpected classes for precip_class'
+    assert set(storyline.temp_class.unique()).issubset(['C', 'AT', 'H']), 'unexpected classes for temp_class'
+    assert set(storyline.precip_class.unique()).issubset(['W', 'AP', 'D']), 'unexpected classes for precip_class'
     assert storyline.rest.max() <= 1, 'unexpected values for restrictions'
     assert storyline.rest.min() >= 0, 'unexpected values for restrictions'
 
@@ -82,11 +82,17 @@ def ensure_no_impossible_events(storyline):
         if month not in acceptable_events[combo_key]:
             messages.append('unacceptable combination(s):{} in year: {} month: {}'.format(combo_key, year, month))
             problems = True
+    # todo add unacceptable transitions
+    out_zero, out_not_zero, missing_data = get_all_zero_prob_transitions()
+    # 'month:{} to {}'.format(m, m2)
+    # '{} to {} is zero'.format(state1, state2)
+
+    # todo add restriction problems?
     if problems:
         raise ValueError('\n '.join(messages))
 
 
-def get_all_zero_prob_transitions():
+def get_all_zero_prob_transitions(save=True):
     trans_prob_dir = os.path.join(ksl_env.slmmac_dir,
                                   r"BS_code\BS_Project_Final\IID\TransitionProbabilities")
     trans = _read_trans(glob.glob(os.path.join(trans_prob_dir, '*_transitions.csv')))
@@ -95,28 +101,38 @@ def get_all_zero_prob_transitions():
     for k, v in acceptable.items():
         for m in v:
             t, p = k.split('-')
-            t = t.replace('A', 'AT')
-            p = p.replace('A', 'AP')
             events[m].append('{}-{}'.format(t, p))
-    out_zero = {e: [] for e in range(1, 13)}
-    out_not_zero = {e: [] for e in range(1, 13)}
-    missing_data = {e: [] for e in range(1, 13)}
+    out_zero = {}
+    out_not_zero = {}
+    missing_data = {}
     for m in range(1, 13):
         if m == 12:
             m2 = 1
         else:
             m2 = m + 1
+        out_zero['month:{} to {}'.format(m, m2)] = []
+        out_not_zero['month:{} to {}'.format(m, m2)] = []
+        missing_data['month:{} to {}'.format(m, m2)] = []
         current_m = events[m]
         next_m = events[m2]
 
         for state1, state2 in itertools.product(current_m, next_m):
             if trans[m].loc[state2, state1] == 0:
-                out_zero[m].append('{} to {} is zero'.format(state1, state2))
+                out_zero['month:{} to {}'.format(m, m2)].append('{} to {} is zero'.format(state1, state2))
             else:
-                out_not_zero[m].append('{} to {} is NOT zero'.format(state1, state2))
+                out_not_zero['month:{} to {}'.format(m, m2)].append('{} to {} is NOT zero'.format(state1, state2))
             if (trans[m].loc[:, state1] == 0).all():
-                missing_data[m].append(state1) #todo following up on missing states with BS.
-    return out_zero, out_not_zero
+                missing_data['month:{} to {}'.format(m, m2)].append(state1)
+
+    if save:
+        with open(os.path.join(os.path.dirname(event_def_path), 'not_permitted_trans.txt'),'w') as f:
+            for k, v in out_zero.items():
+                f.write('{}: {}\n'.format(k,v))
+        with open(os.path.join(os.path.dirname(event_def_path), 'permitted_trans.txt'),'w') as f:
+            for k, v in out_not_zero.items():
+                f.write('{}: {}\n'.format(k,v))
+
+    return out_zero, out_not_zero, missing_data
 
 
 def _read_trans(paths):
