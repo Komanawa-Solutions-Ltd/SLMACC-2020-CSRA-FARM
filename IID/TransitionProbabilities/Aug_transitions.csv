@@ -1,0 +1,17 @@
+# This file was created by https://github.com/bodekerscientific/weather-gen/blob/main/probability%20drive/SLMACC_prob_calc_w%40h.py
+# This is a transition probability matrix for month of Aug using weather@home batch 793 at [-43.372, 172.333]
+# monthly classified data retreived from 1_bias_corrected_all_months_classified.csv 
+# The columns represent class for the month of Aug 
+# The rows represent the class for the next month 
+# The values represent the probability of that transition, with the column being the initial state and the row being the next state 
+# Column and row labels represent all the possible combinations of temp and precip classes (H,D,AT) and (W,D,AP) 
+,"AT,AP","AT,D","AT,W","C,AP","C,D","C,W","H,AP","H,D","H,W"
+"AT,AP",0.7058823529411765,0.2857142857142857,0.8095238095238095,0.769433465085639,0.3389830508474576,0.8518518518518519,0.0,0.0,0.0
+"AT,D",0.20915032679738563,0.6964285714285714,0.09523809523809523,0.12384716732542819,0.559322033898305,0.022222222222222223,0.0,0.0,0.0
+"AT,W",0.06209150326797386,0.017857142857142856,0.047619047619047616,0.06719367588932806,0.06779661016949153,0.05185185185185185,0.0,0.0,0.0
+"C,AP",0.02287581699346405,0.0,0.047619047619047616,0.03162055335968379,0.01694915254237288,0.06666666666666667,0.0,0.0,0.0
+"C,D",0.0,0.0,0.0,0.002635046113306983,0.01694915254237288,0.0,0.0,0.0,0.0
+"C,W",0.0,0.0,0.0,0.005270092226613966,0.0,0.007407407407407408,0.0,0.0,0.0
+"H,AP",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"H,D",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"H,W",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0

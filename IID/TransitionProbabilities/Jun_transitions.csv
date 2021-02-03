@@ -1,0 +1,17 @@
+# This file was created by https://github.com/bodekerscientific/weather-gen/blob/main/probability%20drive/SLMACC_prob_calc_w%40h.py
+# This is a transition probability matrix for month of Jun using weather@home batch 793 at [-43.372, 172.333]
+# monthly classified data retreived from 1_bias_corrected_all_months_classified.csv 
+# The columns represent class for the month of Jun 
+# The rows represent the class for the next month 
+# The values represent the probability of that transition, with the column being the initial state and the row being the next state 
+# Column and row labels represent all the possible combinations of temp and precip classes (H,D,AT) and (W,D,AP) 
+,"AT,AP","AT,D","AT,W","C,AP","C,D","C,W","H,AP","H,D","H,W"
+"AT,AP",0.0,0.0,0.0,0.020042194092827006,0.0,0.025806451612903226,0.0,0.0,0.0
+"AT,D",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"AT,W",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"C,AP",0.8181818181818182,0.0,0.5833333333333334,0.7784810126582279,0.0,0.7193548387096774,0.0,0.0,0.0
+"C,D",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"C,W",0.18181818181818182,0.0,0.4166666666666667,0.20147679324894516,0.0,0.25483870967741934,0.0,0.0,0.0
+"H,AP",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"H,D",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"H,W",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
