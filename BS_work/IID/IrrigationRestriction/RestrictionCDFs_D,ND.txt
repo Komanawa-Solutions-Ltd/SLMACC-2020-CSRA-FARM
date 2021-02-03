@@ -1,0 +1,9 @@
+'This file was created by C:\BodekerScientific\Sync\Projects\SLMACC-2020\Source\ModelRestrictionProbabilities.dpr
+Restr Jan   Feb   Mar   Apr   May   Jun   Jul   Aug   Sep   Oct   Nov   Dec   
+0.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000
+0.000 0.778 0.833 0.833 1.000 0.750 0.769   Nan   Nan   Nan 0.333 0.200 0.000 
+0.250 0.444 0.333 0.500 0.333 0.250 0.231   Nan   Nan   Nan 0.333 0.000 0.000 
+0.500 0.111 0.000 0.500 0.000 0.250 0.077   Nan   Nan   Nan 0.000 0.000 0.000 
+0.750 0.000 0.000 0.333 0.000 0.125 0.000   Nan   Nan   Nan 0.000 0.000 0.000 
+1.000 0.000 0.000 0.000 0.000 0.000 0.000   Nan   Nan   Nan 0.000 0.000 0.000 
+1.000 0.000 0.000 0.000 0.000 0.000 0.000   Nan   Nan   Nan 0.000 0.000 0.000 

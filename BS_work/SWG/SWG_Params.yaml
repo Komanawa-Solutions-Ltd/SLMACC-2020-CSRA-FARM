@@ -1,0 +1,22 @@
+base_directory: D:/Data/Bodeker/ #Directory that contains the directory "SLMACC-Subset"
+SH_model_temp_file: D:/Data/Bodeker/SHTemps.dat #Data file that includes the historic model run temperature data
+VCSN_Class_file: D:/Data/Bodeker/event_definition_data_fixed.csv #Data file that includes the historic classification of VCSN data
+
+lat_val: -43.372 #latitudinal location of the primary site
+lon_val: 172.333 #longitudinal location of the primary site
+month_scale_factor: 1 #A scale factor which increases month length
+number_of_simulations: 3 #number of simulations requested
+story_line_filename: D:/Data/Bodeker/v7.csv #Data file containing the storylines to be simulated
+
+simulation_savename: D:/Data/Bodeker/Mono_SWG_Data #base savename for the simulation output files
+
+netcdf_save_flag: True #Boolean where True requests that netcdf files are saved
+
+Extra_station_flag: False #Boolean where True requests that extra stations are simulated
+Extra_sim_savename: D:/Data/Bodeker/Extra_SWG_Data #base savename for the simulation output files of any extra stations
+Extra_site_lat: #list of latitudinal locations of the extra sites
+- -43.149
+- -43.849
+Extra_site_lon: #list of #longitudinal locations of the extra sites
+- 172.383
+- 172.883
