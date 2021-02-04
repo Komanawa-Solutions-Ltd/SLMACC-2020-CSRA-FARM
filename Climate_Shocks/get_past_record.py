@@ -84,11 +84,12 @@ def get_restriction_record(version='trended', recalc=False):
     if version == 'trended':
         data_path = os.path.join(os.path.dirname(event_def_path), 'restriction_record.csv')
         dt_format = '%Y-%m-%d'
+        raw_data_path = ksl_env.shared_drives(r"Z2003_SLMACC\WIL data\OSHB_WaimakRiverData_withRestrictionInfo.xlsx")
     elif version =='detrended':
-        if recalc:
-            raise NotImplementedError('detrending happened at Bodeker Scientific, cant be recalculated')
-        dt_format = '%d/%m/%Y'
-        data_path = os.path.join(os.path.dirname(event_def_path), 'restriction_record_detrend.csv')
+        raw_dt_format = '%d/%m/%Y'
+        dt_format = '%Y-%m-%d'
+        raw_data_path = os.path.join(os.path.dirname(event_def_path), 'restriction_record_detrend.csv')
+        data_path = os.path.join(os.path.dirname(event_def_path), 'full_restriction_record_detrend.csv')
     else:
         raise ValueError('unexpected argument for version {} expected either trended or detrended'.format(version))
 
@@ -109,20 +110,39 @@ def get_restriction_record(version='trended', recalc=False):
 
         return data
 
-    raw_data_path = ksl_env.shared_drives(r"Z2003_SLMACC\WIL data\OSHB_WaimakRiverData_withRestrictionInfo.xlsx")
-    data = pd.read_excel(raw_data_path).loc[:, ['OHB flow m3/s', 'Take rate', 'Day', 'Month', 'Year']]
-    data = data.rename(
-        columns={'OHB flow m3/s': 'flow', 'Take rate': 'take', 'Day': 'day', 'Month': 'month', 'Year': 'year'})
-    data.loc[:, 'f_rest'] = 1 - data.loc[:, 'take'] / data.loc[:, 'take'].max()
-    data = data.loc[(data.year <= 2019) & (data.year >= 1972)]
-    data = data.groupby(['day', 'month', 'year']).mean().reset_index()
+    if version == 'trended':
+        data = pd.read_excel(raw_data_path).loc[:, ['OHB flow m3/s', 'Take rate', 'Day', 'Month', 'Year']]
+        data = data.rename(
+            columns={'OHB flow m3/s': 'flow', 'Take rate': 'take', 'Day': 'day', 'Month': 'month', 'Year': 'year'})
+        data.loc[:, 'f_rest'] = 1 - data.loc[:, 'take'] / data.loc[:, 'take'].max()
+        data = data.loc[(data.year <= 2019) & (data.year >= 1972)]
+        data = data.groupby(['day', 'month', 'year']).mean().reset_index()
 
-    strs = ['{}-{:02d}-{:02d}'.format(y, m, d) for y, m, d in data[['year', 'month', 'day']].itertuples(False, None)]
-    data.loc[:, 'date'] = pd.Series(pd.to_datetime(strs))
-    data.loc[:, 'doy'] = data.date.dt.dayofyear
+        strs = ['{}-{:02d}-{:02d}'.format(y, m, d) for y, m, d in data[['year', 'month', 'day']].itertuples(False, None)]
+        data.loc[:, 'date'] = pd.Series(pd.to_datetime(strs))
+        data.loc[:, 'doy'] = data.date.dt.dayofyear
+        data = data.set_index('date')
+
+    elif version == 'detrended':
+        int_keys = {
+            'day': int,
+            'doy': int,
+            'month': int,
+            'year': int,
+            'f_rest': float,
+            'flow': float,
+            'take': float,
+        }
+        data = pd.read_csv(raw_data_path, dtype=int_keys)
+        data.loc[:, 'date'] = pd.to_datetime(data.loc[:, 'date'],format=raw_dt_format)
+        data.set_index('date', inplace=True)
+        data.sort_index(inplace=True)
+
+    else:
+        raise ValueError('unexpected argument for version {} expected either trended or detrended'.format(version))
+
     data.loc[data.f_rest < 0.001, 'f_rest'] = 0
 
-    data = data.set_index('date')
     outdata = pd.DataFrame(index=pd.date_range('1972-01-01', '2019-12-31', name='date'), columns=['flow',
                                                                                                   'take',
                                                                                                   'day',
@@ -133,6 +153,11 @@ def get_restriction_record(version='trended', recalc=False):
     outdata = outdata.combine_first(data)
 
     outdata = outdata.fillna(method='ffill')
+    outdata.loc[:,'day'] = outdata.index.day
+    outdata.loc[:,'year'] = outdata.index.year
+    outdata.loc[:,'month'] = outdata.index.month
+    outdata.loc[:,'doy'] = outdata.index.dayofyear
+
 
     outdata.to_csv(data_path)
     return outdata

@@ -1,6 +1,7 @@
 # Fully self generative mono-site stochastic weather generator
 # Author: Alex Schuddeboom
 
+#todo think about wheter to use yaml or function call for this....
 import numpy as np
 import netCDF4 as nc
 import os

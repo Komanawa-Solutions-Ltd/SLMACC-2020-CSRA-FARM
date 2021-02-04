@@ -8,6 +8,7 @@ from scipy.stats import pearsonr, truncnorm
 import netCDF4 as nc
 from copy import deepcopy
 import matplotlib.pyplot as plt
+from matplotlib.cm import get_cmap
 from warnings import warn
 
 
@@ -65,7 +66,10 @@ class MovingBlockBootstrapGenerator(object):
                 self.sim_len[k] = sim_len[k]
             else:
                 raise ValueError('{} not an acceptable argument for sim len'.format(sim_len))
-
+            temp_len = len(self.input_data[k])
+            temp_sim_len = self.sim_len[k]
+            assert (temp_len % temp_sim_len) == 0, ('input data length: {} is not a multiple of simlenth {} '
+                                                    'for key {}'.format(temp_len, temp_sim_len, k))
         self.save_to_nc = save_to_nc
         if save_to_nc:
             if not os.path.exists(data_base_path):
@@ -171,13 +175,52 @@ class MovingBlockBootstrapGenerator(object):
         out = out[:, self.sim_len[key]]
         return out
 
-    def plot_auto_correlation(self, nsims, lags, key=None):
+    def plot_auto_correlation(self, nsims, lags, key=None, quantiles=(5, 25), alpha=0.5, show=True):
+        """
+
+        :param nsims: number of new simulations to select
+        :param lags: number of steps of autocorrelation to calculate
+        :param key: key to data or None, note None will only select datasets is there is only one key
+        :param quantiles: symetrical quantiles (0-50) to plot confidence interval on.
+        :param alpha: the alpha to plot the quantiles
+        :param show: bool if True call plt.show() otherwise return fig, ax
+        :return:
+        """
         if key is None:
             if self.key is None:
                 raise ValueError('more than one key in the dataset, please provide key')
             key = deepcopy(self.key)
-        # todo make auto correlation comparison with some number of samples.
-        raise NotImplementedError
+        sim_data = self.get_data(nsims=nsims, key=key, warn_level=1)
+        org_data = self.get_org_data()
+        org_plot = np.zeros(org_data.shape[0],lags) * np.nan
+        sim_plot = np.zeros(nsims, lags) * np.nan
+        for i in range(nsims):
+            sim_plot[i] = calc_autocorrelation(sim_data[i], lags)
+        for j in range(org_plot.shape[0]):
+            org_plot[j] = calc_autocorrelation(org_data[j], lags)
+        fig, ax = plt.subplots()
+
+        # plot the quantiles
+        x = range(lags)
+        for data, cmap, c, label in zip([org_plot, sim_plot], [get_cmap('Reds'), get_cmap('Blues')],
+                                        ['r','b'],['input', 'sim']):
+            for i, q in enumerate(quantiles):
+                cuse = cmap((i+1)/(len(quantiles)+2))
+                ax.fill_between(x, np.quantile(data,q,axis=1), np.quantile(data,100-q,axis=1),
+                                alpha=alpha, color=cuse, label='{}-quant:{}-{}'.format(label, q, 100-q))
+
+
+            # plot the medians
+            ax.plot(x, np.median(data, axis=1), color=c, label='{}-med'.format(label))
+
+
+        ax.set_xlabel('autocorrelation lag'.format(key))
+        ax.set_ylabel('pearson r')
+        ax.legend()
+        if show:
+            plt.show()
+        else:
+            return fig, ax
 
     def plot_means(self, key=None, bins='freedman', show=True):
         """
@@ -197,10 +240,22 @@ class MovingBlockBootstrapGenerator(object):
         if bins == 'freedman':
             bins = 2 * (np.percentile(data, 75) - np.percentile(data, 25)) / 10000 ** 1 / 3
         ax.hist(data, bins=bins)
+        ax.set_xlabel('mean values for: {}'.format(key))
+        ax.set_ylabel('count')
         if show:
             plt.show()
         else:
             return fig, ax
+
+    def get_org_data(self, key=None):
+        if key is None:
+            if self.key is None:
+                raise ValueError('more than one key in the dataset, please provide key')
+            key = deepcopy(self.key)
+        output = deepcopy(self.input_data[key])
+        shape = (len(output) // self.sim_len[key], self.sim_len[key])
+        output = output.reshape(shape)
+        return output
 
     def get_data(self, nsims, key=None, mean='any', tolerance=None, warn_level=0.1):
         """
@@ -250,10 +305,13 @@ class MovingBlockBootstrapGenerator(object):
                 return out
 
 
-def calc_autocorrelation(x, lags=30):  # todo may need to re group to speed up data
-    data = []
+def calc_autocorrelation(x, lags=30):
+    data = np.zeros((lags,))
     size = len(x)
     for l in range(lags):
-        r, p = pearsonr(x[0:size - l], x[l:]),  # todo perhaps use np version
-        data.append(r)
+        r, p = pearsonr(x[0:size - l], x[l:]),
+        data[l] = r
     return data
+
+if __name__ == '__main__':
+    pass # todo write stand alone test!
