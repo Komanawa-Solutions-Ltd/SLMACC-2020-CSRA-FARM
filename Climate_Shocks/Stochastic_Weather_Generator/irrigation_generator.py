@@ -13,19 +13,20 @@ import pandas as pd
 import numpy as np
 from Climate_Shocks.climate_shocks_env import event_def_path
 
+month_len = {
+    1: 31,
+    2: 28,
+    3: 31,
+    4: 30,
+    5: 31,
+    9: 30,
+    10: 31,
+    11: 30,
+    12: 31,
+}
 
-def make_input_data():  # todo DD, DA breaks?, still need to decide, I would prefer to do this, but minimally d/nd
-    month_len = {
-        1: 31,
-        2: 28,
-        3: 31,
-        4: 30,
-        5: 31,
-        9: 30,
-        10: 31,
-        11: 30,
-        12: 31,
-    }
+
+def make_input_data_2months():  # todo DD, DA breaks?, still need to decide, I would prefer to do this, but minimally d/nd
 
     input_data = {}
     sim_len = {}
@@ -35,7 +36,8 @@ def make_input_data():  # todo DD, DA breaks?, still need to decide, I would pre
     event_data.loc[:, 'month2'] = event_data.loc[:, 'month']
     event_data = event_data.set_index(['year', 'month'])
 
-    for precip, m in itertools.product(['ND-ND', 'ND-D', 'D-ND', 'D-D'], month_len.keys()):
+    for precip, m in itertools.product(['ND-ND', 'ND-D', 'D-ND', 'D-D'],
+                                       month_len.keys()):  # todo checking with just months
         key = 'm{:02d}-{}'.format(m, precip)
         if precip.split('-')[0] == 'ND':
             firstp = [0, -1]
@@ -55,19 +57,56 @@ def make_input_data():  # todo DD, DA breaks?, still need to decide, I would pre
         nmonths[key] = n
         yearmonths = yearmonths.index.values
 
-        # todo check how many years to sample from, and export and save.
         temp = org_data.loc[yearmonths]
         temp = temp.loc[(temp.day <= month_len[m])].f_rest.values
         input_data[key] = temp
         sim_len[key] = month_len[m]
         assert (len(temp) % month_len[m]) == 0, 'problem with m{}'.format(m)
-    # block = (5, 1.5, 2, 8) #todo not sold on this exactly, review in  v1 remember x is off by one in auto correlation plots
     block = (7, 1, 5, 11)
-    return input_data, block, sim_len
+    nmonths_comments = ''
+    for k, v in nmonths.items():
+        nmonths_comments += '{}: {}\n'.format(k, v)
+    return input_data, block, sim_len, nmonths_comments
+
+
+def make_input_data_1month():
+    input_data = {}
+    sim_len = {}
+    nmonths = {}
+    org_data = get_restriction_record('detrended', recalc=False).set_index(['year', 'month'])
+    event_data = pd.read_csv(event_def_path, skiprows=1)
+    event_data.loc[:, 'month2'] = event_data.loc[:, 'month']
+    event_data = event_data.set_index(['year', 'month'])
+
+    for precip, m in itertools.product(['ND', 'D'], month_len.keys()):
+        key = 'm{:02d}-{}'.format(m, precip)
+        if precip == 'ND':
+            firstp = [0, -1]
+        else:
+            firstp = [1]
+
+        yearmonths = event_data.loc[np.in1d(event_data.precip, firstp) &
+                                    (event_data.month2 == m)]
+        n = len(yearmonths)
+        if n == 0:
+            continue
+        nmonths[key] = n
+        yearmonths = yearmonths.index.values
+
+        temp = org_data.loc[yearmonths]
+        temp = temp.loc[(temp.day <= month_len[m])].f_rest.values
+        input_data[key] = temp
+        sim_len[key] = month_len[m]
+        assert (len(temp) % month_len[m]) == 0, 'problem with m{}'.format(m)
+    block = (7, 1, 5, 11)
+    nmonths_comments = ''
+    for k, v in nmonths.items():
+        nmonths_comments += '{}: {}\n'.format(k, v)
+    return input_data, block, sim_len, nmonths_comments
 
 
 def examine_auto_correlation():
-    outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'generator_plots')
+    outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'gen_v', 'generator_plots')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     boot = get_irrigation_generator()
@@ -79,7 +118,7 @@ def examine_auto_correlation():
 
 
 def examine_means():
-    outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'generator_plots')
+    outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'gen_v', 'generator_plots')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     boot = get_irrigation_generator()
@@ -93,10 +132,10 @@ def examine_means():
 def get_irrigation_generator():
     nsims = 1e5  # todo inital to look at breaking up by d-d, nd-d
     nsims = int(nsims)
-    input_data, block, sim_len = make_input_data()
+    input_data, block, sim_len, nmonths_comments = make_input_data_1month()  # todo test between 1 or 2 month precip state
     comments = '''generator created by get irrigation generator {} to provide daily 
-    irrigation timeseries data using the detrended historical irrigation data'''
-    generator_path = os.path.join(ksl_env.slmmac_dir_unbacked, 'irrigation_gen.nc')
+    irrigation timeseries data using the detrended historical irrigation data\n''' + nmonths_comments
+    generator_path = os.path.join(ksl_env.slmmac_dir_unbacked, 'gen_v', 'irrigation_gen.nc')
     boot = MovingBlockBootstrapGenerator(input_data=input_data, blocktype='truncnormal', block=block,
                                          nsims=nsims, data_path=generator_path, sim_len=sim_len, nblocksize=50,
                                          save_to_nc=True, comments=comments)
@@ -105,5 +144,9 @@ def get_irrigation_generator():
 
 if __name__ == '__main__':
     # todo start by reviewing plots
+    # gen_v1: 2 month precip with # block = (5, 1.5, 2, 8) v1 plots are range(nlags so x axis is shifted one value to the left e.g. x=0 should be x=1
+    # gen_v2: 2 month precip with # block = (7, 1, 5, 11)
+    # gen_v: 1 month precip with block = (7, 1, 5, 11)
+
     examine_auto_correlation()
     examine_means()
