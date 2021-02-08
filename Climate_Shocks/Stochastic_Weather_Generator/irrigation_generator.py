@@ -14,7 +14,7 @@ import numpy as np
 from Climate_Shocks.climate_shocks_env import event_def_path
 
 
-def make_input_data():  # todo DD, DA breaks?
+def make_input_data():  # todo DD, DA breaks?, still need to decide, I would prefer to do this, but minimally d/nd
     month_len = {
         1: 31,
         2: 28,
@@ -55,42 +55,43 @@ def make_input_data():  # todo DD, DA breaks?
         nmonths[key] = n
         yearmonths = yearmonths.index.values
 
-        # todo check how many years to sample from
+        # todo check how many years to sample from, and export and save.
         temp = org_data.loc[yearmonths]
         temp = temp.loc[(temp.day <= month_len[m])].f_rest.values
         input_data[key] = temp
         sim_len[key] = month_len[m]
         assert (len(temp) % month_len[m]) == 0, 'problem with m{}'.format(m)
-    block = (5, 1.5, 2, 8) #todo not sold on this exactly, perhaps re-run with (6,1,4,10)
+    # block = (5, 1.5, 2, 8) #todo not sold on this exactly, review in  v1 remember x is off by one in auto correlation plots
+    block = (7, 1, 5, 11)
     return input_data, block, sim_len
 
 
 def examine_auto_correlation():
-    outdir = os.path.join(ksl_env.slmmac_dir_unbacked,'generator_plots')
+    outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'generator_plots')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     boot = get_irrigation_generator()
 
     for k in boot.keys:
-        fig,ax = boot.plot_auto_correlation(10000, 15, k, show=False, hlines=[0, 0.25, 0.5, 0.75])
+        fig, ax = boot.plot_auto_correlation(10000, 15, k, show=False, hlines=[0, 0.25, 0.5, 0.75])
         fig.savefig(os.path.join(outdir, 'correlation_{}.png'.format(k)))
         plt.close()
 
 
 def examine_means():
-    outdir = os.path.join(ksl_env.slmmac_dir_unbacked,'generator_plots')
+    outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'generator_plots')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     boot = get_irrigation_generator()
 
     for k in boot.keys:
-        fig,ax = boot.plot_means(k, include_input=True, bins=50, show=False)
+        fig, ax = boot.plot_means(k, include_input=True, bins=50, show=False)
         fig.savefig(os.path.join(outdir, 'mean_{}.png'.format(k)))
         plt.close()
 
 
 def get_irrigation_generator():
-    nsims = 1e5 #todo inital to look at breaking up by d-d, nd-d
+    nsims = 1e5  # todo inital to look at breaking up by d-d, nd-d
     nsims = int(nsims)
     input_data, block, sim_len = make_input_data()
     comments = '''generator created by get irrigation generator {} to provide daily 
