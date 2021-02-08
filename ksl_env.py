@@ -143,3 +143,6 @@ def get_vscn_dir():
     return host[user]
 
 slmmac_dir = shared_drives('Z2003_SLMACC')
+slmmac_dir_unbacked = mh_unbacked('SLMACC_2020')
+if not os.path.exists(slmmac_dir_unbacked):
+    os.makedirs(slmmac_dir_unbacked)

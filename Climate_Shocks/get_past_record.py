@@ -46,6 +46,7 @@ def get_vcsn_record(version='trended', site='eyrewell', recalc=False):
     if version == 'trended':
         pass
     elif version == 'detrended' and site == 'eyrewell':
+        raise ValueError('depreciated')
         return _get_eyrewell_detrended(1)
     elif version == 'detrended2' and site == 'eyrewell':
         return _get_eyrewell_detrended(2)

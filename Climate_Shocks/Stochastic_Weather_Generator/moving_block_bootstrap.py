@@ -23,14 +23,16 @@ class MovingBlockBootstrapGenerator(object):
     datapath = None
 
     def __init__(self, input_data, blocktype, block, nsims, data_path=None, sim_len=None, nblocksize=None,
-                 save_to_nc=True, comments=''):
+                 save_to_nc=True, comments=''):  # todo make block into a dictionary?
         """
 
         :param input_data: 1d array or dict of 1d arrays, the data to resample
         :param blocktype: one of: 'single': use a single block size, block must be an integer
                                   'list': use np.choice to sample from a list or 1d array block must be list like and 1d
                                   'truncnormal': use truncnormal to generate a sudo normal distribution of block sizes
-                                                 block must be (mean, std, clip_min, clip_max)
+                                                 block must be (mean, std, clip_min, clip_max) note that blocks are not
+                                                 mixed and matched (e.g. each sim will be created from only one
+                                                 block size
         :param block: the block(s) to use, see blocktype above for input options
         :param nsims: the number of simulations for each month to create, nsims may be increased so that
                       nsims % nblocksize = 0
@@ -163,6 +165,7 @@ class MovingBlockBootstrapGenerator(object):
         for k in self.keys:
             out = np.zeros((self.nsims, self.sim_len[k])) * np.nan
             n = self.nsims // self.nblocksize
+
             for i, b in enumerate(blocks):
                 out[i * n:(i + 1) * n] = self._make_moving_sample(k, b, n)
 
@@ -188,7 +191,7 @@ class MovingBlockBootstrapGenerator(object):
         out = out[:, 0:self.sim_len[key]]
         return out
 
-    def plot_auto_correlation(self, nsims, lags, key=None, quantiles=(5, 25), alpha=0.5, show=True):
+    def plot_auto_correlation(self, nsims, lags, key=None, quantiles=(5, 25), alpha=0.5, show=True, hlines=[0,0.5]):
         """
 
         :param nsims: number of new simulations to select
@@ -197,6 +200,7 @@ class MovingBlockBootstrapGenerator(object):
         :param quantiles: symetrical quantiles (0-50) to plot confidence interval on.
         :param alpha: the alpha to plot the quantiles
         :param show: bool if True call plt.show() otherwise return fig, ax
+        :param hlines: list, plot hlines at each value
         :return:
         """
         if key is None:
@@ -225,6 +229,8 @@ class MovingBlockBootstrapGenerator(object):
             # plot the medians
             ax.plot(x, np.nanmedian(data, axis=0), color=c, label='{}-med'.format(label))
 
+        for l in hlines:
+            ax.axhline(l, linestyle='--', color='k', alpha=0.5)
         ax.set_xlabel('autocorrelation lag'.format(key))
         ax.set_ylabel('pearson r')
         ax.legend()
