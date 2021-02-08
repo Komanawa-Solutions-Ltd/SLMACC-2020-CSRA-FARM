@@ -26,7 +26,8 @@ month_len = {
 }
 
 
-def make_input_data_2months():  # todo DD, DA breaks?, still need to decide, I would prefer to do this, but minimally d/nd
+def make_input_data_2months():
+    # decided not enough data here
 
     input_data = {}
     sim_len = {}
@@ -65,11 +66,39 @@ def make_input_data_2months():  # todo DD, DA breaks?, still need to decide, I w
     block = (7, 1, 5, 11)
     nmonths_comments = ''
     for k, v in nmonths.items():
-        nmonths_comments += '{}: {}\n'.format(k, v)
+        nmonths_comments += '{}: {}\n '.format(k, v)
     return input_data, block, sim_len, nmonths_comments
 
 
 def make_input_data_1month():
+    block = {
+        'm01-D': (7, 1, 5, 11),
+        'm01-ND': (8, 1.5, 6, 12),
+
+        'm02-D': (8, 1, 5, 11),
+        'm02-ND': (10, 2, 6, 15),
+
+        'm03-D': (7, 1, 5, 11),
+        'm03-ND': (8, 1, 5, 12),
+
+        'm04-D': (8, 1, 5, 12),
+        'm04-ND': (7, 1, 5, 11),
+
+        'm05-D': (9, 2, 5, 12),
+        'm05-ND': (8, 1.5, 5, 11),
+
+        'm09-D': (9, 2, 5, 12),
+        'm09-ND': (8, 1, 5, 11),
+
+        'm10-D': (7, 1, 5, 11),
+        'm10-ND': (9, 1.5, 5, 13),
+
+        'm11-D': (9, 2, 5, 13),
+        'm11-ND': (8, 1, 5, 11),
+
+        'm12-D': (8, 1, 5, 12),
+        'm12-ND': (8, 1, 5, 11),
+    }
     input_data = {}
     sim_len = {}
     nmonths = {}
@@ -98,10 +127,9 @@ def make_input_data_1month():
         input_data[key] = temp
         sim_len[key] = month_len[m]
         assert (len(temp) % month_len[m]) == 0, 'problem with m{}'.format(m)
-    block = (7, 1, 5, 11)
     nmonths_comments = ''
     for k, v in nmonths.items():
-        nmonths_comments += '{}: {}\n'.format(k, v)
+        nmonths_comments += '{}: {}\n '.format(k, v)
     return input_data, block, sim_len, nmonths_comments
 
 
@@ -144,9 +172,12 @@ def get_irrigation_generator():
 
 if __name__ == '__main__':
     # todo start by reviewing plots
+    # todo I think I need to make it a dictionary...
+
     # gen_v1: 2 month precip with # block = (5, 1.5, 2, 8) v1 plots are range(nlags so x axis is shifted one value to the left e.g. x=0 should be x=1
     # gen_v2: 2 month precip with # block = (7, 1, 5, 11)
-    # gen_v: 1 month precip with block = (7, 1, 5, 11)
+    # gen_v3: 1 month precip with all block = (7, 1, 5, 11)
+    # gen_v4: 1 month precip with multiple blocks see nc file
 
     examine_auto_correlation()
     examine_means()

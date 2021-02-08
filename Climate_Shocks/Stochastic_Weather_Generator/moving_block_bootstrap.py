@@ -33,7 +33,8 @@ class MovingBlockBootstrapGenerator(object):
                                                  block must be (mean, std, clip_min, clip_max) note that blocks are not
                                                  mixed and matched (e.g. each sim will be created from only one
                                                  block size
-        :param block: the block(s) to use, see blocktype above for input options
+        :param block: the block(s) to use, see blocktype above for input options as either this or as a dictionary
+                      with same keys as input data
         :param nsims: the number of simulations for each month to create, nsims may be increased so that
                       nsims % nblocksize = 0
         :param data_path: path to store the generator as a netcdf file (.nc)
@@ -42,6 +43,7 @@ class MovingBlockBootstrapGenerator(object):
                         int: create sims of length int
                         dict: dictionary of keys: length, where keys match input data
         :param nblocksize: the number of differnt block sizes to use required for blocktype: 'list' and 'truncnormal'
+                           one value or dictionary
         :param save_to_nc: boolean if True save to nc and then open the dataset (don't keep all data in memory),
                            if False keep in memory as dataset.
         :param comments: str other comments to save to the netcdf file
@@ -84,45 +86,70 @@ class MovingBlockBootstrapGenerator(object):
 
         assert isinstance(nsims, int)
 
+        temp = deepcopy(block)
+        if not isinstance(block, dict):
+            block = {}
+            for k in self.keys:
+                block[k] = temp
+
+        temp = deepcopy(nblocksize)
+        if not isinstance(temp, dict):
+            nblocksize = {}
+            for k in self.keys:
+                nblocksize[k] = temp
+
         if blocktype == 'single':
-            assert isinstance(block, int), 'block must be an integer if using a single block size'
+            for k in self.keys:
+                assert isinstance(block[k], int), 'block must be an integer if using a single block size'
             self.block_size = block
-            self.nblocksize = 1
-            self.data_id = 'block type: {} block: {:04d}  number of sims{}'.format(blocktype, block, self.nsims)
-            self.nsims = nsims
+            self.nblocksize = {k: 1 for k in self.keys}
+            temp = 'block type: {}\n'.format(blocktype, block, self.nsims)
+            self.nsims = {k: nsims for k in self.keys}
+
+            self.data_id = temp + '\n'.join(['key: {} number of sims: {} block: {:04d}'.format(e, self.nsims[e],
+                                                                                               block[e]) for e in
+                                             self.keys])
 
 
-        elif blocktype == 'list':
-            assert nblocksize is not None and isinstance(nblocksize, int)
+        elif blocktype == 'list':  # todo start mapping block changes here
+
+            for k in self.keys:
+                assert nblocksize[k] is not None and isinstance(nblocksize[k], int)
+                block[k] = np.atleast_1d(block[k]).astype(int)
+                assert block[k].ndim == 1, 'only 1d arrrays/options'
             self.nblocksize = nblocksize
-            block = np.atleast_1d(block).astype(int)
-            assert block.ndim == 1, 'only 1d arrrays/options'
             self.block_array = block
 
             # match nsims and nblocksize
-            t = int(round(nsims / nblocksize))
-            self.nsims = nblocksize * t
+            self.nsims = {nblocksize[k] * int(round(nsims / nblocksize[k])) for k in self.keys}
 
-            self.data_id = ('block type: {} blocks: '
-                            '{} nblocksize: {} '
-                            'number of sims:{}').format(blocktype, ' '.join(block), nblocksize, self.nsims)
+            self.data_id = ('block type: {}'.format(blocktype) +
+                            '\n'.join([
+                                'key:{} blocks: {} nblocksize: {} number of sims:{}'.format(e, block[e],
+                                                                                            self.nblocksize[e],
+                                                                                            self.nsims[e]) for e in
+                                self.keys]
+                            ))
 
         elif blocktype == 'truncnormal':
-            assert nblocksize is not None and isinstance(nblocksize, int)
+            self.mean, self.std, self.clip_min, self.clip_max = {}, {}, {}, {}
+            for k in self.keys:
+                assert nblocksize[k] is not None and isinstance(nblocksize[k], int)
+                assert len(block[k]) == 4, 'with truncnormal block size must be 4 as it holds the 4 parameters'
+                self.mean[k], self.std[k], self.clip_min[k], self.clip_max[k] = block[k]
             self.nblocksize = nblocksize
-            assert len(block) == 4, 'with truncnormal block size must be 4 as it holds the 4 parameters'
-            self.mean, self.std, self.clip_min, self.clip_max = block
 
             # match nsims and nblocksize
-            t = int(round(nsims / nblocksize))
-            self.nsims = nblocksize * t
+            self.nsims = {k: nblocksize[k] * int(round(nsims / nblocksize[k])) for k in self.keys}
 
-            self.data_id = ('block type:{} mean: {} '
-                            'stdev: {} min cutoff: {} '
-                            'max cutoff: {} '
-                            'number of block sizes: {} '
-                            'number of sims: {}').format(blocktype, *block, nblocksize, nsims)
+            temp = [('key: {} mean: {} '
+                     'stdev: {} min cutoff: {} '
+                     'max cutoff: {} '
+                     'number of block sizes: {} '
+                     'number of sims: {}').format(e, *block[e], self.nblocksize[e], self.nsims[e]) for e in
+                    self.keys]
 
+            self.data_id = 'block type:{}\n' + '\n'.join(temp)
         else:
             raise ValueError('incorrect value for blocktype: {}'.format(blocktype))
 
@@ -142,15 +169,18 @@ class MovingBlockBootstrapGenerator(object):
         :return:
         """
         # set blocks
-        if self.blocktype == 'single':
-            blocks = [self.block_size]
-        elif self.blocktype == 'list':
-            blocks = np.random.choice(self.block_array, self.nblocksize)
-        elif self.blocktype == 'truncnormal':
-            a, b = (self.clip_min - self.mean) / self.std, (self.clip_max - self.mean) / self.std
-            blocks = truncnorm(a, b, loc=self.mean, scale=self.std).rvs(size=self.nblocksize).round().astype(int)
-        else:
-            raise ValueError('shouldnt get here')
+        blocks = {}
+        for k in self.keys:
+            if self.blocktype == 'single':
+                blocks = [self.block_size[k]]
+            elif self.blocktype == 'list':
+                blocks = np.random.choice(self.block_array[k], self.nblocksize[k])
+            elif self.blocktype == 'truncnormal':
+                a, b = (self.clip_min[k] - self.mean[k]) / self.std[k], (self.clip_max[k] - self.mean[k]) / self.std[k]
+                blocks = truncnorm(a, b, loc=self.mean[k],
+                                   scale=self.std[k]).rvs(size=self.nblocksize[k]).round().astype(int)
+            else:
+                raise ValueError('shouldnt get here')
 
         if self.save_to_nc:
             nd_data = nc.Dataset(self.datapath, 'w')
@@ -158,22 +188,23 @@ class MovingBlockBootstrapGenerator(object):
             nd_data.created = datetime.datetime.now().isoformat()
             nd_data.comments = self.comments
             nd_data.script = __file__
-            nd_data.createDimension('sim_num', self.nsims)
-            d = nd_data.createVariable('sim_num', int, ('sim_num',))
-            d[:] = range(self.nsims)
+            for k in self.keys:
+                nd_data.createDimension('sim_num_{}'.format(k), self.nsims[k])
+                d = nd_data.createVariable('sim_num_{}'.format(k), int, ('sim_num_{}'.format(k),))
+                d[:] = range(self.nsims[k])
 
         for k in self.keys:
-            out = np.zeros((self.nsims, self.sim_len[k])) * np.nan
-            n = self.nsims // self.nblocksize
+            out = np.zeros((self.nsims[k], self.sim_len[k])) * np.nan
+            n = self.nsims[k] // self.nblocksize[k]
 
             for i, b in enumerate(blocks):
                 out[i * n:(i + 1) * n] = self._make_moving_sample(k, b, n)
 
             if self.save_to_nc:
                 nd_data.createDimension('sim_len_{}'.format(k), self.sim_len[k])
-                t = nd_data.createVariable(k, float, ('sim_len_{}'.format(k), 'sim_num'))
+                t = nd_data.createVariable(k, float, ('sim_len_{}'.format(k), 'sim_num_{}'.format(k)))
                 t[:] = out.transpose()  # this is backwards to manage quick reading
-                t = nd_data.createVariable('{}_mean'.format(k), float, ('sim_num',))
+                t = nd_data.createVariable('{}_mean'.format(k), float, ('sim_num_{}'.format(k),))
                 t[:] = out.mean(axis=1)
             else:
                 self.dataset[k] = out
@@ -191,7 +222,7 @@ class MovingBlockBootstrapGenerator(object):
         out = out[:, 0:self.sim_len[key]]
         return out
 
-    def plot_auto_correlation(self, nsims, lags, key=None, quantiles=(5, 25), alpha=0.5, show=True, hlines=[0,0.5]):
+    def plot_auto_correlation(self, nsims, lags, key=None, quantiles=(5, 25), alpha=0.5, show=True, hlines=[0, 0.5]):
         """
 
         :param nsims: number of new simulations to select
@@ -218,7 +249,7 @@ class MovingBlockBootstrapGenerator(object):
         fig, ax = plt.subplots()
 
         # plot the quantiles
-        x = range(1, lags+1)
+        x = range(1, lags + 1)
         for data, cmap, c, label in zip([org_plot, sim_plot], [get_cmap('Reds'), get_cmap('Blues')],
                                         ['r', 'b'], ['input', 'sim']):
             for i, q in enumerate(quantiles):
@@ -290,7 +321,7 @@ class MovingBlockBootstrapGenerator(object):
                 raise ValueError('more than one key in the dataset, please provide key')
             key = deepcopy(self.key)
         assert key.replace('_mean', '') in self.keys, 'key: {} not found'.format(key)
-        idxs = np.random.choice(range(self.nsims), (nsims,))
+        idxs = np.random.choice(range(self.nsims[key]), (nsims,))
         if self.save_to_nc:
             out = np.array(self.dataset.variables['{}_mean'.format(key)][idxs]).transpose()
             return out
@@ -317,7 +348,7 @@ class MovingBlockBootstrapGenerator(object):
             key = deepcopy(self.key)
         assert key in self.keys, 'key: {} not found'.format(key)
         if mean == 'any':
-            idxs = np.random.choice(range(self.nsims), (nsims,))
+            idxs = np.random.choice(range(self.nsims[key]), (nsims,))
             if self.save_to_nc:
                 out = np.array(self.dataset.variables[key][:, idxs]).transpose()
                 return out
