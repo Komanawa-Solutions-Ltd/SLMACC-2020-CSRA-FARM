@@ -73,10 +73,10 @@ def make_input_data_2months():
 def make_input_data_1month():
     block = {
         'm01-D': (7, 1, 5, 11),
-        'm01-ND': (8, 1.5, 6, 12),
+        'm01-ND': (9, 1.5, 7, 15),
 
         'm02-D': (8, 1, 5, 11),
-        'm02-ND': (10, 2, 6, 15),
+        'm02-ND': (11, 1, 8, 15),
 
         'm03-D': (7, 1, 5, 11),
         'm03-ND': (8, 1, 5, 12),
@@ -84,16 +84,16 @@ def make_input_data_1month():
         'm04-D': (8, 1, 5, 12),
         'm04-ND': (7, 1, 5, 11),
 
-        'm05-D': (9, 2, 5, 12),
-        'm05-ND': (8, 1.5, 5, 11),
+        'm05-D': (10, 1, 7, 15),
+        'm05-ND': (8, 1, 6, 11),
 
         'm09-D': (9, 2, 5, 12),
-        'm09-ND': (8, 1, 5, 11),
+        'm09-ND': (10, 2, 7, 15),
 
         'm10-D': (7, 1, 5, 11),
-        'm10-ND': (9, 1.5, 5, 13),
+        'm10-ND': (10, 1, 8, 15),
 
-        'm11-D': (9, 2, 5, 13),
+        'm11-D': (11, 1, 7, 15),
         'm11-ND': (8, 1, 5, 11),
 
         'm12-D': (8, 1, 5, 12),
@@ -162,7 +162,8 @@ def get_irrigation_generator():
     nsims = int(nsims)
     input_data, block, sim_len, nmonths_comments = make_input_data_1month()  # todo test between 1 or 2 month precip state
     comments = '''generator created by get irrigation generator {} to provide daily 
-    irrigation timeseries data using the detrended historical irrigation data\n''' + nmonths_comments
+    irrigation timeseries data using the detrended historical irrigation data\n 
+    number of months for each key:\n''' + nmonths_comments
     generator_path = os.path.join(ksl_env.slmmac_dir_unbacked, 'gen_v', 'irrigation_gen.nc')
     boot = MovingBlockBootstrapGenerator(input_data=input_data, blocktype='truncnormal', block=block,
                                          nsims=nsims, data_path=generator_path, sim_len=sim_len, nblocksize=50,
@@ -178,6 +179,7 @@ if __name__ == '__main__':
     # gen_v2: 2 month precip with # block = (7, 1, 5, 11)
     # gen_v3: 1 month precip with all block = (7, 1, 5, 11)
     # gen_v4: 1 month precip with multiple blocks see nc file
+    # gen_v5: 1 month precip with multiple blocks see nc file
 
     examine_auto_correlation()
     examine_means()

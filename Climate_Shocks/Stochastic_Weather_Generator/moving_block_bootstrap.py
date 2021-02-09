@@ -249,7 +249,7 @@ class MovingBlockBootstrapGenerator(object):
         fig, ax = plt.subplots()
 
         # plot the quantiles
-        x = range(1, lags + 1)
+        x = range(lags)
         for data, cmap, c, label in zip([org_plot, sim_plot], [get_cmap('Reds'), get_cmap('Blues')],
                                         ['r', 'b'], ['input', 'sim']):
             for i, q in enumerate(quantiles):
