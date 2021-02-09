@@ -271,14 +271,13 @@ class MovingBlockBootstrapGenerator(object):
         else:
             return fig, ax
 
-    def plot_means(self, key=None, bins=100, show=True, include_input=True, nsims=10000, density=True):
+    def plot_means(self, key=None, bins=100, show=True, include_input=True, density=True):
         """
         plot up a histogram of the means,
         :param key: key to plot means of (if None set to self.key)
         :param bins: 'int, number of bins to use
         :param show: boolean, if True call plt.show()
         :param include_input: boolean if True add the original data and set alpha to 0.5 for both
-        :param nsims: number of sims to select for making the historgram (may resample the sims)
         :param density: boolean see density kwarg for matplotlib.pyplot.hist()
         :return:
         """
@@ -287,7 +286,7 @@ class MovingBlockBootstrapGenerator(object):
                 raise ValueError('more than one key in the dataset, please provide key')
             key = deepcopy(self.key)
         assert key in self.keys
-        data = self.get_means(nsims=nsims, key=key)
+        data = self.get_means(key=key)
         fig, ax = plt.subplots()
         ax.hist(data, bins=bins, label='resampled data', alpha=1 - 0.5 * include_input, density=density, color='b')
         if include_input:
@@ -315,71 +314,74 @@ class MovingBlockBootstrapGenerator(object):
         output = output.reshape(shape)
         return output
 
-    def get_means(self, nsims, key=None, ):
+    def get_means(self, key=None):
         if key is None:
             if self.key is None:
                 raise ValueError('more than one key in the dataset, please provide key')
             key = deepcopy(self.key)
         assert key.replace('_mean', '') in self.keys, 'key: {} not found'.format(key)
-        idxs = np.random.choice(range(self.nsims[key]), (nsims,))
+
         if self.save_to_nc:
-            out = np.array(self.dataset.variables['{}_mean'.format(key)][idxs]).transpose()
+            out = np.array(self.dataset.variables['{}_mean'.format(key)][:]).transpose()
             return out
         else:
-            out = self.dataset['{}_mean'.format(key)][idxs]
+            out = self.dataset['{}_mean'.format(key)]
             return out
 
-    def get_data(self, nsims, key=None, mean='any', tolerance=None, warn_level=0.1):
+    def get_data(self, nsims, key=None, mean='any', tolerance=None, lowerbound=None, upper_bound=None,  warn_level=0.1):
         """
         pull simulations from the dataset, samples bootstrap simulations with replacement.
         :param key: data key to pull from, (if None set to self.key),
                     self.key will be None if there is more than one key
-        :param nsims: the number of simulations to pull
-        :param mean: one of 'any': select nsims from full bootstrap
+        :param nsims: the number of simulations to pull, pulls using np.choice, so may resample
+        :param mean: one of:
+                            'any': select nsims from full bootstrap
+                            None: select nsims using upper and lower bounds
                             float: select nsims only from data which satisfies
                                    np.isclose(simulation_means, mean, atol=tolerance, rtol=0)
         :param tolerance: None or float, seem mean for use
+        :param upper_bound: float, select data whose mean is <= this bound
+        :param lowerbound: float, select data whose mean is >= this bound
         :param warn_level: where warn_level of the nsamples must be replacements,
         :return:
         """
+        # manage key
         if key is None:
             if self.key is None:
                 raise ValueError('more than one key in the dataset, please provide key')
             key = deepcopy(self.key)
         assert key in self.keys, 'key: {} not found'.format(key)
+
+        # define the indexes to pull
         if mean == 'any':
             idxs = np.random.choice(range(self.nsims[key]), (nsims,))
-            if self.save_to_nc:
-                out = np.array(self.dataset.variables[key][:, idxs]).transpose()
-                return out
-            else:
-                out = self.dataset[key][idxs]
-                return out
-
         else:
-            if self.save_to_nc:
-                means = np.array(self.dataset.variables['{}_mean'.format(key)])
-                idxs = np.where(np.isclose(means, mean, atol=tolerance, rtol=0))[0]
-                if len(idxs) == 0:
-                    raise ValueError(('no samples fall within specified mean: {} '
-                                      'and tolerance: {} data means min: '
-                                      '{} data means max: {}').format(mean, tolerance, means.min(), means.max()))
-                if len(idxs) < (1 - warn_level) * nsims:
-                    warn('selecting {} from {} unique simulations, less than '
-                         'warn_level: {} of repetition'.format(nsims, len(idxs), warn_level))
-                idxs = np.random.choice(idxs, nsims)
-                out = np.array(self.dataset.variables[key][:, idxs]).transpose()
+            means = self.get_means(key)
+            if mean is None:
+                if upper_bound is None or lowerbound is None:
+                    raise ValueError('if mean is None then upper and lower bound must not be None')
+                idxs = np.where((means>=lowerbound) & (means<=upper_bound))[0]
             else:
-                means = self.dataset['{}_mean'.format(key)]
+                if tolerance is None:
+                    raise ValueError('tolerance must not be None if pulling with means (mean is a float)')
                 idxs = np.where(np.isclose(means, mean, atol=tolerance, rtol=0))[0]
-                if len(idxs) <= (1 - warn_level) * nsims:
-                    warn('selecting {} from {} unique simulations, less than '
-                         'warn_level: {} of repetition'.format(nsims, len(idxs), warn_level))
-                idxs = np.random.choice(idxs, nsims)
-                out = self.dataset[idxs]
-        temp = out.mean()
-        if temp > (mean + tolerance) or temp < (mean - tolerance):
+
+            if len(idxs) <= (1 - warn_level) * nsims:
+                warn('selecting {} from {} unique simulations, less than '
+                     'warn_level: {} of repetition'.format(nsims, len(idxs), warn_level))
+            idxs = np.random.choice(idxs, nsims)
+
+        # pull data
+        if self.save_to_nc:
+            out = np.array(self.dataset.variables[key][:, idxs]).transpose()
+        else:
+            out = self.dataset[idxs]
+            temp = out.mean()
+
+        # a check if pulled out with means
+        if mean != 'any' and (temp > (mean + tolerance) or temp < (mean - tolerance)):
             warn('sampled mean {} is outside of the set mean: {} and tolerance {}'.format(temp, mean, tolerance))
+
         return out
 
 
