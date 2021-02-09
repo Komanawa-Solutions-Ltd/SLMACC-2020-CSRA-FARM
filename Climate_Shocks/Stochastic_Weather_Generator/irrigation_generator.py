@@ -13,6 +13,8 @@ import pandas as pd
 import numpy as np
 from Climate_Shocks.climate_shocks_env import event_def_path
 
+baseoutdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'gen_vfinal')
+
 month_len = {
     1: 31,
     2: 28,
@@ -38,7 +40,7 @@ def make_input_data_2months():
     event_data = event_data.set_index(['year', 'month'])
 
     for precip, m in itertools.product(['ND-ND', 'ND-D', 'D-ND', 'D-D'],
-                                       month_len.keys()):  # todo checking with just months
+                                       month_len.keys()):
         key = 'm{:02d}-{}'.format(m, precip)
         if precip.split('-')[0] == 'ND':
             firstp = [0, -1]
@@ -134,7 +136,7 @@ def make_input_data_1month():
 
 
 def examine_auto_correlation():
-    outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'gen_v', 'generator_plots')
+    outdir = os.path.join(baseoutdir, 'generator_plots')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     boot = get_irrigation_generator()
@@ -146,7 +148,7 @@ def examine_auto_correlation():
 
 
 def examine_means():
-    outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'gen_v', 'generator_plots')
+    outdir = os.path.join(baseoutdir, 'generator_plots')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     boot = get_irrigation_generator()
@@ -155,16 +157,21 @@ def examine_means():
         fig, ax = boot.plot_means(k, include_input=True, bins=50, show=False)
         fig.savefig(os.path.join(outdir, 'mean_{}.png'.format(k)))
         plt.close()
+    for k in boot.keys:
+        fig, ax = boot.plot_means(k, include_input=False, bins=50, show=False, density=False)
+        fig.savefig(os.path.join(outdir, 'not_density_mean_{}.png'.format(k)))
+        plt.close()
+
 
 
 def get_irrigation_generator():
-    nsims = 1e5  # todo inital to look at breaking up by d-d, nd-d
+    nsims = 1e6
     nsims = int(nsims)
-    input_data, block, sim_len, nmonths_comments = make_input_data_1month()  # todo test between 1 or 2 month precip state
+    input_data, block, sim_len, nmonths_comments = make_input_data_1month()
     comments = '''generator created by get irrigation generator {} to provide daily 
     irrigation timeseries data using the detrended historical irrigation data\n 
     number of months for each key:\n''' + nmonths_comments
-    generator_path = os.path.join(ksl_env.slmmac_dir_unbacked, 'gen_v', 'irrigation_gen.nc')
+    generator_path = os.path.join(baseoutdir, 'irrigation_gen.nc')
     boot = MovingBlockBootstrapGenerator(input_data=input_data, blocktype='truncnormal', block=block,
                                          nsims=nsims, data_path=generator_path, sim_len=sim_len, nblocksize=50,
                                          save_to_nc=True, comments=comments)
@@ -172,14 +179,13 @@ def get_irrigation_generator():
 
 
 if __name__ == '__main__':
-    # todo start by reviewing plots
-    # todo I think I need to make it a dictionary...
 
     # gen_v1: 2 month precip with # block = (5, 1.5, 2, 8) v1 plots are range(nlags so x axis is shifted one value to the left e.g. x=0 should be x=1
     # gen_v2: 2 month precip with # block = (7, 1, 5, 11)
     # gen_v3: 1 month precip with all block = (7, 1, 5, 11)
     # gen_v4: 1 month precip with multiple blocks see nc file
     # gen_v5: 1 month precip with multiple blocks see nc file
+    # gen_v6: 1 month precip with multiple blocks see nc file
 
     examine_auto_correlation()
     examine_means()
