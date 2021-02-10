@@ -125,12 +125,12 @@ def add_basgra_nz_path():
 def get_vscn_dir():
     host_nm_dict = {
         'dickie': {
-            'dumon': r"D:\VCSN"
+            'dumon': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn" #todo rename folder on computers
         },
         'Healey': {
-            'Matt Hanson': r"D:\VCSN"},
+            'Matt Hanson': r"SLMMAC_SWG/SLMACC-Subset_vcsn"}, #todo rename folder on computers
         'DESKTOP-G2QSULJ': {
-            'Matt Hanson': r"D:\VCSN"
+            'Matt Hanson': r"SLMMAC_SWG/SLMACC-Subset_vcsn" #todo rename folder on computers
         }
     }
 

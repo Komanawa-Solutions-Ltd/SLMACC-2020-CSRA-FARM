@@ -62,15 +62,15 @@ if not os.path.exists(story_line_filename):
     print('Invalid storyline file. Please change in the Yaml file.')
     sys.exit()
 
-if not os.path.exists(base_directory + 'SLMACC-Subset/'):
+if not os.path.exists(base_directory + 'SLMACC-Subset_vcsn/'):
     print(
-        'Invalid base_directory location. This should be the folder that contains the folder SLMACC-Subset. Please change in the Yaml file.')
+        'Invalid base_directory location. This should be the folder that contains the folder SLMACC-Subset_vcsn. Please change in the Yaml file.')
     sys.exit()
 
 
 def data_loader(baselevel_dir):
     # Identifies relevant files, calls the loaders and manages the output
-    SLMACC_dir = baselevel_dir + 'SLMACC-Subset/'
+    SLMACC_dir = baselevel_dir + 'SLMACC-Subset_vcsn/'
     SLMACC_files = os.listdir(SLMACC_dir)
     SLMACC_files.sort()
     SLMACC_data = []
