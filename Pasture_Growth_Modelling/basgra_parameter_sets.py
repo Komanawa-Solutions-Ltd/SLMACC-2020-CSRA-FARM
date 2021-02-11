@@ -13,6 +13,13 @@ ksl_env.add_basgra_nz_path()
 from supporting_functions.woodward_2020_params import get_woodward_mean_full_params
 
 
+default_mode_sites = (
+    ('dryland', 'oxford'),
+    ('irrigated', 'eyrewell'),
+    ('irrigated', 'oxford'),
+)
+
+abs_max_irr = 5  # the absolute maximum irrigation values
 # todo check initals for SWG data, consider setting to mean of start month of 'average' conditions
 def get_params_doy_irr(mode):
     """
@@ -217,7 +224,7 @@ def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest
                                               'rain',
                                               'pet']]
 
-        matrix_weather.loc[:, 'max_irr'] = 5 * (1 - weather_data.loc[:, rest_key])
+        matrix_weather.loc[:, 'max_irr'] = abs_max_irr * (1 - weather_data.loc[:, rest_key])
         matrix_weather.loc[:, 'irr_trig'] = 0.60
         matrix_weather.loc[:, 'irr_targ'] = 0.75
 

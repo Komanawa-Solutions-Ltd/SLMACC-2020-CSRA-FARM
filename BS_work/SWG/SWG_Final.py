@@ -63,8 +63,8 @@ if not os.path.exists(story_line_filename):
     sys.exit()
 
 if not os.path.exists(base_directory + 'SLMACC-Subset_vcsn/'):
-    print(
-        'Invalid base_directory location. This should be the folder that contains the folder SLMACC-Subset_vcsn. Please change in the Yaml file.')
+    print('Invalid base_directory location: {}. This should be the folder that '.format(base_directory) +
+          'contains the folder SLMACC-Subset_vcsn. Please change in the Yaml file.')
     sys.exit()
 
 

@@ -128,9 +128,9 @@ def get_vscn_dir():
             'dumon': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn" #todo rename folder on computers
         },
         'Healey': {
-            'Matt Hanson': r"SLMMAC_SWG/SLMACC-Subset_vcsn"}, #todo rename folder on computers
+            'Matt Hanson': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn"}, #todo rename folder on computers
         'DESKTOP-G2QSULJ': {
-            'Matt Hanson': r"SLMMAC_SWG/SLMACC-Subset_vcsn" #todo rename folder on computers
+            'Matt Hanson': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn" #todo rename folder on computers
         }
     }
 
