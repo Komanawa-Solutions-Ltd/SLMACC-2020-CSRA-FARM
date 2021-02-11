@@ -1,7 +1,6 @@
 # Fully self generative mono-site stochastic weather generator
 # Author: Alex Schuddeboom
 
-#todo think about wheter to use yaml or function call for this....
 import numpy as np
 import netCDF4 as nc
 import os
@@ -21,7 +20,7 @@ Param_file = sys.argv[1]
 # Param_file='D:\Data\Bodeker\SWG_Params.yaml'
 
 if not os.path.exists(Param_file):
-    print('Cannot find Yaml file. Please check that the yaml file given as an argument exists.')
+    raise ValueError('Cannot find Yaml file. Please check that the yaml file given as an argument exists.')
     sys.exit()
 
 with open(Param_file, 'r') as file:
@@ -51,19 +50,19 @@ if not extra_flag:
 
 # Check some basic error conditions
 if not os.path.exists(SH_model_temp_file):
-    print('Invalid SH model file. Please change in the Yaml file.')
+    raise ValueError('Invalid SH model file. Please change in the Yaml file.')
     sys.exit()
 
 if not os.path.exists(VCSN_Class_file):
-    print('Invalid VCSN Classification file. Please change in the Yaml file.')
+    raise ValueError('Invalid VCSN Classification file. Please change in the Yaml file.')
     sys.exit()
 
 if not os.path.exists(story_line_filename):
-    print('Invalid storyline file. Please change in the Yaml file.')
+    raise ValueError('Invalid storyline file. Please change in the Yaml file.')
     sys.exit()
 
 if not os.path.exists(base_directory + 'SLMACC-Subset_vcsn/'):
-    print('Invalid base_directory location: {}. This should be the folder that '.format(base_directory) +
+    raise ValueError('Invalid base_directory location: {}. This should be the folder that '.format(base_directory) +
           'contains the folder SLMACC-Subset_vcsn. Please change in the Yaml file.')
     sys.exit()
 
@@ -237,9 +236,9 @@ def base_data_detrender(base_directory, lat_point, lon_point, model_temp_filenam
         if not (np.isnan(tmp_Var_point[0])):
             point_flag = False
         else:
-            print('No appropriately close station data, please use a different lat/lon')
-            print('Problem lat:' + str(lat_point))
-            print('Problem lon:' + str(lon_point))
+            raise ValueError('No appropriately close station data, please use a different lat/lon\n' +
+            'Problem lat:' + str(lat_point) + '\n' +
+            'Problem lon:' + str(lon_point) + '\n')
             sys.exit()
 
     # Determine the location where output will be saved.
@@ -482,7 +481,7 @@ def regime_data_loader(file_name):
         len(temp_cl)
         len(precip_cl)
     except:
-        print(
+        raise ValueError(
             'Error reading in the historical classifications file. Please ensure that it has been converted to the '
             'correct format with fix_csv.py.')
         sys.exit()
@@ -496,9 +495,10 @@ def regime_data_loader(file_name):
         viable_T = ['C', 'AT', 'A', 'H']
 
         if not (viable_PR.__contains__(pr_val)) or not (viable_T.__contains__(tmp_val)):
-            print(
-                'Historical classifications file uses an unexpected climate bin value - ' + pr_val + ' or ' + tmp_val + '.')
-            print('Please check that fix_csv.py has been used on the historic data.')
+            raise ValueError(
+                'Historical classifications file uses an unexpected climate bin value - ' +
+                pr_val + ' or ' + tmp_val + '.' +
+            'Please check that fix_csv.py has been used on the historic data.')
             sys.exit()
 
         if pr_val == 'W':
@@ -753,7 +753,7 @@ def data_load_or_make(in_lat_val, in_lon_val, in_Month_filter, in_Regime_filter,
             in_Regime_filter)
 
         if len(Filter_data[0]) == 0:
-            print('Matt you idiot! You requested a storyline that does not exist historically (month number ' + str(
+            raise ValueError('Matt you idiot! You requested a storyline that does not exist historically (month number ' + str(
                 in_Month_filter) + ' regime number ' + str(in_Regime_filter) + ')')
             sys.exit()
 

@@ -7,12 +7,13 @@ import ksl_env
 import numpy as np
 import subprocess
 import sys
+import glob
 
 oxford_lat, oxford_lon = -43.296, 172.192
 swg = os.path.join(os.path.dirname(__file__), 'SWG_Final.py')
 
+# note that each sim takes c. 0.12 mb of storage space.
 
-# todo check
 def create_yaml(outpath_yml, outsim_dir, nsims, storyline_path, sim_name=None,
                 base_dir=os.path.dirname(ksl_env.get_vscn_dir()),
                 plat=-43.372, plon=172.333, xlat=None, xlon=None):
@@ -86,20 +87,34 @@ def create_yaml(outpath_yml, outsim_dir, nsims, storyline_path, sim_name=None,
         f.write(yml)
 
 
-def run_SWG(yml_path):  # todo check
+def run_SWG(yml_path, outdir, rm_npz=True):
+    """
+    run the SWG
+    :param yml_path: path to the yml file
+    :param outdir: output directory (only needed if deleting .npz files
+    :param rm_npz: boolean if true, remove all the .npz files in the folder to save space
+    :return:
+    """
     result = subprocess.run([sys.executable, swg, yml_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if result.returncode != 0:
         raise ChildProcessError('{}\n{}'.format(result.stdout, result.stderr))
+
+    if rm_npz:
+        temp = glob.glob(os.path.join(outdir, '*.npz'))
+        for f in temp:
+            os.remove(f)
     return '{}, {}'.format(result.stdout, result.stderr)
 
 
 if __name__ == '__main__':
-    outdir = r"C:\Users\Matt Hanson\Downloads\test_SWG"
+    import time
+    t = time.time()
+    outdir = r"C:\Users\Matt Hanson\Downloads\test_SWG_remove100"
     yml = os.path.join(outdir, 'test.yml')
     create_yaml(outpath_yml=yml, outsim_dir=outdir,
-                nsims=10, storyline_path=os.path.join(os.path.dirname(__file__), 'v7.csv'),
+                nsims=100, storyline_path=os.path.join(os.path.dirname(__file__), 'v7.csv'),
                 sim_name=None,
                 xlat=oxford_lat, xlon=oxford_lon)
-    temp = run_SWG(yml)
+    temp = run_SWG(yml, outdir)
     print(temp)
-    # todo check that these worked... should have
+    print('took {} s'.format(time.time()-t))
