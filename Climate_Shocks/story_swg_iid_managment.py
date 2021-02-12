@@ -10,5 +10,6 @@ storyline_swg_paths = {
     # swg_path(direictory for SWG files),
     # nsims_aval(number of sims in the SWG,
     # simlen(number of days in the simulation)
+    # possibly add probability... think about. or perhaps in another function thing
 
 }
