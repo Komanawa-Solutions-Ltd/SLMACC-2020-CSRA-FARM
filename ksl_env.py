@@ -146,3 +146,5 @@ slmmac_dir = shared_drives('Z2003_SLMACC')
 slmmac_dir_unbacked = mh_unbacked('SLMACC_2020')
 if not os.path.exists(slmmac_dir_unbacked):
     os.makedirs(slmmac_dir_unbacked)
+
+basgra_version = '4.0.2' #todo update? and make this version once I get cracking!
