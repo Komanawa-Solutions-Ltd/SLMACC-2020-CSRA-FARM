@@ -13,9 +13,6 @@ from warnings import warn
 import datetime
 
 
-# todo test
-
-
 class MovingBlockBootstrapGenerator(object):
     block_size = None
     mean, std, clip_min, clip_max, nblocksize = None, None, None, None, None
@@ -23,7 +20,7 @@ class MovingBlockBootstrapGenerator(object):
     datapath = None
 
     def __init__(self, input_data, blocktype, block, nsims, data_path=None, sim_len=None, nblocksize=None,
-                 save_to_nc=True, comments=''):  # todo make block into a dictionary?
+                 save_to_nc=True, comments=''):
         """
 
         :param input_data: 1d array or dict of 1d arrays, the data to resample
@@ -111,7 +108,7 @@ class MovingBlockBootstrapGenerator(object):
                                              self.keys])
 
 
-        elif blocktype == 'list':  # todo start mapping block changes here
+        elif blocktype == 'list':
 
             for k in self.keys:
                 assert nblocksize[k] is not None and isinstance(nblocksize[k], int)
@@ -210,7 +207,7 @@ class MovingBlockBootstrapGenerator(object):
                 self.dataset[k] = out
                 self.dataset['{}_mean'.format(k)] = out.mean(axis=1)
 
-    def _make_moving_sample(self, key, blocksize, nsamples):  # todo step through and test
+    def _make_moving_sample(self, key, blocksize, nsamples):
         usable_len = len(self.input_data[key]) - blocksize
         possible_idxs = range(usable_len)
 
@@ -343,7 +340,7 @@ class MovingBlockBootstrapGenerator(object):
         :param upper_bound: float, select data whose mean is <= this bound
         :param lowerbound: float, select data whose mean is >= this bound
         :param warn_level: where warn_level of the nsamples must be replacements,
-        :return:
+        :return: data shape (samples, simlen)
         """
         # manage key
         if key is None:

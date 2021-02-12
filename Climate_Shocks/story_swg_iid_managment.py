@@ -6,6 +6,9 @@
 # todo something to keep track of the locations of all of the data
 
 storyline_swg_paths = {
-    # key: (storyline_path, swg_path, nsims_aval, simlen)
+    # key: (storyline_path(csv file),
+    # swg_path(direictory for SWG files),
+    # nsims_aval(number of sims in the SWG,
+    # simlen(number of days in the simulation)
 
 }

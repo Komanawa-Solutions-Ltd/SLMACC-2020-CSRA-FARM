@@ -11,14 +11,14 @@ import scipy.stats
 # either make the data directly or make a large set that covers all restriction options and then sample from that.
 
 
-# todo this is incredible https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2014WR016827
-#todo this is an option: https://github.com/julianneq/Kirsch-Nowak_Streamflow_Generator
-#todo this coudl be simple https://eranraviv.com/bootstrapping-time-series-r-code/
-#todo https://waterprogramming.wordpress.com/2017/08/29/open-source-streamflow-generator-part-i-synthetic-generation/
-#todo https://waterprogramming.wordpress.com/2017/02/07/synthetic-streamflow-generation/
-#todo https://www.researchgate.net/publication/222797906_A_nonparametric_stochastic_approach_for_multisite_disaggregation_of_annual_to_daily_streamflow
-#todo https://www.mdpi.com/2306-5338/5/4/66/htm
-#todo https://www.sciencedirect.com/science/article/pii/S1364815219307133
+# this is incredible https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2014WR016827
+#this is an option: https://github.com/julianneq/Kirsch-Nowak_Streamflow_Generator
+#this coudl be simple https://eranraviv.com/bootstrapping-time-series-r-code/
+#https://waterprogramming.wordpress.com/2017/08/29/open-source-streamflow-generator-part-i-synthetic-generation/
+#https://waterprogramming.wordpress.com/2017/02/07/synthetic-streamflow-generation/
+#https://www.researchgate.net/publication/222797906_A_nonparametric_stochastic_approach_for_multisite_disaggregation_of_annual_to_daily_streamflow
+#https://www.mdpi.com/2306-5338/5/4/66/htm
+#https://www.sciencedirect.com/science/article/pii/S1364815219307133
 
 
 # below from

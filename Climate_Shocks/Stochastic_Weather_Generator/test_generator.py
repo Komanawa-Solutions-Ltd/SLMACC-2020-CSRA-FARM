@@ -31,7 +31,7 @@ def make_input_data():
         input_data['m{}'.format(m)] = temp
         sim_len['m{}'.format(m)] = month_len[m]
         assert (len(temp) % month_len[m]) == 0, 'problem with m{}'.format(m)
-    block = (8, 1.5, 4, 15) #todo these will not be right
+    block = (8, 1.5, 4, 15) #these will not be right
     return input_data, block, sim_len
 
 def create_generator():
