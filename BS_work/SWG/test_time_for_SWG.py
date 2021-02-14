@@ -6,11 +6,11 @@ from BS_work.SWG.SWG_wrapper import *
 import itertools
 import pandas as pd
 import time
+import ksl_env
 
 if __name__ == '__main__':
     numbers = [1, 10, 100, 1000, 10000]
-    numbers = [1]
-    base_dir = r"C:\Users\Matt Hanson\Downloads"
+    base_dir = ksl_env.mh_unbacked('test_swg')
     outdata = pd.DataFrame(columns=['remove_npz',
                                     'number',
                                     'time_per_sim',
@@ -27,7 +27,7 @@ if __name__ == '__main__':
         yml = os.path.join(outdir, 'test.yml')
         create_yaml(outpath_yml=yml, outsim_dir=outdir,
                     nsims=n,
-                    storyline_path=r'C:\Users\Matt Hanson\python_projects\SLMACC-2020-CSRA\BS_work\SWG\v7.csv',
+                    storyline_path=os.path.join(os.path.dirname(__file__), 'v7.csv'),
                     sim_name=None,
                     xlat=oxford_lat, xlon=oxford_lon)
         temp = run_SWG(yml, outdir, rm_npz=rm)
@@ -36,5 +36,4 @@ if __name__ == '__main__':
         outdata.loc[i, 'time_per_sim'] = (time.time() - t) / n
         outdata.loc[i, 'total_time'] = (time.time() - t)
 
-    temp = run_SWG(yml, outdir, rm_npz=rm)
-    outdata.to_csv(os.path.join(r"M:\Shared drives\Z2003_SLMACC", 'time_test_SWG.csv')) # todo run on dickie
+    outdata.to_csv(os.path.join(ksl_env.slmmac_dir, 'time_test_SWG.csv'))  # todo run on dickie
