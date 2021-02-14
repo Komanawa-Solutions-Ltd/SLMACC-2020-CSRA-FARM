@@ -105,7 +105,7 @@ def tempfiles(path):
 def add_basgra_nz_path():
     host_nm_dict = {
         'dickie': {
-            # 'dumon': r"D:\temp_files"
+             'dumon': r"C:\Users\dumon\python_projects\BASGRA_NZ_PY"
         },
         'Healey': {
             'Matt Hanson': 'C:/Users/Matt Hanson/python_projects/BASGRA_NZ_PY'},
@@ -125,7 +125,7 @@ def add_basgra_nz_path():
 def get_vscn_dir():
     host_nm_dict = {
         'dickie': {
-            'dumon': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn" #todo rename folder on computers
+            'dumon': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn"
         },
         'Healey': {
             'Matt Hanson': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn"},
@@ -144,6 +144,7 @@ def get_vscn_dir():
 
 slmmac_dir = shared_drives('Z2003_SLMACC')
 slmmac_dir_unbacked = mh_unbacked('SLMACC_2020')
+
 if not os.path.exists(slmmac_dir_unbacked):
     os.makedirs(slmmac_dir_unbacked)
 
