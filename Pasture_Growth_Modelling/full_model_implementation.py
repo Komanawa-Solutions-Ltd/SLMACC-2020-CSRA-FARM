@@ -24,9 +24,6 @@ from supporting_functions.output_metadata import get_output_metadata
 
 # todo # consider multiprocessing here???? no up a level (e.g. at teh storyline level)
 
-
-# todo check the amount of memory/time to run a full suite on dickie
-
 out_metadata = get_output_metadata()
 
 add_variables = {  # varaibles that are defined here and not in BASGRA
@@ -539,4 +536,10 @@ def _create_nc_file(outpath, number_run, month, doy, year, storyline_text, save_
 
     return nc_file
 
-# todo calculate pasture growth anamoly??? or external function?, external function but defined here
+
+def pasture_growth_anamoly(storyline_key, data):
+    #todo point and cumulative
+    raise NotImplementedError
+
+def _add_pasture_growthanaomoly_to_nc(): #todo
+    raise NotImplementedError

@@ -29,8 +29,8 @@ def get_months_with_events():
 
 def get_acceptable_events():
     events = pd.read_csv(event_def_path, skiprows=1)
-    temps = ['C', 'AT', 'H']
-    precips = ['W', 'AP', 'D']
+    temps = ['C', 'A', 'H']
+    precips = ['W', 'A', 'D']
     _vals = [-1, 0, 1]
     acceptable_events = {}
     for (tkey, tval), (pkey, pval) in itertools.product(zip(temps, _vals), zip(precips, _vals)):
@@ -55,8 +55,8 @@ def get_past_event_frequency():
 def ensure_no_impossible_events(storyline):
     assert isinstance(storyline, pd.DataFrame)
     assert set(storyline.columns) == {'year', 'month', 'temp_class', 'precip_class', 'rest'}
-    assert set(storyline.temp_class.unique()).issubset(['C', 'AT', 'H']), 'unexpected classes for temp_class'
-    assert set(storyline.precip_class.unique()).issubset(['W', 'AP', 'D']), 'unexpected classes for precip_class'
+    assert set(storyline.temp_class.unique()).issubset(['C', 'A', 'H']), 'unexpected classes for temp_class'
+    assert set(storyline.precip_class.unique()).issubset(['W', 'A', 'D']), 'unexpected classes for precip_class'
     assert storyline.rest.max() <= 1, 'unexpected values for restrictions'
     assert storyline.rest.min() >= 0, 'unexpected values for restrictions'
 
@@ -70,7 +70,7 @@ def ensure_no_impossible_events(storyline):
     assert idx.all(), 'expected full years bad values are {}'.format(storyline.index[idx])
     # check against daterange for index.
     assert (storyline.loc[np.in1d(storyline.month,
-                                  [5, 6, 7, 8]), 'rest'] == 0).all(), 'irrigation rest in months without irr'
+                                  [ 6, 7, 8]), 'rest'] == 0).all(), 'irrigation rest in months without irr'
 
     acceptable_events = get_acceptable_events()
     problems = False
@@ -83,7 +83,7 @@ def ensure_no_impossible_events(storyline):
             messages.append('unacceptable combination(s):{} in year: {} month: {}'.format(combo_key, year, month))
             problems = True
     # todo add unacceptable transitions
-    out_zero, out_not_zero, missing_data = get_all_zero_prob_transitions()
+    # out_zero, out_not_zero, missing_data = get_all_zero_prob_transitions()
     # 'month:{} to {}'.format(m, m2)
     # '{} to {} is zero'.format(state1, state2)
 
