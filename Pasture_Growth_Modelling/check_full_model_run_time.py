@@ -46,5 +46,5 @@ def check_full_model_run_time():
         out.loc[i + 1, 'paddock_res'] = pad
         out.loc[i + 1, 'save_daily'] = daily
 
-    out.to_csv(os.path.join(ksl_env.slmmac_dir, 'time_test_SWG.csv'))
+    out.to_csv(os.path.join(ksl_env.slmmac_dir, 'time_test_basgra_.csv'))
 
