@@ -13,6 +13,7 @@ from scipy.interpolate import interp1d
 import numpy as np
 from datetime import datetime
 import warnings
+import os
 
 warnings.simplefilter("ignore")
 
@@ -31,7 +32,33 @@ months = [None,
           "Nov",
           "Dec",
           ]
+base_dir = os.path.dirname(__file__)
 
+# path for Irrigation CDFS
+ir_path = Path(os.path.join(base_dir, "IrrigationRestriction"))
+ir_files = list(ir_path.glob("RestrictionCDFs*.txt"))
+
+assert len(ir_files) == 4, "should be 4 CDFS for calculating restriction probabilities"
+
+ir_dfs = {x.name.split(".")[0].split("_")[-1]: pd.read_csv(x, comment="'", delim_whitespace=True, index_col="Restr")
+          for x in ir_files}
+
+# base path that transition table files are stored in
+base_path = Path(os.path.join(base_dir, "TransitionProbabilities"))
+
+# globbing probability files
+trans_files = list(base_path.glob("*_transitions.csv"))
+initial_path = base_path / "initial_matrix.csv"
+
+# raising error if incomplete probability matrices
+if len(trans_files) != 12 or not initial_path.exists():
+    raise FileNotFoundError(f"Error should be 12 trans and 1 initial matrices found "
+                            f"{len(trans_files)}, and ini_path exists {initial_path.exists()}")
+
+# loading probability matrices
+print("loading probability matrices")
+trans_dfs = {f.name.split("_")[0]: pd.read_csv(f, index_col=0, comment="#") for f in trans_files}
+initial_df = pd.read_csv(initial_path, index_col=0, comment="#")
 
 def run_IID(story_dict, outpath=None, verbose=False, comments=''):
     """
@@ -43,33 +70,6 @@ def run_IID(story_dict, outpath=None, verbose=False, comments=''):
     assert isinstance(story_dict, dict), 'storylines must be dictionaries'
     for k, v in story_dict.items():
         assert isinstance(v, pd.DataFrame), '{} is not a dataframe'.format(k)
-
-    # path for Irrigation CDFS
-    ir_path = Path("./IrrigationRestriction")
-    ir_files = list(ir_path.glob("RestrictionCDFs*.txt"))
-
-    assert len(ir_files) == 4, "should be 4 CDFS for calculating restriction probabilities"
-
-    ir_dfs = {x.name.split(".")[0].split("_")[-1]: pd.read_csv(x, comment="'", delim_whitespace=True, index_col="Restr")
-              for x in ir_files}
-
-    # base path that transition table files are stored in
-    base_path = Path("./TransitionProbabilities")
-
-    # globbing probability files
-    trans_files = list(base_path.glob("*_transitions.csv"))
-    initial_path = base_path / "initial_matrix.csv"
-
-    # raising error if incomplete probability matrices
-    if len(trans_files) != 12 or not initial_path.exists():
-        raise FileNotFoundError(f"Error should be 12 trans and 1 initial matrices found "
-                                f"{len(trans_files)}, and ini_path exists {initial_path.exists()}")
-
-    # loading probability matrices
-    if verbose:
-        print("loading probability matrices")
-    trans_dfs = {f.name.split("_")[0]: pd.read_csv(f, index_col=0, comment="#") for f in trans_files}
-    initial_df = pd.read_csv(initial_path, index_col=0, comment="#")
 
     # dataframe for storing story probabilities
     prob_df = pd.DataFrame()
