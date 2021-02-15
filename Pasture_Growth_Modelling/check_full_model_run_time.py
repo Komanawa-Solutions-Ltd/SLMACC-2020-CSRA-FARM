@@ -49,3 +49,5 @@ def check_full_model_run_time():
 
     out.to_csv(os.path.join(ksl_env.slmmac_dir, 'time_test_basgra_.csv'))
 
+if __name__ == '__main__':
+    check_full_model_run_time()
