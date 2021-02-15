@@ -5,7 +5,7 @@
 from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growth
 import ksl_env
 import os
-from memory_profiler import profile
+#from memory_profiler import profile
 
 
 #@profile
