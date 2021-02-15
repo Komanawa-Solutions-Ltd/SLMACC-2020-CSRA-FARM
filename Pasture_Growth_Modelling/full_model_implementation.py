@@ -39,7 +39,7 @@ add_variables = {  # varaibles that are defined here and not in BASGRA
 
 out_metadata.update(add_variables)
 
-memory_per_run = 1  # todo define in bytes
+memory_per_run = (140.3 * 1.049e+6) /2/100 * 1.1*3   # 140 mib for 100 2 year sims and add 10% slack so c. 2.3mb/3yrsim
 
 out_variables = (
     'BASAL',  # should some of these be amalgamated to sum, no you can multiply against # of days in the month.

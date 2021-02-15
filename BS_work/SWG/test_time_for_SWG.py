@@ -36,4 +36,4 @@ if __name__ == '__main__':
         outdata.loc[i, 'time_per_sim'] = (time.time() - t) / n
         outdata.loc[i, 'total_time'] = (time.time() - t)
 
-    outdata.to_csv(os.path.join(ksl_env.slmmac_dir, 'time_test_SWG.csv'))  # todo run on dickie
+    outdata.to_csv(os.path.join(ksl_env.slmmac_dir, 'time_test_SWG.csv'))
