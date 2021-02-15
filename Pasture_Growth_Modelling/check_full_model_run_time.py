@@ -26,6 +26,7 @@ def check_full_model_run_time():
 
 
     for i, (num, pad, daily) in enumerate(itertools.product([100, 1000], [True, False], [True, False])):
+        t = time.time()
         if pad:
             val = 'paddock'
         else:
