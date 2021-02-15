@@ -22,24 +22,91 @@ ksl_env.add_basgra_nz_path()
 from basgra_python import run_basgra_nz
 from supporting_functions.output_metadata import get_output_metadata
 
-# todo check that the SWG realisations fit our criterion!?! yes need to, but here or up a level at the creation of the realisations
-
 # todo # consider multiprocessing here???? no up a level (e.g. at teh storyline level)
 
-# todo check!
 
-# todo check the amount of memory/time to run a full suite!
+# todo check the amount of memory/time to run a full suite on dickie
 
 out_metadata = get_output_metadata()
+
+add_variables = {  # varaibles that are defined here and not in BASGRA
+    'PGR': {'unit': '( kg dry matter/m2/day)', 'description': 'pasture growth rate, calculated from yield'},
+    'PER_PAW': {'unit': '(fraction)', 'description': 'fraction of PAW (profile available water'},
+    'F_REST': {'unit': '(fraction)', 'description': 'fraction of irrigation restriction, '
+                                                    '1=0 mm water available/day, '
+                                                    '0 = {} mm water available/day,'.format(abs_max_irr)}
+}
+
+out_metadata.update(add_variables)
 
 memory_per_run = 1  # todo define in bytes
 
 out_variables = (
-    'BASAL',  # todo fill out
+    'BASAL',  # should some of these be amalgamated to sum, no you can multiply against # of days in the month.
     'PGR',
+    'PER_PAW',
+    'F_REST',
+    'IRRIG',
+    'IRRIG_DEM',
+    'RESEEDED',
+    'DMH_RYE',
+    'DMH_WEED',
+    'YIELD',
+    'DRAIN',
+
 )
 
 irr_gen = get_irrigation_generator()
+month_len = {
+    1: 31,
+    2: 28,
+    3: 31,
+    4: 30,
+    5: 31,
+    6: 30,
+    7: 31,
+    8: 31,
+    9: 30,
+    10: 31,
+    11: 30,
+    12: 31,
+}
+
+
+def run_pasture_growth(storyline_key, outdir, nsims='all', mode_sites=default_mode_sites, padock_rest=False,
+                       save_daily=False, description=''):
+    """
+
+    :param storyline_key: key to the storyline, see Climate_Shocks.story_swg_iid_managment.py
+    :param outdir: directory to save the data in
+    :param nsims: int, 'all'; number of simulations to run if all run all avalible, if the number to run is greater
+                  than the total, run all available.
+    :param mode_sites: a list of the unique mode and sites needed e.g. [('dryland', 'oxford')]
+    :param padock_rest: boolean, if True will run a 4 paddock irrigation restrictions
+    :param save_daily: boolean, if True will save the daily data as well as the monthly data
+    :param description: str, a description to append to the description saved to the netcdf output file
+    :return:
+    """
+    storyline_path, swg_path, nsims_aval, simlen = storyline_swg_paths[storyline_key]
+
+    if nsims == 'all':
+        nsims = nsims_aval
+
+    if nsims >= nsims_aval:
+        print('not or just enough sims available, running all')
+        nsims = nsims_aval
+    else:
+        pass
+
+    for mode, site in mode_sites:
+
+        _run_simple_rest(storyline_path, swg_path, nsims, mode, site, simlen, storyline_key,
+                         outdir,
+                         save_daily, description)
+
+        if padock_rest:
+            _run_paddock_rest(storyline_key, outdir, storyline_path, swg_path, nsims, mode, site, simlen,
+                              save_daily, description)
 
 
 def get_rest_tolerance(r):
@@ -49,13 +116,19 @@ def get_rest_tolerance(r):
 def get_irr_data(num_to_pull, storyline_path, simlen):
     storyline = pd.read_csv(storyline_path)
     out = np.zeros((num_to_pull, simlen))
+    idx = 0
     for i, (m, pstate, r) in enumerate(storyline.loc[:, ['month', 'precip_class', 'rest']].itertuples(False, None)):
-        if pstate >= 0.9:
+        if m in [6, 7, 8]:  # skip months without irrigation
+            idx += month_len[m]
+            continue
+        if pstate == 'D':
             plet = 'D'
         else:
             plet = 'ND'
         key = 'm{:02d}-{}'.format(m, plet)
-        out[:, irr_gen.sim_len[key]] = irr_gen.get_data(num_to_pull, key=key, mean=r, tolerance=get_rest_tolerance(r))
+        out[:, idx: idx + month_len[m]] = irr_gen.get_data(num_to_pull, key=key, mean=r,
+                                                           tolerance=get_rest_tolerance(r))
+        idx += month_len[m]
 
     return out
 
@@ -100,20 +173,24 @@ def _gen_input(storyline_path, SWG_path, nsims, mode, site, chunks, current_c, n
     swg_paths = pd.Series(sorted(os.listdir(SWG_path)))
     swg_paths = swg_paths.loc[swg_paths.str.contains('.nc')]  # get rid of any non-nc files like YML
     if site == 'eyrewell':
-        exsite = False
         swg_paths = list(swg_paths.loc[~swg_paths.str.contains('exsites')])
 
     elif site == 'oxford':
-        exsite = True
-        swg_paths = list(swg_paths.loc[swg_paths.str.contains('exsites')])
+        swg_paths = list(swg_paths.loc[swg_paths.str.contains('exsites_P0')])  # assume it is p0
 
     else:
         raise ValueError('weird input for site: {}'.format(site))
-    weather_data = read_swg_data(swg_paths, exsite)
+
+    swg_paths = [os.path.join(SWG_path, e) for e in swg_paths]
+    swg_paths = swg_paths[current_c * nperc: current_c * nperc + num_to_pull]
+    weather_data = read_swg_data(swg_paths)
 
     # make all the other data
     for rest, weather in zip(rest_data, weather_data):
-        rest_temp = pd.DataFrame(data=rest, index=weather_data.index, columns=['frest'])
+        if rest is None:
+            rest_temp = None
+        else:
+            rest_temp = pd.DataFrame(data=rest, index=weather.index, columns=['frest'])
         matrix_weather = create_matrix_weather(mode, weather_data=weather, restriction_data=rest_temp,
                                                rest_key='frest')
         matrix_weathers.append(matrix_weather)
@@ -122,61 +199,41 @@ def _gen_input(storyline_path, SWG_path, nsims, mode, site, chunks, current_c, n
     return params, doy_irr, matrix_weathers, days_harvests
 
 
-def run_restrictions(storyline_key, outdir, nsims='all', mode_sites=default_mode_sites, padock_rest=False,
-                     save_daily=False, description=''):
-    storyline_path, swg_path, nsims_aval, simlen = storyline_swg_paths[storyline_key]
-
-    if nsims == 'all':
-        nsims = nsims_aval
-
-    if nsims >= nsims_aval:
-        print('not or just enough sims available, running all')
-        nsims = nsims_aval
-    else:
-        pass
-
+def _run_simple_rest(storyline_path, swg_path, nsims, mode, site, simlen, storyline_key, outdir,
+                     save_daily, description):
     number_run = (psutil.virtual_memory().available // memory_per_run)
     chunks = -1 * (-nsims // number_run)
+    if chunks == 1:
+        number_run = nsims
 
-    for mode, site in mode_sites:
-        for c in range(chunks):
-            _run_simple_rest(storyline_path, swg_path, nsims, mode, site, chunks, c, number_run, simlen, storyline_key,
-                             outdir,
-                             save_daily, description)
+    for c in range(chunks):
+        print('starting chunk {} of {} for simple irrigation restrictions {}-{}'.format(c + 1, chunks, site, mode))
+        params, doy_irr, all_matrix_weathers, all_days_harvests = _gen_input(storyline_path, swg_path,
+                                                                             nsims=nsims, mode=mode, site=site,
+                                                                             chunks=chunks, current_c=c,
+                                                                             nperc=number_run, simlen=simlen)
 
-        if padock_rest:
-            _run_paddock_rest(storyline_key, outdir, storyline_path, swg_path, nsims, mode, site, simlen,
-                              save_daily, description)
+        all_out = np.zeros((len(out_variables), simlen, number_run)) * np.nan
+        for i, (matrix_weather, days_harvest) in enumerate(zip(all_matrix_weathers, all_days_harvests)):
+            restrict = 1 - matrix_weather.loc[:, 'max_irr'] / abs_max_irr
+            out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
+            out.loc[:, 'PER_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
 
+            pg = pd.DataFrame(
+                calc_pasture_growth(out, days_harvest, mode='from_yield', resamp_fun='mean', freq='1d'))
+            out.loc[:, 'PGR'] = pg.loc[:, 'pg']
+            out.loc[:, 'F_REST'] = restrict
 
-def _run_simple_rest(storyline_path, swg_path, nsims, mode, site, chunks, c, number_run, simlen, storyline_key, outdir,
-                     save_daily, description):
-    params, doy_irr, all_matrix_weathers, all_days_harvests = _gen_input(storyline_path, swg_path,
-                                                                         nsims=nsims, mode=mode, site=site,
-                                                                         chunks=chunks, current_c=c,
-                                                                         nperc=number_run, simlen=simlen)
+            all_out[:, :, i] = out.loc[:, out_variables].values.transpose()
 
-    all_out = np.zeros((len(out_variables), simlen, number_run)) * np.nan
-    for i, (matrix_weather, days_harvest) in enumerate(zip(all_matrix_weathers, all_days_harvests)):
-        restrict = 1 - matrix_weather.loc[:, 'max_irr'] / abs_max_irr
-        out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
-        out.loc[:, 'PER_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
-
-        pg = pd.DataFrame(
-            calc_pasture_growth(out, days_harvest, mode='from_yield', resamp_fun='mean', freq='1d'))
-        out.loc[:, 'PGR'] = pg.loc[:, 'pg']
-        out.loc[:, 'F_REST'] = restrict
-
-        all_out[:, :, i] = out.loc[:, out_variables].values.transpose()  # todo check
-
-    # one netcdf file for each mode/site
-    month = out.loc[:, 'month'].values
-    doy = out.loc[:, 'doy'].values
-    year = out.loc[:, 'year'].values
-    _output_to_nc(storyline_key=storyline_key, outdir=outdir, outdata=all_out, nsims=nsims,
-                  month=month, doy=doy, year=year,
-                  chunks=chunks, current_c=c, nperchunk=number_run, save_daily=save_daily,
-                  description=description)
+        # one netcdf file for each mode/site
+        month = out.index.month.values
+        doy = out.loc[:, 'doy'].values
+        year = out.loc[:, 'year'].values
+        _output_to_nc(storyline_key=storyline_key, outdir=outdir, outdata=all_out, nsims=nsims,
+                      month=month, doy=doy, year=year,
+                      chunks=chunks, current_c=c, nperchunk=number_run, save_daily=save_daily,
+                      description=description, site=site, mode=mode)
 
 
 def _run_paddock_rest(storyline_key, outdir, storyline_path, swg_path, nsims, mode, site, simlen,
@@ -194,8 +251,11 @@ def _run_paddock_rest(storyline_key, outdir, storyline_path, swg_path, nsims, mo
     levels = np.arange(0, 125, 25) / 100
     number_run = (psutil.virtual_memory().available // (memory_per_run * len(levels)))
     chunks = -1 * (-nsims // number_run)
+    if chunks == 1:
+        number_run = nsims
 
     for c in range(chunks):
+        print('running paddock pasture growth for chunk {} of {} {}-{}'.format(c + 1, chunks, site, mode))
         params, doy_irr, all_matrix_weathers, all_days_harvests = _gen_input(storyline_path, swg_path,
                                                                              nsims=nsims, mode=mode, site=site,
                                                                              chunks=chunks, current_c=c,
@@ -224,20 +284,20 @@ def _run_paddock_rest(storyline_key, outdir, storyline_path, swg_path, nsims, mo
                 temp.loc[:, 'PGR'] = calc_pasture_growth(temp, days_harvest, 'from_yield', '1D', resamp_fun='mean')
                 temp.loc[:, 'F_REST'] = restrict
 
-                all_out[:, :, i, j] = temp.loc[:, out_variables].values.transpose()  # todo check
+                all_out[:, :, i, j] = temp.loc[:, out_variables].values.transpose()
         # one netcdf for each mode,site, (paddock, mean)
-        month = temp.loc[:, 'month'].values
+        month = temp.index.month.values
         doy = temp.loc[:, 'doy'].values
         year = temp.loc[:, 'year'].values
         _output_to_nc_paddock(storyline_key=storyline_key, outdir=outdir, outdata=all_out, nsims=nsims,
                               month=month, doy=doy, year=year,
                               chunks=chunks, current_c=c, nperchunk=number_run,
                               out_names=out_names, out_limits=out_limits,
-                              save_daily=save_daily, description=description)
+                              save_daily=save_daily, description=description, site=site, mode=mode)
 
 
 def _output_to_nc(storyline_key, outdir, outdata, nsims, month, doy, year,
-                  chunks, current_c, nperchunk, save_daily=False, description=''):
+                  chunks, current_c, nperchunk, site, mode, save_daily=False, description=''):
     """
 
     :param storyline_key: key to the storyline
@@ -262,13 +322,13 @@ def _output_to_nc(storyline_key, outdir, outdata, nsims, month, doy, year,
 
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    outpath = os.path.join(outdir, '{}.nc'.format(storyline_key))
+    outpath = os.path.join(outdir, '{}-{}-{}.nc'.format(storyline_key, site, mode))
 
     # get netcdf file instance
     if current_c == 0:
         nc_file = _create_nc_file(outpath, number_run=nsims, month=month, doy=doy, year=year,
                                   storyline_text=storyline_text,
-                                  save_daily=False, description=description)
+                                  save_daily=save_daily, description=description)
     else:
         nc_file = nc.Dataset(outpath, 'a')
 
@@ -277,7 +337,7 @@ def _output_to_nc(storyline_key, outdir, outdata, nsims, month, doy, year,
 
 def _output_to_nc_paddock(storyline_key, outdir, outdata, nsims, month, doy, year,
                           chunks, current_c, nperchunk,
-                          out_names, out_limits,
+                          out_names, out_limits, site, mode,
                           save_daily=False, description=''):
     """
 
@@ -308,7 +368,7 @@ def _output_to_nc_paddock(storyline_key, outdir, outdata, nsims, month, doy, yea
 
     # outdata shape np.zeros((len(out_variables), simlen, len(levels) - 1, number_run))
     for i, (outn, outl) in enumerate(zip(out_names, out_limits)):
-        outpath = os.path.join(outdir, '{}-{}.nc'.format(storyline_key, outn))
+        outpath = os.path.join(outdir, '{}-{}-{}-{}.nc'.format(storyline_key, outn, site, mode, ))
         extra = ('\npaddock restrictions are broken into {} different paddocks, where '.format(len(out_names)) +
                  'each paddock absorbs specific restrictions defined by limts:\n')
         description = description + extra + '\n' + outn + '\n' + outl
@@ -317,14 +377,14 @@ def _output_to_nc_paddock(storyline_key, outdir, outdata, nsims, month, doy, yea
         if current_c == 0:
             nc_file = _create_nc_file(outpath, number_run=nsims, month=month, doy=doy, year=year,
                                       storyline_text=storyline_text,
-                                      save_daily=False, description=description)
+                                      save_daily=save_daily, description=description)
         else:
             nc_file = nc.Dataset(outpath, 'a')
 
         _write_data(nc_file, year, month, outdata[:, :, i, :], current_c, nperchunk, chunks, nsims, save_daily)
 
     # save the mean data
-    outpath = os.path.join(outdir, '{}-mean.nc'.format(storyline_key))
+    outpath = os.path.join(outdir, '{}-paddock-mean-{}-{}.nc'.format(storyline_key, site, mode))
     extra = ('\npaddock restrictions are broken into {} different paddocks, where '.format(len(out_names)) +
              'each paddock absorbs specific restrictions defined by limts this file represents the mean of all'
              'paddocks')
@@ -334,7 +394,7 @@ def _output_to_nc_paddock(storyline_key, outdir, outdata, nsims, month, doy, yea
     if current_c == 0:
         nc_file = _create_nc_file(outpath, number_run=nsims, month=month, doy=doy, year=year,
                                   storyline_text=storyline_text,
-                                  save_daily=False, description=description)
+                                  save_daily=save_daily, description=description)
     else:
         nc_file = nc.Dataset(outpath, 'a')
 
@@ -343,35 +403,36 @@ def _output_to_nc_paddock(storyline_key, outdir, outdata, nsims, month, doy, yea
 
 
 def _write_data(nc_file, year, month, outdata, current_c, nperchunk, chunks, nsims, save_daily):
+    print(' writing data for {}'.format(nc_file.filepath()))
     # write monthly data chunk
     for i, v in enumerate(out_variables):
-        temp = nc_file.variables[v]
+        temp = nc_file.variables['m_{}'.format(v)]
         # outdata shape = np.zeros((len(out_variables), simlen_monthly, number_run))
-
-        # resample to monthly data
-        yearmonths = list(pd.Series(zip(year, month)).unique())
-        resamp_data = np.zeros((outdata.shape[1], len(yearmonths))) * np.nan
-        for k, (y, m) in enumerate(yearmonths):
-            idx = ((year == y) & (month == m))
-            resamp_data[k, :] = np.nanmean(outdata[i, idx, :], axis=0)
-
         to_val = (current_c + 1) * nperchunk
         # capture last chunk...
         if current_c + 1 == chunks:
             to_val = nsims
-        temp[:, (current_c * nperchunk): to_val] = outdata[i, :, :]
+
+        # resample to monthly data
+        yearmonths = list(pd.Series(zip(year, month)).unique())
+        resamp_data = np.zeros((len(yearmonths), to_val - current_c*nperchunk)) * np.nan
+        for k, (y, m) in enumerate(yearmonths):
+            idx = ((year == y) & (month == m))
+            resamp_data[k, :] = np.nanmean(outdata[i, idx, :], axis=0)[:to_val - current_c*nperchunk]
+
+        temp[:, (current_c * nperchunk): to_val] = resamp_data
 
         # write daily data chunk
     if save_daily:
         for i, v in enumerate(out_variables):
-            temp = nc_file.variables[v]
+            temp = nc_file.variables['d_{}'.format(v)]
             to_val = (current_c + 1) * nperchunk
             # capture last chunk...
             if current_c + 1 == chunks:
                 to_val = nsims
 
             # outdata shape = np.zeros((len(out_variables), simlen, number_run))
-            temp[:, (current_c * nperchunk): to_val] = outdata[i, :, :]
+            temp[:, (current_c * nperchunk): to_val] = outdata[i, :, :][:,:to_val - current_c*nperchunk]
 
 
 def _create_nc_file(outpath, number_run, month, doy, year, storyline_text, save_daily=False, description=''):
@@ -388,6 +449,7 @@ def _create_nc_file(outpath, number_run, month, doy, year, storyline_text, save_
     :param description: an additional description to add to the netcdf description
     :return: nc.Dataset(outpath,w)
     """
+    print(' creating nc file {}'.format(outpath))
     nc_file = nc.Dataset(outpath, 'w')
 
     # set global attributes
@@ -469,7 +531,7 @@ def _create_nc_file(outpath, number_run, month, doy, year, storyline_text, save_
                         'missing_value': np.nan})
 
         if save_daily:
-            temp2 = nc_file.createVariable('d_{}'.format(v), float, ('sim_month', 'realisation'))
+            temp2 = nc_file.createVariable('d_{}'.format(v), float, ('sim_day', 'realisation'))
             temp2.setncatts({'units': out_metadata[v.upper()]['unit'],
                              'description': out_metadata[v.upper()]['description'],
                              'long_name': 'daily raw {}'.format(v),

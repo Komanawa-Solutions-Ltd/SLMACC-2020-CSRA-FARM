@@ -105,6 +105,8 @@ def run_SWG(yml_path, outdir, rm_npz=True):
             os.remove(f)
     return '{}, {}'.format(result.stdout, result.stderr)
 
+# todo check that the SWG realisations fit our criterion!?! yes need to, but here or up a level at the creation of the realisations
+
 
 if __name__ == '__main__':
     import time

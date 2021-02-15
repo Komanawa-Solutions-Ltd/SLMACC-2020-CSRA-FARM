@@ -371,6 +371,7 @@ class MovingBlockBootstrapGenerator(object):
         # pull data
         if self.save_to_nc:
             out = np.array(self.dataset.variables[key][:, idxs]).transpose()
+            temp = out.mean()
         else:
             out = self.dataset[idxs]
             temp = out.mean()

@@ -58,7 +58,7 @@ def get_params_doy_irr(mode):
         params['reseed_CSTUB'] = 0
 
         # modify inital  # set from start of simulation month (7) mean
-        params['BASALI'] = 73.843861
+        params['BASALI'] = 0.73843861
 
         # set from a mid point value not important for percistance, but important to stop inital high yeild!
         # set to start of simulation start month(7) average
