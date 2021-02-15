@@ -364,8 +364,8 @@ class MovingBlockBootstrapGenerator(object):
                 idxs = np.where(np.isclose(means, mean, atol=tolerance, rtol=0))[0]
 
             if len(idxs) <= (1 - warn_level) * nsims:
-                warn('selecting {} from {} unique simulations, less than '
-                     'warn_level: {} of repetition'.format(nsims, len(idxs), warn_level))
+                warn('{}: selecting {} from {} unique simulations, less than '
+                     'warn_level: {} of repetition'.format(key, nsims, len(idxs), warn_level))
             idxs = np.random.choice(idxs, nsims)
 
         # pull data
