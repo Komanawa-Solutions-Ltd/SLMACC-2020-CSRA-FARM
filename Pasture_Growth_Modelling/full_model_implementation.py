@@ -10,7 +10,7 @@ import psutil
 import netCDF4 as nc
 import ksl_env
 import datetime
-from Climate_Shocks.story_swg_iid_managment import storyline_swg_paths
+from Storylines.story_swg_iid_managment import storyline_swg_paths
 from Climate_Shocks.Stochastic_Weather_Generator.read_swg_data import read_swg_data
 from Climate_Shocks.Stochastic_Weather_Generator.irrigation_generator import get_irrigation_generator
 from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, create_days_harvest, \

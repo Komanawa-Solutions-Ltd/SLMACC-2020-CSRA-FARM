@@ -8,9 +8,12 @@ import numpy as np
 import subprocess
 import sys
 import glob
+import yaml
+import pandas as pd
 
 oxford_lat, oxford_lon = -43.296, 172.192
 swg = os.path.join(os.path.dirname(__file__), 'SWG_Final.py')
+
 
 # note that each sim takes c. 0.12 mb of storage space.
 
@@ -31,6 +34,7 @@ def create_yaml(outpath_yml, outsim_dir, nsims, storyline_path, sim_name=None,
     :param xlon: extra lons float or list like
     :return:
     """
+    assert '_' not in os.path.basename(storyline_path), '_ in file basename mucks things up'
     if sim_name is None:
         sim_name = os.path.splitext(os.path.basename(storyline_path))[0]
     SH_model_temp_file = os.path.join(os.path.dirname(__file__), 'SHTemps.dat')
@@ -87,7 +91,7 @@ def create_yaml(outpath_yml, outsim_dir, nsims, storyline_path, sim_name=None,
         f.write(yml)
 
 
-def run_SWG(yml_path, outdir, rm_npz=True):
+def run_SWG(yml_path, outdir, rm_npz=True, clean=True):
     """
     run the SWG
     :param yml_path: path to the yml file
@@ -103,13 +107,49 @@ def run_SWG(yml_path, outdir, rm_npz=True):
         temp = glob.glob(os.path.join(outdir, '*.npz'))
         for f in temp:
             os.remove(f)
+    if clean:
+        clean_swg(outdir, yml_path)
     return '{}, {}'.format(result.stdout, result.stderr)
 
-# todo check that the SWG realisations fit our criterion!?! yes need to, but here or up a level at the creation of the realisations
+
+def clean_swg(swg_dir, yml_path, exsites=1):
+    """
+    remove swg files which do not match the data. Note that definitions are hard coded into this process
+    via _check_data_v1.
+    :param swg_dir: directory for the swg
+    :param yml_path: path to the yml file
+    :param exsites: int, number of external sites
+    :return:
+    """
+    with open(yml_path, 'r') as file:
+        # The FullLoader parameter handles the conversion from YAML
+        # scalar values to Python the dictionary format
+        param_dict = yaml.load(file, Loader=yaml.FullLoader)
+    storyline_path = param_dict['story_line_filename']
+    storyline = pd.read_csv(storyline_path)
+    paths = os.listdir(swg_dir)
+    paths = paths.loc[(~paths.str.contains('exsites')) & (paths.str.contains('.nc'))]
+    for p in paths:
+        fp = os.path.join(swg_dir, p)
+        bad = _check_data_v1(fp, storyline)
+        if bad:
+            for i in range(exsites):
+                vals = p.split('_')
+                if len(vals) > 2:
+                    raise ValueError('names preclude removal of exsites')
+                os.remove(os.path.join(swg_dir, '{}exsites_P{}_{}'.format(vals[0], i, vals[1])))
+            os.remove(fp)
+
+
+
+def _check_data_v1(path, storyline):  # todo start here
+    # todo check that the SWG realisations fit our criterion!?! yes need to, but here or up a level at the creation of the realisations
+    raise NotImplementedError
 
 
 if __name__ == '__main__':
     import time
+
     t = time.time()
     outdir = r"C:\Users\Matt Hanson\Downloads\test_SWG_remove100"
     yml = os.path.join(outdir, 'test.yml')
@@ -119,4 +159,4 @@ if __name__ == '__main__':
                 xlat=oxford_lat, xlon=oxford_lon)
     temp = run_SWG(yml, outdir)
     print(temp)
-    print('took {} s'.format(time.time()-t))
+    print('took {} s'.format(time.time() - t))

@@ -42,7 +42,7 @@ def get_baseline_storyline(save=False):
     data.loc[:, 'rest'] = data.loc[:, 'month'].replace(rest_data)
     ensure_no_impossible_events(data)
     if save:
-        data.to_csv(os.path.join(climate_shocks_env.storyline_dir, '0_baseline.csv'))
+        data.to_csv(os.path.join(climate_shocks_env.storyline_dir, '0-baseline.csv'))
 
     return data
 
