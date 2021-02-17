@@ -16,21 +16,21 @@ storyline_swg_paths = {
 
     'test100': (  # used to test and profile run...
         os.path.join(os.path.dirname(os.path.dirname(__file__)), 'BS_work/SWG/v7.csv'),  # storyline_path(csv file)
-        os.path.join(ksl_env.slmmac_dir_unbacked, '100_rm_npz'),  # swg_path(direictory for SWG files),
+        os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', '100_rm_npz'),  # swg_path(direictory for SWG files),
         100,  # nsims_aval(number of sims in the SWG,
         730  # simlen(number of days in the simulation)
     ),
 
     'test1000': (  # used to test and profile run...
         os.path.join(os.path.dirname(os.path.dirname(__file__)), 'BS_work/SWG/v7.csv'),  # storyline_path(csv file)
-        os.path.join(ksl_env.slmmac_dir_unbacked, '1000_rm_npz'),  # swg_path(direictory for SWG files),
+        os.path.join(ksl_env.slmmac_dir_unbacked,  'SWG_runs','1000_rm_npz'),  # swg_path(direictory for SWG files),
         1000,  # nsims_aval(number of sims in the SWG,
         730  # simlen(number of days in the simulation)
     ),
 
     'test10000': (  # used to test and profile run...
         os.path.join(os.path.dirname(os.path.dirname(__file__)), 'BS_work/SWG/v7.csv'),  # storyline_path(csv file)
-        os.path.join(ksl_env.slmmac_dir_unbacked, '10000_rm_npz'),  # swg_path(direictory for SWG files),
+        os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', '10000_rm_npz'),  # swg_path(direictory for SWG files),
         10000,  # nsims_aval(number of sims in the SWG,
         730  # simlen(number of days in the simulation)
     ),

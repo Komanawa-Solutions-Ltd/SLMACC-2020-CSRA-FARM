@@ -1023,8 +1023,8 @@ def plot_restriction_record():
 
 if __name__ == '__main__':
     # final run set up
+    calc_dry_recurance()
     calc_hot_recurance()
     calc_cold_recurance()
-    calc_dry_recurance()
     calc_wet_recurance_ndays()
     calc_restrict_cumulative_recurance()

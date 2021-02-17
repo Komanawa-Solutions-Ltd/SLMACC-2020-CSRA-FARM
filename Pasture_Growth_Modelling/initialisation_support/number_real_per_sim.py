@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+#todo run on baseline scen, and look at mean vs median.
 
 def make_dataset(n, n_compare): #todo looks like we can get away with 100 sims, but check on other storylines!
     all_data = nc.Dataset(os.path.join(ksl_env.slmmac_dir_unbacked,

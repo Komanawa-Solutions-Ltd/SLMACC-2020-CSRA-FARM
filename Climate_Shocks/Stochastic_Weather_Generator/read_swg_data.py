@@ -36,7 +36,7 @@ def read_swg_data(paths):
 
     # weather data with datetime index named date, no missing days, and has at least the following
     #                          keys: ['year', 'doy', 'radn', 'tmin', 'tmax', 'rain', 'pet']
-
+    paths = np.atleast_1d(paths)
     outdata = []
     for p in paths:
         temp = nc.Dataset(p)
