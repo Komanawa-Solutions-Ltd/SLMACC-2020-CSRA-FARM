@@ -33,7 +33,7 @@ if __name__ == '__main__':
         temp = run_SWG(yml, outdir, rm_npz=True, clean=False)
         print(temp)
 
-    if clean_data: #todo make sure to save a copy to check cleaning process!
+    if clean_data: #todo make sure to save a copy to check cleaning process!, this is a mess right now
         print('cleaning_data')
         clean_swg(outdir, yml)
 

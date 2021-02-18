@@ -94,7 +94,7 @@ def run_pasture_growth(storyline_key, outdir, nsims='all', mode_sites=default_mo
         nsims = nsims_aval
     else:
         pass
-
+    assert isinstance(nsims, int), 'nsims must be an integer instead {}: {}'.format(nsims, type(nsims))
     for mode, site in mode_sites:
 
         _run_simple_rest(storyline_path, swg_path, nsims, mode, site, simlen, storyline_key,
@@ -198,7 +198,7 @@ def _gen_input(storyline_path, SWG_path, nsims, mode, site, chunks, current_c, n
 
 def _run_simple_rest(storyline_path, swg_path, nsims, mode, site, simlen, storyline_key, outdir,
                      save_daily, description):
-    number_run = (psutil.virtual_memory().available // memory_per_run * (simlen/365))
+    number_run = int(psutil.virtual_memory().available // memory_per_run * (simlen/365))
     chunks = int(-1 * (-nsims // number_run))
     if chunks == 1:
         number_run = nsims
@@ -246,7 +246,7 @@ def _run_paddock_rest(storyline_key, outdir, storyline_path, swg_path, nsims, mo
     """
     # paddock level restrictions
     levels = np.arange(0, 125, 25) / 100
-    number_run = (psutil.virtual_memory().available // (memory_per_run *(simlen/365) * len(levels)))
+    number_run = int(psutil.virtual_memory().available // (memory_per_run *(simlen/365) * len(levels)))
     chunks = int(-1 * (-nsims // number_run))
     if chunks == 1:
         number_run = nsims
