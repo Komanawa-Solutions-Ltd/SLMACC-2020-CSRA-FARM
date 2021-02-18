@@ -18,6 +18,17 @@ from Climate_Shocks.climate_shocks_env import event_def_dir
 unbacked_dir = ksl_env.mh_unbacked("Z2003_SLMACC\event_definition")
 if not os.path.exists(unbacked_dir):
     os.makedirs(unbacked_dir)
+    
+vcsn_version = 'trended'
+
+#todo testing detrended data changes
+test_detrended = True
+if test_detrended:
+    event_def_dir = ksl_env.shared_drives("Z2003_SLMACC\event_definition/v5_detrend")
+    vcsn_version = 'detrended2'
+
+if not os.path.exists(event_def_dir):
+    os.makedirs(event_def_dir)
 
 irrigated_pga = calc_past_pasture_growth_anomaly('irrigated', site='eyrewell').reset_index()
 irrigated_pga.loc[:, 'year'] = irrigated_pga.date.dt.year
@@ -71,7 +82,7 @@ def add_pga(grouped_data, sim_keys, outdata):
 
 
 def calc_dry_recurance():
-    data = get_vcsn_record().reset_index()
+    data = get_vcsn_record(vcsn_version).reset_index()
 
     temp = calc_sma_smd_historical(data['rain'], data['pet'], data.date, 150, 1)
 
@@ -121,7 +132,7 @@ def calc_dry_recurance():
 
 
 def calc_wet_recurance():
-    data = get_vcsn_record().reset_index()
+    data = get_vcsn_record(vcsn_version).reset_index()
     temp = calc_sma_smd_historical(data['rain'], data['pet'], data.date, 150, 1)
 
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
@@ -213,7 +224,7 @@ def calc_wet_recurance_ndays():
             12: 99,
         })
 
-    data = get_vcsn_record().reset_index()
+    data = get_vcsn_record(vcsn_version).reset_index()
     temp = calc_sma_smd_historical(data['rain'], data['pet'], data.date, 150, 1)
 
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
@@ -319,7 +330,7 @@ def calc_dry_rolling():
             12: -1,
         })
 
-    data = get_vcsn_record().reset_index()
+    data = get_vcsn_record(vcsn_version).reset_index()
     data.loc[:, 'roll_rain_10'] = data.loc[:, 'rain'].rolling(10).sum()
 
     out_keys = []
@@ -425,7 +436,7 @@ def calc_dry_recurance_ndays():
             7: -1,
         })
 
-    data = get_vcsn_record().reset_index()
+    data = get_vcsn_record(vcsn_version).reset_index()
     temp = calc_sma_smd_historical(data['rain'], data['pet'], data.date, 150, 1)
 
     trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
@@ -568,7 +579,7 @@ def calc_hot_recurance_variable():
             12: 7,
         })
 
-    data = get_vcsn_record().reset_index()
+    data = get_vcsn_record(vcsn_version).reset_index()
     data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
 
     out_keys = []
@@ -861,7 +872,7 @@ def calc_restrict_recurance():
 
 
 def calc_cold_recurance():
-    data = get_vcsn_record()
+    data = get_vcsn_record(vcsn_version)
     data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
     data.loc[:, 'tmean_raw'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
     data.loc[:, 'tmean'] = data.loc[:, 'tmean'].rolling(3).mean()
@@ -916,7 +927,7 @@ def calc_cold_recurance():
 
 
 def calc_hot_recurance():
-    data = get_vcsn_record()
+    data = get_vcsn_record(vcsn_version)
     data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
     data.to_csv(os.path.join(event_def_dir, 'temp_raw.csv'))
 

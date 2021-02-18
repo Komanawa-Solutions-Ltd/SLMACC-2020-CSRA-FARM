@@ -5,6 +5,7 @@
 import pandas as pd
 import numpy as np
 import os
+import ksl_env
 from Pasture_Growth_Modelling.initialisation_support.pasture_growth_deficit import calc_past_pasture_growth_anomaly
 from Climate_Shocks.note_worthy_events.rough_stats import make_data
 from Climate_Shocks.climate_shocks_env import event_def_dir, event_def_path
@@ -57,9 +58,9 @@ def make_prob(in_series):
     return pd.DataFrame(out_series)
 
 
-def get_org_data():
+def get_org_data(event_dir=event_def_dir):
     data = [
-        pd.read_csv(os.path.join(event_def_dir, '{}_years.csv'.format(f))).loc[:, k] for (f, k) in events
+        pd.read_csv(os.path.join(event_dir, '{}_years.csv'.format(f))).loc[:, k] for (f, k) in events
 
     ]
     use_data = []
@@ -116,12 +117,19 @@ def make_prob_impact_data():
 if __name__ == '__main__':
     # initial events recurrence must be run first. then this creates, the final events.
     # visualied_events.csv come from Storylines.check_storyline
-    out = make_prob_impact_data()
+    # event def data comes from Climate_Shocks\note_worthy_events\rough_stats.py
+    run_old=False
+    run_detrend_test=True
+    if run_old:
+        out = make_prob_impact_data()
 
-    t = pd.Series([' '.join(e) for e in out.columns])
-    idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
-    out.loc[:, out.columns[idx]] *= 100
-    out.to_csv(os.path.join(event_def_dir, 'current_choice.csv'), float_format='%.1f%%')
-    out.to_csv(os.path.join(os.path.dirname(event_def_path),
-                            'event_historical_prob_impact.csv'), float_format='%.1f%%')
-    make_data(get_org_data(), save=True)
+        t = pd.Series([' '.join(e) for e in out.columns])
+        idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
+        out.loc[:, out.columns[idx]] *= 100
+        out.to_csv(os.path.join(event_def_dir, 'current_choice.csv'), float_format='%.1f%%')
+        out.to_csv(os.path.join(os.path.dirname(event_def_path),
+                                'event_historical_prob_impact.csv'), float_format='%.1f%%')
+        make_data(get_org_data(), save=True)
+    if run_detrend_test:
+        make_data(get_org_data(ksl_env.shared_drives("Z2003_SLMACC\event_definition/v5_detrend")), save=True,
+                  save_paths=[ksl_env.shared_drives("Z2003_SLMACC\event_definition/v5_detrend/detrend_event_data.csv")])

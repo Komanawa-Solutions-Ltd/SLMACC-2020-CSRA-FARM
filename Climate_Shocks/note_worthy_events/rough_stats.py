@@ -6,10 +6,11 @@ import pandas as pd
 import numpy as np
 import os
 import ksl_env
-from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
+#from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
 from Climate_Shocks.climate_shocks_env import event_def_dir as backed_dir
 from Climate_Shocks.get_past_record import get_restriction_record
 from Climate_Shocks.climate_shocks_env import event_def_path_drive, event_def_path
+
 
 outdir = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\mutual_info")
 if not os.path.exists(outdir):
@@ -23,7 +24,7 @@ event_months = {
     'rest': list(range(9, 13)) + list(range(1, 5))}
 
 
-def make_data(org_data, save=False, restrict_cat=True):
+def make_data(org_data, save=False, restrict_cat=True, save_paths=(event_def_path, event_def_path_drive)):
     """
     make the final data for greg
     :param org_data: from final_event_recurance import get_org_data
@@ -57,7 +58,7 @@ def make_data(org_data, save=False, restrict_cat=True):
         data.loc[:, 'prev_{}'.format(k)] = data.loc[:, k].shift(1)
 
     if save:
-        for path in [event_def_path, event_def_path_drive]:
+        for path in save_paths:
             with open(path, 'w') as f:
                 f.write('0=normal temp: -1=cold; ; 1=hot; Precip: -1=wet; 1=dry; rest: 1=anomalous restrictions. '
                         'prev_{} = previous months data  \n')
@@ -167,6 +168,7 @@ def run_stats2():
 
 
 if __name__ == '__main__':
+
     make_data(True)
 
     pass
