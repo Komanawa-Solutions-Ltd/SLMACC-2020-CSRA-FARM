@@ -199,7 +199,7 @@ def _gen_input(storyline_path, SWG_path, nsims, mode, site, chunks, current_c, n
 def _run_simple_rest(storyline_path, swg_path, nsims, mode, site, simlen, storyline_key, outdir,
                      save_daily, description):
     number_run = (psutil.virtual_memory().available // memory_per_run * (simlen/365))
-    chunks = -1 * (-nsims // number_run)
+    chunks = int(-1 * (-nsims // number_run))
     if chunks == 1:
         number_run = nsims
 
@@ -247,7 +247,7 @@ def _run_paddock_rest(storyline_key, outdir, storyline_path, swg_path, nsims, mo
     # paddock level restrictions
     levels = np.arange(0, 125, 25) / 100
     number_run = (psutil.virtual_memory().available // (memory_per_run *(simlen/365) * len(levels)))
-    chunks = -1 * (-nsims // number_run)
+    chunks = int(-1 * (-nsims // number_run))
     if chunks == 1:
         number_run = nsims
 

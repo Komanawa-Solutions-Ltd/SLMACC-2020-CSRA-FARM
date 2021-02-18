@@ -16,9 +16,9 @@ from BS_work.SWG.SWG_wrapper import *
 if __name__ == '__main__':
     # todo set up the check and deletion of any data that does not fit limits
     #todo run on dickie
-    run_swg = True
+    run_swg = False
     clean_data = False
-    run_basgra = False
+    run_basgra = True
 
     # run swg
     print('running SWG')
@@ -43,4 +43,5 @@ if __name__ == '__main__':
         run_pasture_growth(storyline_key='0-base',
                            outdir=os.path.join(ksl_env.slmmac_dir_unbacked, 'pasture_growth_sims'),
                            nsims='all', padock_rest=True,
-                           save_daily=True, description='initial baseline run')
+                           save_daily=True, description='initial baseline run note that this was run before fixing '
+                                                        'the swg matching errors e.g. realisation cleaning')
