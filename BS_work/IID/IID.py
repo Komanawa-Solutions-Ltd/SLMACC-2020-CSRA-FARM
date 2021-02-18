@@ -4,7 +4,7 @@ This program will calculate the combined probability of a story given probabilit
 SLAMACC_prob_calc.py
 The stories must be provided in the format of a directory containing story files in csv format.
 The Column headers for this csv must be year, month, temp_class, precip_class, rest
-Stories will be irrated over and total story probability calculated for each story.
+Stories will be iterated over and total story probability calculated for each story.
 Stories probability will be written to a csv file in the same base directory as this file named story_probs.csv
 """
 from pathlib import Path
@@ -36,11 +36,11 @@ base_dir = os.path.dirname(__file__)
 
 # path for Irrigation CDFS
 ir_path = Path(os.path.join(base_dir, "IrrigationRestriction"))
-ir_files = list(ir_path.glob("RestrictionCDFs*.txt"))
+ir_files = list(ir_path.glob("ir_CDFs*.csv"))
 
 assert len(ir_files) == 4, "should be 4 CDFS for calculating restriction probabilities"
 
-ir_dfs = {x.name.split(".")[0].split("_")[-1]: pd.read_csv(x, comment="'", delim_whitespace=True, index_col="Restr")
+ir_dfs = {x.name.split(".")[0].split("_")[-1]: pd.read_csv(x, comment="#", index_col=0)
           for x in ir_files}
 
 # base path that transition table files are stored in
@@ -175,3 +175,4 @@ if __name__ == '__main__':
     expected = pd.read_csv("story_probs.csv", comment="#")
     print(expected)
     assert (np.isclose(expected.prob.values, t.prob.values)).all()
+    print('passed test')
