@@ -12,10 +12,10 @@ from Storylines.storyline_building_support import make_sampling_options, map_irr
 #  2 normal months, run 2500 (rethink based on number of individaul events
 #  samples for each one this suggests less than a 1 kg error on mean monthly pasture growth
 
+individual_dir = os.path.join(temp_storyline_dir, 'individual_runs')
 def make_storyline_files():
-    outdir = os.path.join(temp_storyline_dir, 'individual_runs')
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
+    if not os.path.exists(individual_dir):
+        os.makedirs(individual_dir)
     # there are 69 unique event/month comparisons.
 
     all_events = make_sampling_options()
@@ -33,7 +33,7 @@ def make_storyline_files():
             if m == 1 or m == 2:
                 ppy += -1
             map_irrigation(1,1)
-            with open(os.path.join(outdir, fname), 'w') as f:
+            with open(os.path.join(individual_dir, fname), 'w') as f:
                 f.write('month,year,precip_class,temp_class,rest\n')
                 f.write('{},{},{},{},{}\n'.format(ppm, ppy, *base_events[ppm][0:-1],
                                                   map_irrigation(ppm, base_events[ppm][-1])))
@@ -45,7 +45,7 @@ def make_storyline_files():
 
 if __name__ == '__main__':
     make_files = True
-    make_weather = False
+    make_weather = True
     run_basgra = False
     n = 500 #todo consider carefully
 
@@ -53,20 +53,24 @@ if __name__ == '__main__':
         make_storyline_files()
 
     # todo below this had not been managed, also consider multiprocessing here !
+    # todo just thrown togeather so I can look at produced data
     # run swg
     print('running SWG')
 
-    outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', '0-base')
-    yml = os.path.join(outdir, '0-base.yml')
-    if make_weather:
+    for p in os.listdir(individual_dir):
+        print(p)
 
-        create_yaml(outpath_yml=yml, outsim_dir=outdir,
-                    nsims=n,
-                    storyline_path=os.path.join(storyline_dir, '0-baseline.csv'),
-                    sim_name=None,
-                    xlat=oxford_lat, xlon=oxford_lon)
-        temp = run_SWG(yml, outdir, rm_npz=True, clean=False)
-        print(temp)
+        outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'individual',p.split('.')[0])
+        yml = os.path.join(outdir, 'ind.yml')
+        if make_weather:
+
+            create_yaml(outpath_yml=yml, outsim_dir=outdir,
+                        nsims=n,
+                        storyline_path=os.path.join(individual_dir, p),
+                        sim_name=None,
+                        xlat=oxford_lat, xlon=oxford_lon)
+            temp = run_SWG(yml, outdir, rm_npz=True, clean=False)
+            print(temp)
 
     if run_basgra:
     # run basgra

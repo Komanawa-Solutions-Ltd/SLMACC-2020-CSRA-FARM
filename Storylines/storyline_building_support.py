@@ -69,7 +69,7 @@ def make_sampling_options(include_irr=True):
 def map_irrigation(m, rest):
     # todo map irrigation for the month for True and False states.
     warnings.warn('###########MAPPING RESTRICTIONS IS ONLY AT DUMMY FUNCTINO YOU DUMMY##############')
-    return 'm{}: r{}'.format(m, rest)
+    return 0
 
 def get_rest_base_data(): #todo should this be defined by the precip and previous precip??? or just the precip??
     data = pd.read_csv(climate_shocks_env.event_def_path, skiprows=1)

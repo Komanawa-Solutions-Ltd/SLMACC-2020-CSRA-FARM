@@ -109,6 +109,7 @@ def compair_means(outdir, detrended=False):
 
 
 # todo compare to the produced data from the SWG
+# todo investigate the delta smd from first to last of month with average start time....
 # todo see how the specification shift if given differnt characteristics
 
 
