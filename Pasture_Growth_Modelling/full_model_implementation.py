@@ -84,7 +84,7 @@ def run_pasture_growth(storyline_key, outdir, nsims='all', mode_sites=default_mo
     :param description: str, a description to append to the description saved to the netcdf output file
     :return:
     """
-    storyline_path, swg_path, nsims_aval, simlen = storyline_swg_paths[storyline_key]
+    storyline_path, swg_path, nsims_aval, simlen = storyline_swg_paths[storyline_key] #todo this needs updating! pronto
 
     if nsims == 'all':
         nsims = nsims_aval

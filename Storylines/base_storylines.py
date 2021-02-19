@@ -6,21 +6,8 @@ import pandas as pd
 from Storylines.check_storyline import ensure_no_impossible_events
 from Climate_Shocks import climate_shocks_env
 import os
+from Storylines.storyline_building_support import get_rest_base_data
 
-month_len = {
-    1: 31,
-    2: 28,
-    3: 31,
-    4: 30,
-    5: 31,
-    6: 30,
-    7: 31,
-    8: 31,
-    9: 30,
-    10: 31,
-    11: 30,
-    12: 31,
-}
 
 
 def get_baseline_storyline(save=False):
@@ -47,14 +34,7 @@ def get_baseline_storyline(save=False):
     return data
 
 
-def get_rest_base_data():
-    data = pd.read_csv(climate_shocks_env.event_def_path, skiprows=1)
-    data.loc[:, 'mlen'] = data.loc[:, 'month'].replace(month_len)
-    data.loc[:, 'rest'] = data.loc[:, 'rest_cum'] / data.loc[:, 'mlen']
-    data = data.loc[(data.temp == 0) & (data.precip == 0)]
-    out = data.loc[:, ['month', 'rest']].groupby('month').describe().round(4)
 
-    return out[('rest', 'mean')].to_dict()
 
 
 if __name__ == '__main__':
