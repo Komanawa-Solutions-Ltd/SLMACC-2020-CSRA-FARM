@@ -138,6 +138,32 @@ def calc_sma_smd_historical(rain, pet, date, h2o_cap, h2o_start, average_start_y
     return outdata
 
 
+def calc_monthly_based_smd_sma_150mm(rain, pet, date):
+    month_start = {1: -79.0, 2: -92.0, 3: -84.0, 4: -71.0, 5: -46.0, 6: -21.0, 7: -9.0, 8: -7.0, 9: -12.0, 10: -30.0,
+                   11: -47.0, 12: -67.0}
+    doy = pd.Series(date).dt.dayofyear.values
+    month = pd.Series(date).dt.month.values
+    year = pd.Series(date).dt.year.values
+    day = pd.Series(date).dt.day.values
+
+    assert date.shape == pet.shape == rain.shape, 'date, pet, rain must be same shape'
+
+    outdata = pd.DataFrame(index=date)
+    for k in ['doy', 'month', 'year', 'day', 'rain', 'pet']:
+        outdata.loc[:, k] = eval(k)
+
+
+
+    for m in range(1, 13):
+        for y in range(year.max()):
+            idx = (outdata.month == m) & (outdata.year == y)
+            smd = calc_smd(outdata.loc[idx, 'rain'].values, outdata.loc[idx, 'pet'].values,
+                           h2o_cap=150, h2o_start=(150 + month_start[m]) / 150, return_drn_aet=False)
+            outdata.loc[idx, 'smd'] = smd
+
+    return outdata
+
+
 def calc_penman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=None,
                     elevation=None):
     """
@@ -290,9 +316,11 @@ def test_calc_smd():
     # 3d
     raise NotImplementedError
 
+
 def test_penman_pet():
-    #todo write a testing regime in the future I am confidnet that it is working appropriately
+    # todo write a testing regime in the future I am confidnet that it is working appropriately
     raise NotImplementedError
+
 
 if __name__ == '__main__':
     rough_testing_of_pet()
