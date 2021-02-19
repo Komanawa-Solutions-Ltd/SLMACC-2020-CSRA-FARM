@@ -9,8 +9,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-default_funcs = ('np.nanmean',
-                 'np.nanmedian')
+default_funcs = (
+    'np.nanmedian',
+    'np.nanmean',
+)
 
 
 def make_dataset(all_data, n, n_compare,
@@ -43,10 +45,12 @@ def plot_resampled_sims(paths, ns, n_compare, show=True, save_dir=None):
         all_data = nc.Dataset(p)
         x = pd.date_range('2025-07-01', freq='MS', periods=all_data.dimensions['sim_month'].size)
         ns = np.atleast_1d(ns)
-        for n in ns:
-            data = make_dataset(all_data, n, n_compare)
-            for f in default_funcs:
+        for f in default_funcs:
+            outdata_all = []
+            for n in ns:
+                data = make_dataset(all_data, n, n_compare)
                 act_mean, outdata, difs = data[f]
+                outdata_all.append(np.nanmax(np.abs(difs), axis=1))
                 fig, (ax, ax2) = plt.subplots(2, figsize=(11, 11))
 
                 for i in range(n_compare):
@@ -62,15 +66,35 @@ def plot_resampled_sims(paths, ns, n_compare, show=True, save_dir=None):
                         os.makedirs(save_dir)
                     fig.savefig(os.path.join(save_dir, '{}_{}_{}_comp.png'.format(os.path.basename(p).split('.')[0],
                                                                                   f, n)))
+                if not show:
+                    plt.close(fig)
+            fig, ax = plt.subplots(figsize=(11, 11))
+            ax.boxplot(outdata_all, labels=ns)
+            ax.set_yscale('log')
+            ax.set_title('{} - {}:\n n vs 10000'.format(f, os.path.basename(p), ))
+            ax.set_xlabel('number of sims per average')
+            ax.set_ylabel('maximum error from 10,000 simulation {}'.format(f))
+            ax.set_ylim(0.1, 100)
+            if save_dir is not None:
+                if not os.path.exists(save_dir):
+                    os.makedirs(save_dir)
+                fig.savefig(os.path.join(save_dir, 'z-max_diff_{}_{}.png'.format(os.path.basename(p).split('.')[0],
+                                                                                 f)))
+
     if show:
         plt.show()
 
 
 if __name__ == '__main__':
-    all_paths = [ #todo add irrigated base and keep looking at this!
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test10000-eyrewell-irrigated.nc",
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\0-base-oxford-dryland.nc",
+    all_paths = [  # todo add irrigated base and keep looking at this!
+        # r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test10000-eyrewell-irrigated.nc",
+        # r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\0-base-oxford-dryland.nc",
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\0-base-oxford-irrigated.nc",
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\0-base-eyrewell-irrigated.nc",
+
     ]
     plot_resampled_sims(all_paths,
-                        [1, 10, 100, 200, 300, 400, 500, 750, 1000], 1000, save_dir=os.path.join(ksl_env.slmmac_dir_unbacked,
-                                                                        'pasture_growth_sims', 'n_comp_plots'))
+                        [1, 10, 100, 200, 300, 400, 500, 750, 1000, 2500, 5000, 7500], 1000,
+                        save_dir=os.path.join(ksl_env.slmmac_dir_unbacked,
+                                              'pasture_growth_sims', 'n_comp_plots'),
+                        show=False)
