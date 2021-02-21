@@ -111,6 +111,7 @@ def check_single(path, yml_path, m=None):  # todo check
     data.loc[:, 'cold'] = ((data.loc[:, 'tmin'] +
                             data.loc[:, 'tmax']) / 2).rolling(3).mean().fillna(method='bfill') <= 7
 
+    data.loc[:,'year'] += 1
     temp = data.loc[:, ['year', 'month', 'wet',
                         'dry', 'hot', 'cold']].groupby(['year', 'month']).sum()
     storyline.loc[temp.index, ['wet', 'dry', 'hot', 'cold']] = temp.loc[:, ['wet', 'dry', 'hot', 'cold']]
@@ -148,6 +149,7 @@ def check_single(path, yml_path, m=None):  # todo check
 
 
 if __name__ == '__main__':
+
     base_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'try_individual')
     out_dict = {}
     for d in os.listdir(base_dir):

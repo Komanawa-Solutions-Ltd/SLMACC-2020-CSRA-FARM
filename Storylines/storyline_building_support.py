@@ -44,7 +44,7 @@ base_events = {e: ('A', 'A', 0) for e in range(1, 13)}
 base_events[7] = ('C', 'A', 0)
 
 # make all possible events
-def make_sampling_options(include_irr=True):
+def make_sampling_options(include_irr=True): #todo some of these are not running... why mismatch in event defs... find out
     acceptable = get_acceptable_events()
     outdata = {}
     for m in range(1, 13):
@@ -67,6 +67,7 @@ def make_sampling_options(include_irr=True):
     return outdata
 
 def map_irrigation(m, rest):
+    # todo also include the precip state for the month! and previous month???
     # todo map irrigation for the month for True and False states.
     warnings.warn('###########MAPPING RESTRICTIONS IS ONLY AT DUMMY FUNCTINO YOU DUMMY##############')
     return 0

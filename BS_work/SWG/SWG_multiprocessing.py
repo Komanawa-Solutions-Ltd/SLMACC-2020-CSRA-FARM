@@ -45,7 +45,10 @@ def run_swg_mp(storyline_paths, outdirs, ns, base_dirs, vcfs, cleans, log_path):
     if len(cleans) == 1:
         cleans = np.repeat(cleans, storyline_paths.shape)
 
-    assert ns.shape == base_dirs.shape == vcfs.shapes == cleans.shape == storyline_paths.shape
+    assert ns.shape == base_dirs.shape == vcfs.shape == cleans.shape == storyline_paths.shape
+
+    if not os.path.exists(os.path.dirname(log_path)):
+        os.makedirs(os.path.dirname(log_path))
 
     runs = []
     # make into dictionary
@@ -75,8 +78,6 @@ def run_swg_mp(storyline_paths, outdirs, ns, base_dirs, vcfs, cleans, log_path):
 
     outdata = pd.DataFrame(pool_outputs,
                            columns=['storyline_path', 'outdir', 'n', 'base_dir', 'vcf', 'clean', 'success', 'errors'])
-    if not os.path.exists(os.path.dirname(log_path)):
-        os.makedirs(os.path.dirname(log_path))
     outdata.to_csv(log_path)
 
 
@@ -91,7 +92,7 @@ def start_process():
     p.nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)
 
 
-def _run_mp(**kwargs):
+def _run_mp(kwargs):
     # set up args
     storyline_path = kwargs['storyline_path']
     outdir = kwargs['outdir']
@@ -100,9 +101,13 @@ def _run_mp(**kwargs):
     vcf = kwargs['vcf']
     clean = kwargs['clean']
 
+    storyline_id = os.path.basename(storyline_path).split('.')[0]
     yml = os.path.join(outdir, 'ind.yml')
+
     success = True
-    v = ''
+    v = 'none'
+
+    print('starting to run {}'.format(storyline_id))
     try:
         create_yaml(outpath_yml=yml, outsim_dir=outdir,
                     nsims=n,
@@ -112,6 +117,9 @@ def _run_mp(**kwargs):
                     base_dir=base_dir,
                     vcf=vcf)
         temp = run_SWG(yml, outdir, rm_npz=True, clean=clean)
-    except Exception as v:
+    except Exception as val:
+        v = val
         success = False
-    return storyline_path, outdir, n, base_dir, vcf, clean, success, v
+
+    print('finished storyline: {},  success: {}'.format(storyline_id, success))
+    return storyline_id, outdir, n, base_dir, vcf, clean, success, v
