@@ -35,10 +35,6 @@ def make_storyline_files():
             map_irrigation(1,1)
             with open(os.path.join(individual_dir, fname), 'w') as f:
                 f.write('month,year,precip_class,temp_class,rest\n')
-                f.write('{},{},{},{},{}\n'.format(ppm, ppy, *base_events[ppm][0:-1],
-                                                  map_irrigation(ppm, base_events[ppm][-1])))
-                f.write('{},{},{},{},{}\n'.format(pm, py, *base_events[pm][0:-1],
-                                                  map_irrigation(pm, base_events[pm][-1])))
                 f.write('{},{},{},{},{}\n'.format(m, 2026, *e[0:-1],
                                                   map_irrigation(m, e[-1])))  # todo really map restrictions
 
@@ -47,7 +43,9 @@ if __name__ == '__main__':
     make_files = True
     make_weather = True
     run_basgra = False
-    n = 500 #todo consider carefully
+    detrended_vcf = r"D:\SLMMAC_SWG_test_detrend\detrend_event_data_fixed.csv"
+
+    n = 1000 #todo consider carefully
 
     if make_files:
         make_storyline_files()
@@ -56,28 +54,23 @@ if __name__ == '__main__':
     # todo just thrown togeather so I can look at produced data
     # run swg
     print('running SWG')
-
+    didnotwork = []
     for p in os.listdir(individual_dir):
         print(p)
 
-        outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'individual',p.split('.')[0])
+        outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'try_individual',p.split('.')[0])
         yml = os.path.join(outdir, 'ind.yml')
         if make_weather:
 
-            create_yaml(outpath_yml=yml, outsim_dir=outdir,
-                        nsims=n,
-                        storyline_path=os.path.join(individual_dir, p),
-                        sim_name=None,
-                        xlat=oxford_lat, xlon=oxford_lon)
-            temp = run_SWG(yml, outdir, rm_npz=True, clean=False)
-            print(temp)
+            try:
 
-    if run_basgra:
-    # run basgra
-        print('running BASGRA')
-        run_pasture_growth(storyline_key='0-base',
-                           outdir=os.path.join(ksl_env.slmmac_dir_unbacked, 'pasture_growth_sims'),
-                           nsims='all', padock_rest=True,
-                           save_daily=True, description='initial baseline run note that this was run before fixing '
-                                                        'the swg matching errors e.g. realisation cleaning')
-
+                create_yaml(outpath_yml=yml, outsim_dir=outdir,
+                            nsims=n,
+                            storyline_path=os.path.join(individual_dir, p),
+                            sim_name=None,
+                            vcf=detrended_vcf) # todo this is just a test, will need to make oxford in teh future
+                temp = run_SWG(yml, outdir, rm_npz=True, clean=False)
+            except Exception as v:
+                print(v)
+                didnotwork.append(p)
+    print(didnotwork)

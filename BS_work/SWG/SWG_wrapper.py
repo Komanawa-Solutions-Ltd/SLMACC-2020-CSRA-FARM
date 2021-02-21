@@ -55,6 +55,9 @@ def create_yaml(outpath_yml, outsim_dir, nsims, storyline_path, sim_name=None,
         exstat = True
         xlat = ''.join(['- {}\n'.format(e) for e in np.atleast_1d(xlat)])
         xlon = ''.join(['- {}\n'.format(e) for e in np.atleast_1d(xlon)])
+    else:
+        xlat = '- \n'
+        xlon = '- \n'
 
     yml = ('# created with {create_file}\n'
            'base_directory: {bd}/ #Directory that contains the directory "SLMACC-Subset_vcsn", must have / at end\n'
