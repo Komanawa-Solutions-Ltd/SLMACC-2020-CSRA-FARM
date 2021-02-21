@@ -61,5 +61,5 @@ def build_example_storylines_for_greg(outdir):
 
 
 if __name__ == '__main__':
-    # todo these will no longer run as they do not have the correct index
+    # these will no longer run as they do not have the correct index
     build_example_storylines_for_greg(ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\example_storys_for_greg"))

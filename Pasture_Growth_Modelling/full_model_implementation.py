@@ -22,7 +22,7 @@ ksl_env.add_basgra_nz_path()
 from basgra_python import run_basgra_nz
 from supporting_functions.output_metadata import get_output_metadata
 
-# todo # consider multiprocessing here???? no up a level (e.g. at teh storyline level)
+# consider multiprocessing here???? no up a level (e.g. at teh storyline level)
 
 out_metadata = get_output_metadata()
 

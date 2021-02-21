@@ -52,7 +52,7 @@ def get_past_event_frequency():
     return events
 
 
-def ensure_no_impossible_events(storyline):
+def ensure_no_impossible_events(storyline): # takes longer to run this than the IID
     assert isinstance(storyline, pd.DataFrame)
     assert set(storyline.columns) == {'year', 'month', 'temp_class', 'precip_class', 'rest'}
     assert set(storyline.temp_class.unique()).issubset(['C', 'A', 'H']), 'unexpected classes for temp_class'
@@ -82,12 +82,9 @@ def ensure_no_impossible_events(storyline):
         if month not in acceptable_events[combo_key]:
             messages.append('unacceptable combination(s):{} in year: {} month: {}'.format(combo_key, year, month))
             problems = True
-    # todo add unacceptable transitions
     # out_zero, out_not_zero, missing_data = get_all_zero_prob_transitions()
     # 'month:{} to {}'.format(m, m2)
     # '{} to {} is zero'.format(state1, state2)
-
-    # todo add restriction problems?
     if problems:
         raise ValueError('\n '.join(messages))
 
