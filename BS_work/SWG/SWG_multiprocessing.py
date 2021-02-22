@@ -12,7 +12,7 @@ import psutil
 from BS_work.SWG.SWG_wrapper import create_yaml, run_SWG, oxford_lon, oxford_lat
 
 
-def run_swg_mp(storyline_paths, outdirs, ns, base_dirs, vcfs, cleans, log_path):  # todo check!
+def run_swg_mp(storyline_paths, outdirs, ns, base_dirs, vcfs, cleans, log_path, pool_size=None):  # todo check!
     """
     run a bunch of storylines as multiprocessing
     :param storyline_paths: storyline paths to run
@@ -63,7 +63,8 @@ def run_swg_mp(storyline_paths, outdirs, ns, base_dirs, vcfs, cleans, log_path):
         })
     t = time.time()
     multiprocessing.log_to_stderr(logging.DEBUG)
-    pool_size = psutil.cpu_count(logical=True)
+    if pool_size is None:
+        pool_size = psutil.cpu_count(logical=True)
     pool = multiprocessing.Pool(processes=pool_size,
                                 initializer=start_process,
                                 )
@@ -121,5 +122,5 @@ def _run_mp(kwargs):
         v = val
         success = False
 
-    print('finished storyline: {},  success: {}'.format(storyline_id, success))
+    print('finished storyline: {},  success: {}, error: {}'.format(storyline_id, success,v))
     return storyline_id, outdir, n, base_dir, vcf, clean, success, v

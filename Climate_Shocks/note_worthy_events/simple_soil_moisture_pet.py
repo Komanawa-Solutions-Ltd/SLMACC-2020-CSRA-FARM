@@ -306,9 +306,14 @@ def rough_testing_of_pet():
     pass
 
 
+detrended_start_month = {
+    1: -50.0, 2: -52.0, 3: -41.0, 4: -36.0, 5: -22.0, 6: -11.0, 7: -7.0, 8: -8.0,
+    9: -14.0, 10: -30.0, 11: -41.0, 12: -49.0}
+# calculated from historical SMD from detrended2 on first day of each month with a 10 day centered rolling window mean
+
+
 def calc_smd_monthly(rain, pet, dates,
-                     month_start={1: -79.0, 2: -92.0, 3: -84.0, 4: -71.0, 5: -46.0, 6: -21.0, 7: -9.0, 8: -7.0,
-                                  9: -12.0, 10: -30.0, 11: -47.0, 12: -67.0},
+                     month_start=detrended_start_month,
                      h2o_cap=150,
                      a=0.0073,
                      p=1, return_drn_aet=False):
@@ -399,12 +404,23 @@ def test_penman_pet():
 
 
 if __name__ == '__main__':
-    #rough_testing_of_pet()
+    # rough_testing_of_pet()
     from Climate_Shocks.get_past_record import get_vcsn_record
+
     vcsn = get_vcsn_record('detrended2')
-    t= calc_smd_monthly(rain=vcsn.rain, pet=vcsn.pet, dates=vcsn.index)
-    vcsn.loc[:,'smd'] = t
-    t = vcsn.loc[:,['doy', 'smd']].groupby('doy').mean().to_dict()
-    vcsn.loc[:,'sma'] = vcsn.loc[:,'smd'] - vcsn.loc[:,'doy'].replace(t['smd'])
+    t = calc_smd_monthly(rain=vcsn.rain, pet=vcsn.pet, dates=vcsn.index)
+    vcsn.loc[:, 'smd_monthly'] = t
+    t = vcsn.loc[:, ['doy', 'smd_monthly']].groupby('doy').mean().to_dict()
+    vcsn.loc[:, 'sma_monthly'] = vcsn.loc[:, 'smd_monthly'] - vcsn.loc[:, 'doy'].replace(t['smd_monthly'])
 
+    temp = calc_sma_smd_historical(vcsn.rain, vcsn.pet, vcsn.index, h2o_cap=150, h2o_start=1)
+    vcsn.loc[:, 'smd'] = temp.loc[:, 'smd'].values
 
+    vcsn.loc[:, 'sma'] = temp.loc[:, 'sma'].values
+    vcsn.loc[:, 'rolling_smd'] = vcsn.loc[:, 'smd'].rolling(10, center=True).mean()
+    vcsn.loc[:, 'day'] = vcsn.index.day
+    t = vcsn.loc[~((vcsn.month == 2) & (vcsn.day == 29))].groupby('doy').mean()
+    t.loc[:, 'day'] = t.day.astype(int)
+
+    temp = vcsn.groupby(['year', 'month']).mean().reset_index().groupby('month').describe()
+    temp.to_csv(r"C:\Users\dumon\Downloads\compare_smd-sma.csv")

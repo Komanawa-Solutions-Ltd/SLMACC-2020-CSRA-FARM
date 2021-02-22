@@ -13,13 +13,15 @@ from Climate_Shocks.climate_shocks_env import event_def_dir, event_def_path
 hot = '07d_d_tmax_25'
 cold = '10d_d_tmean_07'
 dry = '10d_d_smd000_sma-20'
+monthly_smd_dry = '10d_d_smd000_sma-15'
 wet = 'org'  # moved wet to n days with rain in month
 rest = 'eqliklyd_rest'
 
 events = [
     ('hot', hot),
     ('rolling_cold', cold),
-    ('dry', dry),
+    # ('dry', dry), this had some problems with reliance on previous month...
+    ('monthly_smd_dry', monthly_smd_dry),  # trying in version 6 to see if it help the data matching
     ('ndays_wet', wet),
     ('rest', rest),
 
@@ -118,8 +120,8 @@ if __name__ == '__main__':
     # initial events recurrence must be run first. then this creates, the final events.
     # visualied_events.csv come from Storylines.check_storyline
     # event def data comes from Climate_Shocks\note_worthy_events\rough_stats.py
-    run_old=False
-    run_detrend_test=True
+    run_old = False
+    run_detrend_test = True
     if run_old:
         out = make_prob_impact_data()
 
@@ -131,5 +133,16 @@ if __name__ == '__main__':
                                 'event_historical_prob_impact.csv'), float_format='%.1f%%')
         make_data(get_org_data(), save=True)
     if run_detrend_test:
-        make_data(get_org_data(ksl_env.shared_drives("Z2003_SLMACC\event_definition/v5_detrend")), save=True,
-                  save_paths=[ksl_env.shared_drives("Z2003_SLMACC\event_definition/v5_detrend/detrend_event_data.csv")])
+        temp = make_data(get_org_data(ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/v6_detrend")), save=True,
+                         save_paths=[
+                             ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/v6_detrend/detrend_event_data.csv")])
+        old = pd.read_csv(ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\v5_detrend\detrend_event_data.csv"),
+                          skiprows=1,
+                          index_col=0, )
+        temp.loc[:, 'old_temp'] = old.loc[:, 'temp'].values
+        temp.loc[:, 'old_precip'] = old.loc[:, 'precip'].values
+        temp.loc[:, 'change_temp'] = ~(temp.temp == temp.old_temp)
+        temp.loc[:, 'change_precip'] = ~(temp.precip == temp.old_precip)
+        temp.to_csv(ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/v6_detrend/event_data_with_old.csv"))
+        temp.loc[:, ['month', 'change_temp', 'change_precip']].groupby('month').sum().to_csv(
+            ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/v6_detrend/event_data_sum_changes.csv"))

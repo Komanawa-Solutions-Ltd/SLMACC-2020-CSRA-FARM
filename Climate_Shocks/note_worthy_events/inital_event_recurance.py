@@ -4,7 +4,7 @@
  """
 
 from Climate_Shocks.vcsn_pull import vcsn_pull_single_site
-from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_sma_smd_historical
+from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_sma_smd_historical, calc_smd_monthly
 from Climate_Shocks.get_past_record import get_restriction_record, get_vcsn_record
 from Pasture_Growth_Modelling.initialisation_support.pasture_growth_deficit import calc_past_pasture_growth_anomaly
 import ksl_env
@@ -18,13 +18,13 @@ from Climate_Shocks.climate_shocks_env import event_def_dir
 unbacked_dir = ksl_env.mh_unbacked("Z2003_SLMACC\event_definition")
 if not os.path.exists(unbacked_dir):
     os.makedirs(unbacked_dir)
-    
+
 vcsn_version = 'trended'
 
-#todo testing detrended data changes
+# todo testing detrended data changes
 test_detrended = True
 if test_detrended:
-    event_def_dir = ksl_env.shared_drives("Z2003_SLMACC\event_definition/v5_detrend")
+    event_def_dir = ksl_env.shared_drives("Z2003_SLMACC\event_definition/v6_detrend")
     vcsn_version = 'detrended2'
 
 if not os.path.exists(event_def_dir):
@@ -82,6 +82,58 @@ def add_pga(grouped_data, sim_keys, outdata):
 
 
 def calc_dry_recurance():
+    data = get_vcsn_record(vcsn_version)
+    t = calc_smd_monthly(rain=data.rain, pet=data.pet, dates=data.index)
+    data.loc[:, 'smd'] = t
+    t = data.loc[:, ['doy', 'smd']].groupby('doy').mean().to_dict()
+    data.loc[:, 'sma'] = data.loc[:, 'smd'] - data.loc[:, 'doy'].replace(t['smd'])
+    data.reset_index(inplace=True)
+
+    data.to_csv(os.path.join(event_def_dir, 'monthly_smd_dry_raw.csv'))
+
+    smd_thresholds = [0]
+    sma_thresholds = [-5, -10, -12, -15, -17, -20]
+    ndays = [5, 7, 10, 14]
+    out_keys = []
+    for smd_t, sma_t in itertools.product(smd_thresholds, sma_thresholds):
+        k = 'd_smd{:03d}_sma{:02d}'.format(smd_t, sma_t)
+        data.loc[:, k] = (data.loc[:, 'smd'] <= smd_t) & (data.loc[:, 'sma'] <= sma_t)
+        out_keys.append(k)
+
+    grouped_data = data.loc[:, ['month', 'year',
+                                'smd', 'sma'] + out_keys].groupby(['month', 'year']).sum().reset_index()
+
+    grouped_data.to_csv(os.path.join(event_def_dir, 'monthly_smd_dry_monthly_data.csv'))
+    grouped_data.drop(columns=['year']).groupby('month').describe().to_csv(os.path.join(event_def_dir,
+                                                                                        'monthly_smd_dry_monthly_data_desc.csv'))
+    out_keys2 = []
+    for nd in ndays:
+        for k in out_keys:
+            ok = '{:02d}d_{}'.format(nd, k)
+            out_keys2.append(ok)
+            grouped_data.loc[:, ok] = grouped_data.loc[:, k] >= nd
+
+    out = grouped_data.loc[:, ['month'] + out_keys2].groupby(['month']).aggregate(['sum', prob])
+    drop_keys = []
+    for k in out_keys2:
+        temp = (out.loc[:, k].loc[:, 'sum'] == 48).all() or (out.loc[:, k].loc[:, 'sum'] == 0).all()
+        if temp:
+            drop_keys.append(k)
+
+    out = out.drop(columns=drop_keys)
+    out, out_years = add_pga(grouped_data, set(out_keys2) - set(drop_keys), out)
+    t = pd.Series([' '.join(e) for e in out.columns])
+    idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
+    out.loc[:, out.columns[idx]] *= 100
+
+    out.to_csv(os.path.join(event_def_dir, 'monthly_smd_dry_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'monthly_smd_dry_prob_only_prob.csv'),
+                                        float_format='%.1f%%')
+
+    out_years.to_csv(os.path.join(event_def_dir, 'monthly_smd_dry_years.csv'))
+
+
+def calc_dry_recurance_monthly_smd():
     data = get_vcsn_record(vcsn_version).reset_index()
 
     temp = calc_sma_smd_historical(data['rain'], data['pet'], data.date, 150, 1)
@@ -198,7 +250,8 @@ def calc_wet_recurance():
     out.loc[:, out.columns[idx]] *= 100
 
     out.to_csv(os.path.join(event_def_dir, 'smd_wet_prob.csv'), float_format='%.1f%%')
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'smd_wet_prob_only_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'smd_wet_prob_only_prob.csv'),
+                                        float_format='%.1f%%')
 
     out_years.to_csv(os.path.join(event_def_dir, 'smd_wet_years.csv'))
 
@@ -262,7 +315,8 @@ def calc_wet_recurance_ndays():
     out.loc[:, out.columns[idx]] *= 100
 
     out.to_csv(os.path.join(event_def_dir, 'ndays_wet_prob.csv'), float_format='%.1f%%')
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'ndays_wet_prob_only_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'ndays_wet_prob_only_prob.csv'),
+                                        float_format='%.1f%%')
 
     out_years.to_csv(os.path.join(event_def_dir, 'ndays_wet_years.csv'))
 
@@ -271,7 +325,7 @@ def calc_dry_rolling():
     bulk_ndays = [5, 10, 15, 20]
     ndays = {}
     for bnd in bulk_ndays:
-        ndays['ndays{}'.format(bnd)] = {k:bnd for k in range(1,13)}
+        ndays['ndays{}'.format(bnd)] = {k: bnd for k in range(1, 13)}
 
     thresholds = {  # this did not end up getting used
         'first': {
@@ -281,22 +335,22 @@ def calc_dry_rolling():
             9: 10,
         },
         'first-3': {
-            4: 15-3,
-            5: 10-3,
-            8: 5-3,
-            9: 10-3,
+            4: 15 - 3,
+            5: 10 - 3,
+            8: 5 - 3,
+            9: 10 - 3,
         },
         'first-5': {
-            4: 15-5,
-            5: 10-5,
-            8: 5-5,
-            9: 10-5,
+            4: 15 - 5,
+            5: 10 - 5,
+            8: 5 - 5,
+            9: 10 - 5,
         },
         'first-10': {
-            4: 15-10,
-            5: 10-10,
-            8: 5-10,
-            9: 10-10,
+            4: 15 - 10,
+            5: 10 - 10,
+            8: 5 - 10,
+            9: 10 - 10,
         },
         'zero': {
             4: 0,
@@ -311,10 +365,10 @@ def calc_dry_rolling():
             9: 1,
         },
         'first-7': {
-            4: 15-7,
-            5: 10-7,
-            8: 5-7,
-            9: 10-7,
+            4: 15 - 7,
+            5: 10 - 7,
+            8: 5 - 7,
+            9: 10 - 7,
         },
     }
     for v in thresholds.values():
@@ -474,7 +528,8 @@ def calc_dry_recurance_ndays():
     out.loc[:, out.columns[idx]] *= 100
 
     out.to_csv(os.path.join(event_def_dir, 'ndays_dry_prob.csv'), float_format='%.1f%%')
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'ndays_dry_prob_only_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'ndays_dry_prob_only_prob.csv'),
+                                        float_format='%.1f%%')
 
     out_years.to_csv(os.path.join(event_def_dir, 'ndays_dry_years.csv'))
 
@@ -727,7 +782,8 @@ def old_calc_restrict_recurance():
     idx = ~((t.str.contains('sum')) | (t.str.contains('count')))
     out.loc[:, out.columns[idx]] *= 100
     out.to_csv(os.path.join(event_def_dir, 'old_rest_prob.csv'), float_format='%.1f%%')
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'old_rest_prob_only_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'old_rest_prob_only_prob.csv'),
+                                        float_format='%.1f%%')
 
 
 def calc_restrict_cumulative_recurance():
@@ -868,7 +924,8 @@ def calc_restrict_recurance():
     out.loc[:, out.columns[idx]] *= 100
     out.to_csv(os.path.join(event_def_dir, 'len_rest_prob.csv'), float_format='%.1f%%')
     out_years.to_csv(os.path.join(event_def_dir, 'len_rest_years.csv'))
-    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'len_rest_prob_only_prob.csv'), float_format='%.1f%%')
+    out.loc[:, out.columns[idx]].to_csv(os.path.join(event_def_dir, 'len_rest_prob_only_prob.csv'),
+                                        float_format='%.1f%%')
 
 
 def calc_cold_recurance():
@@ -1034,6 +1091,7 @@ def plot_restriction_record():
 
 if __name__ == '__main__':
     # final run set up
+    calc_dry_recurance_monthly_smd()
     calc_dry_recurance()
     calc_hot_recurance()
     calc_cold_recurance()
