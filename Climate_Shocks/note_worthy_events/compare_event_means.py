@@ -31,7 +31,7 @@ def compair_means(outdir, detrended=False):
     vcsn.loc[:, 'smd'] = temp.loc[:, 'smd'].values
     vcsn.loc[:, 'sma'] = temp.loc[:, 'sma'].values
     temp = calc_smd_monthly(vcsn.rain, vcsn.pet, vcsn.index)
-    vcsn.loc[:, 'monthly_smd'] = temp.loc[:, 'smd'].values
+    vcsn.loc[:, 'monthly_smd'] = temp
     # todo make monthly basis smd/sma
 
     vcsn = vcsn.groupby(['year', 'month']).mean()
@@ -111,7 +111,6 @@ def compair_means(outdir, detrended=False):
 # todo compare to the produced data from the SWG
 # todo investigate the delta smd from first to last of month with average start time....
 # todo see how the specification shift if given differnt characteristics
-
 
 if __name__ == '__main__':
     compair_means(r"C:\Users\Matt Hanson\Downloads\compare_means")
