@@ -2,9 +2,9 @@
  Author: Matt Hanson
  Created: 19/02/2021 1:07 PM
  """
-from Storylines.generate_random_storylines import make_sampling_options
+from Storylines.storyline_building_support import make_sampling_options
 from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_sma_smd_historical, \
-    calc_monthly_based_smd_sma_150mm
+    calc_smd_monthly
 from Climate_Shocks.get_past_record import get_vcsn_record
 from Climate_Shocks import climate_shocks_env
 import pandas as pd
@@ -30,7 +30,7 @@ def compair_means(outdir, detrended=False):
     temp = calc_sma_smd_historical(vcsn.rain, vcsn.pet, vcsn.index, 150, 1)
     vcsn.loc[:, 'smd'] = temp.loc[:, 'smd'].values
     vcsn.loc[:, 'sma'] = temp.loc[:, 'sma'].values
-    temp = calc_monthly_based_smd_sma_150mm(vcsn.rain, vcsn.pet, vcsn.index)
+    temp = calc_smd_monthly(vcsn.rain, vcsn.pet, vcsn.index)
     vcsn.loc[:, 'monthly_smd'] = temp.loc[:, 'smd'].values
     # todo make monthly basis smd/sma
 

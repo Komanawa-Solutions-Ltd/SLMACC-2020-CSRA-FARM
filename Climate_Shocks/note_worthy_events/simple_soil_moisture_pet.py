@@ -152,8 +152,6 @@ def calc_monthly_based_smd_sma_150mm(rain, pet, date):
     for k in ['doy', 'month', 'year', 'day', 'rain', 'pet']:
         outdata.loc[:, k] = eval(k)
 
-
-
     for m in range(1, 13):
         for y in range(year.max()):
             idx = (outdata.month == m) & (outdata.year == y)
@@ -308,6 +306,84 @@ def rough_testing_of_pet():
     pass
 
 
+def calc_smd_monthly(rain, pet, dates,
+                     month_start={1: -79.0, 2: -92.0, 3: -84.0, 4: -71.0, 5: -46.0, 6: -21.0, 7: -9.0, 8: -7.0,
+                                  9: -12.0, 10: -30.0, 11: -47.0, 12: -67.0},
+                     h2o_cap=150,
+                     a=0.0073,
+                     p=1, return_drn_aet=False):
+    """
+    calculate the soil moisture deficit from aet, assuems that if these are arrays axis 0 is time
+    sets the start of each month to the delta of the month start value and the rain/pet on that day.
+    :param rain: array of rain fall amounts, mm, shape = (time, *other dimensions (if needed))
+    :param pet: array of pet amounts, mm, shape = (time, *other dimensions (if needed))
+    :param dates: array of datetime objects,  shape = (time,)
+    :param month_start: the SMD value to start each month with
+    :param h2o_cap: maximum soil water capacity, mm, niwa uses 150mm as a standard
+    :param a: "readily available" water coefficient (d mm-1)
+              default value from woodward 2010
+    :param p: proportion of readilay avalible water (RAW) abe to be extracted in one day (d-1)
+              default value from woodward, 2010
+    :param return_drn_aet: boolean, if True return AET and drainage
+    :return: (soil moisture deficit, mm) or (soil moisture deficit, mm), (drainage, mm), (aet, mm)
+    """
+
+    assert isinstance(month_start, dict)
+    assert set(month_start.keys()) == set(range(1, 13))
+    dates = pd.Series(np.atleast_1d(dates))
+    months = np.array([d.month for d in dates])
+    days = np.array([d.day for d in dates])
+    # make this work if float/ndarray passed
+    if np.atleast_1d(pet).ndim == 1:
+        array_d = 1  # 1d array or list, return 1d data
+        pet = np.atleast_1d(pet)[:, np.newaxis]
+        rain = np.atleast_1d(rain)[:, np.newaxis]
+    else:
+        array_d = 2  # 2 or more dimensions return without modification
+    assert rain.shape == pet.shape, 'rain, dates and PET must be same shape'
+    assert dates.shape == pet.shape[0:1]
+    smd = np.zeros(pet.shape, float) * np.nan
+    if return_drn_aet:
+        drain = np.zeros(pet.shape, float) * np.nan
+        aet_out = np.zeros(pet.shape, float) * np.nan
+
+    iter_shp = pet.shape[1:]
+    soil_mois = np.zeros((iter_shp)) + month_start[months[0]] + h2o_cap
+
+    for i, (r, pe, m, d) in enumerate(zip(rain, pet, months, days)):
+        if d == 1:  # set the soil moisture on the first day of the month
+            soil_mois[:] = month_start[m] + h2o_cap
+
+        aet = calc_aet(pe, p=p, a=a, AWHC=h2o_cap, W=soil_mois - h2o_cap)
+
+        soil_mois = soil_mois + r - aet
+        soil_mois[soil_mois < 0] = 0
+
+        d = np.zeros((iter_shp))
+
+        idx = soil_mois > h2o_cap
+        d[idx] = soil_mois[idx] - h2o_cap
+        soil_mois[idx] = h2o_cap
+
+        smd[i] = (soil_mois - h2o_cap)
+
+        if return_drn_aet:
+            drain[i] = d
+            aet_out[i] = aet
+
+    # manage shape and return data
+    if array_d == 1:
+        smd = smd[:, 0]
+        if return_drn_aet:
+            drain = drain[:, 0]
+            aet_out = aet_out[:, 0]
+
+    if return_drn_aet:
+        return smd, drain, aet_out
+    else:
+        return smd
+
+
 def test_calc_smd():
     # todo write testing regime in the future. I'm confident it is working correctly
     # float
@@ -323,4 +399,12 @@ def test_penman_pet():
 
 
 if __name__ == '__main__':
-    rough_testing_of_pet()
+    #rough_testing_of_pet()
+    from Climate_Shocks.get_past_record import get_vcsn_record
+    vcsn = get_vcsn_record('detrended2')
+    t= calc_smd_monthly(rain=vcsn.rain, pet=vcsn.pet, dates=vcsn.index)
+    vcsn.loc[:,'smd'] = t
+    t = vcsn.loc[:,['doy', 'smd']].groupby('doy').mean().to_dict()
+    vcsn.loc[:,'sma'] = vcsn.loc[:,'smd'] - vcsn.loc[:,'doy'].replace(t['smd'])
+
+
