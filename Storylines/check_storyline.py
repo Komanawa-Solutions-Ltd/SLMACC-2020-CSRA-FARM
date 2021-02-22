@@ -27,7 +27,7 @@ def get_months_with_events():
     return events_out
 
 
-def get_acceptable_events():
+def get_acceptable_events(): #todo his may have changed with new events definitions, but probably not too much.
     events = pd.read_csv(event_def_path, skiprows=1)
     temps = ['C', 'A', 'H']
     precips = ['W', 'A', 'D']

@@ -21,7 +21,8 @@ def make_storyline_files():
         os.makedirs(individual_dir)
     # there are 69 unique event/month comparisons.
 
-    all_events = make_sampling_options(False)  # todo this is just to exaime swg data
+    all_events = make_sampling_options(False)  # todo this is just to exaime swg data,
+
 
     for m in range(1, 13):
         for e in all_events[m]:
@@ -66,4 +67,4 @@ if __name__ == '__main__':
         run_swg_mp(storyline_paths=storylines, outdirs=outdirs, ns=n, base_dirs=r"D:\SLMMAC_SWG_detrend_test_nPrecip",
                    vcfs=detrended_vcf, cleans=False,
                    log_path=r"D:\mh_unbacked\SLMACC_2020\SWG_runs\logs\try_individual_newp_02-22-16_35.csv",
-                   pool_size=1)
+                   pool_size=1) #todo run this once before running heaps to make all of the options
