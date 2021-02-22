@@ -101,7 +101,7 @@ def check_single(path, yml_path, m=None):  # todo check
 
     # calc SMA
     data.loc[:, 'sma'] = calc_smd(rain=data.loc[:, 'rain'].values, pet=data.loc[:, 'pet'].values,
-                                  h2o_cap=150, h2o_start=1, a=0.0073,
+                                  h2o_cap=150, h2o_start=(150 + month_start[m[0]]) / 150, a=0.0073,
                                   p=1, return_drn_aet=False) - data.loc[:, 'doy'].replace(
         smd_mean_detrended)  # todo trended or de trended!
 
@@ -147,6 +147,8 @@ def check_single(path, yml_path, m=None):  # todo check
                                                           None)]
     return num_dif, out_keys ,hot, cold, wet, dry
 
+month_start = {1: -79.0, 2: -92.0, 3: -84.0, 4: -71.0, 5: -46.0, 6: -21.0, 7: -9.0, 8: -7.0, 9: -12.0, 10: -30.0,
+                   11: -47.0, 12: -67.0}
 
 if __name__ == '__main__':
 
