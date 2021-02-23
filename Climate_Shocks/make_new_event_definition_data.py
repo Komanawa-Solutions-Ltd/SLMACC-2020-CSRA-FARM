@@ -12,6 +12,10 @@ from Climate_Shocks.note_worthy_events.rough_stats import make_data
 from Climate_Shocks.climate_shocks_env import event_def_path, supporting_data_dir
 from Climate_Shocks.note_worthy_events.final_event_recurance import get_org_data
 from Storylines.check_storyline import get_past_event_frequency, get_acceptable_events
+from Storylines.storyline_runs.run_SWG_for_all_months import generate_all_swg, generate_SWG_output_support
+from BS_work.SWG.check_1_month_runs import make_event_prob
+from BS_work.SWG.SWG_wrapper import get_monthly_smd_mean_detrended
+
 
 if __name__ == '__main__':
     prev_event_path = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\v5_detrend\detrend_event_data.csv")
@@ -71,7 +75,7 @@ if __name__ == '__main__':
     print('making detrended restriction record')
     detrend_rest = os.path.join(root_dir, r'BS_work\f_rest_detrend.py')
     rest_data = os.path.join(supporting_data_dir, 'restriction_record.csv')
-    shtemps =os.path.join(root_dir, r'BS_work\SWG\SHTemps.dat')
+    shtemps = os.path.join(root_dir, r'BS_work\SWG\SHTemps.dat')
 
     result = subprocess.run([sys.executable, detrend_rest, rest_data, shtemps, supporting_data_dir],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -81,8 +85,8 @@ if __name__ == '__main__':
     # make restriction probabiliities
     print('making restriction probability tables')
     rest_to_cdf = os.path.join(root_dir, r'BS_work\f_rest_to_cdf.py')
-    rest_record= os.path.join(supporting_data_dir,  "restriction_record_detrend.csv")
-    event_data= event_def_path
+    rest_record = os.path.join(supporting_data_dir, "restriction_record_detrend.csv")
+    event_data = event_def_path
     outdir = os.path.join(root_dir, r'BS_work\IID\IrrigationRestriction')
     result = subprocess.run([sys.executable, rest_to_cdf, rest_record, event_data, outdir],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -91,4 +95,11 @@ if __name__ == '__main__':
 
     # todo make quantile tables for the new event_data!
 
-    # todo make probality of creating an event with SWG?
+    # make probality of creating an event with SWG
+    prob_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'id_prob')
+    generate_SWG_output_support()
+    generate_all_swg(1000, False, outdir=prob_dir)
+    make_event_prob(prob_dir)
+
+    # make anything esle needed
+    get_monthly_smd_mean_detrended(True)

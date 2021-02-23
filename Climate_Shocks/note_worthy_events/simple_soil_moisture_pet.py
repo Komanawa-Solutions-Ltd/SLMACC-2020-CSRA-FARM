@@ -362,8 +362,6 @@ def rough_testing_of_pet():
 detrended_start_month = {
     1: -50.0, 2: -52.0, 3: -41.0, 4: -36.0, 5: -22.0, 6: -11.0, 7: -7.0, 8: -8.0,
     9: -14.0, 10: -30.0, 11: -41.0, 12: -49.0}
-
-
 # calculated from historical SMD from detrended2 on first day of each month with a 10 day centered rolling window mean
 
 

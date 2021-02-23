@@ -2,7 +2,7 @@
  Author: Matt Hanson
  Created: 17/02/2021 3:15 PM
  """
-from BS_work.SWG.SWG_wrapper import _check_data_v1
+from BS_work.SWG.SWG_wrapper import check_data_v1
 import os
 import pandas as pd
 
@@ -17,7 +17,7 @@ def statsof_data(base_dir, ex=''):
     t = pd.Series(e.split(':')[0] for e in test)
     t.groupby(t).count().to_csv(os.path.join(base_dir, "{}_dif_months.csv".format(ex)))
 
-def classify_bad_data(storyline_path, swg_dir, check_fun=_check_data_v1, ex=''):
+def classify_bad_data(storyline_path, swg_dir, check_fun=check_data_v1, ex=''):
     """
 
     :param storyline_path:
@@ -67,7 +67,7 @@ if __name__ == '__main__':
             for i, p in enumerate(paths):
                 if i % 100 == 0:
                     print('{} of {}'.format(i, len(paths)))
-                nums, keys = _check_data_v1(os.path.join(swg_dir, p), story)
+                nums, keys = check_data_v1(os.path.join(swg_dir, p), story)
                 num.append(nums)
                 all_keys.extend(keys)
             out = pd.Series(num, index=paths)
