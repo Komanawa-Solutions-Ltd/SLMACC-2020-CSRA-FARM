@@ -8,7 +8,7 @@ import os
 import ksl_env
 from Pasture_Growth_Modelling.initialisation_support.pasture_growth_deficit import calc_past_pasture_growth_anomaly
 from Climate_Shocks.note_worthy_events.rough_stats import make_data
-from Climate_Shocks.climate_shocks_env import event_def_dir, event_def_path
+from Climate_Shocks.climate_shocks_env import event_def_path
 
 hot = '07d_d_tmax_25'
 cold = '10d_d_tmean_07'
@@ -60,7 +60,7 @@ def make_prob(in_series):
     return pd.DataFrame(out_series)
 
 
-def get_org_data(event_dir=event_def_dir):
+def get_org_data(event_dir):
     data = [
         pd.read_csv(os.path.join(event_dir, '{}_years.csv'.format(f))).loc[:, k] for (f, k) in events
 
@@ -120,9 +120,11 @@ if __name__ == '__main__':
     # initial events recurrence must be run first. then this creates, the final events.
     # visualied_events.csv come from Storylines.check_storyline
     # event def data comes from Climate_Shocks\note_worthy_events\rough_stats.py
+    # below is historical... moved to Climate_Shocks\make_new_event_definition_data.py
     run_old = False
     run_detrend_test = True
     if run_old:
+        event_def_dir = ksl_env.shared_drives("Z2003_SLMACC\event_definition/v5")
         out = make_prob_impact_data()
 
         t = pd.Series([' '.join(e) for e in out.columns])

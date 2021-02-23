@@ -14,6 +14,7 @@ import pandas
 from scipy.optimize import curve_fit
 import sys
 from pathlib import Path
+import os
 
 
 def SH_model_load_in(dat_filename, data_length):
@@ -86,8 +87,9 @@ def Line_based_correction(in_fit, in_data, in_model):
     return out_data, adjust_vals
 
 
-if len(sys.argv) != 3:
-    print("2 arguments are required, arg1: path to restriction record csv, arg2: path to  SHTemps.dat")
+if len(sys.argv) != 4:
+    print("3 arguments are required, arg1: path to restriction record csv, arg2: path to  SHTemps.dat, "
+          "arg3 path to outdir")
     sys.exit()
 
 # First load in the F Rest data
@@ -99,6 +101,10 @@ IR = Data.get('f_rest')
 
 #model_temp_filename = r'C:\Users\sloth\Desktop\work\weather-gen\SWG Full Package\SHTemps.dat'
 model_temp_filename = Path(sys.argv[2])
+
+outdir = sys.argv[3]
+if not os.path.exists(outdir):
+    os.makedirs(outdir)
 
 print(np.mean(IR))
 Model_data, Model_dates = SH_model_load_in(model_temp_filename, len(IR))
@@ -121,9 +127,9 @@ tmp_points[tmp_points > 1] = 1
 Data['f_rest'] = tmp_points
 print(np.mean(Data['f_rest']))
 
-outpath = Path("./")
-Data.to_csv(outpath/"restriction_record_detrend.csv", index=False)
-print(f"saved to {outpath}/restriction_record_detrend.csv")
+
+Data.to_csv(os.path.join(outdir, "restriction_record_detrend.csv"), index=False)
+print(f"saved to {outdir}/restriction_record_detrend.csv")
 #plot to check quality of fit
 line_vals = tmp_fit_coeff[0] + tmp_fit_coeff[1] * Model_data
 line_fit = curve_func([Model_dates, Model_data], *tmp_fit_coeff)

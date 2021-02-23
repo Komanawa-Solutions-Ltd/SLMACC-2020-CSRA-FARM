@@ -16,7 +16,7 @@ from Climate_Shocks.get_past_record import get_vcsn_record
 
 oxford_lat, oxford_lon = -43.296, 172.192
 swg = os.path.join(os.path.dirname(__file__), 'SWG_Final.py')
-default_vcf = os.path.join(os.path.dirname(__file__), 'event_definition_data_fixed.csv')
+default_vcf = os.path.join(os.path.dirname(__file__), 'event_definition_data_fixed.csv') #todo update
 
 
 # note that each sim takes c. 0.12 mb of storage space.

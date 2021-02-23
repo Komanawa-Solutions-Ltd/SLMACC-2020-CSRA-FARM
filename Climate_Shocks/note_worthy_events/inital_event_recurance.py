@@ -13,19 +13,15 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import itertools
-from Climate_Shocks.climate_shocks_env import event_def_dir
+import sys
 
-unbacked_dir = ksl_env.mh_unbacked("Z2003_SLMACC\event_definition")
-if not os.path.exists(unbacked_dir):
-    os.makedirs(unbacked_dir)
+event_def_dir = sys.argv[1] # the path to the directory
+print(event_def_dir)
 
-vcsn_version = 'trended'
-
-# todo testing detrended data changes
-test_detrended = True
-if test_detrended:
-    event_def_dir = ksl_env.shared_drives("Z2003_SLMACC\event_definition/v6_detrend")
-    vcsn_version = 'detrended2'
+vcsn_version = sys.argv[2]  # 'trended', 'detrended2'
+print(vcsn_version)
+if vcsn_version not in ['trended', 'detrended2']:
+    raise ValueError('incorrect value for vcsn_version: {}'.format(vcsn_version, ))
 
 if not os.path.exists(event_def_dir):
     os.makedirs(event_def_dir)

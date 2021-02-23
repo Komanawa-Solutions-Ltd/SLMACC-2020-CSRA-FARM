@@ -187,10 +187,6 @@ def check_single(path, yml_path, m=None):  # todo check
                                                           None)]
     return num_dif, out_keys, hot, cold, wet, dry
 
-
-month_start = {1: -79.0, 2: -92.0, 3: -84.0, 4: -71.0, 5: -46.0, 6: -21.0, 7: -9.0, 8: -7.0, 9: -12.0, 10: -30.0,
-               11: -47.0, 12: -67.0}
-
 if __name__ == '__main__':
     # todo Start by running this and looking at SWG's ability to re-create
     # todo then
