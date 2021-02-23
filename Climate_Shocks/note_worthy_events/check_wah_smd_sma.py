@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.cm import get_cmap
 import glob
-from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_smd_sma_wah
+from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_sma_smd_historical
 from Climate_Shocks.note_worthy_events.explore_wah_soil_moisture import get_sim
 
 
@@ -82,5 +82,6 @@ def plot_exlploritory_data(number, num_to_plot=20, vars_to_plot=['rain', 'pet', 
 
 
 if __name__ == '__main__':
+    # todo check this function!
     plot_exlploritory_data(10, 2)
     plt.show()

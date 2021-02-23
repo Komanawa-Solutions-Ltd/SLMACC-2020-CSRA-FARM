@@ -217,13 +217,18 @@ def calc_penman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=N
            (delt + y * (1 + 0.34 * wind)))
     return pet
 
-def calc_smd_sma_wah_monthly(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv):
+
+def calc_smd_sma_wah_monthly(dates, rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv):
     """
     calculate soil moisture deficit, soil moisture anomaly, and pet for weather at home data.  this is a convenience
     function for Bodeker Scientific.  the expected inputs which are nd arrays are expected to be 2d arrays of
-    shape (365, num of sims) the goal soil moisture anomaly is calculated against the mean(axis=1) of the soil moisture
-    deficit array.  The units should be in the same format as weather at home. assumes no input data contains nan values
-    SMD assumes a starting soil moisture of 75mm and a water holding capacity of 150mm
+    shape (one of (360,365,366), num of sims) the goal soil moisture anomaly is calculated against the mean(axis=1)
+    of the soil moisture deficit array.  The units should be in the same format as weather at home. assumes no
+    input data contains nan values
+    SMD is a monthly standardized dataset assumes a starting soil moisture for each month (see detrended_start_month
+    object in this file)
+    :param dates: list array or series of datetime objects, it is imporant that pd.Series(dates) has .day and .month
+                  attributes.  the first day of each month is used to reset the SMD to a standard value.
     :param rain: precipitation (kg m-2 s-1), np.ndarray
     :param radn: radiation (W m-2), np.ndarray
     :param tmax: maximum temperature (k), np.ndarray
@@ -235,7 +240,35 @@ def calc_smd_sma_wah_monthly(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, ms
     :param elv: elevation at site (m), float
     :return: smd(mm), sma(mm), pet(mm/day)
     """
-    raise NotImplementedError # todo make this function for Bryn to run on his W@H data, pull from below
+    # check inputs
+    expected_shape = rain.shape
+    assert (expected_shape[0] == 366 or
+            expected_shape[0] == 365 or
+            expected_shape[0] == 360), 'axis 0 must be days and it is expected to be a full year (360 365 or 366 days)'
+    assert len(expected_shape) == 2, 'expected 2d array shape = (day of year, simulation number)'
+    for k in ['radn', 'rain', 'tmax', 'tmin', 'rh_min', 'rh_max', 'wind_10', 'mslp']:
+        assert eval(k).shape == expected_shape, '{} does not match rain shape'.format(k)
+        assert np.isfinite(
+            eval(k)).all(), 'nan values passed in {}, please remove otherwise they will impact the sma'.format(k)
+
+    # make mean values and convert units
+    temp = (tmax + tmin) / 2 - 273.15  # to C
+    rh = (rh_min + rh_max) / 2
+    rain = rain * 86400  # kg/m2/s to mm/day
+    radn = radn * 86400 * 1e-6  # from w/m2 to mj/m2/day
+    mslp = mslp / 1000  # Pa to kpa
+
+    # run SMD/SMA
+    pet = calc_penman_pet(rad=radn, temp=temp, rh=rh, wind_10=wind_10, wind_2=None, psurf=None, mslp=mslp,
+                          elevation=elv)
+    smd = calc_smd_monthly(rain=rain, pet=pet, dates=dates,
+                           month_start=detrended_start_month,
+                           h2o_cap=150,
+                           a=0.0073,
+                           p=1, return_drn_aet=False)
+    sma = smd - smd.mean(axis=1)[:, np.newaxis]
+    return smd, sma, pet
+
 
 def calc_smd_sma_wah_depreciated(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv):
     """
@@ -329,6 +362,8 @@ def rough_testing_of_pet():
 detrended_start_month = {
     1: -50.0, 2: -52.0, 3: -41.0, 4: -36.0, 5: -22.0, 6: -11.0, 7: -7.0, 8: -8.0,
     9: -14.0, 10: -30.0, 11: -41.0, 12: -49.0}
+
+
 # calculated from historical SMD from detrended2 on first day of each month with a 10 day centered rolling window mean
 
 
@@ -365,8 +400,8 @@ def calc_smd_monthly(rain, pet, dates,
         rain = np.atleast_1d(rain)[:, np.newaxis]
     else:
         array_d = 2  # 2 or more dimensions return without modification
-    assert rain.shape == pet.shape, 'rain, dates and PET must be same shape'
-    assert dates.shape == pet.shape[0:1]
+    assert rain.shape == pet.shape, 'rain and PET must be same shape'
+    assert dates.shape == pet.shape[0:1], 'dates must be the same shape as pet.shape[0:1]'
     smd = np.zeros(pet.shape, float) * np.nan
     if return_drn_aet:
         drain = np.zeros(pet.shape, float) * np.nan

@@ -45,7 +45,8 @@ def classify_bad_data(storyline_path, swg_dir, check_fun=_check_data_v1, ex=''):
     statsof_data(swg_dir, ex)
 
 
-if __name__ == '__main__':  # todo start here with this problem
+if __name__ == '__main__':
+    # problem should be solved
     run_checks =True
 
     if run_checks:

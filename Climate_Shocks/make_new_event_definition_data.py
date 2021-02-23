@@ -90,3 +90,5 @@ if __name__ == '__main__':
         raise ChildProcessError('{}\n{}'.format(result.stdout, result.stderr))
 
     # todo make quantile tables for the new event_data!
+
+    # todo make probality of creating an event with SWG?
