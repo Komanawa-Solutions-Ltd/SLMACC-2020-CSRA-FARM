@@ -13,7 +13,7 @@ from Climate_Shocks.climate_shocks_env import event_def_path, supporting_data_di
 from Climate_Shocks.note_worthy_events.final_event_recurance import get_org_data
 from Storylines.check_storyline import get_past_event_frequency, get_acceptable_events
 
-if __name__ == '__main__':  # todo check outputs
+if __name__ == '__main__':
     prev_event_path = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\v5_detrend\detrend_event_data.csv")
     event_def_dir = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/v6_detrend")
     vcsn_version = 'detrended2'
@@ -89,4 +89,4 @@ if __name__ == '__main__':  # todo check outputs
     if result.returncode != 0:
         raise ChildProcessError('{}\n{}'.format(result.stdout, result.stderr))
 
-    # todo make quantile tables for the new dataset!
+    # todo make quantile tables for the new event_data!

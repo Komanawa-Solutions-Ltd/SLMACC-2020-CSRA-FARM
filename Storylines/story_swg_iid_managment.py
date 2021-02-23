@@ -45,3 +45,4 @@ storyline_swg_paths = {
 }
 
 # todo need to run something here to capture the data as or once it is generated.
+#todo this needs to be rethought...

@@ -13,10 +13,11 @@ import pandas as pd
 from Climate_Shocks.Stochastic_Weather_Generator.read_swg_data import read_swg_data
 from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_smd
 from Climate_Shocks.get_past_record import get_vcsn_record
+from Climate_Shocks import climate_shocks_env
 
 oxford_lat, oxford_lon = -43.296, 172.192
 swg = os.path.join(os.path.dirname(__file__), 'SWG_Final.py')
-default_vcf = os.path.join(os.path.dirname(__file__), 'event_definition_data_fixed.csv') #todo update
+default_vcf = os.path.join(climate_shocks_env.supporting_data_dir, 'event_definition_data_fixed.csv')
 
 
 # note that each sim takes c. 0.12 mb of storage space.
@@ -151,119 +152,9 @@ def clean_swg(swg_dir, yml_path, exsites=1):
     print('removed {} as they did not match the story: {}'.format(len(removed), '\n'.join(removed)))
 
 
-def _check_data_v1(path, storyline):  # todo check
-
-    storyline = storyline.set_index(['year', 'month'])
-    data = read_swg_data(path)[0]
-
-    # calc SMA
-    data.loc[:, 'sma'] = calc_smd(rain=data.loc[:, 'rain'].values, pet=data.loc[:, 'pet'].values,
-                                  h2o_cap=150, h2o_start=1, a=0.0073,
-                                  p=1, return_drn_aet=False) - data.loc[:, 'doy'].replace(
-        smd_mean_detrended)  # todo trended or de trended!
-
-    data.loc[:, 'wet'] = data.loc[:, 'rain'] >= 0.1
-    data.loc[:, 'dry'] = data.loc[:, 'sma'] <= -20
-    data.loc[:, 'hot'] = data.loc[:, 'tmax'] >= 25
-    data.loc[:, 'cold'] = ((data.loc[:, 'tmin'] +
-                            data.loc[:, 'tmax']) / 2).rolling(3).mean().fillna(method='bfill') <= 7
-
-    temp = data.loc[:, ['year', 'month', 'wet',
-                        'dry', 'hot', 'cold']].groupby(['year', 'month']).sum()
-    storyline.loc[temp.index, ['wet', 'dry', 'hot', 'cold']] = temp.loc[:, ['wet', 'dry', 'hot', 'cold']]
-    storyline.reset_index(inplace=True)
-
-    storyline.loc[:, 'swg_precip_class'] = 'A'
-    storyline.loc[((storyline.dry >= 10) &
-                   np.in1d(storyline.month, [8, 9, 10, 11, 12, 1, 2, 3, 4, 5])), 'swg_precip_class'] = 'D'
-    storyline.loc[((storyline.wet >= storyline.month.replace(rain_limits_wet)) &
-                   np.in1d(storyline.month, [5, 6, 7, 8, 9])), 'swg_precip_class'] = 'W'
-
-    storyline.loc[:, 'swg_temp_class'] = 'A'
-    storyline.loc[(storyline.hot >= 7) & np.in1d(storyline.month, [11, 12, 1, 2, 3]), 'swg_temp_class'] = 'H'
-    storyline.loc[(storyline.cold >= 10) & np.in1d(storyline.month, [5, 6, 7, 8, 9]), 'swg_temp_class'] = 'C'
-
-    where_same = ((storyline.temp_class == storyline.swg_temp_class) & (
-            storyline.precip_class == storyline.swg_precip_class))
-    num_dif = (~((storyline.temp_class == storyline.swg_temp_class) & (
-            storyline.precip_class == storyline.swg_precip_class))).sum()
-
-    out_keys = ['{}:{}-{}_{}-{}'.format(m, p, swgp, t, swgt) for m, p, swgp, t, swgt in
-                storyline.loc[~where_same, ['month',
-                                            'precip_class',
-                                            'swg_precip_class',
-                                            'temp_class',
-                                            'swg_temp_class'
-                                            ]].itertuples(False,
-                                                          None)]
-    return num_dif, out_keys
-
-
-def _check_data_v2(path, storyline):  # todo check
-    tolerance = 2
-
-    storyline = storyline.set_index(['year', 'month'])
-    data = read_swg_data(path)[0]
-
-    # calc SMA
-    data.loc[:, 'sma'] = calc_smd(rain=data.loc[:, 'rain'].values, pet=data.loc[:, 'pet'].values,
-                                  h2o_cap=150, h2o_start=1, a=0.0073,
-                                  p=1, return_drn_aet=False) - data.loc[:, 'doy'].replace(
-        smd_mean_detrended)  # todo trended or de trended!
-
-    data.loc[:, 'wet'] = data.loc[:, 'rain'] >= 0.1
-    data.loc[:, 'dry'] = data.loc[:, 'sma'] <= -20
-    data.loc[:, 'hot'] = data.loc[:, 'tmax'] >= 25
-    data.loc[:, 'cold'] = ((data.loc[:, 'tmin'] +
-                            data.loc[:, 'tmax']) / 2).rolling(3).mean().fillna(method='bfill') <= 7
-
-    temp = data.loc[:, ['year', 'month', 'wet',
-                        'dry', 'hot', 'cold']].groupby(['year', 'month']).sum()
-    storyline.loc[temp.index, ['wet', 'dry', 'hot', 'cold']] = temp.loc[:, ['wet', 'dry', 'hot', 'cold']]
-    storyline.reset_index(inplace=True)
-
-    for i, m, p, t, w, d, h, c in storyline.loc[:, ['month', 'precip_class',
-                                                    'temp_class', 'wet',
-                                                    'dry', 'hot', 'cold']].itertuples(True, None):
-        if p == 'A':
-            storyline.loc[i, 'precip_match'] = (d < (10 + tolerance)) and (w < (rain_limits_wet[m] + tolerance))
-        elif p == 'D':
-            storyline.loc[i, 'precip_match'] = (d >= (10 - tolerance))
-        elif p == 'W':
-            storyline.loc[i, 'precip_match'] = (w >= (rain_limits_wet[m] - tolerance))
-        else:
-            raise ValueError('shouldnt get here')
-
-        if t == 'A':
-            storyline.loc[i, 'temp_match'] = (h < (7 + tolerance)) and (c < (10 + tolerance))
-        elif t == 'H':
-            storyline.loc[i, 'temp_match'] = (h >= (7 - tolerance))
-        elif t == 'C':
-            storyline.loc[i, 'temp_match'] = (c >= (10 - tolerance))
-        else:
-            raise ValueError('shouldnt get here')
-
-    storyline.loc[:, 'swg_precip_class'] = 'A'
-    storyline.loc[((storyline.dry >= 10) &
-                   np.in1d(storyline.month, [8, 9, 10, 11, 12, 1, 2, 3, 4, 5])), 'swg_precip_class'] = 'D'
-    storyline.loc[((storyline.wet >= storyline.month.replace(rain_limits_wet)) &
-                   np.in1d(storyline.month, [5, 6, 7, 8, 9])), 'swg_precip_class'] = 'W'
-
-    storyline.loc[:, 'swg_temp_class'] = 'A'
-    storyline.loc[(storyline.hot >= 7) & np.in1d(storyline.month, [11, 12, 1, 2, 3]), 'swg_temp_class'] = 'H'
-    storyline.loc[(storyline.cold >= 10) & np.in1d(storyline.month, [5, 6, 7, 8, 9]), 'swg_temp_class'] = 'C'
-    where_same = (storyline.temp_match & storyline.precip_match)
-    num_dif = (~(storyline.temp_match & storyline.precip_match)).sum()
-
-    out_keys = ['{}:{}-{}_{}-{}'.format(m, p, swgp, t, swgt) for m, p, swgp, t, swgt in
-                storyline.loc[~where_same, ['month',
-                                            'precip_class',
-                                            'swg_precip_class',
-                                            'temp_class',
-                                            'swg_temp_class'
-                                            ]].itertuples(False,
-                                                          None)]
-    return num_dif, out_keys
+def _check_data_v1(fp, storyline):
+    raise NotImplementedError  # todo
+    # todo pull from check_single in BS_work\SWG\check_1_month_runs.py
 
 
 rain_limits_wet = {
@@ -404,44 +295,4 @@ def make_smd_mean_detrended():
 
 
 if __name__ == '__main__':
-    make_smd_mean_detrended()
-    # todo triple check that these limits are not a problem!
-    v7story = pd.read_csv(r'C:\Users\dumon\python_projects\SLMACC-2020-CSRA\Storylines\storyline_csvs\test.csv')
-    base0 = pd.read_csv(r'C:\Users\dumon\python_projects\SLMACC-2020-CSRA\Storylines\storyline_csvs\0-baseline.csv')
-
-    v7_paths = [
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\test\test_S9.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\test\test_S0.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\test\test_S1.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\test\test_S2.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\test\test_S3.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\test\test_S4.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\test\test_S5.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\test\test_S6.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\test\test_S7.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\test\test_S8.nc",
-    ]
-
-    base0_paths = [
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\0-base\0-baseline_S9.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\0-base\0-baseline_S0.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\0-base\0-baseline_S1.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\0-base\0-baseline_S2.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\0-base\0-baseline_S3.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\0-base\0-baseline_S4.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\0-base\0-baseline_S5.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\0-base\0-baseline_S6.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\0-base\0-baseline_S7.nc",
-        r"D:\mh_unbacked\SLMACC_2020\SWG_runs\0-base\0-baseline_S8.nc",
-    ]
-
-    for p in base0_paths:
-        print('test should pass', os.path.basename(p), _check_data_v1(p, base0))
-        print('test should not pass', os.path.basename(p), _check_data_v1(p, v7story))
-        print('\n')
-
-    print('\n\n')
-    for p in v7_paths:
-        print('test should pass', os.path.basename(p), _check_data_v1(p, v7story))
-        print('test should not pass', os.path.basename(p), _check_data_v1(p, base0))
-        print('\n')
+    pass

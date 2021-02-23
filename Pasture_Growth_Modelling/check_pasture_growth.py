@@ -10,6 +10,7 @@ import os
 
 #@profile
 def test_mem():
+    # todo re-run with new method
     # todo plot and compair multiple paddock vs non paddock!
     #todo compaire impacts of events
     # todo test against storyline with non zero restriction data

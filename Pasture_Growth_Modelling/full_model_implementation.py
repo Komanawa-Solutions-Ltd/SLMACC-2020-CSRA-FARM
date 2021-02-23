@@ -84,9 +84,9 @@ def run_pasture_growth(storyline_key, outdir, nsims='all', mode_sites=default_mo
     :param description: str, a description to append to the description saved to the netcdf output file
     :return:
     """
-    storyline_path, swg_path, nsims_aval, simlen = storyline_swg_paths[storyline_key] #todo this needs updating! pronto
+    storyline_path, swg_path, nsims_aval, simlen = storyline_swg_paths[storyline_key] #todo this needs updating
 
-    if nsims == 'all':
+    if nsims == 'all': #todo this needs to be updated
         nsims = nsims_aval
 
     if nsims >= nsims_aval:
@@ -166,7 +166,7 @@ def _gen_input(storyline_path, SWG_path, nsims, mode, site, chunks, current_c, n
     else:
         raise ValueError('weird arg for mode: {}'.format(mode))
 
-    # get weather data
+    # get weather data # todo this needs to be updated!
     swg_paths = pd.Series(sorted(os.listdir(SWG_path)))
     swg_paths = swg_paths.loc[swg_paths.str.contains('.nc')]  # get rid of any non-nc files like YML
     if site == 'eyrewell':

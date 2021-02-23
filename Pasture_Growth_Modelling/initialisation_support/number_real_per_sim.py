@@ -86,6 +86,7 @@ def plot_resampled_sims(paths, ns, n_compare, show=True, save_dir=None):
 
 
 if __name__ == '__main__':
+    # todo re look at given new generation technique
     all_paths = [  # todo add irrigated base and keep looking at this!
         # r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test10000-eyrewell-irrigated.nc",
         # r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\0-base-oxford-dryland.nc",

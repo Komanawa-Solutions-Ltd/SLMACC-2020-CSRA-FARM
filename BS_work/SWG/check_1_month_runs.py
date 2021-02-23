@@ -122,7 +122,7 @@ rain_limits_wet = {
 }
 
 
-def check_single(path, yml_path, m=None):  # todo check
+def check_single(path, yml_path, m=None):
 
     if m == None:
         m = np.arange(1, 13)
@@ -143,7 +143,7 @@ def check_single(path, yml_path, m=None):  # todo check
 
     # calc SMA
     data.loc[:, 'sma'] = calc_smd_monthly(data.rain, data.pet, data.index) - data.loc[:, 'doy'].replace(
-        smd_mean_detrended_nprecip)  # todo trended or de trended!
+        smd_mean_detrended_nprecip)
 
     data.loc[:, 'wet'] = data.loc[:, 'rain'] >= 0.1
     data.loc[:, 'dry'] = data.loc[:, 'sma'] <= -15
@@ -188,8 +188,6 @@ def check_single(path, yml_path, m=None):  # todo check
     return num_dif, out_keys, hot, cold, wet, dry
 
 if __name__ == '__main__':
-    # todo Start by running this and looking at SWG's ability to re-create
-    # todo then
     base_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'try_individual_nPrecip')
     out_dict = {}
     for d in os.listdir(base_dir):

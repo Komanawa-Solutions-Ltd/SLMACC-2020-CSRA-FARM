@@ -1,4 +1,7 @@
 """
+
+This script was used to debug our dry and not matching problem, we have found a way arond that which is to generate
+unique months and then stiching them togeather after the fact
  Author: Matt Hanson
  Created: 19/02/2021 1:07 PM
  """
@@ -32,7 +35,7 @@ def compair_means(outdir, detrended=False):
     vcsn.loc[:, 'sma'] = temp.loc[:, 'sma'].values
     temp = calc_smd_monthly(vcsn.rain, vcsn.pet, vcsn.index)
     vcsn.loc[:, 'monthly_smd'] = temp
-    # todo make monthly basis smd/sma
+    # make monthly basis smd/sma
 
     vcsn = vcsn.groupby(['year', 'month']).mean()
 
@@ -107,10 +110,6 @@ def compair_means(outdir, detrended=False):
 
     plt.show()
 
-
-# todo compare to the produced data from the SWG
-# todo investigate the delta smd from first to last of month with average start time....
-# todo see how the specification shift if given differnt characteristics
 
 if __name__ == '__main__':
     compair_means(r"C:\Users\Matt Hanson\Downloads\compare_means")

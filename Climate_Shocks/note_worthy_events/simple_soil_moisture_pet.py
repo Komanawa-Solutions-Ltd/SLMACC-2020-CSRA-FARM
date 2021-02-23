@@ -217,8 +217,7 @@ def calc_penman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=N
            (delt + y * (1 + 0.34 * wind)))
     return pet
 
-
-def calc_smd_sma_wah(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv):
+def calc_smd_sma_wah_monthly(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv):
     """
     calculate soil moisture deficit, soil moisture anomaly, and pet for weather at home data.  this is a convenience
     function for Bodeker Scientific.  the expected inputs which are nd arrays are expected to be 2d arrays of
@@ -236,6 +235,27 @@ def calc_smd_sma_wah(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv)
     :param elv: elevation at site (m), float
     :return: smd(mm), sma(mm), pet(mm/day)
     """
+    raise NotImplementedError # todo make this function for Bryn to run on his W@H data, pull from below
+
+def calc_smd_sma_wah_depreciated(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv):
+    """
+    calculate soil moisture deficit, soil moisture anomaly, and pet for weather at home data.  this is a convenience
+    function for Bodeker Scientific.  the expected inputs which are nd arrays are expected to be 2d arrays of
+    shape (365, num of sims) the goal soil moisture anomaly is calculated against the mean(axis=1) of the soil moisture
+    deficit array.  The units should be in the same format as weather at home. assumes no input data contains nan values
+    SMD assumes a starting soil moisture of 75mm and a water holding capacity of 150mm
+    :param rain: precipitation (kg m-2 s-1), np.ndarray
+    :param radn: radiation (W m-2), np.ndarray
+    :param tmax: maximum temperature (k), np.ndarray
+    :param tmin: minimum temperature (k), np.ndarray
+    :param rh_min: maximum relative humidity (%), np.ndarray
+    :param rh_max: minimum relative humidity (%), np.ndarray
+    :param wind_10: 10m wind speed (m/s), np.ndarray
+    :param mslp: mean sea level pressure (Pa), np.ndarray
+    :param elv: elevation at site (m), float
+    :return: smd(mm), sma(mm), pet(mm/day)
+    """
+    raise ValueError('depreciated')
     # check inputs
     expected_shape = rain.shape
     assert (expected_shape[0] == 366 or

@@ -9,9 +9,7 @@ from BS_work.SWG.SWG_wrapper import *
 from Storylines.storyline_building_support import make_sampling_options, map_irrigation, prev_month, base_events
 from BS_work.SWG.SWG_multiprocessing import run_swg_mp
 
-# todo run a bunch of storylines for each individual event to see impact of just that event. # proceed with
-#  2 normal months, run 2500 (rethink based on number of individaul events
-#  samples for each one this suggests less than a 1 kg error on mean monthly pasture growth
+# historical for running and checking the ability to create individual events, see also BS_work\SWG\check_1_month_runs.py
 
 individual_dir = os.path.join(temp_storyline_dir, 'individual_runs')
 

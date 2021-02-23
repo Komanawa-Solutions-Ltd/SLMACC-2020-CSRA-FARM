@@ -12,7 +12,7 @@ import psutil
 from BS_work.SWG.SWG_wrapper import create_yaml, run_SWG, oxford_lon, oxford_lat
 
 
-def run_swg_mp(storyline_paths, outdirs, ns, base_dirs, vcfs, cleans, log_path, pool_size=None):  # todo check!
+def run_swg_mp(storyline_paths, outdirs, ns, base_dirs, vcfs, cleans, log_path, pool_size=None):
     """
     run a bunch of storylines as multiprocessing
     :param storyline_paths: storyline paths to run
