@@ -63,7 +63,7 @@ if not os.path.exists(story_line_filename):
 
 if not os.path.exists(base_directory + 'SLMACC-Subset_vcsn/'):
     raise ValueError('Invalid base_directory location: {}. This should be the folder that '.format(base_directory) +
-          'contains the folder SLMACC-Subset_vcsn. Please change in the Yaml file.')
+                     'contains the folder SLMACC-Subset_vcsn. Please change in the Yaml file.')
     sys.exit()
 
 
@@ -237,8 +237,8 @@ def base_data_detrender(base_directory, lat_point, lon_point, model_temp_filenam
             point_flag = False
         else:
             raise ValueError('No appropriately close station data, please use a different lat/lon\n' +
-            'Problem lat:' + str(lat_point) + '\n' +
-            'Problem lon:' + str(lon_point) + '\n')
+                             'Problem lat:' + str(lat_point) + '\n' +
+                             'Problem lon:' + str(lon_point) + '\n')
             sys.exit()
 
     # Determine the location where output will be saved.
@@ -364,7 +364,7 @@ def Precipitation_function_fit(PR_amounts):
     bin_centres = (np.array(bin_edge[0:len(bin_edge) - 1]) + np.array(bin_edge[1:len(bin_edge)])) / 2
 
     p0 = [0., 0., 0., 0.]
-    coeff, var_matrix = curve_fit(exp_curve_func, bin_centres, cdf, p0=p0)
+    coeff, var_matrix = curve_fit(exp_curve_func, bin_centres, cdf, p0=p0, maxfev=10000)
 
     if log_curve_func(0.00, *coeff) < 0:
         new_coeff = np.array([0., 0., 0., 0.])
@@ -498,7 +498,7 @@ def regime_data_loader(file_name):
             raise ValueError(
                 'Historical classifications file uses an unexpected climate bin value - ' +
                 pr_val + ' or ' + tmp_val + '.' +
-            'Please check that fix_csv.py has been used on the historic data.')
+                'Please check that fix_csv.py has been used on the historic data.')
             sys.exit()
 
         if pr_val == 'W':
@@ -753,8 +753,9 @@ def data_load_or_make(in_lat_val, in_lon_val, in_Month_filter, in_Regime_filter,
             in_Regime_filter)
 
         if len(Filter_data[0]) == 0:
-            raise ValueError('Matt you idiot! You requested a storyline that does not exist historically (month number ' + str(
-                in_Month_filter) + ' regime number ' + str(in_Regime_filter) + ')')
+            raise ValueError(
+                'Matt you idiot! You requested a storyline that does not exist historically (month number ' + str(
+                    in_Month_filter) + ' regime number ' + str(in_Regime_filter) + ')')
             sys.exit()
 
         # Calculate the Required precipitation variables
@@ -1249,7 +1250,7 @@ for sim_ind in range(0, number_of_simulations):
     tmp_simulation_savename = simulation_savename + '_S' + str(sim_ind)
     if not netcdf_flag or extra_flag:
         np.savez(tmp_simulation_savename, PR_State=sim_state, PR_Amount=sim_PR_A, PR_Streak=sim_PR_streak,
-             Tmax=sim_Tmax, Tmin=sim_Tmin, RSDS=sim_RSDS, EV=sim_EV)
+                 Tmax=sim_Tmax, Tmin=sim_Tmin, RSDS=sim_RSDS, EV=sim_EV)
     if netcdf_flag:
         netcdf_saver(sim_PR_A, sim_Tmax, sim_Tmin, sim_RSDS, sim_EV, sim_mon_vals, tmp_simulation_savename, lat_val,
                      lon_val)
@@ -1345,7 +1346,7 @@ for i_ex in range(0, len(Extra_site_lat)):
                 # Need to export data
                 Full_e_PR_state.append(e_PR_state)
                 Full_e_PR_A.append(e_PR_A)
-                if e_tmax>e_tmin:
+                if e_tmax > e_tmin:
                     Full_e_tmax.append(e_tmax)
                     Full_e_tmin.append(e_tmin)
                 else:
