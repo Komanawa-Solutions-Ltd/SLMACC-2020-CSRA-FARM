@@ -138,7 +138,7 @@ def clean_swg(swg_dir, yml_path, duplicate=True, merge=True, nc_outpath=None):
     if merge:
         assert nc_outpath is not None, ' if merging must define nc outpath'
 
-    if duplicate:  # todo this is causing problems.... doesnt wait until finished???
+    if duplicate:
         base_dup_dir = os.path.join(os.path.dirname(os.path.dirname(swg_dir)),
                                     '{}_duplicated'.format(os.path.basename(os.path.dirname(swg_dir))))
         if not os.path.exists(base_dup_dir):
@@ -198,7 +198,8 @@ def _get_possible_months():
     return cold_months, wet_months, hot_months, dry_months
 
 
-def _check_data_v1(swg_path, storyline, m, cold_months, wet_months, hot_months, dry_months):
+def _check_data_v1(swg_path, storyline, m, cold_months, wet_months, hot_months, dry_months,
+                   return_full_results=False):
     """
     check that a single realisation is correct
     :param swg_path: path to the SWG
@@ -241,7 +242,27 @@ def _check_data_v1(swg_path, storyline, m, cold_months, wet_months, hot_months, 
 
     num_dif = (~((storyline.temp_class == storyline.swg_temp_class) & (
             storyline.precip_class == storyline.swg_precip_class))).sum()
-    return num_dif == 0
+    if not return_full_results:
+        return num_dif > 0
+
+    hot = storyline.hot.max()
+    cold = storyline.cold.max()
+    wet = storyline.wet.max()
+    dry = storyline.dry.max()
+
+    where_same = ((storyline.temp_class == storyline.swg_temp_class) & (
+            storyline.precip_class == storyline.swg_precip_class))
+
+    out_keys = ['{}:{}-{}_{}-{}'.format(m, p, swgp, t, swgt) for m, p, swgp, t, swgt in
+                storyline.loc[~where_same, ['month',
+                                            'precip_class',
+                                            'swg_precip_class',
+                                            'temp_class',
+                                            'swg_temp_class'
+                                            ]].itertuples(False,
+                                                          None)]
+    return num_dif, out_keys, hot, cold, wet, dry
+
 
 
 def _merge_ncs(swg_dir, outpath, storyline, yml_txt):
@@ -350,8 +371,7 @@ def get_monthly_smd_mean_detrended(recalc=False):
     data = get_vcsn_record('detrended2').reset_index()
     average_start_year = 1981
     average_stop_year = 2010
-    rain, pet, date, h2o_cap, h2o_start = data['rain'], data['pet'], data.date, 150, 1
-    dates = data.index
+    rain, pet, h2o_cap, h2o_start = data['rain'], data['pet'], 150, 1
 
     dates = data.loc[:, 'date']
     doy = dates.dt.dayofyear
@@ -359,7 +379,7 @@ def get_monthly_smd_mean_detrended(recalc=False):
     pet = np.atleast_1d(pet)
     rain = np.atleast_1d(rain)
 
-    assert date.shape == pet.shape == rain.shape, 'date, pet, rain must be same shape'
+    assert dates.shape == pet.shape == rain.shape, 'date, pet, rain must be same shape'
 
     smd = calc_smd_monthly(rain, pet, dates,
                            month_start=detrended_start_month,
@@ -367,7 +387,7 @@ def get_monthly_smd_mean_detrended(recalc=False):
                            a=0.0073,
                            p=1, return_drn_aet=False)
 
-    outdata = pd.DataFrame(data={'date': date, 'doy': doy, 'pet': pet, 'rain': rain, 'smd': smd},
+    outdata = pd.DataFrame(data={'date': dates, 'doy': doy, 'pet': pet, 'rain': rain, 'smd': smd},
                            )
 
     # calculate mean smd for doy

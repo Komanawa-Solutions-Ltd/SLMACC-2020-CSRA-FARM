@@ -77,9 +77,9 @@ def generate_all_swg(n, n_is_final, outdir, vcfs=default_vcf, base_dirs=default_
 
     if n_is_final:
         prob_data = pd.read_csv(prob_path, index_col=0)
-        if prob_data.isna().any():
+        if prob_data.isna().values.any():
             raise ValueError('null data in prob data, this should not be, check: {}'.format(prob_path))
-        prob_data.loc[:, '0'].to_dict()
+        prob_data = prob_data.loc[:, '0'].to_dict()
 
     print('running SWG')
     storylines = []
@@ -106,18 +106,17 @@ def clean_individual(ind_dir):
             continue
         swg_dir = os.path.join(ind_dir, p)
         t = clean_swg(swg_dir=swg_dir, yml_path=os.path.join(swg_dir, 'ind.yml'),
-                  duplicate=False, merge=True, nc_outpath=os.path.join(ind_dir, '{}_all.nc'.format(p)))
+                  duplicate=True, merge=True, nc_outpath=os.path.join(ind_dir, '{}_all.nc'.format(p)))
         print('{}: removed: {}'.format(p, len(t)))
 
 if __name__ == '__main__':
     # generate_SWG_output_support()
     test_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'test_run_delete')
     test_dir_dup = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'test_run_delete_duplicated')
-    if False:
-        if os.path.exists(test_dir):
-            shutil.rmtree(test_dir)
-        if os.path.exists(test_dir_dup):
-            shutil.rmtree(test_dir_dup)
-        generate_all_swg(10, False, test_dir)
-    else:
-        clean_individual(test_dir) #todo spot check cleaning!
+    #if os.path.exists(test_dir):
+    #    shutil.rmtree(test_dir)
+    #if os.path.exists(test_dir_dup):
+    #    shutil.rmtree(test_dir_dup)
+    #generate_all_swg(10, True, test_dir)
+    clean_individual(test_dir)
+    # todo spot check amalgamation up to large nc

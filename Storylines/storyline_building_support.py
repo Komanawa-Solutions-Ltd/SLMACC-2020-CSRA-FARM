@@ -69,6 +69,7 @@ def make_sampling_options(include_irr=True):
     return outdata
 
 def map_irrigation(m, rest):
+    #todo run 3 states initially the median, 75th and 90th
     # todo also include the precip state for the month! and previous month???
     # todo map irrigation for the month for True and False states.
     warnings.warn('###########MAPPING RESTRICTIONS IS ONLY AT DUMMY FUNCTINO YOU DUMMY##############')
