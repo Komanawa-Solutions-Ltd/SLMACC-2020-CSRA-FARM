@@ -46,12 +46,12 @@ if __name__ == '__main__':
     run_basgra = False
     detrended_vcf =r"D:\SLMMAC_SWG_detrend_test_nPrecip\detrend_event_data_new_p_fixed.csv"
 
-    n = 1000  # todo consider carefully
+    n = 1000
 
     if make_files:
         make_storyline_files()
 
-    # todo just thrown togeather so I can look at produced data
+    # just thrown togeather so I can look at produced data
     # run swg
     if make_weather:
         print('running SWG')
@@ -63,6 +63,6 @@ if __name__ == '__main__':
             outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'try_individual_nPrecip', p.split('.')[0])
             outdirs.append(outdir)
         run_swg_mp(storyline_paths=storylines, outdirs=outdirs, ns=n, base_dirs=r"D:\SLMMAC_SWG_detrend_test_nPrecip",
-                   vcfs=detrended_vcf, cleans=False,
+                   vcfs=detrended_vcf,
                    log_path=r"D:\mh_unbacked\SLMACC_2020\SWG_runs\logs\try_individual_newp_02-22-16_35.csv",
-                   pool_size=1) #todo run this once before running heaps to make all of the options
+                   pool_size=1)

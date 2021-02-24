@@ -12,7 +12,7 @@ import psutil
 from BS_work.SWG.SWG_wrapper import create_yaml, run_SWG, oxford_lon, oxford_lat
 
 
-def run_swg_mp(storyline_paths, outdirs, ns, base_dirs, vcfs, cleans, log_path, pool_size=None):
+def run_swg_mp(storyline_paths, outdirs, ns, base_dirs, vcfs, log_path, pool_size=None):
     """
     run a bunch of storylines as multiprocessing
     :param storyline_paths: storyline paths to run
@@ -41,25 +41,20 @@ def run_swg_mp(storyline_paths, outdirs, ns, base_dirs, vcfs, cleans, log_path, 
     if len(vcfs) == 1:
         vcfs = np.repeat(vcfs, storyline_paths.shape)
 
-    cleans = np.atleast_1d(cleans)
-    if len(cleans) == 1:
-        cleans = np.repeat(cleans, storyline_paths.shape)
-
-    assert ns.shape == base_dirs.shape == vcfs.shape == cleans.shape == storyline_paths.shape
+    assert ns.shape == base_dirs.shape == vcfs.shape == storyline_paths.shape
 
     if not os.path.exists(os.path.dirname(log_path)):
         os.makedirs(os.path.dirname(log_path))
 
     runs = []
     # make into dictionary
-    for s, o, n, b, v, c in zip(storyline_paths, outdirs, ns, base_dirs, vcfs, cleans):
+    for s, o, n, b, v, in zip(storyline_paths, outdirs, ns, base_dirs, vcfs):
         runs.append({
             'storyline_path': s,
             'outdir': o,
             'n': n,
             'base_dir': b,
             'vcf': v,
-            'clean': c,
         })
     t = time.time()
     multiprocessing.log_to_stderr(logging.DEBUG)
@@ -78,7 +73,7 @@ def run_swg_mp(storyline_paths, outdirs, ns, base_dirs, vcfs, cleans, log_path, 
     print('completed {} runs in {} min'.format(len(runs), (time.time() - t) / 60))
 
     outdata = pd.DataFrame(pool_outputs,
-                           columns=['storyline_path', 'outdir', 'n', 'base_dir', 'vcf', 'clean', 'success', 'errors'])
+                           columns=['storyline_path', 'outdir', 'n', 'base_dir', 'vcf', 'success', 'errors'])
     outdata.to_csv(log_path)
 
 
@@ -100,7 +95,6 @@ def _run_mp(kwargs):
     n = kwargs['n']
     base_dir = kwargs['base_dir']
     vcf = kwargs['vcf']
-    clean = kwargs['clean']
 
     storyline_id = os.path.basename(storyline_path).split('.')[0]
     yml = os.path.join(outdir, 'ind.yml')
@@ -117,10 +111,10 @@ def _run_mp(kwargs):
                     xlat=oxford_lat, xlon=oxford_lon,
                     base_dir=base_dir,
                     vcf=vcf)
-        temp = run_SWG(yml, outdir, rm_npz=True, clean=clean)
+        temp = run_SWG(yml, outdir, rm_npz=True)
     except Exception as val:
         v = val
         success = False
 
     print('finished storyline: {},  success: {}, error: {}'.format(storyline_id, success,v))
-    return storyline_id, outdir, n, base_dir, vcf, clean, success, v
+    return storyline_id, outdir, n, base_dir, vcf, success, v

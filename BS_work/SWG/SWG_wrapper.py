@@ -5,15 +5,19 @@
 import os
 import ksl_env
 import numpy as np
+import datetime
 import subprocess
 import sys
+import netCDF4 as nc
 import glob
 import yaml
 import pandas as pd
+import shutil
 from Climate_Shocks.Stochastic_Weather_Generator.read_swg_data import read_swg_data
 from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import detrended_start_month, calc_smd_monthly
 from Climate_Shocks.get_past_record import get_vcsn_record
 from Climate_Shocks import climate_shocks_env
+from Storylines.check_storyline import get_acceptable_events
 
 oxford_lat, oxford_lon = -43.296, 172.192
 swg = os.path.join(os.path.dirname(__file__), 'SWG_Final.py')
@@ -100,7 +104,7 @@ def create_yaml(outpath_yml, outsim_dir, nsims, storyline_path, sim_name=None,
         f.write(yml)
 
 
-def run_SWG(yml_path, outdir, rm_npz=True, clean=True):
+def run_SWG(yml_path, outdir, rm_npz=True):
     """
     run the SWG
     :param yml_path: path to the yml file
@@ -116,44 +120,85 @@ def run_SWG(yml_path, outdir, rm_npz=True, clean=True):
         temp = glob.glob(os.path.join(outdir, '*.npz'))
         for f in temp:
             os.remove(f)
-    if clean:
-        clean_swg(outdir, yml_path)
     return '{}, {}'.format(result.stdout, result.stderr)
 
 
-def clean_swg(swg_dir, yml_path, exsites=1):  # todo update to move things into single nc files, here or in the run?
+def clean_swg(swg_dir, yml_path, duplicate=True, merge=True, nc_outpath=None):
     """
     remove swg files which do not match the data. Note that definitions are hard coded into this process
     via _check_data_v1.
     :param swg_dir: directory for the swg
     :param yml_path: path to the yml file
     :param exsites: int, number of external sites
+    :param duplicate: boolean if True duplicate before removing bad files.
+    :param merge: boolean if True merge everything into one large nc file
+    :param nc_outpath: the path to save the merged path if merged is True
     :return:
     """
+    if merge:
+        assert nc_outpath is not None, ' if merging must define nc outpath'
+
+    if duplicate:  # todo this is causing problems.... doesnt wait until finished???
+        base_dup_dir = os.path.join(os.path.dirname(os.path.dirname(swg_dir)),
+                                    '{}_duplicated'.format(os.path.basename(os.path.dirname(swg_dir))))
+        if not os.path.exists(base_dup_dir):
+            os.makedirs(base_dup_dir)
+        shutil.copytree(swg_dir, os.path.join(base_dup_dir, os.path.basename(swg_dir)))
+
     with open(yml_path, 'r') as file:
         # The FullLoader parameter handles the conversion from YAML
         # scalar values to Python the dictionary format
         param_dict = yaml.load(file, Loader=yaml.FullLoader)
     storyline_path = param_dict['story_line_filename']
     storyline = pd.read_csv(storyline_path)
-    paths = pd.Series(os.listdir(swg_dir))
-    paths = paths.loc[(~paths.str.contains('exsites')) & (paths.str.contains('.nc'))]
+    paths = pd.Series(sorted(os.listdir(swg_dir)))
+    paths = paths.loc[paths.str.contains('.nc')]
+
+    sites = (['exsites_{}'.format(e) for e in
+              paths.loc[paths.str.contains('exsites')].str.split('_').str[1].unique()])
+
+    paths = paths.loc[~paths.str.contains('exsites')]
     removed = []
+    cold_months, wet_months, hot_months, dry_months = _get_possible_months()
     for p in paths:
+        m = int(p.split('-')[0].replace('m', ''))
         fp = os.path.join(swg_dir, p)
-        bad = check_data_v1(fp, storyline, m)
+        bad = _check_data_v1(fp, storyline, m, cold_months, wet_months, hot_months, dry_months)
         if bad:
             removed.append(p)
-            for i in range(exsites):
+            for i in range(len(sites)):
                 vals = p.split('_')
                 if len(vals) > 2:
                     raise ValueError('names preclude removal of exsites')
                 os.remove(os.path.join(swg_dir, '{}exsites_P{}_{}'.format(vals[0], i, vals[1])))
             os.remove(fp)
-    print('removed {} as they did not match the story: {}'.format(len(removed), '\n'.join(removed)))
+    with open(yml_path, 'r') as file:
+        yml_text = file.readlines()
+    _merge_ncs(swg_dir, nc_outpath, storyline, yml_txt=yml_text)
+    return removed
 
 
-def check_data_v1(swg_path, storyline, m):
+def _get_possible_months():
+    cold_months, wet_months, hot_months, dry_months = [], [], [], []
+    acceptable_events = get_acceptable_events()
+    for k, v in acceptable_events.items():
+        if 'C' in k:
+            cold_months.extend(v)
+        if 'H' in k:
+            hot_months.extend(v)
+        if 'W' in k:
+            wet_months.extend(v)
+        if 'D' in k:
+            dry_months.extend(v)
+
+        cold_months = list(set(cold_months))
+        wet_months = list(set(wet_months))
+        hot_months = list(set(hot_months))
+        dry_months = list(set(dry_months))
+    return cold_months, wet_months, hot_months, dry_months
+
+
+def _check_data_v1(swg_path, storyline, m, cold_months, wet_months, hot_months, dry_months):
     """
     check that a single realisation is correct
     :param swg_path: path to the SWG
@@ -178,7 +223,6 @@ def check_data_v1(swg_path, storyline, m):
     data.loc[:, 'cold'] = ((data.loc[:, 'tmin'] +
                             data.loc[:, 'tmax']) / 2).rolling(3).mean().fillna(method='bfill') <= 7
 
-    data.loc[:, 'year'] += 1
     temp = data.loc[:, ['year', 'month', 'wet',
                         'dry', 'hot', 'cold']].groupby(['year', 'month']).sum()
     storyline.loc[temp.index, ['wet', 'dry', 'hot', 'cold']] = temp.loc[:, ['wet', 'dry', 'hot', 'cold']]
@@ -186,36 +230,95 @@ def check_data_v1(swg_path, storyline, m):
 
     storyline.loc[:, 'swg_precip_class'] = 'A'
     storyline.loc[((storyline.wet >= storyline.month.replace(rain_limits_wet)) &
-                   np.in1d(storyline.month, [5, 6, 7, 8, 9])), 'swg_precip_class'] = 'W' # todo make this linked to the acceptable events...
+                   np.in1d(storyline.month, wet_months)), 'swg_precip_class'] = 'W'
     # dry out weighs wet if both happen
     storyline.loc[((storyline.dry >= 10) &
-                   np.in1d(storyline.month, [8, 9, 10, 11, 12, 1, 2, 3, 4, 5])), 'swg_precip_class'] = 'D' # todo make this linked to the acceptable events...
+                   np.in1d(storyline.month, dry_months)), 'swg_precip_class'] = 'D'
 
     storyline.loc[:, 'swg_temp_class'] = 'A'
-    storyline.loc[(storyline.hot >= 7) & np.in1d(storyline.month, [11, 12, 1, 2, 3]), 'swg_temp_class'] = 'H' # todo make this linked to the acceptable events...
-    storyline.loc[(storyline.cold >= 10) & np.in1d(storyline.month, [5, 6, 7, 8, 9]), 'swg_temp_class'] = 'C' # todo make this linked to the acceptable events...
+    storyline.loc[(storyline.hot >= 7) & np.in1d(storyline.month, hot_months), 'swg_temp_class'] = 'H'
+    storyline.loc[(storyline.cold >= 10) & np.in1d(storyline.month, cold_months), 'swg_temp_class'] = 'C'
 
-    hot = storyline.hot.max()
-    cold = storyline.cold.max()
-    wet = storyline.wet.max()
-    dry = storyline.dry.max()
-
-    where_same = ((storyline.temp_class == storyline.swg_temp_class) & (
-            storyline.precip_class == storyline.swg_precip_class))
     num_dif = (~((storyline.temp_class == storyline.swg_temp_class) & (
             storyline.precip_class == storyline.swg_precip_class))).sum()
+    return num_dif == 0
 
-    out_keys = ['{}:{}-{}_{}-{}'.format(m, p, swgp, t, swgt) for m, p, swgp, t, swgt in
-                storyline.loc[~where_same, ['month',
-                                            'precip_class',
-                                            'swg_precip_class',
-                                            'temp_class',
-                                            'swg_temp_class'
-                                            ]].itertuples(False,
-                                                          None)]
-    raise NotImplementedError  # todo
-    return num_dif, out_keys, hot, cold, wet, dry
 
+def _merge_ncs(swg_dir, outpath, storyline, yml_txt):
+    """
+    merge all of the ncs into a single netcdf file no cleaning takes place
+    :param swg_dir: dir to the individual swg
+    :param outpath: path
+    :return:
+    """
+    out = nc.Dataset(outpath, 'w')
+
+    paths = pd.Series(sorted(os.listdir(swg_dir)))
+    paths = paths.loc[(paths.str.contains('.nc'))]
+    nreal = (~paths.str.contains('exsites')).sum()
+    if nreal==0:
+        print('no realisations for {}'.format(swg_dir))
+        return None
+    temp = nc.Dataset(os.path.join(swg_dir, paths.iloc[0]))
+
+    # create dimensions and dimension variables
+    days = temp.dimensions['day'].size
+    out.createDimension('day', days)
+    day = out.createVariable('day', int, ('day',), fill_value=-1)
+    day[:] = range(days)
+    day.setncatts({'long_name': 'day of simulation'})
+
+    month = out.createVariable('month', int, ('day',), fill_value=-1)
+    month[:] = np.array(temp.variables['Month'])
+    month.setncatts({'long_name': 'month of simulation'})
+
+    out.createDimension('real', nreal)
+    real = out.createVariable('real', int, ('real',), fill_value=-1)
+    real[:] = range(nreal)
+    real.setncatts({'long_name': 'the realisation number of the simulation'})
+
+    measures = ['PR_A', 'Tmax', 'Tmin', 'RSDS', 'PEV']
+    out.createDimension('w_var', len(measures))
+    ms = out.createVariable('w_var', str, ('w_var',))
+    for i, m in enumerate(measures):
+        ms[i] = m
+    ms.setncatts({e: [temp.variables[m].getncattr(e) for m in measures] for e in ['long_name', 'units']})
+
+    # create site variables
+    sites = ['main_site']
+    sites.extend(['exsites_{}'.format(e) for e in
+                  paths.loc[paths.str.contains('exsites')].str.split('_').str[1].unique()])
+    for s in sites:
+        if s == 'main_site':
+            idx = (~paths.str.contains('exsites'))
+        else:
+            idx = (paths.str.contains(s))
+
+        for i, p in enumerate(paths.loc[idx]):
+            temp_read = nc.Dataset(os.path.join(swg_dir, p))
+            if i == 0:
+                out_var = out.createVariable(s, float, ('day', 'w_var', 'real'), fill_value=np.nan)
+                out_var.setncatts({
+                    'long_name': 'site {}'.format(s),
+                    'units': 'see nc variable w_var',
+                    'lat': temp_read.lat,
+                    'lon': temp_read.lon
+                })
+
+            else:
+                out_var = out.variables[s]
+            temp_out = np.zeros((days, len(measures))) * np.nan
+            for j, m in enumerate(measures):
+                temp_out[:, j] = np.array(temp_read.variables[m][:])
+
+            out_var[:, :, i] = temp_out
+    # set global variables including storyline, and yml
+    out.description = 'amalgamated SWG run'
+    out.created = datetime.datetime.now().isoformat()
+    out.script = __file__
+    out.storyline = str(storyline)
+    out.yml = yml_txt
+    out.sites = sites
 
 
 rain_limits_wet = {
@@ -241,7 +344,7 @@ def get_monthly_smd_mean_detrended(recalc=False):
     outpath = os.path.join(climate_shocks_env.supporting_data_dir, 'mean_montly_smd_detrend.csv')
 
     if not recalc and os.path.exists(outpath):
-        average_smd = pd.read_csv(outpath, index_col=0)  # todo check
+        average_smd = pd.read_csv(outpath, index_col=0)
         return average_smd.loc[:, 'smd'].to_dict()
 
     data = get_vcsn_record('detrended2').reset_index()
@@ -250,8 +353,8 @@ def get_monthly_smd_mean_detrended(recalc=False):
     rain, pet, date, h2o_cap, h2o_start = data['rain'], data['pet'], data.date, 150, 1
     dates = data.index
 
-    dates = np.atleast_1d(dates)
-    doy = pd.Series(dates).dt.dayofyear
+    dates = data.loc[:, 'date']
+    doy = dates.dt.dayofyear
 
     pet = np.atleast_1d(pet)
     rain = np.atleast_1d(rain)
@@ -262,7 +365,7 @@ def get_monthly_smd_mean_detrended(recalc=False):
                            month_start=detrended_start_month,
                            h2o_cap=150,
                            a=0.0073,
-                           p=1, return_drn_aet=False)  # todo not right
+                           p=1, return_drn_aet=False)
 
     outdata = pd.DataFrame(data={'date': date, 'doy': doy, 'pet': pet, 'rain': rain, 'smd': smd},
                            )

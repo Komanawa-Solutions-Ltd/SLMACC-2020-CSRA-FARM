@@ -9,7 +9,7 @@ import shutil
 import ksl_env
 import pandas as pd
 from Climate_Shocks import climate_shocks_env
-from BS_work.SWG.SWG_wrapper import default_vcf, default_base_dir
+from BS_work.SWG.SWG_wrapper import default_vcf, default_base_dir, clean_swg
 from Storylines.storyline_building_support import make_sampling_options
 from BS_work.SWG.SWG_multiprocessing import run_swg_mp
 
@@ -52,7 +52,7 @@ def generate_SWG_output_support(vcfs=default_vcf, base_dirs=default_base_dir):
         outdirs.append(outdir)
     run_id = datetime.datetime.now().isoformat().replace(':', '-').split('.')[0]
     run_swg_mp(storyline_paths=storylines, outdirs=outdirs, ns=1,
-               vcfs=vcfs, cleans=False, base_dirs=base_dirs,
+               vcfs=vcfs, base_dirs=base_dirs,
                log_path=os.path.join(log_dir, 'generate_SWG_output_support_{}.txt'.format(run_id)),
                pool_size=1)
 
@@ -96,13 +96,28 @@ def generate_all_swg(n, n_is_final, outdir, vcfs=default_vcf, base_dirs=default_
         outdirs.append(o)
     run_id = datetime.datetime.now().isoformat().replace(':', '-').split('.')[0]
     run_swg_mp(storyline_paths=storylines, outdirs=outdirs, ns=ns,
-               vcfs=vcfs, cleans=False, base_dirs=base_dirs,
+               vcfs=vcfs, base_dirs=base_dirs,
                log_path=os.path.join(log_dir, 'generate_all_swg_{}.txt'.format(run_id)))
 
 
-def clean_and_collate_base_runs(yml_path, swg_dir):
-    raise NotImplementedError
+def clean_individual(ind_dir):
+    for p in os.listdir(ind_dir):
+        if '.nc' in p:
+            continue
+        swg_dir = os.path.join(ind_dir, p)
+        t = clean_swg(swg_dir=swg_dir, yml_path=os.path.join(swg_dir, 'ind.yml'),
+                  duplicate=False, merge=True, nc_outpath=os.path.join(ind_dir, '{}_all.nc'.format(p)))
+        print('{}: removed: {}'.format(p, len(t)))
 
 if __name__ == '__main__':
-    generate_SWG_output_support()
-    #generate_all_swg(10, False, os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'test_run_delete'))
+    # generate_SWG_output_support()
+    test_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'test_run_delete')
+    test_dir_dup = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'test_run_delete_duplicated')
+    if False:
+        if os.path.exists(test_dir):
+            shutil.rmtree(test_dir)
+        if os.path.exists(test_dir_dup):
+            shutil.rmtree(test_dir_dup)
+        generate_all_swg(10, False, test_dir)
+    else:
+        clean_individual(test_dir) #todo spot check cleaning!

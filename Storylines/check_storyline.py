@@ -160,6 +160,7 @@ months = {
 }
 
 if __name__ == '__main__':
+    test = get_acceptable_events()
     temp = get_past_event_frequency()
     get_all_zero_prob_transitions()
     data_path = os.path.join(os.path.dirname(event_def_path), 'visualize_event_options.csv')

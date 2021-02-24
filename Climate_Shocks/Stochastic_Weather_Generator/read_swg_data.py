@@ -55,6 +55,7 @@ def read_swg_data(paths):
         temp_out.index.name = 'date'
         change_swg_units(temp_out)
         outdata.append(temp_out)
+        temp.close()
 
     return outdata
 
