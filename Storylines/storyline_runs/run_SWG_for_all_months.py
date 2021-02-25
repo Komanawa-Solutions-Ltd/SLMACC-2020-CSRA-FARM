@@ -100,13 +100,13 @@ def generate_all_swg(n, n_is_final, outdir, vcfs=default_vcf, base_dirs=default_
                log_path=os.path.join(log_dir, 'generate_all_swg_{}.txt'.format(run_id)))
 
 
-def clean_individual(ind_dir):
+def clean_individual(ind_dir, duplicate=True, merge=True):
     for p in os.listdir(ind_dir):
         if '.nc' in p:
             continue
         swg_dir = os.path.join(ind_dir, p)
         t = clean_swg(swg_dir=swg_dir, yml_path=os.path.join(swg_dir, 'ind.yml'),
-                  duplicate=True, merge=True, nc_outpath=os.path.join(ind_dir, '{}_all.nc'.format(p)))
+                  duplicate=duplicate, merge=merge, nc_outpath=os.path.join(ind_dir, '{}_all.nc'.format(p)))
         print('{}: removed: {}'.format(p, len(t)))
 
 if __name__ == '__main__':
@@ -119,4 +119,4 @@ if __name__ == '__main__':
     #    shutil.rmtree(test_dir_dup)
     #generate_all_swg(10, True, test_dir)
     clean_individual(test_dir)
-    # todo spot check amalgamation up to large nc
+    # todo spot check amalgamation up to large nc, just spot check the data! and the realisation number

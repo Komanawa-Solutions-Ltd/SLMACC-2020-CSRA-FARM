@@ -264,7 +264,6 @@ def _check_data_v1(swg_path, storyline, m, cold_months, wet_months, hot_months, 
     return num_dif, out_keys, hot, cold, wet, dry
 
 
-
 def _merge_ncs(swg_dir, outpath, storyline, yml_txt):
     """
     merge all of the ncs into a single netcdf file no cleaning takes place
@@ -277,7 +276,10 @@ def _merge_ncs(swg_dir, outpath, storyline, yml_txt):
     paths = pd.Series(sorted(os.listdir(swg_dir)))
     paths = paths.loc[(paths.str.contains('.nc'))]
     nreal = (~paths.str.contains('exsites')).sum()
-    if nreal==0:
+    reals = [int(e) for e in
+             paths.loc[(~paths.str.contains('exsites'))].str.split('_').str[-1].str.replace('S', '').str.replace('.nc',
+                                                                                                                 '')]
+    if nreal == 0:
         print('no realisations for {}'.format(swg_dir))
         return None
     temp = nc.Dataset(os.path.join(swg_dir, paths.iloc[0]))
@@ -297,6 +299,11 @@ def _merge_ncs(swg_dir, outpath, storyline, yml_txt):
     real = out.createVariable('real', int, ('real',), fill_value=-1)
     real[:] = range(nreal)
     real.setncatts({'long_name': 'the realisation number of the simulation'})
+
+    real = out.createVariable('org_real', int, ('real',), fill_value=-1)
+    real[:] = reals
+    real.setncatts({'long_name': 'the original realisation number of the simulation from when the SWG '
+                                 'was run and before any filtering'})
 
     measures = ['PR_A', 'Tmax', 'Tmin', 'RSDS', 'PEV']
     out.createDimension('w_var', len(measures))

@@ -10,16 +10,16 @@ import numpy as np
 
 def change_swg_units(data):
     for k in data.keys():
-        if k in ['tmax', 'tmin']:
+        if k in ['tmax', 'tmin', 'Tmax', 'Tmin']:
             # convert to C.
             # originally in k
             data.loc[:, k] += - 273.15
-        elif k in ['pet', 'rain']:
+        elif k in ['pet', 'rain', 'PR_A', 'PEV']:
             # convert to mm
             # orginally in kg/m2/s or mm/m2/s
             # kg/m2 ==mm/m2
             data.loc[:, k] *= 86400
-        elif k == 'radn':
+        elif k in ['radn', 'RSDS']:
             # convert to MJ/m2/d
             # orignally in W/m2
             data.loc[:, k] *= 86400 * 1e-6
