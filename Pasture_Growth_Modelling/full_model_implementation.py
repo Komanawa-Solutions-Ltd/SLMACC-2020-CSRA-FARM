@@ -578,5 +578,3 @@ def pasture_growth_anamoly(storyline_key, data):  # todo point and cumulative
 
 def _add_pasture_growthanaomoly_to_nc():  # todo
     raise NotImplementedError
-
-#todo new timeit test for new method

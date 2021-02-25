@@ -19,7 +19,7 @@ def make_storyline_files():
         os.makedirs(individual_dir)
     # there are 69 unique event/month comparisons.
 
-    all_events = make_sampling_options(False)  # todo this is just to exaime swg data,
+    all_events = make_sampling_options(False)  # this is just to exaime swg data,
 
 
     for m in range(1, 13):
@@ -37,7 +37,7 @@ def make_storyline_files():
             with open(os.path.join(individual_dir, fname), 'w') as f:
                 f.write('month,year,temp_class,precip_class,rest\n')
                 f.write('{},{},{},{},{}\n'.format(m, 2026, *e[0:-1],
-                                                  map_irrigation(m, e[-1])))  # todo really map restrictions
+                                                  map_irrigation(m, e[-1])))  # really map restrictions
 
 
 if __name__ == '__main__':
