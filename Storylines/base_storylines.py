@@ -14,7 +14,7 @@ def get_baseline_storyline(save=False):
     rest_data = get_rest_base_data()
     for i in [5, 6, 7, 8]:
         rest_data[i] = 0
-    data = pd.DataFrame(index=pd.date_range('2025-07-01', '2028-06-01', freq='MS'),
+    data = pd.DataFrame(index=pd.date_range('2024-07-01', '2027-06-01', freq='MS'),
                         columns=['precip_class', 'temp_class', 'rest'])
     data.index.name = 'date'
     data.loc[:, 'year'] = data.index.year

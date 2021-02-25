@@ -8,15 +8,16 @@ import ksl_env
 import os
 import pandas as pd
 import itertools
+from Climate_Shocks.climate_shocks_env import storyline_dir
 
 
 def check_full_model_run_time():
     out = pd.DataFrame(index=range(5), columns=['nsims', 'time', 'paddock_res', 'save_daily'])
     t = time.time()
 
-    run_pasture_growth(storyline_key='test10000',
-                       outdir=os.path.join(ksl_env.slmmac_dir_unbacked, 'test_full_model0000'),
-                       nsims='all', padock_rest=False, mode_sites=[('irrigated', 'eyrewell')],
+    run_pasture_growth(storyline_path=os.path.join(storyline_dir,'0-baseline.csv'),
+                       outdir=os.path.join(ksl_env.slmmac_dir_unbacked, 'test_full_modelbase_10000'),
+                       nsims=10000, padock_rest=False, mode_sites=[('irrigated', 'eyrewell')],
                        save_daily=True, description='to test functinality')
 
     out.loc[0, 'time'] = time.time() - t
@@ -35,11 +36,10 @@ def check_full_model_run_time():
             dval = 'daily'
         else:
             dval = 'monthly'
-
-        run_pasture_growth(storyline_key='test{}'.format(num),
+        run_pasture_growth(storyline_path=os.path.join(storyline_dir,'0-baseline.csv'),
                            outdir=os.path.join(ksl_env.slmmac_dir_unbacked,
-                                               'test_full_model{}_{}_{}'.format(num, val, dval)),
-                           nsims='all', padock_rest=pad, mode_sites=[('irrigated', 'eyrewell')],
+                                               'test_full_model0-base{}_{}_{}'.format(num, val, dval)),
+                           nsims=num, padock_rest=pad, mode_sites=[('irrigated', 'eyrewell')],
                            save_daily=daily, description='to test functinality')
 
         out.loc[i + 1, 'time'] = time.time() - t

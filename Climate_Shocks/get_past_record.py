@@ -87,7 +87,6 @@ def get_restriction_record(version='trended', recalc=False):
         dt_format = '%Y-%m-%d'
         raw_data_path = ksl_env.shared_drives(r"Z2003_SLMACC\WIL data\OSHB_WaimakRiverData_withRestrictionInfo.xlsx")
     elif version =='detrended':
-        raw_dt_format = '%d/%m/%Y'
         dt_format = '%Y-%m-%d'
         raw_data_path = os.path.join(os.path.dirname(event_def_path), 'restriction_record_detrend.csv')
         data_path = os.path.join(os.path.dirname(event_def_path), 'full_restriction_record_detrend.csv')
@@ -135,7 +134,7 @@ def get_restriction_record(version='trended', recalc=False):
             'take': float,
         }
         data = pd.read_csv(raw_data_path, dtype=int_keys)
-        data.loc[:, 'date'] = pd.to_datetime(data.loc[:, 'date'],format=raw_dt_format)
+        data.loc[:, 'date'] = pd.to_datetime(data.loc[:, 'date'],format=dt_format)
         data.set_index('date', inplace=True)
         data.sort_index(inplace=True)
 

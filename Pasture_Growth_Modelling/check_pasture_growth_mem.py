@@ -10,10 +10,6 @@ import os
 
 #@profile
 def test_mem():
-    # todo re-run with new method
-    # todo plot and compair multiple paddock vs non paddock!
-    #todo compaire impacts of events
-    # todo test against storyline with non zero restriction data
     run_pasture_growth(storyline_key='test100', outdir=os.path.join(ksl_env.slmmac_dir_unbacked, 'test_full_model'),
                        nsims='all', padock_rest=True, mode_sites=[('irrigated', 'eyrewell'),
                                                                   ('irrigated', 'oxford'), ],
