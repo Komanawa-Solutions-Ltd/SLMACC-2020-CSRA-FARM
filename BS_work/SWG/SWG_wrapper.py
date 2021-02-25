@@ -348,6 +348,8 @@ def _merge_ncs(swg_dir, outpath, storyline, yml_txt):
     out.yml = yml_txt
     out.sites = sites
 
+measures = ['PR_A', 'Tmax', 'Tmin', 'RSDS', 'PEV']
+measures_cor = ['rain', 'tmax', 'tmin', 'radn', 'pet']
 
 rain_limits_wet = {
     # non wet months

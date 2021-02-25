@@ -10,12 +10,12 @@ import psutil
 import netCDF4 as nc
 import ksl_env
 import datetime
-from Climate_Shocks.Stochastic_Weather_Generator.read_swg_data import read_swg_data
+from BS_work.SWG.SWG_wrapper import measures_cor
 from Climate_Shocks.Stochastic_Weather_Generator.irrigation_generator import get_irrigation_generator
 from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, create_days_harvest, \
     create_matrix_weather, default_mode_sites, abs_max_irr
 from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growth
-
+from Climate_Shocks.Stochastic_Weather_Generator.read_swg_data import change_swg_units
 # add basgra nz functions
 ksl_env.add_basgra_nz_path()
 from basgra_python import run_basgra_nz
@@ -68,9 +68,11 @@ month_len = {
     12: 31,
 }
 
+default_swg_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SWG')
+
 
 def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_sites, padock_rest=False,
-                       save_daily=False, description=''):
+                       save_daily=False, description='', swg_dir=default_swg_dir):
     """
 
     :param storyline_key: update!!!!
@@ -85,8 +87,8 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
     """
 
     storyline_key = os.path.splitext(os.path.basename(storyline_path))[0]
-    storyline = pd.read_csv(storyline_path) # todo check
-    simlen = np.array([month_len[e] for e in storyline.month]).sum() # todo check
+    storyline = pd.read_csv(storyline_path)  # todo check
+    simlen = np.array([month_len[e] for e in storyline.month]).sum()  # todo check
 
     with open(storyline_path, 'r') as f:
         storyline_text = f.readlines()
@@ -97,11 +99,12 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
         _run_simple_rest(storyline=storyline, nsims=nsims, mode=mode, site=site, simlen=simlen,
                          storyline_key=storyline_key,
                          outdir=outdir,
-                         save_daily=save_daily, description=description, storyline_text=storyline_text)
+                         save_daily=save_daily, description=description, storyline_text=storyline_text, swg_dir=swg_dir)
         if padock_rest:
             _run_paddock_rest(storyline_key=storyline_key, outdir=outdir, storyline=storyline, nsims=nsims, mode=mode,
                               site=site, simlen=simlen,
-                              save_daily=save_daily, description=description, storyline_text=storyline_text)
+                              save_daily=save_daily, description=description, storyline_text=storyline_text,
+                              swg_dir=swg_dir)
 
 
 def get_rest_tolerance(r):
@@ -129,7 +132,7 @@ def get_irr_data(num_to_pull, storyline, simlen):
     return out
 
 
-def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen):
+def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, swg_dir):
     """
 
     :param storyline: loaded storyline
@@ -166,7 +169,7 @@ def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen):
         raise ValueError('weird arg for mode: {}'.format(mode))
 
     # get weather data
-    weather_data = _get_weather_data(storyline)
+    weather_data = _get_weather_data(storyline=storyline, nsims=num_to_pull, simlen=simlen, swg_dir=swg_dir, site=site)
 
     # make all the other data
     for rest, weather in zip(rest_data, weather_data):
@@ -183,7 +186,7 @@ def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen):
 
 
 def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir,
-                     save_daily, description, storyline_text):
+                     save_daily, description, storyline_text, swg_dir):
     number_run = int(psutil.virtual_memory().available // memory_per_run * (simlen / 365))
     chunks = int(-1 * (-nsims // number_run))
     if chunks == 1:
@@ -194,7 +197,8 @@ def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir
         params, doy_irr, all_matrix_weathers, all_days_harvests = _gen_input(storyline=storyline,
                                                                              nsims=nsims, mode=mode, site=site,
                                                                              chunks=chunks, current_c=c,
-                                                                             nperc=number_run, simlen=simlen)
+                                                                             nperc=number_run, simlen=simlen,
+                                                                             swg_dir=swg_dir)
 
         all_out = np.zeros((len(out_variables), simlen, number_run)) * np.nan
         for i, (matrix_weather, days_harvest) in enumerate(zip(all_matrix_weathers, all_days_harvests)):
@@ -221,7 +225,7 @@ def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir
 
 
 def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simlen,
-                      save_daily, description, storyline_text):
+                      save_daily, description, storyline_text, swg_dir):
     """
     run storyline through paddock restrictions...
     :param storyline:
@@ -243,7 +247,8 @@ def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simle
         params, doy_irr, all_matrix_weathers, all_days_harvests = _gen_input(storyline=storyline,
                                                                              nsims=nsims, mode=mode, site=site,
                                                                              chunks=chunks, current_c=c,
-                                                                             nperc=number_run, simlen=simlen)
+                                                                             nperc=number_run, simlen=simlen,
+                                                                             swg_dir=swg_dir)
 
         all_out = np.zeros((len(out_variables), simlen, len(levels) - 1, number_run)) * np.nan
         out_names = []
@@ -515,11 +520,38 @@ def _create_nc_file(outpath, number_run, month, doy, year, storyline_text, save_
     return nc_file
 
 
-def _get_weather_data(storyline):  # todo
-    raise NotImplementedError
+def _get_weather_data(storyline, nsims, simlen, swg_dir, site):  # todo check
+    out_array = np.zeros((simlen, len(measures_cor), nsims))
+    i = 0
+    if site == 'eyrewell':
+        var = 'main_site'
+    elif site == 'oxford':
+        var = 'exsites_P0'
+    else:
+        raise ValueError('incorrect site {} expected one of [eyrewell, oxford]')
+
+    sm = storyline.month.iloc[0]
+    sy = storyline.year.iloc[0]
+    ey = storyline.year.iloc[-1]
+    em = storyline.month.iloc[-1]
+    out_index = pd.date_range(f'{sy}-{sm:02d}-1', f'{ey}-{em:02d}-{month_len[em]}') #todo check
+
+    for m, t, p in storyline.loc[:, ['precip_class', 'temp_class', 'month']].itertuples(False, None):
+        temp = nc.Dataset(os.path.join(swg_dir, f'm{m:02d}-{t}-{p}-0_all.nc'))
+        idxs = np.random.randint(temp.dimensions['real'].size, size=(nsims,))
+
+        out_array[i: i + month_len[m], :, :] = np.array(temp.variables[var][:,:,idxs])
+        i += month_len[m]
+    outdata = [pd.DataFrame(v, columns=measures_cor, index=out_index) for v in out_array]
+
+    for e in outdata:
+        change_swg_units(e)
+
+    # output is list of pd dataframes that can go into matrix weather
+    return outdata
 
 
-def pasture_growth_anamoly(storyline_key, data): # todo point and cumulative
+def pasture_growth_anamoly(storyline_key, data):  # todo point and cumulative
     raise NotImplementedError
 
 
