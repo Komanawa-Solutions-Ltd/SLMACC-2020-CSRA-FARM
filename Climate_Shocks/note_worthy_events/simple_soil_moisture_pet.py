@@ -4,6 +4,7 @@
  """
 import numpy as np
 import pandas as pd
+import copy
 
 
 def calc_smd(rain, pet, h2o_cap, h2o_start, a=0.0073,
@@ -86,7 +87,7 @@ def calc_aet(PET, AWHC, W, p=1, a=0.0073):
 
     RAW = a * PET * (AWHC + W) * p
 
-    AET = PET
+    AET = copy.deepcopy(PET)
     AET[AET > RAW] = RAW[AET > RAW]
 
     return AET
