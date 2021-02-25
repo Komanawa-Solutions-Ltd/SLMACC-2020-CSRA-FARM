@@ -18,6 +18,7 @@ log_dir = r"D:\mh_unbacked\SLMACC_2020\SWG_runs\logs"
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
+
 def make_storyline_files():
     if not os.path.exists(individual_dir):
         os.makedirs(individual_dir)
@@ -39,7 +40,7 @@ def generate_SWG_output_support(vcfs=default_vcf, base_dirs=default_base_dir):
     # delete the old outputs
     shutil.rmtree(os.path.join(default_base_dir, 'Output'))
 
-    print('running SWG')
+    print('running SWG to create the output files')
     storylines = []
     outdirs = []
     for p in os.listdir(individual_dir):
@@ -102,18 +103,14 @@ def clean_individual(ind_dir, duplicate=True, merge=True):
             continue
         swg_dir = os.path.join(ind_dir, p)
         t = clean_swg(swg_dir=swg_dir, yml_path=os.path.join(swg_dir, 'ind.yml'),
-                  duplicate=duplicate, merge=merge, nc_outpath=os.path.join(ind_dir, '{}_all.nc'.format(p)))
+                      duplicate=duplicate, merge=merge, nc_outpath=os.path.join(ind_dir, '{}_all.nc'.format(p)))
         print('{}: removed: {}'.format(p, len(t)))
 
-if __name__ == '__main__':
 
-    # todo the run for everything I need.
-    # generate_SWG_output_support()
-    test_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'test_run_delete')
-    test_dir_dup = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'test_run_delete_duplicated')
-    #if os.path.exists(test_dir):
-    #    shutil.rmtree(test_dir)
-    #if os.path.exists(test_dir_dup):
-    #    shutil.rmtree(test_dir_dup)
-    #generate_all_swg(10, True, test_dir)
-    clean_individual(test_dir)
+if __name__ == '__main__':
+    run = False  # to prevent accidental re-run
+    if run:
+        generate_SWG_output_support()
+        full_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SWG')
+        generate_all_swg(10000, True, full_dir)
+        clean_individual(full_dir)
