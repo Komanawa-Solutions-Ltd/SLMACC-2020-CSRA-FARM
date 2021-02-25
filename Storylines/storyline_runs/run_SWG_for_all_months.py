@@ -18,10 +18,6 @@ log_dir = r"D:\mh_unbacked\SLMACC_2020\SWG_runs\logs"
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
-
-# todo the run for everything I need.
-
-
 def make_storyline_files():
     if not os.path.exists(individual_dir):
         os.makedirs(individual_dir)
@@ -110,6 +106,8 @@ def clean_individual(ind_dir, duplicate=True, merge=True):
         print('{}: removed: {}'.format(p, len(t)))
 
 if __name__ == '__main__':
+
+    # todo the run for everything I need.
     # generate_SWG_output_support()
     test_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'test_run_delete')
     test_dir_dup = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'test_run_delete_duplicated')
@@ -119,4 +117,3 @@ if __name__ == '__main__':
     #    shutil.rmtree(test_dir_dup)
     #generate_all_swg(10, True, test_dir)
     clean_individual(test_dir)
-    # todo spot check amalgamation up to large nc, just spot check the data! and the realisation number

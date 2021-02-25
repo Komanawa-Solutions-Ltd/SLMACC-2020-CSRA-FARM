@@ -10,7 +10,6 @@ import psutil
 import netCDF4 as nc
 import ksl_env
 import datetime
-from Storylines.story_swg_iid_managment import storyline_swg_paths
 from Climate_Shocks.Stochastic_Weather_Generator.read_swg_data import read_swg_data
 from Climate_Shocks.Stochastic_Weather_Generator.irrigation_generator import get_irrigation_generator
 from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, create_days_harvest, \
@@ -23,6 +22,8 @@ from basgra_python import run_basgra_nz
 from supporting_functions.output_metadata import get_output_metadata
 
 # consider multiprocessing here???? no up a level (e.g. at teh storyline level)
+storyline_swg_paths = None# todo remove
+
 
 out_metadata = get_output_metadata()
 
@@ -74,7 +75,7 @@ def run_pasture_growth(storyline_key, outdir, nsims='all', mode_sites=default_mo
                        save_daily=False, description=''):
     """
 
-    :param storyline_key: key to the storyline, see Climate_Shocks.story_swg_iid_managment.py
+    :param storyline_key: update!!!!
     :param outdir: directory to save the data in
     :param nsims: int, 'all'; number of simulations to run if all run all avalible, if the number to run is greater
                   than the total, run all available.

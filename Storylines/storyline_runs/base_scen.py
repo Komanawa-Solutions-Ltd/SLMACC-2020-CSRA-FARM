@@ -8,7 +8,6 @@ import pandas as pd
 import time
 import ksl_env
 import os
-from Storylines.story_swg_iid_managment import storyline_swg_paths
 from Climate_Shocks.climate_shocks_env import storyline_dir
 from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growth
 from BS_work.SWG.SWG_wrapper import *

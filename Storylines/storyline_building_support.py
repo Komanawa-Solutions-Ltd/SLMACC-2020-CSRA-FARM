@@ -41,7 +41,7 @@ prev_month = {
 }
 
 base_events = {e: ('A', 'A', 0) for e in range(1, 13)}
-# todo need revisit with new classifications updated 24-02-2021
+# todo need revisit with any new classifications updated 24-02-2021
 base_events[6] = ('C', 'A', 0)
 base_events[7] = ('C', 'A', 0)
 
