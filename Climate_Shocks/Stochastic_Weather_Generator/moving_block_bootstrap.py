@@ -235,7 +235,7 @@ class MovingBlockBootstrapGenerator(object):
             if self.key is None:
                 raise ValueError('more than one key in the dataset, please provide key')
             key = deepcopy(self.key)
-        sim_data = self.get_data(nsims=nsims, key=key, warn_level=1)
+        sim_data = self.get_data(nsims=nsims, key=key, max_replacement_level=1)
         org_data = self.get_org_data(key=key)
         org_plot = np.zeros((org_data.shape[0], lags)) * np.nan
         sim_plot = np.zeros((nsims, lags)) * np.nan
@@ -325,7 +325,9 @@ class MovingBlockBootstrapGenerator(object):
             out = self.dataset['{}_mean'.format(key)]
             return out
 
-    def get_data(self, nsims, key=None, mean='any', tolerance=None, lowerbound=None, upper_bound=None,  warn_level=0.1):
+    def get_data(self, nsims, key=None, mean='any', tolerance=None, lowerbound=None, upper_bound=None,
+                 max_replacement_level=0.1,
+                 under_level='warn'):
         """
         pull simulations from the dataset, samples bootstrap simulations with replacement.
         :param key: data key to pull from, (if None set to self.key),
@@ -339,7 +341,9 @@ class MovingBlockBootstrapGenerator(object):
         :param tolerance: None or float, seem mean for use
         :param upper_bound: float, select data whose mean is <= this bound
         :param lowerbound: float, select data whose mean is >= this bound
-        :param warn_level: where warn_level of the nsamples must be replacements,
+        :param max_replacement_level: warn,raise, or pass when at least
+                                      max_replacement_level * nsims must be replacements,
+        :param under_level: describes the action to be taken 'warn', 'raise', 'pass'
         :return: data shape (samples, simlen)
         """
         # manage key
@@ -352,20 +356,36 @@ class MovingBlockBootstrapGenerator(object):
         # define the indexes to pull
         if mean == 'any':
             idxs = np.random.choice(range(self.nsims[key]), (nsims,))
+            if len(idxs) == 0:
+                raise ValueError('no simulations for key: {}'.format(key))
         else:
             means = self.get_means(key)
             if mean is None:
                 if upper_bound is None or lowerbound is None:
                     raise ValueError('if mean is None then upper and lower bound must not be None')
-                idxs = np.where((means>=lowerbound) & (means<=upper_bound))[0]
+                idxs = np.where((means >= lowerbound) & (means <= upper_bound))[0]
+                if len(idxs) == 0:
+                    raise ValueError(
+                        'no simulations between {}<=x<={} for key: {}'.format(lowerbound, upper_bound, key))
             else:
                 if tolerance is None:
                     raise ValueError('tolerance must not be None if pulling with means (mean is a float)')
                 idxs = np.where(np.isclose(means, mean, atol=tolerance, rtol=0))[0]
+                if len(idxs) == 0:
+                    raise ValueError(
+                        'no simulations matching mean: {} and tolerance:{} for key: {}'.format(mean, tolerance, key))
 
-            if len(idxs) <= (1 - warn_level) * nsims:
-                warn('{}: selecting {} from {} unique simulations, less than '
-                     'warn_level: {} of repetition'.format(key, nsims, len(idxs), warn_level))
+            if len(idxs) <= (1 - max_replacement_level) * nsims:
+                mess = ('{}: selecting {} from {} unique simulations, less than '
+                        'warn_level: {} of repetition'.format(key, nsims, len(idxs), max_replacement_level))
+                if under_level == 'warn':
+                    warn(mess)
+                elif under_level == 'raise':
+                    raise ValueError(mess)
+                elif under_level == 'pass':
+                    pass
+                else:
+                    raise ValueError("incorrect arg for under_level expected on of ['warn', 'raise', 'pass']")
             idxs = np.random.choice(idxs, nsims)
 
         # pull data

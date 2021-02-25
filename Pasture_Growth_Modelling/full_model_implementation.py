@@ -85,8 +85,8 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
     """
 
     storyline_key = os.path.splitext(os.path.basename(storyline_path))[0]
-    storyline = pd.read_csv(storyline_path)
-    simlen = 0  # todo calculate
+    storyline = pd.read_csv(storyline_path) # todo check
+    simlen = np.array([month_len[e] for e in storyline.month]).sum() # todo check
 
     with open(storyline_path, 'r') as f:
         storyline_text = f.readlines()
@@ -105,7 +105,7 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
 
 
 def get_rest_tolerance(r):
-    return max([0.02, 0.1 * r])  # todo check if these data are avalible in the SWG...
+    return max([0.02, 0.1 * r])
 
 
 def get_irr_data(num_to_pull, storyline, simlen):
@@ -121,7 +121,9 @@ def get_irr_data(num_to_pull, storyline, simlen):
             plet = 'ND'
         key = 'm{:02d}-{}'.format(m, plet)
         out[:, idx: idx + month_len[m]] = irr_gen.get_data(num_to_pull, key=key, mean=r,
-                                                           tolerance=get_rest_tolerance(r))
+                                                           tolerance=get_rest_tolerance(r),
+                                                           max_replacement_level=0.1,
+                                                           under_level='raise')
         idx += month_len[m]
 
     return out
@@ -517,8 +519,7 @@ def _get_weather_data(storyline):  # todo
     raise NotImplementedError
 
 
-def pasture_growth_anamoly(storyline_key, data):
-    # todo point and cumulative
+def pasture_growth_anamoly(storyline_key, data): # todo point and cumulative
     raise NotImplementedError
 
 

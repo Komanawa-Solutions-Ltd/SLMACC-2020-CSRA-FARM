@@ -164,7 +164,7 @@ def examine_means():
 
 
 
-def get_irrigation_generator():
+def get_irrigation_generator(): #todo I may need to make this bigger
     nsims = 1e6
     nsims = int(nsims)
     input_data, block, sim_len, nmonths_comments = make_input_data_1month()
