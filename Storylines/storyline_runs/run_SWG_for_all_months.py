@@ -108,7 +108,7 @@ def clean_individual(ind_dir, duplicate=True, merge=True):
 
 
 if __name__ == '__main__':
-    run = False  # to prevent accidental re-run
+    run = False  # to prevent accidental re-run #todo spot check the final options
     if run:
         generate_SWG_output_support()
         full_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SWG')
