@@ -10,6 +10,7 @@ import psutil
 import netCDF4 as nc
 import ksl_env
 import datetime
+import time
 from BS_work.SWG.SWG_wrapper import measures_cor
 from Climate_Shocks.Stochastic_Weather_Generator.irrigation_generator import get_irrigation_generator
 from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, create_days_harvest, \
@@ -33,8 +34,8 @@ add_variables = {  # varaibles that are defined here and not in BASGRA
     'PGR': {'unit': 'kg dry matter/m2/day', 'description': 'pasture growth rate, calculated from yield'},
     'PER_PAW': {'unit': 'fraction', 'description': 'fraction of PAW (profile available water'},
     'F_REST': {'unit': 'fraction', 'description': 'fraction of irrigation restriction, '
-                                                    '1=0 mm water available/day, '
-                                                    '0 = {} mm water available/day,'.format(abs_max_irr)}
+                                                  '1=0 mm water available/day, '
+                                                  '0 = {} mm water available/day,'.format(abs_max_irr)}
 }
 
 out_metadata.update(add_variables)
@@ -95,6 +96,7 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
                        multiprocessing.  if calling this funtion, then simply leave as 1
     :return: None
     """
+    t = time.time()
     assert isinstance(n_parallel, int)
     assert n_parallel > 0
     storyline_key = os.path.splitext(os.path.basename(storyline_path))[0]
@@ -124,6 +126,8 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
                               site=site, simlen=simlen,
                               save_daily=save_daily, description=description, storyline_text=storyline_text,
                               swg_dir=swg_dir, verbose=verbose, n_parallel=n_parallel)
+    t = time.time() - t
+    print(f'took {t / 60} min to run {nsims} sims paddock_rest{padock_rest}')
 
 
 def get_rest_tolerance(r):
