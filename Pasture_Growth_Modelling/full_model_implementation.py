@@ -23,6 +23,9 @@ from basgra_python import run_basgra_nz
 from supporting_functions.output_metadata import get_output_metadata
 
 # consider multiprocessing here???? no up a level (e.g. at teh storyline level)
+default_pasture_growth_dir = os.path.join(os.path.join(ksl_env.slmmac_dir_unbacked, 'pasture_growth_sims'))
+if not os.path.exists(default_pasture_growth_dir):
+    os.makedirs(default_pasture_growth_dir)
 
 out_metadata = get_output_metadata()
 
@@ -73,20 +76,27 @@ default_swg_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SW
 
 
 def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_sites, padock_rest=False,
-                       save_daily=False, description='', swg_dir=default_swg_dir, verbose=True):
+                       save_daily=False, description='', swg_dir=default_swg_dir, verbose=True,
+                       n_parallel=1):
     """
-
-    :param storyline_key: update!!!!
-    :param outdir: directory to save the data in
-    :param nsims: int, 'all'; number of simulations to run if all run all avalible, if the number to run is greater
-                  than the total, run all available.
-    :param mode_sites: a list of the unique mode and sites needed e.g. [('dryland', 'oxford')]
-    :param padock_rest: boolean, if True will run a 4 paddock irrigation restrictions
-    :param save_daily: boolean, if True will save the daily data as well as the monthly data
-    :param description: str, a description to append to the description saved to the netcdf output file
-    :return:
+    creates weather data, runs basgra and saves values to a netcdf
+    :param storyline_path: path to the storyline
+    :param outdir: directory to save the files to
+    :param nsims: number of simulations to run
+    :param mode_sites: a list of modes and sites some or all of:     ('dryland', 'oxford'),
+                                                                     ('irrigated', 'eyrewell'),
+                                                                     ('irrigated', 'oxford'),
+    :param padock_rest: boolean if True run paddock restrictions,
+    :param save_daily: boolean if True save daily data to netcdf otherwise just save monthly
+    :param description: description to append to the default description for the netcdf
+    :param swg_dir: directory to the stocastic weather dir which has full netcdfs for all possible weather states
+    :param verbose: boolean, if True then print data as it runs
+    :param n_parallel: int, the number of parallel runs happening (used to prevent memory errors from large sims while
+                       multiprocessing.  if calling this funtion, then simply leave as 1
+    :return: None
     """
-
+    assert isinstance(n_parallel, int)
+    assert n_parallel > 0
     storyline_key = os.path.splitext(os.path.basename(storyline_path))[0]
     storyline = pd.read_csv(storyline_path)
     simlen = np.array([month_len[e] for e in storyline.month]).sum()
@@ -108,12 +118,12 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
                          storyline_key=storyline_key,
                          outdir=outdir,
                          save_daily=save_daily, description=description, storyline_text=storyline_text, swg_dir=swg_dir,
-                         verbose=verbose)
+                         verbose=verbose, n_parallel=n_parallel)
         if padock_rest:
             _run_paddock_rest(storyline_key=storyline_key, outdir=outdir, storyline=storyline, nsims=nsims, mode=mode,
                               site=site, simlen=simlen,
                               save_daily=save_daily, description=description, storyline_text=storyline_text,
-                              swg_dir=swg_dir, verbose=verbose)
+                              swg_dir=swg_dir, verbose=verbose, n_parallel=n_parallel)
 
 
 def get_rest_tolerance(r):
@@ -195,8 +205,10 @@ def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, s
 
 
 def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir,
-                     save_daily, description, storyline_text, swg_dir, verbose):
-    number_run = int(psutil.virtual_memory().available // memory_per_run * (simlen / 365))
+                     save_daily, description, storyline_text, swg_dir, verbose, n_parallel):
+    number_run = int(
+        psutil.virtual_memory().available // memory_per_run * (simlen / 365) / n_parallel
+    )
     chunks = int(-1 * (-nsims // number_run))
     if chunks == 1:
         number_run = nsims
@@ -235,7 +247,7 @@ def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir
 
 
 def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simlen,
-                      save_daily, description, storyline_text, swg_dir, verbose):
+                      save_daily, description, storyline_text, swg_dir, verbose, n_parallel):
     """
     run storyline through paddock restrictions...
     :param storyline:
@@ -246,8 +258,10 @@ def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simle
     :return:
     """
     # paddock level restrictions
-    levels = np.arange(0, 125, 25) / 100
-    number_run = int(psutil.virtual_memory().available // (memory_per_run * (simlen / 365) * len(levels)))
+    levels = np.arange(0, 125, 25) / 100  # levels already capture the extra (mean run) as levels has start stop
+    number_run = int(
+        psutil.virtual_memory().available // (memory_per_run * (simlen / 365) * len(levels)) / n_parallel
+    )
     chunks = int(-1 * (-nsims // number_run))
     if chunks == 1:
         number_run = nsims
@@ -413,7 +427,10 @@ def _write_data(nc_file, year, month, outdata, current_c, nperchunk, chunks, nsi
         resamp_data = np.zeros((len(yearmonths), to_val - current_c * nperchunk)) * np.nan
         for k, (y, m) in enumerate(yearmonths):
             idx = ((year == y) & (month == m))
-            resamp_data[k, :] = np.nanmean(outdata[i, idx, :], axis=0)[:to_val - current_c * nperchunk]
+            if v == 'RESEED':  # make reseed easier to understand (1 if reseeds in the month)
+                resamp_data[k, :] = np.nansum(outdata[i, idx, :], axis=0)[:to_val - current_c * nperchunk]
+            else:
+                resamp_data[k, :] = np.nanmean(outdata[i, idx, :], axis=0)[:to_val - current_c * nperchunk]
 
         temp[:, (current_c * nperchunk): to_val] = resamp_data
 
@@ -521,9 +538,13 @@ def _create_nc_file(outpath, number_run, month, doy, year, storyline_text, save_
 
     # make output variables
     for v in out_variables:
+        ex = ''
+        if v == 'RESEEDED':
+            ex = (' for RESEEDED the monthly data is summed across the month, so if any reseed event happened '
+                  'it will be 1 as only 1 reseed event is allowed per year in these sims')
         temp = nc_file.createVariable('m_{}'.format(v), float, ('sim_month', 'realisation'))
         temp.setncatts({'units': out_metadata[v.upper()]['unit'],
-                        'description': out_metadata[v.upper()]['description'],
+                        'description': out_metadata[v.upper()]['description'] + ex,
                         'long_name': 'monthly mean {}'.format(v),
                         'missing_value': np.nan})
 

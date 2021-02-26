@@ -6,24 +6,41 @@ import os
 import numpy as np
 import pandas as pd
 import time
+from copy import deepcopy
 import multiprocessing
 import logging
 import psutil
-from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growth, default_swg_dir, default_mode_sites
+from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growth, default_swg_dir, default_mode_sites, \
+    default_pasture_growth_dir
+
+pgm_log_dir = os.path.join(default_pasture_growth_dir, 'logs')
+if not os.path.exists(pgm_log_dir):
+    os.makedirs(pgm_log_dir)
+
 
 # todo check full script
 def run_full_model_mp(storyline_path_mult,
                       outdir_mult,
                       nsims_mult,
-                      mode_sites_mult,
-                      padock_rest_mult,
-                      save_daily_mult,
+                      log_path,
                       description_mult,
-                      swg_dir_mult,
-                      log_path, pool_size=None):
+                      padock_rest_mult=False,
+                      save_daily_mult=False,
+                      mode_sites_mult=default_mode_sites,
+                      swg_dir_mult=default_swg_dir,
+                      pool_size=None,
+                      verbose=False):
     """
-    run a bunch of BASGRA models for storylines as multiprocessing
-    :param log_path: directory to save the log
+    run a bunch of basgra models for storylines
+    :param storyline_path_mult: list of storyline_paths
+    :param outdir_mult: list of outdirs
+    :param nsims_mult: can be either a single value or a list
+    :param mode_sites_mult: can be either a single value or a list
+    :param padock_rest_mult: can be either a single value or a list
+    :param save_daily_mult: can be either a single value or a list
+    :param description_mult: can be either a single value or a list
+    :param swg_dir_mult: can be either a single value or a list
+    :param log_path: path to save the log
     :param pool_size: if none use full processor pool otherwise specify
     :return:
     """
@@ -33,7 +50,7 @@ def run_full_model_mp(storyline_path_mult,
     assert storyline_path_mult.ndim == 1
     assert ex_shape == outdir_mult.shape
 
-    # might not be 1d
+    # make args that might not be the right shape into the right shape
     args_n1d = {
         'nsims_mult': nsims_mult,
         'mode_sites_mult': mode_sites_mult,
@@ -44,20 +61,39 @@ def run_full_model_mp(storyline_path_mult,
 
     }
     for k in args_n1d.keys():
-        t = np.atleast_1d(args_n1d[k])
-        if len(t) == 1:
-            t = np.repeat(t, ex_shape)
-        assert t.shape == ex_shape, (f'unexpected shape for {k} '
-                                                  f'expected to match storylines shape {ex_shape} '
-                                                  'or to be of length 1 or non-iterable')
+        if k == 'mode_sites_mult':
+            t = np.array(args_n1d[k])
+            if t.ndim == 2:
+                t = np.moveaxis(np.atleast_3d(t), -1, 0)
+                t = np.array([t[0] for e in range(ex_shape[0])])
+            elif t.ndim == 3 and len(t) == 1:
+                t = np.array([t[0] for e in range(ex_shape[0])])
+
+            assert t.shape[0] == ex_shape[0] and t.shape[-1] == 2, (f'unexpected shape{t.shape} for {k} '
+                                                                    'expected to match storylines '
+                                                                    f'shape ({ex_shape[0]},2) '
+                                                                    'or to be of length 1 or non-iterable')
+
+        else:
+            t = np.atleast_1d(args_n1d[k])
+            if len(t) == 1:
+                t = np.repeat(t, ex_shape)
+            assert t.shape == ex_shape, (f'unexpected shape{t.shape} for {k} '
+                                         f'expected to match storylines shape {ex_shape} '
+                                         'or to be of length 1 or non-iterable')
         args_n1d[k] = t
+
+    if pool_size is None:
+        pool_size = psutil.cpu_count(logical=True)
+    pool_size = min(ex_shape[0],
+                    pool_size)  # to make is so full memory is avalible if running a smaller num of sims than pool size
 
     if not os.path.exists(os.path.dirname(log_path)):
         os.makedirs(os.path.dirname(log_path))
 
     runs = []
     for i, (s, o) in enumerate(zip(storyline_path_mult, outdir_mult)):
-        runs.append({
+        runs.append(deepcopy({
             'storyline_path': s,
             'outdir': o,
             'nsims': args_n1d['nsims_mult'][i],
@@ -66,11 +102,11 @@ def run_full_model_mp(storyline_path_mult,
             'save_daily': args_n1d['save_daily_mult'][i],
             'description': args_n1d['description_mult'][i],
             'swg_dir': args_n1d['swg_dir_mult'][i],
-        })
-    t = time.time() #todo check args are right
+            'verbose': verbose,
+            'n_parallel': pool_size
+        }))
+    t = time.time()
     multiprocessing.log_to_stderr(logging.DEBUG)
-    if pool_size is None:
-        pool_size = psutil.cpu_count(logical=True)
     pool = multiprocessing.Pool(processes=pool_size,
                                 initializer=start_process)
 
@@ -104,6 +140,7 @@ kwarg_keys = ['storyline_path', 'success', 'outdir', 'nsims', 'mode_sites', 'pad
 
 def _rpg_mp(kwargs):
     storyline_id = os.path.basename(kwargs['storyline_path']).split('.')[0]
+    kwargs['nsims'] = int(kwargs['nsims'])
 
     success = True
     v = 'no error'
@@ -118,3 +155,19 @@ def _rpg_mp(kwargs):
     kwargs['error_v'] = v
     print('finished storyline: {},  success: {}, error: {}'.format(storyline_id, success, v))
     return [kwargs[e] for e in kwarg_keys]
+
+
+if __name__ == '__main__':
+    from Climate_Shocks.climate_shocks_env import storyline_dir
+
+    spaths = np.repeat([os.path.join(storyline_dir, '0-baseline.csv')], (20))
+    odirs = [os.path.join(default_pasture_growth_dir, 'test_mp_f', f't{e}') for e in range(20)]
+    run_full_model_mp(storyline_path_mult=spaths,
+                      outdir_mult=odirs,
+                      nsims_mult=500,
+                      log_path=os.path.join(pgm_log_dir, 'test_mp_function.csv'),
+                      description_mult='just to test mp function',
+                      padock_rest_mult=False,
+                      save_daily_mult=False,
+                      pool_size=None,
+                      verbose=True)

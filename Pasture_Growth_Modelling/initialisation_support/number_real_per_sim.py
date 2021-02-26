@@ -62,9 +62,10 @@ def plot_resampled_sims(paths, ns, n_compare, show=True, save_dir=None):
                 ax.set_xlabel('PGR dif')
                 ax2.boxplot(difs, labels=x)
                 if save_dir is not None:
-                    if not os.path.exists(save_dir):
-                        os.makedirs(save_dir)
-                    fig.savefig(os.path.join(save_dir, '{}_{}_{}_comp.png'.format(os.path.basename(p).split('.')[0],
+                    use_save_dir = os.path.join(save_dir,os.path.basename(p).split('.')[0])
+                    if not os.path.exists(use_save_dir):
+                        os.makedirs(use_save_dir)
+                    fig.savefig(os.path.join(use_save_dir, '{}_{}_{}_comp.png'.format(os.path.basename(p).split('.')[0],
                                                                                   f, n)))
                 if not show:
                     plt.close(fig)
@@ -88,10 +89,7 @@ def plot_resampled_sims(paths, ns, n_compare, show=True, save_dir=None):
 if __name__ == '__main__':
     # todo re look at given new generation technique
     all_paths = [  # todo add irrigated base and keep looking at this!
-        # r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test10000-eyrewell-irrigated.nc",
-        # r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\0-base-oxford-dryland.nc",
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\0-base-oxford-irrigated.nc",
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\0-base-eyrewell-irrigated.nc",
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_full_modelbase_10000\0-baseline-eyrewell-irrigated.nc"
 
     ]
     plot_resampled_sims(all_paths,
