@@ -24,4 +24,5 @@ if __name__ == '__main__':
                            outdir=os.path.join(default_pasture_growth_dir, 'baseline_sim'),
                            nsims=10000, padock_rest=True,
                            save_daily=True, description='initial baseline run after the realisation cleaning, '
-                                                        'have not finalized irrigation restirctions')
+                                                        'have not finalized irrigation restirctions',
+                           verbose=True)

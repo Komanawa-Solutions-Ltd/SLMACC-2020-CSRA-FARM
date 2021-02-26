@@ -127,7 +127,8 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
                               save_daily=save_daily, description=description, storyline_text=storyline_text,
                               swg_dir=swg_dir, verbose=verbose, n_parallel=n_parallel)
     t = time.time() - t
-    print(f'took {t / 60} min to run {nsims} sims paddock_rest{padock_rest}')
+    if verbose:
+        print(f'took {t / 60} min to run {nsims} sims paddock_rest{padock_rest}')
 
 
 def get_rest_tolerance(r):
