@@ -91,19 +91,18 @@ def plot_sims(data_paths, plot_ind=False, plt_vars=out_variables, nindv=100, sav
 
 if __name__ == '__main__':
     plot_sims([
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_full_model0-base1000_paddock_daily\0-baseline-paddock_0-eyrewell-irrigated.nc",
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_full_model0-base1000_paddock_daily\0-baseline-paddock_1-eyrewell-irrigated.nc",
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_full_model0-base1000_paddock_daily\0-baseline-paddock_2-eyrewell-irrigated.nc",
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_full_model0-base1000_paddock_daily\0-baseline-paddock_3-eyrewell-irrigated.nc",
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_pg_ex_swg\0-baseline-paddock_0-eyrewell-irrigated.nc",
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_pg_ex_swg\0-baseline-paddock_1-eyrewell-irrigated.nc",
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_pg_ex_swg\0-baseline-paddock_2-eyrewell-irrigated.nc",
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_pg_ex_swg\0-baseline-paddock_3-eyrewell-irrigated.nc",
 
 
     ], plot_ind=False, plt_vars=out_variables, nindv=30, save_dir=None, show=True,
               daily=False)
 
     plot_sims([
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_full_model0-base1000_paddock_daily\0-baseline-paddock-mean-eyrewell-irrigated.nc",
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_full_model0-base1000_paddock_daily\0-baseline-eyrewell-irrigated.nc",
-
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_pg_ex_swg\0-baseline-paddock-mean-eyrewell-irrigated.nc",
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_pg_ex_swg\0-baseline-eyrewell-irrigated.nc",
 
     ], plot_ind=False, plt_vars=out_variables, nindv=30, save_dir=None, show=True,
               daily=False)
