@@ -14,8 +14,7 @@ from Pasture_Growth_Modelling.plot_full_model import plot_sims
 from BS_work.SWG.SWG_wrapper import *
 
 if __name__ == '__main__':
-    # todo set up with new datsets run on dickie , and REVIEW
-    # todo may need to re-run with new irrigation restrictions...
+    # todo re-run with new restriction data
     run_basgra = False  # to stop accidental re-run
     plot_results = True
 
