@@ -14,7 +14,7 @@ from Pasture_Growth_Modelling.plot_full_model import plot_sims
 from BS_work.SWG.SWG_wrapper import *
 
 if __name__ == '__main__':
-    # todo re-run with new restriction data
+    #todo review with new restrictions
     run_basgra = False  # to stop accidental re-run
     plot_results = True
 
@@ -22,8 +22,8 @@ if __name__ == '__main__':
         # run basgra
         print('running BASGRA')
         run_pasture_growth(storyline_path=os.path.join(storyline_dir, '0-baseline.csv'),
-                           outdir=os.path.join(default_pasture_growth_dir, 'baseline_sim'),
-                           nsims=10000, padock_rest=True,
+                           outdir=os.path.join(default_pasture_growth_dir, 'baseline_sim_no_pad'),
+                           nsims=10000, padock_rest=False,
                            save_daily=True, description='initial baseline run after the realisation cleaning, '
                                                         'have not finalized irrigation restirctions',
                            verbose=True)
