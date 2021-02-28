@@ -19,7 +19,7 @@ def make_storyline_files():
         os.makedirs(individual_dir)
     # there are 69 unique event/month comparisons.
 
-    all_events = make_sampling_options(False)  # this is just to exaime swg data,
+    all_events = make_sampling_options()  # this is just to exaime swg data,
 
 
     for m in range(1, 13):

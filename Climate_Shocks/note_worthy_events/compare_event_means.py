@@ -5,7 +5,6 @@ unique months and then stiching them togeather after the fact
  Author: Matt Hanson
  Created: 19/02/2021 1:07 PM
  """
-from Storylines.storyline_building_support import make_sampling_options
 from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_sma_smd_historical, \
     calc_smd_monthly
 from Climate_Shocks.get_past_record import get_vcsn_record

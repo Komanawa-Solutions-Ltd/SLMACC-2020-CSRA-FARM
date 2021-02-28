@@ -61,7 +61,7 @@ month_fchange = {
 
 
 # make all possible events
-def make_sampling_options(include_irr=True):
+def make_sampling_options():
     acceptable = get_acceptable_events()
     outdata = {}
     for m in range(1, 13):
@@ -74,10 +74,6 @@ def make_sampling_options(include_irr=True):
                 temp.append(k.split('-')[0])
                 precip.append(k.split('-')[1])
                 rest.append(0)
-                if m in irrig_season and include_irr:
-                    temp.append(k.split('-')[0])
-                    precip.append(k.split('-')[1])
-                    rest.append(1)  # todo more options?
 
         outdata[m] = np.array([temp, precip, rest]).transpose()
 

@@ -24,7 +24,7 @@ def make_storyline_files():
         os.makedirs(individual_dir)
     # there are 69 unique event/month comparisons.
 
-    all_events = make_sampling_options(False)
+    all_events = make_sampling_options()
 
     for m in range(1, 13):
         for e in all_events[m]:
