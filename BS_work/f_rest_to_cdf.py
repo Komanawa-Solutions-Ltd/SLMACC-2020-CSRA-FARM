@@ -83,7 +83,8 @@ for key in keys:
 
 for key in keys:
 
-    df = pd.DataFrame(data=dis_dict[key], index=bins)
+    df = pd.DataFrame(data=dis_dict[key],
+                      index=bins).fillna(0) # fill na to allow me to run event combinations without restrictions
 
     f = open(os.path.join(outdir, f"Ir_CDFs_{key}.csv"), "w")
     f.write(f"# This file contains Irrigation restriction CDF's for the {key} dissagreation \n")

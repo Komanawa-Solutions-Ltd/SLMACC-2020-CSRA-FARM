@@ -4,9 +4,13 @@
  """
 import warnings
 import pandas as pd
+import os
 import numpy as np
 from Storylines.check_storyline import get_acceptable_events
 from Climate_Shocks import climate_shocks_env
+import itertools
+import ksl_env
+from scipy.interpolate import interp1d
 
 month_len = {
     1: 31,
@@ -40,10 +44,21 @@ prev_month = {
     12: 11,
 }
 
-base_events = {e: ('A', 'A', 0) for e in range(1, 13)}
-# todo need revisit with any new classifications updated 24-02-2021
-base_events[6] = ('C', 'A', 0)
-base_events[7] = ('C', 'A', 0)
+month_fchange = {
+    1: "Jan",
+    2: "Feb",
+    3: "Mar",
+    4: "Apr",
+    5: "May",
+    6: "Jun",
+    7: "Jul",
+    8: "Aug",
+    9: "Sep",
+    10: "Oct",
+    11: "Nov",
+    12: "Dec",
+}
+
 
 # make all possible events
 def make_sampling_options(include_irr=True):
@@ -62,24 +77,89 @@ def make_sampling_options(include_irr=True):
                 if m in irrig_season and include_irr:
                     temp.append(k.split('-')[0])
                     precip.append(k.split('-')[1])
-                    rest.append(1)
+                    rest.append(1)  # todo more options?
 
         outdata[m] = np.array([temp, precip, rest]).transpose()
 
     return outdata
 
-def map_irrigation(m, rest):
-    #todo run 3 states initially the median, 75th and 90th
-    # todo also include the precip state for the month! and previous month???
-    # todo map irrigation for the month for True and False states.
-    warnings.warn('###########MAPPING RESTRICTIONS IS ONLY AT DUMMY FUNCTINO YOU DUMMY##############')
-    return 0
 
-def get_rest_base_data(): #todo should this be defined by the precip and previous precip??? or just the precip??
-    data = pd.read_csv(climate_shocks_env.event_def_path, skiprows=1)
-    data.loc[:, 'mlen'] = data.loc[:, 'month'].replace(month_len)
-    data.loc[:, 'rest'] = data.loc[:, 'rest_cum'] / data.loc[:, 'mlen']
-    data = data.loc[(data.temp == 0) & (data.precip == 0)]
-    out = data.loc[:, ['month', 'rest']].groupby('month').describe().round(4)
+def map_irrigation(m, rest_quantile, precip, prev_precip):
+    if m in (5, 6, 7, 8,):  # non irrigation months
+        return 0
+    key = f'{prev_precip}-{precip}'.replace('W', 'ND').replace('A', 'ND')
+    rest_quantile = round(rest_quantile, 2)
+    return round(_rest_data[key].loc[rest_quantile, m],4)
 
-    return out[('rest', 'mean')].to_dict()
+
+def _get_irr_by_quantile(recalc=False):
+    dnd = [['D', 'ND'], ['D', 'ND']]
+    possible_quantiles = np.arange(1, 100) / 100
+
+    rest_dir = os.path.join(climate_shocks_env.supporting_data_dir, 'rest_mapper')
+    if not os.path.exists(rest_dir):
+        os.makedirs(rest_dir)
+
+    if os.listdir(rest_dir) == [f'{m1}-{m2}_rest.csv' for m1, m2 in itertools.product(*dnd)] and not recalc:
+        out = {}
+        for m1, m2 in itertools.product(*dnd):
+            quantile = pd.read_csv(os.path.join(rest_dir, f'{m1}-{m2}_rest.csv'), index_col=0)
+            quantile.columns = quantile.columns.astype(int)
+            out[f'{m1}-{m2}'] = quantile
+        return out
+
+    rest_data = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir,
+                                         'restriction_record_detrend.csv'))
+    rest_data = rest_data.groupby(['year', 'month']).mean()
+    event_data = pd.read_csv(climate_shocks_env.event_def_path, skiprows=1)
+    event_data = event_data.set_index(['year', 'month'])
+    event_data.loc[:, 'rest'] = rest_data.loc[:, 'f_rest']
+    event_data.loc[:, 'dnd'] = [fix_precip(e) for e in event_data.loc[:, 'precip']]
+    event_data.loc[:, 'prev_dnd'] = [fix_precip(e) for e in event_data.loc[:, 'prev_precip']]
+
+    out = {}
+    for m1, m2 in itertools.product(*dnd):
+        outdata = pd.DataFrame(index=possible_quantiles, columns=irrig_season)
+        for m in irrig_season:
+            temp = event_data.loc[:, m, :]
+            temp = temp.loc[(temp.dnd == m2) & (temp.prev_dnd == m1)]
+            outdata.loc[:, m] = temp.loc[:, 'rest'].quantile(possible_quantiles).fillna(0)
+        out[f'{m1}-{m2}'] = outdata
+        outdata.to_csv(os.path.join(rest_dir, f'{m1}-{m2}_rest.csv'))
+    return out
+
+_rest_data = _get_irr_by_quantile()
+
+def fix_precip(x):
+    if x == 1:
+        return "D"
+    else:
+        if not np.isnan(x):
+            return "ND"
+
+
+base_rest_data = {
+    1: 0.5,
+    2: 0.5,
+    3: 0.5,
+    4: 0.5,
+    9: 0.5,
+    10: 0.5,
+    11: 0.5,
+    12: 0.5,
+
+    # non-irrigation seasons
+    5:0.01,
+    6:0.01,
+    7:0.01,
+    8:0.01,
+}
+
+base_events = {e: ('A', 'A', map_irrigation(e, base_rest_data[e], 'A', 'A')) for e in range(1, 13)}
+# todo need revisit with any new classifications updated 24-02-2021
+base_events[6] = ('C', 'A', 0)
+base_events[7] = ('C', 'A', 0)
+
+
+if __name__ == '__main__':
+    print(map_irrigation(1, 0.5, 'D', 'ND'))
