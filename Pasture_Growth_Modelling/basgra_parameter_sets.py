@@ -20,7 +20,7 @@ default_mode_sites = (
 )
 
 abs_max_irr = 5  # the absolute maximum irrigation values
-# todo check initals for SWG data, consider setting to mean of start month of 'average' conditions
+# todo check initals for SWG data, consider setting to mean of start month of 'average' conditions, yes necissary!
 def get_params_doy_irr(mode):
     """
     get the parameter sets for all of the basgra modelling
@@ -40,7 +40,7 @@ def get_params_doy_irr(mode):
     params['fixed_removal'] = 0
     params['opt_harvfrin'] = 1
 
-    if mode == 'irrigated':
+    if mode == 'irrigated': #todo I need to make these starting bits site specific
         # add irrigation parameters
         params['irr_frm_paw'] = 1
         params['IRRIGF'] = 1

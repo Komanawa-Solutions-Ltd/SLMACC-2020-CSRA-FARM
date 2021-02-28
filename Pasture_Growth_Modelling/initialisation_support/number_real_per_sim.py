@@ -10,13 +10,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 default_funcs = (
-    'np.nanmedian',
+    #'np.nanmedian',
     'np.nanmean',
 )
 
 
 def make_dataset(all_data, n, n_compare,
-                 functions=default_funcs):  # todo looks like we can get away with 100 sims, but check on other storylines!
+                 functions=default_funcs):  # todo looks like we can get away with 100-1000 sims, but check on other storylines!
     """
 
     :param all_data: nc dataset
@@ -89,7 +89,9 @@ def plot_resampled_sims(paths, ns, n_compare, show=True, save_dir=None):
 if __name__ == '__main__':
     # todo re look at given new generation technique
     all_paths = [  # todo add irrigated base and keep looking at this!
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\test_full_modelbase_10000\0-baseline-eyrewell-irrigated.nc"
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-oxford-dryland.nc",
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-oxford-irrigated.nc",
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-eyrewell-irrigated.nc",
 
     ]
     plot_resampled_sims(all_paths,

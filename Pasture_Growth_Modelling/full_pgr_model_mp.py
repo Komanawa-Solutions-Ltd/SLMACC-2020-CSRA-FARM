@@ -18,7 +18,6 @@ if not os.path.exists(pgm_log_dir):
     os.makedirs(pgm_log_dir)
 
 
-# todo check full script
 def run_full_model_mp(storyline_path_mult,
                       outdir_mult,
                       nsims_mult,

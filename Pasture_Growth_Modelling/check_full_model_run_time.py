@@ -10,7 +10,6 @@ import pandas as pd
 import itertools
 from Climate_Shocks.climate_shocks_env import storyline_dir
 
-# todo review new outputs
 def check_full_model_run_time():
     out = pd.DataFrame(index=range(5), columns=['nsims', 'time', 'paddock_res', 'save_daily'])
     t = time.time()
