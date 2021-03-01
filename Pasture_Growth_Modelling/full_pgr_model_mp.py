@@ -44,7 +44,7 @@ def run_full_model_mp(storyline_path_mult,
     :param pool_size: if none use full processor pool otherwise specify
     :return:
     """
-    log_path = f'{log_path}-{datetime.datetime.now().isoformat().replace(":","-").split(".")[0]}.csv' #todo check
+    log_path = f'{log_path}-{datetime.datetime.now().isoformat().replace(":", "-").split(".")[0]}.csv'  # todo check
     if not os.path.exists(os.path.dirname(log_path)):
         os.makedirs(os.path.dirname(log_path))
 
@@ -91,8 +91,6 @@ def run_full_model_mp(storyline_path_mult,
         pool_size = psutil.cpu_count(logical=True)
     pool_size = min(ex_shape[0],
                     pool_size)  # to make is so full memory is avalible if running a smaller num of sims than pool size
-
-
 
     runs = []
     for i, (s, o) in enumerate(zip(storyline_path_mult, outdir_mult)):
@@ -162,15 +160,27 @@ def _rpg_mp(kwargs):
 
 if __name__ == '__main__':
     from Climate_Shocks.climate_shocks_env import storyline_dir
+    nsims=1
+
+    run_mp = False
+    run_norm = True
 
     spaths = np.repeat([os.path.join(storyline_dir, '0-baseline.csv')], (20))
     odirs = [os.path.join(default_pasture_growth_dir, 'test_mp_f', f't{e}') for e in range(20)]
-    run_full_model_mp(storyline_path_mult=spaths,
-                      outdir_mult=odirs,
-                      nsims_mult=500,
-                      log_path=os.path.join(pgm_log_dir, 'test_mp_function.csv'),
-                      description_mult='just to test mp function',
-                      padock_rest_mult=False,
-                      save_daily_mult=False,
-                      pool_size=None,
-                      verbose=True)
+
+    if run_mp:
+        run_full_model_mp(storyline_path_mult=spaths,
+                          outdir_mult=odirs,
+                          nsims_mult=nsims,
+                          log_path=os.path.join(pgm_log_dir, 'test_mp_function.csv'),
+                          description_mult='just to test mp function',
+                          padock_rest_mult=False,
+                          save_daily_mult=False,
+                          pool_size=None,
+                          verbose=True)
+    if run_norm:
+        for p, od in zip(spaths, odirs):
+            print(p)
+            run_pasture_growth(storyline_path=p, outdir=od, nsims=nsims, padock_rest=False,
+                               save_daily=True, description='', verbose=True,
+                               n_parallel=1)

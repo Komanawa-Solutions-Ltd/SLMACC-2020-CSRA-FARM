@@ -12,6 +12,7 @@ from Storylines.storyline_building_support import base_events, map_irrigation
 from Storylines.check_storyline import ensure_no_impossible_events
 from Climate_Shocks import climate_shocks_env
 from Pasture_Growth_Modelling.full_pgr_model_mp import default_pasture_growth_dir, run_full_model_mp, pgm_log_dir
+from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growth
 
 default_lauras_story_dir = os.path.join(climate_shocks_env.temp_storyline_dir, 'lauras_run')
 if not os.path.exists(default_lauras_story_dir):
@@ -129,14 +130,13 @@ def make_storylines(rest_quantiles=[0.75, 0.95], no_irr_event=0.5):
                                          f'{k}-rest-{int(no_irr_event * 100)}-{int(q * 100)}.csv'))
 
 
-def run_pasture_growth():  # todo
-    make_storylines()
+def run_pasture_growth_mp():  # todo
     base_outdir = os.path.join(default_pasture_growth_dir, 'lauras')
     if not os.path.exists(base_outdir):
         os.makedirs(base_outdir)
 
-    outdirs = [os.path.join(base_outdir, e.split('.')[0]) for e in os.listdir(default_lauras_story_dir)]
-    paths = [os.path.join(default_lauras_story_dir, e) for e in os.listdir(default_lauras_story_dir)]
+    outdirs = [os.path.join(base_outdir, e.split('.')[0]) for e in os.listdir(default_lauras_story_dir)][0:5]
+    paths = [os.path.join(default_lauras_story_dir, e) for e in os.listdir(default_lauras_story_dir)][0:5]
     run_full_model_mp(
         storyline_path_mult=paths,
         outdir_mult=outdirs,
@@ -150,5 +150,21 @@ def run_pasture_growth():  # todo
     )
 
 
+def run_pasture_growth_normal():
+    base_outdir = os.path.join(default_pasture_growth_dir, 'lauras')
+    if not os.path.exists(base_outdir):
+        os.makedirs(base_outdir)
+
+    nsims = 1
+    paths = [os.path.join(default_lauras_story_dir, e) for e in os.listdir(default_lauras_story_dir)]#[5:]
+    outdirs = [base_outdir for e in paths]
+
+    for p, od in zip(paths, outdirs):
+        print(p)
+        run_pasture_growth(storyline_path=p, outdir=od, nsims=nsims, padock_rest=False,
+                           save_daily=True, description='', verbose=True,
+                           n_parallel=1)
+
+
 if __name__ == '__main__':
-    run_pasture_growth()
+    run_pasture_growth_normal()
