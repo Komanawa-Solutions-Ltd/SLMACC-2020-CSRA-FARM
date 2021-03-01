@@ -112,8 +112,6 @@ def run_full_model_mp(storyline_path_mult,
                                 initializer=start_process)
 
     results = pool.map_async(_rpg_mp, runs)
-    while not results.ready():
-        time.sleep(60)  # sleep 1 min between printing
     pool_outputs = results.get()
     pool.close()  # no more tasks
     pool.join()
@@ -154,19 +152,21 @@ def _rpg_mp(kwargs):
         success = False
     kwargs['success'] = success
     kwargs['error_v'] = v
+    kwargs['mode_sites'] = '; '.join(['-'.join(e)  for e in kwargs['mode_sites']])
     print('finished storyline: {},  success: {}, error: {}'.format(storyline_id, success, v))
     return [kwargs[e] for e in kwarg_keys]
 
 
 if __name__ == '__main__':
     from Climate_Shocks.climate_shocks_env import storyline_dir
-    nsims=1
 
-    run_mp = False
-    run_norm = True
+    nsims = 1
 
-    spaths = np.repeat([os.path.join(storyline_dir, '0-baseline.csv')], (20))
-    odirs = [os.path.join(default_pasture_growth_dir, 'test_mp_f', f't{e}') for e in range(20)]
+    run_mp = True
+    run_norm = False
+
+    spaths = np.repeat([os.path.join(storyline_dir, '0-baseline.csv')], (10))
+    odirs = [os.path.join(default_pasture_growth_dir, 'test_mp_f', f't{e}') for e in range(10)]
 
     if run_mp:
         run_full_model_mp(storyline_path_mult=spaths,

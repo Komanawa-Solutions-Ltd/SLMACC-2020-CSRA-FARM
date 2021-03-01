@@ -130,17 +130,17 @@ def make_storylines(rest_quantiles=[0.75, 0.95], no_irr_event=0.5):
                                          f'{k}-rest-{int(no_irr_event * 100)}-{int(q * 100)}.csv'))
 
 
-def run_pasture_growth_mp():  # todo
+def run_pasture_growth_mp():
     base_outdir = os.path.join(default_pasture_growth_dir, 'lauras')
     if not os.path.exists(base_outdir):
         os.makedirs(base_outdir)
 
-    outdirs = [os.path.join(base_outdir, e.split('.')[0]) for e in os.listdir(default_lauras_story_dir)][0:5]
-    paths = [os.path.join(default_lauras_story_dir, e) for e in os.listdir(default_lauras_story_dir)][0:5]
+    outdirs = [base_outdir for e in os.listdir(default_lauras_story_dir)]
+    paths = [os.path.join(default_lauras_story_dir, e) for e in os.listdir(default_lauras_story_dir)]
     run_full_model_mp(
         storyline_path_mult=paths,
         outdir_mult=outdirs,
-        nsims_mult=1,  # todo!
+        nsims_mult=10000,
         log_path=os.path.join(pgm_log_dir, 'lauras'),
         description_mult='a first run of Lauras storylines',
         padock_rest_mult=False,
@@ -156,7 +156,7 @@ def run_pasture_growth_normal():
         os.makedirs(base_outdir)
 
     nsims = 1
-    paths = [os.path.join(default_lauras_story_dir, e) for e in os.listdir(default_lauras_story_dir)]#[5:]
+    paths = [os.path.join(default_lauras_story_dir, e) for e in os.listdir(default_lauras_story_dir)]
     outdirs = [base_outdir for e in paths]
 
     for p, od in zip(paths, outdirs):
@@ -167,4 +167,6 @@ def run_pasture_growth_normal():
 
 
 if __name__ == '__main__':
-    run_pasture_growth_normal()
+    run=False
+    if run:
+        run_pasture_growth_mp()

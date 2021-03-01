@@ -191,7 +191,6 @@ def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, s
         rest_data = get_irr_data(num_to_pull, storyline, simlen)
     else:
         raise ValueError('weird arg for mode: {}'.format(mode))
-
     # get weather data
     weather_data = _get_weather_data(storyline=storyline, nsims=num_to_pull, simlen=simlen, swg_dir=swg_dir, site=site)
 
@@ -578,13 +577,13 @@ def _get_weather_data(storyline, nsims, simlen, swg_dir, site):
     ey = storyline.year.iloc[-1]
     em = storyline.month.iloc[-1]
     out_index = pd.date_range(f'{sy}-{sm:02d}-1', f'{ey}-{em:02d}-{month_len[em]}')
-
     for p, t, m in storyline.loc[:, ['precip_class', 'temp_class', 'month']].itertuples(False, None):
-        temp = nc.Dataset(os.path.join(swg_dir, f'm{int(m):02d}-{t}-{p}-0_all.nc'))
+        temp = nc.Dataset(os.path.join(swg_dir, 'm{m:02d}-{t}-{p}-0_all.nc'.format(m=int(m), t=t, p=p)))
         idxs = np.random.randint(temp.dimensions['real'].size, size=(nsims,))
 
         out_array[i: i + month_len[m], :, :] = np.array(temp.variables[var][:, :, idxs])
         i += month_len[m]
+        temp.close()
     outdata = []
     for s in range(nsims):
         t = pd.DataFrame(out_array[:, :, s], columns=measures_cor, index=out_index)
