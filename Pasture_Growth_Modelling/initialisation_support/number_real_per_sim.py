@@ -8,15 +8,17 @@ import ksl_env
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import glob
+from Pasture_Growth_Modelling.full_model_implementation import default_pasture_growth_dir
 
 default_funcs = (
-    #'np.nanmedian',
+    # 'np.nanmedian',
     'np.nanmean',
 )
 
 
 def make_dataset(all_data, n, n_compare,
-                 functions=default_funcs):  # todo looks like we can get away with 100-1000 sims, but check on other storylines!
+                 functions=default_funcs, real=True):  # todo looks like we can get away with 100-1000 sims, but check on other storylines!
     """
 
     :param all_data: nc dataset
@@ -35,20 +37,30 @@ def make_dataset(all_data, n, n_compare,
         for i in range(n_compare):
             idx = np.random.choice(options, n)
             outdata[i] = eval(k)(all_pg[idx], axis=0)
-        difs = outdata - act_mean[np.newaxis, :]
+        difs = (outdata - act_mean[np.newaxis, :])
+        if not real:
+            idx = act_mean >= 10
+            difs[:, idx] *= 1 / act_mean[np.newaxis, idx] * 100
+            difs[:, ~idx] = 0
+            difs[:, 0] = 0
         all_out[k] = (act_mean, outdata, difs)
     return all_out
 
 
-def plot_resampled_sims(paths, ns, n_compare, show=True, save_dir=None):
+def plot_resampled_sims(paths, ns, n_compare, show=True, save_dir=None, real=True):
+    if real:
+        unit = 'kgdm/ha'
+    else:
+        unit = '%'
     for p in paths:
+        print(f'plotting for {p}')
         all_data = nc.Dataset(p)
         x = pd.date_range('2025-07-01', freq='MS', periods=all_data.dimensions['sim_month'].size)
         ns = np.atleast_1d(ns)
         for f in default_funcs:
             outdata_all = []
             for n in ns:
-                data = make_dataset(all_data, n, n_compare)
+                data = make_dataset(all_data, n, n_compare, real=real)
                 act_mean, outdata, difs = data[f]
                 outdata_all.append(np.nanmax(np.abs(difs), axis=1))
                 fig, (ax, ax2) = plt.subplots(2, figsize=(11, 11))
@@ -58,44 +70,59 @@ def plot_resampled_sims(paths, ns, n_compare, show=True, save_dir=None):
                 ax.plot(x, act_mean, c='b')
                 ax.set_ylim(0, 120)
                 ax.set_title('{} - {}:\n{} vs 10000'.format(f, os.path.basename(p), n))
-                ax.set_ylabel('PGR')
-                ax.set_xlabel('PGR dif')
+                ax.set_ylabel('PGR kgDM/ha')
+                ax.set_xlabel('Date')
+                ax2.set_ylabel(f'PGR dif ({unit})')
                 ax2.boxplot(difs, labels=x)
+                ax2.get_xaxis().set_ticklabels([])
                 if save_dir is not None:
-                    use_save_dir = os.path.join(save_dir,os.path.basename(p).split('.')[0])
+                    use_save_dir = os.path.join(save_dir, os.path.basename(p).split('.')[0])
                     if not os.path.exists(use_save_dir):
                         os.makedirs(use_save_dir)
                     fig.savefig(os.path.join(use_save_dir, '{}_{}_{}_comp.png'.format(os.path.basename(p).split('.')[0],
-                                                                                  f, n)))
+                                                                                      f, n)))
                 if not show:
                     plt.close(fig)
             fig, ax = plt.subplots(figsize=(11, 11))
             ax.boxplot(outdata_all, labels=ns)
-            ax.set_yscale('log')
+            if real:
+                ax.set_yscale('log')
+                ax.set_ylim(0.1, 100)
+            else:
+                ax.set_ylim(0, 100)
+
             ax.set_title('{} - {}:\n n vs 10000'.format(f, os.path.basename(p), ))
             ax.set_xlabel('number of sims per average')
-            ax.set_ylabel('maximum error from 10,000 simulation {}'.format(f))
-            ax.set_ylim(0.1, 100)
+            ax.set_ylabel(f'maximum error ({unit}) from 10,000 simulation {f}')
             if save_dir is not None:
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
                 fig.savefig(os.path.join(save_dir, 'z-max_diff_{}_{}.png'.format(os.path.basename(p).split('.')[0],
                                                                                  f)))
+            if not show:
+                plt.close(fig)
 
     if show:
         plt.show()
 
 
 if __name__ == '__main__':
-    # todo re look at given new generation technique
+    # todo look at this as a percentage of the results.
     all_paths = [  # todo add irrigated base and keep looking at this!
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-oxford-dryland.nc",
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-oxford-irrigated.nc",
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-eyrewell-irrigated.nc",
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-oxford-dryland.nc",
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-oxford-irrigated.nc",
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-eyrewell-irrigated.nc"]
+    ap2 = glob.glob(os.path.join(default_pasture_growth_dir, 'lauras', '*.nc'))
 
-    ]
+    all_paths = all_paths + ap2
+
     plot_resampled_sims(all_paths,
                         [1, 10, 100, 200, 300, 400, 500, 750, 1000, 2500, 5000, 7500], 1000,
                         save_dir=os.path.join(ksl_env.slmmac_dir_unbacked,
-                                              'pasture_growth_sims', 'n_comp_plots'),
-                        show=False)
+                                              'pasture_growth_sims', 'n_comp_plots_per'),
+                        show=False, real=False)
+    plot_resampled_sims(all_paths[0:2],
+                        [1, 10, 100, 200, 300, 400, 500, 750, 1000, 2500, 5000, 7500], 1000,
+                        save_dir=os.path.join(ksl_env.slmmac_dir_unbacked,
+                                              'pasture_growth_sims', 'n_comp_plots_real'),
+                        show=False, real=True)
