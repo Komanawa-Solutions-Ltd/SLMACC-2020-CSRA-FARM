@@ -597,9 +597,9 @@ def _get_weather_data(storyline, nsims, simlen, swg_dir, site):
     return outdata
 
 
-def pasture_growth_anamoly(storyline_key, data):  # todo point and cumulative
+def pasture_growth_anamoly(storyline_key, data):  # todo point and cumulative #todo start here
     raise NotImplementedError
 
 
-def _add_pasture_growthanaomoly_to_nc():  # todo
+def _add_pasture_growth_anaomoly_to_nc(site, mode, ):  # todo
     raise NotImplementedError
