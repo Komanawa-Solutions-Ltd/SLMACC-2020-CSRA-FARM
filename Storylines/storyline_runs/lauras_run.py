@@ -7,12 +7,14 @@ import pandas as pd
 import ksl_env
 import os
 import itertools
+import glob
 from copy import deepcopy
 from Storylines.storyline_building_support import base_events, map_irrigation
 from Storylines.check_storyline import ensure_no_impossible_events
 from Climate_Shocks import climate_shocks_env
 from Pasture_Growth_Modelling.full_pgr_model_mp import default_pasture_growth_dir, run_full_model_mp, pgm_log_dir
 from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growth
+from Pasture_Growth_Modelling.plot_full_model import plot_sims
 
 default_lauras_story_dir = os.path.join(climate_shocks_env.temp_storyline_dir, 'lauras_run')
 if not os.path.exists(default_lauras_story_dir):
@@ -168,5 +170,27 @@ def run_pasture_growth_normal():
 
 if __name__ == '__main__':
     run = False  # todo start by review this
+    run_missing = False
+    plot = False
     if run:
         run_pasture_growth_mp()
+    if run_missing:
+        base_outdir = os.path.join(default_pasture_growth_dir, 'lauras')
+        sp = r'D:/mh_unbacked\SLMACC_2020\temp_storyline_files\lauras_run\Event Every Season Y1 and Y3-rest-50-95.csv'
+        run_pasture_growth(storyline_path=sp, outdir=base_outdir, nsims=10000, padock_rest=False,
+                           save_daily=True, description='', verbose=True,
+                           n_parallel=1)
+
+    if plot:
+        data_paths = []
+
+        base_outdir = os.path.join(default_pasture_growth_dir, 'lauras')
+        for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
+            data_paths = glob.glob(os.path.join(base_outdir, f'*{sm}.nc')) + [
+                f"D:/mh_unbacked/SLMACC_2020/pasture_growth_sims/baseline_sim_no_pad/0-baseline-{sm}.nc"]
+            outdir = os.path.join(base_outdir, 'plots', sm)
+            if not os.path.exists(outdir):
+                os.makedirs(outdir)
+            plot_sims(data_paths,
+                      plot_ind=False, nindv=100, save_dir=outdir, show=False, figsize=(20, 20),
+                      daily=False)

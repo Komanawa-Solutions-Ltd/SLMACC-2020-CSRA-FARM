@@ -191,6 +191,7 @@ class MovingBlockBootstrapGenerator(object):
                 d[:] = range(self.nsims[k])
 
         for k in self.keys:
+            print(f'making data for {k}')
             out = np.zeros((self.nsims[k], self.sim_len[k])) * np.nan
             n = self.nsims[k] // self.nblocksize[k]
 

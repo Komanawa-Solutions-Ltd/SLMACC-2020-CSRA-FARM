@@ -31,7 +31,7 @@ def plot_sims(data_paths, plot_ind=False, plt_vars=out_variables, nindv=100, sav
     assert np.in1d(plt_vars, out_variables).all(), (f'some variables {plt_vars} are not found in the '
                                                     f'expected variables: {out_variables}')
     if save_dir is not None:
-        if os.path.exists(save_dir):
+        if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
     axs = {}

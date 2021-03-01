@@ -164,8 +164,8 @@ def examine_means():
 
 
 
-def get_irrigation_generator(): #todo I may need to make this bigger
-    nsims = 1e6
+def get_irrigation_generator():
+    nsims = 1e7
     nsims = int(nsims)
     input_data, block, sim_len, nmonths_comments = make_input_data_1month()
     comments = '''generator created by get irrigation generator {} to provide daily 
@@ -187,5 +187,4 @@ if __name__ == '__main__':
     # gen_v5: 1 month precip with multiple blocks see nc file
     # gen_v6: 1 month precip with multiple blocks see nc file
 
-    examine_auto_correlation()
-    examine_means()
+    get_irrigation_generator()
