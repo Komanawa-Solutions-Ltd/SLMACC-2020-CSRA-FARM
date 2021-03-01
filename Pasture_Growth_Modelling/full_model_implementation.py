@@ -17,6 +17,7 @@ from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, c
     create_matrix_weather, default_mode_sites, abs_max_irr
 from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growth
 from Climate_Shocks.Stochastic_Weather_Generator.read_swg_data import change_swg_units
+from Climate_Shocks import climate_shocks_env
 
 # add basgra nz functions
 ksl_env.add_basgra_nz_path()
@@ -597,9 +598,105 @@ def _get_weather_data(storyline, nsims, simlen, swg_dir, site):
     return outdata
 
 
-def pasture_growth_anamoly(storyline_key, data):  # todo point and cumulative #todo start here
-    raise NotImplementedError
+def add_pasture_growth_anaomoly_to_nc(nc_path, recalc=False):  # todo check and add to run
+    data = nc.Dataset(nc_path, 'a')
+    site, mode = os.path.basename(nc_path).strip('.nc').split('-')[-2:]
+    # monthly
+    sim_months = np.array(data.variables['m_month'])
+    sim_years = np.array(data.variables['m_year'])
+    base_data, story_nm, storyline_text, base_run_date, base_sim_path = _get_baseline_pgr(site, mode, sim_months,
+                                                                                          sim_years, False,
+                                                                                          recalc=recalc)
+    sim_data = np.array(data.variables['m_PGR'])
+    pga_an = data.createVariable('m_PGRA', float, ('sim_month', 'realisation'), fill_value=np.nan)
+    pga_an.setncatts({'units': 'kgDM/ha/day',
+                      'base_storyline_name': story_nm,
+                      'base_storyline_text': storyline_text,
+                      'base_run_date': base_run_date,
+                      'base_simulation_path': base_sim_path,
+                      'long_name': f'monthly pasture growth anomaly from {story_nm}',
+                      'missing_value': np.nan,
+                      'direction': 'sim - base'})
+    pga_an[:] = sim_data - base_data[:, np.newaxis]
+
+    # daily
+    if 'd_year' in data.variables.keys():
+        sim_days = np.array(data.variables['d_doy'])
+        sim_years = np.array(data.variables['d_year'])
+        sim_data = np.array(data.variables['d_PGR'])
+
+        base_data, story_nm, storyline_text, base_run_date, base_sim_path = _get_baseline_pgr(site, mode, sim_days,
+                                                                                              sim_years, True,
+                                                                                              recalc=recalc)
+        pga_an = data.createVariable('d_PGRA', float, ('sim_day', 'realisation'), fill_value=np.nan)
+        pga_an.setncatts({'units': 'kgDM/ha/day',
+                          'base_storyline_name': story_nm,
+                          'base_storyline_text': storyline_text,
+                          'base_run_date': base_run_date,
+                          'long_name': f'daily pasture growth anomaly from {story_nm}',
+                          'missing_value': np.nan,
+                          'direction': 'sim - base'})
+        pga_an[:] = sim_data - base_data[:, np.newaxis]
+
+    data.close()
 
 
-def _add_pasture_growth_anaomoly_to_nc(site, mode, ):  # todo
-    raise NotImplementedError
+def _get_baseline_pgr(site, mode, sim_mon_day, sim_years, daily, recalc=False):  # todo check
+    """
+
+    :param site:
+    :param mode:
+    :param daily:
+    :param recalc: normal reacl
+    :return: baseline name, baseline data
+    """
+    story_nm = '0-baseline.csv'
+    base_sim_path = os.path.join(default_pasture_growth_dir, "baseline_sim_no_pad", f"0-baseline-{site}-{mode}.nc")
+    with open(os.path.join(climate_shocks_env.storyline_dir, story_nm), 'r') as f:
+        storyline_text = f.readlines()
+
+    data_dir = os.path.join(climate_shocks_env.supporting_data_dir, 'baseline_data')
+    if daily:
+        d = 'daily'
+    else:
+        d = 'monthly'
+    saved_data_path = os.path.join(data_dir, f'{site}-{mode}-{d}.csv')
+
+    if os.path.exists(saved_data_path) and not recalc:
+        with open(saved_data_path, 'r') as f:
+            base_run_date = f.readline().strip()
+        base_data = pd.read_csv(saved_data_path, skiprows=1)
+    else:
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+        data = nc.Dataset(base_sim_path)
+        if daily:
+            sim_d_m = np.array(data.variables['d_doy'])
+            sim_years = np.array(data.variables['d_year'])
+            sim_data = np.nanmean(np.array(data.variables['d_PGR']), axis=1)
+        else:
+            sim_d_m = np.array(data.variables['m_month'])
+            sim_years = np.array(data.variables['m_year'])
+            sim_data = np.nanmean(np.array(data.variables['m_PGR']), axis=1)
+        base_data = pd.DataFrame({
+            'year': sim_years, 'sim_mon_day': sim_d_m, 'PGR': sim_data
+        })
+        base_run_date = data.history
+        # get the base data and save to a csv... make sure it;s dataframe with columns, year, sim_mon_day, 'pgr'
+
+        with open(saved_data_path, 'w') as f:
+            f.write(f'{base_run_date}\n')
+        base_data.to_csv(saved_data_path, mode='a')
+
+    # get the base data aligned to the simdata (e.g. don't assume same time steps)
+    base_data = base_data.set_index(['year', 'sim_mon_day'])
+    base_data = base_data.loc[zip(sim_years, sim_mon_day), 'PGR'].values
+    assert sim_years.shape == base_data.shape
+    return base_data, story_nm, storyline_text, base_run_date, base_sim_path
+
+
+if __name__ == '__main__':
+    # todo start here testing this, I think it has run...
+    add_pasture_growth_anaomoly_to_nc(
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad - Copy\0-baseline-eyrewell-irrigated.nc",
+        recalc=True)
