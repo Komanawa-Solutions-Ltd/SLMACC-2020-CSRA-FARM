@@ -6,6 +6,7 @@ import os
 import numpy as np
 import pandas as pd
 import time
+import datetime
 from copy import deepcopy
 import multiprocessing
 import logging
@@ -39,10 +40,14 @@ def run_full_model_mp(storyline_path_mult,
     :param save_daily_mult: can be either a single value or a list
     :param description_mult: can be either a single value or a list
     :param swg_dir_mult: can be either a single value or a list
-    :param log_path: path to save the log
+    :param log_path: path to save the log, has the time and .csv appended to it
     :param pool_size: if none use full processor pool otherwise specify
     :return:
     """
+    log_path = f'{log_path}-{datetime.datetime.now().isoformat().replace(":","-").split(".")[0]}.csv' #todo check
+    if not os.path.exists(os.path.dirname(log_path)):
+        os.makedirs(os.path.dirname(log_path))
+
     storyline_path_mult = np.atleast_1d(storyline_path_mult)
     outdir_mult = np.atleast_1d(outdir_mult)
     ex_shape = storyline_path_mult.shape
@@ -87,8 +92,7 @@ def run_full_model_mp(storyline_path_mult,
     pool_size = min(ex_shape[0],
                     pool_size)  # to make is so full memory is avalible if running a smaller num of sims than pool size
 
-    if not os.path.exists(os.path.dirname(log_path)):
-        os.makedirs(os.path.dirname(log_path))
+
 
     runs = []
     for i, (s, o) in enumerate(zip(storyline_path_mult, outdir_mult)):

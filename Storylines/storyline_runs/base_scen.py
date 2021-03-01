@@ -14,7 +14,6 @@ from Pasture_Growth_Modelling.plot_full_model import plot_sims
 from BS_work.SWG.SWG_wrapper import *
 
 if __name__ == '__main__':
-    #todo review with new restrictions
     run_basgra = False  # to stop accidental re-run
     plot_results = True
 
@@ -30,18 +29,9 @@ if __name__ == '__main__':
 
     if plot_results:
         path_list = [
-            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-paddock-mean-eyrewell-irrigated.nc",
-            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-paddock-mean-oxford-irrigated.nc",
-            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-eyrewell-irrigated.nc",
-            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-oxford-irrigated.nc",
+            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-eyrewell-irrigated.nc",
+            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-oxford-irrigated.nc",
         ]
-        path_list = [
-            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-paddock_2-eyrewell-irrigated.nc",
-            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-paddock_3-eyrewell-irrigated.nc",
-            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-paddock_0-eyrewell-irrigated.nc",
-            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim\0-baseline-paddock_1-eyrewell-irrigated.nc",
-        ]
-
         plot_sims(data_paths=path_list, plot_ind=True, nindv=30, save_dir=None, show=True, figsize=(11, 8),
                   daily=False
                   )

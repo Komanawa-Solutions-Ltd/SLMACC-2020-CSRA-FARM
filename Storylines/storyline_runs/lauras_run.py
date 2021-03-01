@@ -11,10 +11,11 @@ from copy import deepcopy
 from Storylines.storyline_building_support import base_events, map_irrigation
 from Storylines.check_storyline import ensure_no_impossible_events
 from Climate_Shocks import climate_shocks_env
-
-# todo start here!
+from Pasture_Growth_Modelling.full_pgr_model_mp import default_pasture_growth_dir, run_full_model_mp, pgm_log_dir
 
 default_lauras_story_dir = os.path.join(climate_shocks_env.temp_storyline_dir, 'lauras_run')
+if not os.path.exists(default_lauras_story_dir):
+    os.makedirs(default_lauras_story_dir)
 
 
 def make_storylines(rest_quantiles=[0.75, 0.95], no_irr_event=0.5):
@@ -116,6 +117,7 @@ def make_storylines(rest_quantiles=[0.75, 0.95], no_irr_event=0.5):
         data.loc[:, 'precip_class_prev'] = data.loc[:, 'precip_class'].shift(1).fillna('A')
         for q in rest_quantiles:
             data_out = deepcopy(data)
+            data_out.loc[:, 'rest_code'] = data.loc[:, 'rest']
             q1 = q - no_irr_event
             for i in data.index:
                 data_out.loc[i, 'rest'] = map_irrigation(m=data_out.loc[i, 'month'],
@@ -123,14 +125,30 @@ def make_storylines(rest_quantiles=[0.75, 0.95], no_irr_event=0.5):
                                                          precip=data_out.loc[i, 'precip_class'],
                                                          prev_precip=data_out.loc[i, 'precip_class_prev'])
 
-                # todo save storyline
             data_out.to_csv(os.path.join(default_lauras_story_dir,
                                          f'{k}-rest-{int(no_irr_event * 100)}-{int(q * 100)}.csv'))
 
 
-def run_pasture_growth():
+def run_pasture_growth():  # todo
     make_storylines()
+    base_outdir = os.path.join(default_pasture_growth_dir, 'lauras')
+    if not os.path.exists(base_outdir):
+        os.makedirs(base_outdir)
+
+    outdirs = [os.path.join(base_outdir, e.split('.')[0]) for e in os.listdir(default_lauras_story_dir)]
+    paths = [os.path.join(default_lauras_story_dir, e) for e in os.listdir(default_lauras_story_dir)]
+    run_full_model_mp(
+        storyline_path_mult=paths,
+        outdir_mult=outdirs,
+        nsims_mult=1,  # todo!
+        log_path=os.path.join(pgm_log_dir, 'lauras'),
+        description_mult='a first run of Lauras storylines',
+        padock_rest_mult=False,
+        save_daily_mult=True,
+        verbose=False
+
+    )
 
 
 if __name__ == '__main__':
-    make_storylines()
+    run_pasture_growth()
