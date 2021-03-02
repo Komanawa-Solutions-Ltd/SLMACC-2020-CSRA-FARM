@@ -5,7 +5,10 @@
 import os
 import numpy as np
 import pandas as pd
+import netCDF4 as nc
+import glob
 from copy import deepcopy
+import ksl_env
 from Storylines.storyline_building_support import make_sampling_options, base_events, default_storyline_time, \
     map_storyline_rest, irrig_season
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
@@ -66,12 +69,42 @@ def run_pasture_growth():  # todo
                       verbose=False)
 
 
-def extract_data():  # todo
-    raise NotImplementedError
+def extract_data(outdir):  # todo
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
+        paths = sorted(glob.glob(os.path.join(unique_events_pgr_dir, f'*{sm}.nc')))
+        names = [os.path.basename(os.path.splitext(p)[0]) for p in paths]
+        outdata = pd.DataFrame(index=range(0, 12), columns=names,dtype=float)
+        outdata.index.name = 'months since event month'
+        for p, n in zip(paths, names):
+            data = nc.Dataset(p)
+            months = np.array(data.variables['m_month'])
+            idx = np.where(months == int(n.split('-')[0].replace('m', '')))[0][0]
+            use_data = np.nanmean(np.array(data.variables['m_PGRA'][idx:]), axis=1)
+            outdata.loc[range(len(use_data)), n] = use_data
+
+            data.close()
+        outdata = outdata.round(2).transpose()
+        temp = list(outdata.columns.values)
+        outdata.loc[:, 'month'] = outdata.index.str.split('-').str[0].str.replace('m', '')
+        outdata.loc[:, 'precip'] = outdata.index.str.split('-').str[1]
+        outdata.loc[:, 'temp'] = outdata.index.str.split('-').str[2]
+        outdata.loc[:, 'rest'] = outdata.index.str.split('-').str[3]
+
+        outdata = outdata.loc[:, ['month',
+                                  'precip',
+                                  'temp',
+                                  'rest'] + temp]
+        outdata.to_csv(os.path.join(outdir, f'{sm}-PGA-singe_events.csv'))
 
 
 if __name__ == '__main__':
     run_pgr = False
+    extract = True
     if run_pgr:
         make_storylines()
         run_pasture_growth()
+    if extract:
+        extract_data(os.path.join(ksl_env.slmmac_dir, 'output_pgr', 'unique_events'))
