@@ -12,4 +12,3 @@ if __name__ == '__main__':
         storyline_path=os.path.join(climate_shocks_env.storyline_dir, '0-baseline.csv'),
         outdir=os.path.join(default_pasture_growth_dir, 'test_pg_ex_swg'), nsims=100, padock_rest=True,
         save_daily=True, description='', verbose=False)
-    # todo make sure new reseeded works appropriately

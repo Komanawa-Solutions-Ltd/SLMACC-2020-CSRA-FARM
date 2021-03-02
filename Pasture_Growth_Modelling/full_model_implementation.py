@@ -244,11 +244,14 @@ def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir
         month = out.index.month.values
         doy = out.loc[:, 'doy'].values
         year = out.loc[:, 'year'].values
-        _output_to_nc(storyline_key=storyline_key, storyline_text=storyline_text, outdir=outdir, outdata=all_out,
-                      nsims=nsims,
-                      month=month, doy=doy, year=year,
-                      chunks=chunks, current_c=c, nperchunk=number_run, save_daily=save_daily,
-                      description=description, site=site, mode=mode, verbose=verbose)
+        outpath = _output_to_nc(storyline_key=storyline_key, storyline_text=storyline_text, outdir=outdir,
+                                outdata=all_out,
+                                nsims=nsims,
+                                month=month, doy=doy, year=year,
+                                chunks=chunks, current_c=c, nperchunk=number_run, save_daily=save_daily,
+                                description=description, site=site, mode=mode, verbose=verbose)
+
+    add_pasture_growth_anaomoly_to_nc(outpath)
 
 
 def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simlen,
@@ -308,13 +311,16 @@ def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simle
         month = temp.index.month.values
         doy = temp.loc[:, 'doy'].values
         year = temp.loc[:, 'year'].values
-        _output_to_nc_paddock(storyline_key=storyline_key, storyline_text=storyline_text, outdir=outdir,
-                              outdata=all_out, nsims=nsims,
-                              month=month, doy=doy, year=year,
-                              chunks=chunks, current_c=c, nperchunk=number_run,
-                              out_names=out_names, out_limits=out_limits,
-                              save_daily=save_daily, description=description, site=site, mode=mode,
-                              verbose=verbose)
+        outpaths = _output_to_nc_paddock(storyline_key=storyline_key, storyline_text=storyline_text, outdir=outdir,
+                                         outdata=all_out, nsims=nsims,
+                                         month=month, doy=doy, year=year,
+                                         chunks=chunks, current_c=c, nperchunk=number_run,
+                                         out_names=out_names, out_limits=out_limits,
+                                         save_daily=save_daily, description=description, site=site, mode=mode,
+                                         verbose=verbose)
+
+    for p in outpaths:
+        add_pasture_growth_anaomoly_to_nc(p)
 
 
 def _output_to_nc(storyline_key, storyline_text, outdir, outdata, nsims, month, doy, year,
@@ -349,6 +355,8 @@ def _output_to_nc(storyline_key, storyline_text, outdir, outdata, nsims, month, 
         nc_file = nc.Dataset(outpath, 'a')
 
     _write_data(nc_file, year, month, outdata, current_c, nperchunk, chunks, nsims, save_daily, verbose=verbose)
+    nc_file.close()
+    return outpath
 
 
 def _output_to_nc_paddock(storyline_key, storyline_text, outdir, outdata, nsims, month, doy, year,
@@ -373,7 +381,7 @@ def _output_to_nc_paddock(storyline_key, storyline_text, outdir, outdata, nsims,
     :param description: additional description
     :return:
     """
-
+    out_paths = []
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
@@ -394,6 +402,8 @@ def _output_to_nc_paddock(storyline_key, storyline_text, outdir, outdata, nsims,
 
         _write_data(nc_file, year, month, outdata[:, :, i, :], current_c, nperchunk, chunks, nsims, save_daily,
                     verbose=verbose)
+        nc_file.close()
+        out_paths.append(outpath)
 
     # save the mean data
     outpath = os.path.join(outdir, '{}-paddock-mean-{}-{}.nc'.format(storyline_key, site, mode))
@@ -412,6 +422,9 @@ def _output_to_nc_paddock(storyline_key, storyline_text, outdir, outdata, nsims,
 
     outdata = np.nanmean(outdata, axis=2)
     _write_data(nc_file, year, month, outdata, current_c, nperchunk, chunks, nsims, save_daily, verbose=verbose)
+    out_paths.append(outpath)
+    nc_file.close()
+    return out_paths
 
 
 def _write_data(nc_file, year, month, outdata, current_c, nperchunk, chunks, nsims, save_daily,
@@ -432,7 +445,7 @@ def _write_data(nc_file, year, month, outdata, current_c, nperchunk, chunks, nsi
         resamp_data = np.zeros((len(yearmonths), to_val - current_c * nperchunk)) * np.nan
         for k, (y, m) in enumerate(yearmonths):
             idx = ((year == y) & (month == m))
-            if v == 'RESEED':  # make reseed easier to understand (1 if reseeds in the month)
+            if v == 'RESEEDED':  # make reseed easier to understand (1 if reseeds in the month)
                 resamp_data[k, :] = np.nansum(outdata[i, idx, :], axis=0)[:to_val - current_c * nperchunk]
             else:
                 resamp_data[k, :] = np.nanmean(outdata[i, idx, :], axis=0)[:to_val - current_c * nperchunk]
@@ -598,7 +611,7 @@ def _get_weather_data(storyline, nsims, simlen, swg_dir, site):
     return outdata
 
 
-def add_pasture_growth_anaomoly_to_nc(nc_path, recalc=False):  # todo check and add to run
+def add_pasture_growth_anaomoly_to_nc(nc_path, recalc=False):
     data = nc.Dataset(nc_path, 'a')
     site, mode = os.path.basename(nc_path).strip('.nc').split('-')[-2:]
     # monthly
@@ -608,7 +621,10 @@ def add_pasture_growth_anaomoly_to_nc(nc_path, recalc=False):  # todo check and 
                                                                                           sim_years, False,
                                                                                           recalc=recalc)
     sim_data = np.array(data.variables['m_PGR'])
-    pga_an = data.createVariable('m_PGRA', float, ('sim_month', 'realisation'), fill_value=np.nan)
+    if 'm_PGRA' not in data.variables.keys():  # needed to allow re-write
+        pga_an = data.createVariable('m_PGRA', float, ('sim_month', 'realisation'), fill_value=np.nan)
+    else:
+        pga_an = data.variables['m_PGRA']
     pga_an.setncatts({'units': 'kgDM/ha/day',
                       'base_storyline_name': story_nm,
                       'base_storyline_text': storyline_text,
@@ -619,6 +635,23 @@ def add_pasture_growth_anaomoly_to_nc(nc_path, recalc=False):  # todo check and 
                       'direction': 'sim - base'})
     pga_an[:] = sim_data - base_data[:, np.newaxis]
 
+    # cumulative
+    if 'm_PGRA_cum' not in data.variables.keys():
+        pga_an = data.createVariable('m_PGRA_cum', float, ('sim_month', 'realisation'), fill_value=np.nan)
+    else:
+        pga_an = data.variables['m_PGRA_cum']
+    pga_an.setncatts({'units': 'kgDM/ha/day',
+                      'base_storyline_name': story_nm,
+                      'base_storyline_text': storyline_text,
+                      'base_run_date': base_run_date,
+                      'base_simulation_path': base_sim_path,
+                      'long_name': f'cumulative monthly pasture growth anomaly from {story_nm}, adj for ndays in month',
+                      'missing_value': np.nan,
+                      'direction': 'sim - base'})
+    pga_an[:] = np.nancumsum((sim_data - base_data[:, np.newaxis]) *
+                             np.array([month_len[e] for e in sim_months])[:, np.newaxis]
+                             , axis=0)
+
     # daily
     if 'd_year' in data.variables.keys():
         sim_days = np.array(data.variables['d_doy'])
@@ -628,7 +661,10 @@ def add_pasture_growth_anaomoly_to_nc(nc_path, recalc=False):  # todo check and 
         base_data, story_nm, storyline_text, base_run_date, base_sim_path = _get_baseline_pgr(site, mode, sim_days,
                                                                                               sim_years, True,
                                                                                               recalc=recalc)
-        pga_an = data.createVariable('d_PGRA', float, ('sim_day', 'realisation'), fill_value=np.nan)
+        if 'd_PGRA' not in data.variables.keys():
+            pga_an = data.createVariable('d_PGRA', float, ('sim_day', 'realisation'), fill_value=np.nan)
+        else:
+            pga_an = data.variables['d_PGRA']
         pga_an.setncatts({'units': 'kgDM/ha/day',
                           'base_storyline_name': story_nm,
                           'base_storyline_text': storyline_text,
@@ -638,10 +674,24 @@ def add_pasture_growth_anaomoly_to_nc(nc_path, recalc=False):  # todo check and 
                           'direction': 'sim - base'})
         pga_an[:] = sim_data - base_data[:, np.newaxis]
 
+        # cumulative
+        if 'd_PGRA_sum' not in data.variables.keys():
+            pga_an = data.createVariable('d_PGRA_cum', float, ('sim_day', 'realisation'), fill_value=np.nan)
+        else:
+            pga_an = data.variables['d_PGRA_sum']
+        pga_an.setncatts({'units': 'kgDM/ha/day',
+                          'base_storyline_name': story_nm,
+                          'base_storyline_text': storyline_text,
+                          'base_run_date': base_run_date,
+                          'long_name': f'cumulative daily pasture growth anomaly from {story_nm}',
+                          'missing_value': np.nan,
+                          'direction': 'sim - base'})
+        pga_an[:] = np.nancumsum(sim_data - base_data[:, np.newaxis], axis=0)
+
     data.close()
 
 
-def _get_baseline_pgr(site, mode, sim_mon_day, sim_years, daily, recalc=False):  # todo check
+def _get_baseline_pgr(site, mode, sim_mon_day, sim_years, daily, recalc=False):
     """
 
     :param site:
@@ -695,8 +745,14 @@ def _get_baseline_pgr(site, mode, sim_mon_day, sim_years, daily, recalc=False): 
     return base_data, story_nm, storyline_text, base_run_date, base_sim_path
 
 
+def fix_reseeded(nc_path):
+    data = nc.Dataset(nc_path, 'a')
+    t = data.variables['m_RESEEDED']
+    t[:] = (np.array(t) > 0).astype(float)
+    data.close()
+
+
 if __name__ == '__main__':
-    # todo start here testing this, I think it has run...
     add_pasture_growth_anaomoly_to_nc(
         r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad - Copy\0-baseline-eyrewell-irrigated.nc",
         recalc=True)

@@ -18,7 +18,7 @@ default_funcs = (
 
 
 def make_dataset(all_data, n, n_compare,
-                 functions=default_funcs, real=True):  # todo looks like we can get away with 100-1000 sims, but check on other storylines!
+                 functions=default_funcs, real=True):
     """
 
     :param all_data: nc dataset
@@ -107,8 +107,7 @@ def plot_resampled_sims(paths, ns, n_compare, show=True, save_dir=None, real=Tru
 
 
 if __name__ == '__main__':
-    # todo look at this as a percentage of the results.
-    all_paths = [  # todo add irrigated base and keep looking at this!
+    all_paths = [
         r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-oxford-dryland.nc",
         r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-oxford-irrigated.nc",
         r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-eyrewell-irrigated.nc"]
@@ -121,8 +120,9 @@ if __name__ == '__main__':
                         save_dir=os.path.join(ksl_env.slmmac_dir_unbacked,
                                               'pasture_growth_sims', 'n_comp_plots_per'),
                         show=False, real=False)
-    plot_resampled_sims(all_paths[0:2],
+    plot_resampled_sims(all_paths,
                         [1, 10, 100, 200, 300, 400, 500, 750, 1000, 2500, 5000, 7500], 1000,
                         save_dir=os.path.join(ksl_env.slmmac_dir_unbacked,
                                               'pasture_growth_sims', 'n_comp_plots_real'),
                         show=False, real=True)
+    # todo discuss with Laura and Zeb and decide what to use
