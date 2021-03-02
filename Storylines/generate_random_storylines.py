@@ -8,7 +8,7 @@ import numpy as np
 from Storylines.check_storyline import get_acceptable_events
 
 # todo I need to generate storylines!
-
+#todo 100 sims for these
 
 def generate_random_suite(n):
     # todo generate N random options

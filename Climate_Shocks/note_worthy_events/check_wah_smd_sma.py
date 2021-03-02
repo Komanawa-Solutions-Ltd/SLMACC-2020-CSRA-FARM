@@ -56,7 +56,7 @@ def make_exploritory_data(number=None):
     wind_10 = np.delete(wind_10, bad_sims, axis=1)
     mslp = np.delete(mslp, bad_sims, axis=1)
 
-    smd, sma, pet = calc_smd_sma_wah_monthly(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv=200)
+    smd, sma, pet = calc_smd_sma_wah_monthly(dates, rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv=200)
     rain *= 84600
     return dates, rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, smd, sma, pet
 
@@ -82,6 +82,5 @@ def plot_exlploritory_data(number, num_to_plot=20, vars_to_plot=['rain', 'pet', 
 
 
 if __name__ == '__main__':
-    # todo check this function!
-    plot_exlploritory_data(10, 2)
+    plot_exlploritory_data(10, 5)
     plt.show()
