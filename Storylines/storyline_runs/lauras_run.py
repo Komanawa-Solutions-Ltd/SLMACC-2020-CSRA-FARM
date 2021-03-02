@@ -15,10 +15,13 @@ from Climate_Shocks import climate_shocks_env
 from Pasture_Growth_Modelling.full_pgr_model_mp import default_pasture_growth_dir, run_full_model_mp, pgm_log_dir
 from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growth
 from Pasture_Growth_Modelling.plot_full_model import plot_sims
+from Pasture_Growth_Modelling.export_to_csvs import export_all_in_pattern
 
 default_lauras_story_dir = os.path.join(climate_shocks_env.temp_storyline_dir, 'lauras_run')
 if not os.path.exists(default_lauras_story_dir):
     os.makedirs(default_lauras_story_dir)
+
+inital_laura_dir = os.path.join(default_pasture_growth_dir, 'lauras')
 
 
 def make_storylines(rest_quantiles=[0.75, 0.95], no_irr_event=0.5):
@@ -172,25 +175,32 @@ if __name__ == '__main__':
     run = False  # todo extract to csvs for laura to play around with
     run_missing = False
     plot = False
+    export_csv = True
     if run:
         run_pasture_growth_mp()
     if run_missing:
-        base_outdir = os.path.join(default_pasture_growth_dir, 'lauras')
+        inital_laura_dir = os.path.join(default_pasture_growth_dir, 'lauras')
         sp = r'D:/mh_unbacked\SLMACC_2020\temp_storyline_files\lauras_run\Event Every Season Y1 and Y3-rest-50-95.csv'
-        run_pasture_growth(storyline_path=sp, outdir=base_outdir, nsims=10000, padock_rest=False,
+        run_pasture_growth(storyline_path=sp, outdir=inital_laura_dir, nsims=10000, padock_rest=False,
                            save_daily=True, description='', verbose=True,
                            n_parallel=1)
 
     if plot:
         data_paths = []
 
-        base_outdir = os.path.join(default_pasture_growth_dir, 'lauras')
+        inital_laura_dir = os.path.join(default_pasture_growth_dir, 'lauras')
         for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
-            data_paths = glob.glob(os.path.join(base_outdir, f'*{sm}.nc')) + [
+            data_paths = glob.glob(os.path.join(inital_laura_dir, f'*{sm}.nc')) + [
                 f"D:/mh_unbacked/SLMACC_2020/pasture_growth_sims/baseline_sim_no_pad/0-baseline-{sm}.nc"]
-            outdir = os.path.join(base_outdir, 'plots', sm)
+            outdir = os.path.join(inital_laura_dir, 'plots', sm)
             if not os.path.exists(outdir):
                 os.makedirs(outdir)
             plot_sims(data_paths,
                       plot_ind=False, nindv=100, save_dir=outdir, show=False, figsize=(20, 20),
                       daily=False)
+    if export_csv:
+        export_all_in_pattern(base_outdir=os.path.join(ksl_env.slmmac_dir, 'output_pgr', 'inital_laura_runs'),
+                              patterns=[
+                                  os.path.join(inital_laura_dir, '*.nc'),
+                                  os.path.join(os.path.dirname(inital_laura_dir), 'baseline_sim_no_pad', '*.nc')
+                              ])

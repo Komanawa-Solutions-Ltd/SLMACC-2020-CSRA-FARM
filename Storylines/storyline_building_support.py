@@ -156,6 +156,8 @@ base_events = {e: ('A', 'A', map_irrigation(e, base_rest_data[e], 'A', 'A')) for
 base_events[6] = ('C', 'A', 0)
 base_events[7] = ('C', 'A', 0)
 
+default_storyline_time = pd.date_range('2024-07-01', '2027-06-01', freq='MS')
+
 
 if __name__ == '__main__':
     print(map_irrigation(1, 0.5, 'D', 'ND'))
