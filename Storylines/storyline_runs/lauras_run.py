@@ -172,7 +172,7 @@ def run_pasture_growth_normal():
 
 
 if __name__ == '__main__':
-    run = False  # todo extract to csvs for laura to play around with
+    run = False
     run_missing = False
     plot = False
     export_csv = True

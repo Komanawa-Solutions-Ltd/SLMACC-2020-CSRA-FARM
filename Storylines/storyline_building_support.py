@@ -80,12 +80,28 @@ def make_sampling_options():
     return outdata
 
 
+def map_storyline_rest(story): #todo check
+    """
+    assumes that the rest values are quantiles
+    :param story:
+    :return:
+    """
+    story.loc[:, 'precip_class_prev'] = story.loc[:, 'precip_class'].shift(1).fillna('A')
+    story.loc[:, 'rest'] = [
+        map_irrigation(m=m,
+                       rest_quantile=rq,
+                       precip=p,
+                       prev_precip=pp) for m, rq, p, pp in story.loc[:, ['month', 'rest',
+                                                                         'precip_class',
+                                                                         'precip_class_prev']].itertuples(False, None)]
+
+
 def map_irrigation(m, rest_quantile, precip, prev_precip):
     if m in (5, 6, 7, 8,):  # non irrigation months
         return 0
     key = f'{prev_precip}-{precip}'.replace('W', 'ND').replace('A', 'ND')
     rest_quantile = round(rest_quantile, 2)
-    return round(_rest_data[key].loc[rest_quantile, m],4)
+    return round(_rest_data[key].loc[rest_quantile, m], 4)
 
 
 def _get_irr_by_quantile(recalc=False):
@@ -124,7 +140,9 @@ def _get_irr_by_quantile(recalc=False):
         outdata.to_csv(os.path.join(rest_dir, f'{m1}-{m2}_rest.csv'))
     return out
 
+
 _rest_data = _get_irr_by_quantile()
+
 
 def fix_precip(x):
     if x == 1:
@@ -145,10 +163,10 @@ base_rest_data = {
     12: 0.5,
 
     # non-irrigation seasons
-    5:0.01,
-    6:0.01,
-    7:0.01,
-    8:0.01,
+    5: 0.01,
+    6: 0.01,
+    7: 0.01,
+    8: 0.01,
 }
 
 base_events = {e: ('A', 'A', map_irrigation(e, base_rest_data[e], 'A', 'A')) for e in range(1, 13)}
@@ -157,7 +175,6 @@ base_events[6] = ('C', 'A', 0)
 base_events[7] = ('C', 'A', 0)
 
 default_storyline_time = pd.date_range('2024-07-01', '2027-06-01', freq='MS')
-
 
 if __name__ == '__main__':
     print(map_irrigation(1, 0.5, 'D', 'ND'))
