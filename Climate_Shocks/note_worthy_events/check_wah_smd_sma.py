@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.cm import get_cmap
 import glob
-from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_sma_smd_historical
+from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_smd_sma_wah_monthly
 from Climate_Shocks.note_worthy_events.explore_wah_soil_moisture import get_sim
 
 
@@ -56,7 +56,7 @@ def make_exploritory_data(number=None):
     wind_10 = np.delete(wind_10, bad_sims, axis=1)
     mslp = np.delete(mslp, bad_sims, axis=1)
 
-    smd, sma, pet = calc_smd_sma_wah(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv=200)
+    smd, sma, pet = calc_smd_sma_wah_monthly(rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv=200)
     rain *= 84600
     return dates, rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, smd, sma, pet
 
