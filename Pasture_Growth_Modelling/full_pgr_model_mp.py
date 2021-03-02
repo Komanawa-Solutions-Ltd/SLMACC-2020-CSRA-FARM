@@ -44,7 +44,7 @@ def run_full_model_mp(storyline_path_mult,
     :param pool_size: if none use full processor pool otherwise specify
     :return:
     """
-    log_path = f'{log_path}-{datetime.datetime.now().isoformat().replace(":", "-").split(".")[0]}.csv'  # todo check
+    log_path = f'{log_path}-{datetime.datetime.now().isoformat().replace(":", "-").split(".")[0]}.csv'
     if not os.path.exists(os.path.dirname(log_path)):
         os.makedirs(os.path.dirname(log_path))
 
