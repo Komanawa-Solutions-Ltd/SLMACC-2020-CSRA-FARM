@@ -7,7 +7,7 @@ import pandas as pd
 import os
 from scipy import stats
 from Climate_Shocks.get_past_record import get_vcsn_record
-from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_sma_smd_historical
+from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_sma_smd_historical, calc_smd_monthly
 from Storylines.check_storyline import get_months_with_events
 from Climate_Shocks.climate_shocks_env import event_def_path
 
@@ -28,17 +28,29 @@ def inverse_percentile(a, value, bootstrap=True):
     return per, err
 
 
-def calc_doy_per_from_historical(version='trended'):
+def calc_doy_per_from_historical(version='detrended2'):
     data = get_vcsn_record(version).reset_index()
-    data.loc[:, 'doy'] = data.date.dt.dayofyear
+    data.loc[:, 'month'] = data.date.dt.month
+    data.loc[:, 'day'] = data.date.dt.day
+
+    # todo fix leap year shit!
+    data = data.loc[~((data.month == 2) & (data.day == 29))]
+    data.loc[:, 'doy'] = pd.to_datetime(
+        [f'2001 - {m:02d} - {d:02d}' for m, d in data.loc[:, ['month', 'day']].itertuples(False, None)]).dayofyear
+
+    # add data
     data.loc[:, 'cold'] = ((data.loc[:, 'tmin'] + data.loc[:, 'tmax']) / 2).rolling(3).mean()
     data.loc[:, 'hot'] = data.loc[:, 'tmax']
     data.loc[:, 'wet'] = data.loc[:, 'rain']
-    temp = calc_sma_smd_historical(data['rain'], data['pet'], data.date, 150, 1)
 
-    trans_cols = ['mean_doy_smd', 'sma', 'smd', 'drain', 'aet_out']
-    data.loc[:, trans_cols] = temp.loc[:, trans_cols]
+    t = calc_smd_monthly(rain=data.rain, pet=data.pet, dates=data.loc[:, 'date'])
+    data.loc[:, 'smd'] = t
+    t = data.loc[:, ['doy', 'smd']].groupby('doy').mean().to_dict()
+    data.loc[:, 'sma'] = data.loc[:, 'smd'] - data.loc[:, 'doy'].replace(t['smd'])
+
     data.loc[:, 'dry'] = data.loc[:, 'sma']
+
+
     use_keys = ['hot', 'cold', 'dry', 'wet']
     thresholds = {
         'hot': 25,
@@ -53,7 +65,10 @@ def calc_doy_per_from_historical(version='trended'):
         print(k)
         temp = data.loc[np.in1d(data.month, events[k2])]
         for d in range(1, 366):
-            days = np.arange(d-5, d+6)
+            if k == 'dry':
+                days = np.array([d])
+            else:
+                days = np.arange(d - 5, d + 6)
             days[days <= 0] += 365
             days[days > 365] += -365
 
@@ -64,7 +79,7 @@ def calc_doy_per_from_historical(version='trended'):
             outdata.loc[d, '{}_per'.format(k)] = per
             outdata.loc[d, '{}_err'.format(k)] = err
     outdata.loc[:, 'date'] = pd.to_datetime(['2001-{:03d}'.format(e) for e in outdata.index], format='%Y-%j')
-    outdata.loc[:,'month'] = outdata.date.dt.month
+    outdata.loc[:, 'month'] = outdata.date.dt.month
 
     # get rid of hangers on from leap years
     for k, k2 in zip(use_keys, use_keys2):
@@ -77,11 +92,5 @@ def calc_doy_per_from_historical(version='trended'):
 
 
 if __name__ == '__main__':
-    data = calc_doy_per_from_historical('detrended')
-    data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles_detrended.csv'))
-
-    data = calc_doy_per_from_historical('detrended2') #this should be the one used, others are for investigation
+    data = calc_doy_per_from_historical('detrended2')  # this should be the one used, others are for investigation
     data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles_detrended_v2.csv'))
-
-    data = calc_doy_per_from_historical()
-    data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles.csv'))

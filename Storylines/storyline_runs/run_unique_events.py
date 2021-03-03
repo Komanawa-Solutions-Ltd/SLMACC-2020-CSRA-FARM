@@ -54,7 +54,7 @@ def make_storylines():
                 outdata.to_csv(os.path.join(unique_events_storyline, f'm{m:02d}-{p}-{t}-{int(rest * 100)}.csv'))
 
 
-def run_pasture_growth():  # todo
+def run_pasture_growth():
     storyline_paths = [os.path.join(unique_events_storyline, e) for e in os.listdir(unique_events_storyline)]
     odirs = [unique_events_pgr_dir for e in storyline_paths]
     nsims = 1000
@@ -69,7 +69,7 @@ def run_pasture_growth():  # todo
                       verbose=False)
 
 
-def extract_data(outdir):  # todo
+def extract_data(outdir):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 

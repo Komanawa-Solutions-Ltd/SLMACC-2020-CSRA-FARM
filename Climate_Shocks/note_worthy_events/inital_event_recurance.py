@@ -77,7 +77,7 @@ def add_pga(grouped_data, sim_keys, outdata):
     return outdata, out_years
 
 
-def calc_dry_recurance():
+def calc_dry_recurance_monthly_smd():
     data = get_vcsn_record(vcsn_version)
     t = calc_smd_monthly(rain=data.rain, pet=data.pet, dates=data.index)
     data.loc[:, 'smd'] = t
@@ -129,7 +129,7 @@ def calc_dry_recurance():
     out_years.to_csv(os.path.join(event_def_dir, 'monthly_smd_dry_years.csv'))
 
 
-def calc_dry_recurance_monthly_smd():
+def calc_dry_recurance():
     data = get_vcsn_record(vcsn_version).reset_index()
 
     temp = calc_sma_smd_historical(data['rain'], data['pet'], data.date, 150, 1)

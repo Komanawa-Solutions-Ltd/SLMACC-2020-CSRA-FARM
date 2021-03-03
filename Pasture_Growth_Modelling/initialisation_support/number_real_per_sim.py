@@ -125,4 +125,4 @@ if __name__ == '__main__':
                         save_dir=os.path.join(ksl_env.slmmac_dir_unbacked,
                                               'pasture_growth_sims', 'n_comp_plots_real'),
                         show=False, real=True)
-    # todo discuss with Laura and Zeb and decide what to use
+    # decided to use 100 reals for random sims and 1000 for farmer sims

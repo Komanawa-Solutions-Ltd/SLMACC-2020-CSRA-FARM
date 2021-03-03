@@ -80,7 +80,7 @@ def make_sampling_options():
     return outdata
 
 
-def map_storyline_rest(story): #todo check
+def map_storyline_rest(story):
     """
     assumes that the rest values are quantiles
     :param story:

@@ -15,6 +15,7 @@ from Storylines.check_storyline import get_past_event_frequency, get_acceptable_
 from Storylines.storyline_runs.run_SWG_for_all_months import generate_all_swg, generate_SWG_output_support
 from BS_work.SWG.check_1_month_runs import make_event_prob
 from BS_work.SWG.SWG_wrapper import get_monthly_smd_mean_detrended
+from Climate_Shocks.note_worthy_events.inverse_percentile import calc_doy_per_from_historical
 
 
 if __name__ == '__main__':
@@ -93,7 +94,9 @@ if __name__ == '__main__':
     if result.returncode != 0:
         raise ChildProcessError('{}\n{}'.format(result.stdout, result.stderr))
 
-    # todo make quantile tables for the new event_data!
+    # todo make quantile tables for the new event_data!, todo check!
+    data = calc_doy_per_from_historical('detrended2') #this should be the one used, others are for investigation
+    data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles_detrended_v2.csv'))
 
     # make probality of creating an event with SWG
     prob_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'id_prob')
