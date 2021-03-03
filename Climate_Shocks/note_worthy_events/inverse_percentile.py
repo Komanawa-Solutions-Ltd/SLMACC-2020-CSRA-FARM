@@ -55,7 +55,7 @@ def calc_doy_per_from_historical(version='detrended2'):
     thresholds = {
         'hot': 25,
         'cold': 7,
-        'dry': -15, #todo this might be wrong
+        'dry': -15,
         'wet': 0.01,
     }
     use_keys2 = ['H', 'C', 'D', 'W']
