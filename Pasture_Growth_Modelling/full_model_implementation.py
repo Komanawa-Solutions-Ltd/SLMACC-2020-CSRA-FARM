@@ -181,7 +181,7 @@ def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, s
     else:
         raise ValueError('shouldnt get here')
 
-    params, doy_irr = get_params_doy_irr(mode)
+    params, doy_irr = get_params_doy_irr(mode, site)
     matrix_weathers = []
     days_harvests = []
 

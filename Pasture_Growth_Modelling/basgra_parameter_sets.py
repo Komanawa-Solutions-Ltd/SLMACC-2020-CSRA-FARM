@@ -12,7 +12,6 @@ import ksl_env
 ksl_env.add_basgra_nz_path()
 from supporting_functions.woodward_2020_params import get_woodward_mean_full_params
 
-
 default_mode_sites = (
     ('dryland', 'oxford'),
     ('irrigated', 'eyrewell'),
@@ -20,7 +19,9 @@ default_mode_sites = (
 )
 
 abs_max_irr = 5  # the absolute maximum irrigation values
-def get_params_doy_irr(mode):
+
+
+def get_params_doy_irr(mode, site='eyrewell'):
     """
     get the parameter sets for all of the basgra modelling
     :param mode: 'dryland','irrigated'
@@ -57,7 +58,12 @@ def get_params_doy_irr(mode):
         params['reseed_CSTUB'] = 0
 
         # modify inital  # set from start of simulation month (7) mean
-        params['BASALI'] = 0.73843861
+        if site == 'eyrewell':
+            params['BASALI'] = 0.747
+        elif site == 'oxford':
+            params['BASALI'] = 0.723
+        else:
+            raise ValueError(f'unexpected value for site {site}')
 
         # set from a mid point value not important for percistance, but important to stop inital high yeild!
         # set to start of simulation start month(7) average

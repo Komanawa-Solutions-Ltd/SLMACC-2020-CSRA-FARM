@@ -33,7 +33,7 @@ def calc_doy_per_from_historical(version='detrended2'):
     data.loc[:, 'month'] = data.date.dt.month
     data.loc[:, 'day'] = data.date.dt.day
 
-    # todo fix leap year shit!
+    # fix leap year shit!
     data = data.loc[~((data.month == 2) & (data.day == 29))]
     data.loc[:, 'doy'] = pd.to_datetime(
         [f'2001 - {m:02d} - {d:02d}' for m, d in data.loc[:, ['month', 'day']].itertuples(False, None)]).dayofyear
