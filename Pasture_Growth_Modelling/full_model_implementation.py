@@ -79,7 +79,7 @@ default_swg_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SW
 
 def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_sites, padock_rest=False,
                        save_daily=False, description='', swg_dir=default_swg_dir, verbose=True,
-                       n_parallel=1):
+                       n_parallel=1, fix_leap=False):
     """
     creates weather data, runs basgra and saves values to a netcdf
     :param storyline_path: path to the storyline
@@ -109,6 +109,10 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
     ey = storyline.year.iloc[-1]
     em = storyline.month.iloc[-1]
     out_index = pd.date_range(f'{sy}-{sm:02d}-1', f'{ey}-{em:02d}-{month_len[em]}')
+    if fix_leap:
+        out_index = out_index[~((out_index.month == 2) & (out_index.day == 29))]
+        out_index = pd.to_datetime(
+            [f'{y}-{m:02d}-{d:02d}' for y, m, d in zip(out_index.year, out_index.month, out_index.day)])
     assert simlen == len(out_index), f'simlen should be {simlen}, but is {len(out_index)}, check for leap years'
 
     with open(storyline_path, 'r') as f:

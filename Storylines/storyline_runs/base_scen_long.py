@@ -15,22 +15,21 @@ from BS_work.SWG.SWG_wrapper import *
 
 if __name__ == '__main__':
     run_basgra = False  # to stop accidental re-run
-    plot_results = True
+    plot_results = True #todo look at
 
     if run_basgra:
         # run basgra
         print('running BASGRA')
-        run_pasture_growth(storyline_path=os.path.join(storyline_dir, '0-baseline.csv'),
-                           outdir=os.path.join(default_pasture_growth_dir, 'baseline_sim_no_pad'),
-                           nsims=10000, padock_rest=False,
-                           save_daily=True, description='initial baseline run after the realisation cleaning, '
-                                                        'have not finalized irrigation restirctions',
-                           verbose=True)
+        run_pasture_growth(storyline_path=os.path.join(storyline_dir, '0-long-baseline.csv'),
+                           outdir=os.path.join(default_pasture_growth_dir, 'long_baseline'),
+                           nsims=1000, padock_rest=False,
+                           save_daily=False, description='initial long baseline run to help set ibasal',
+                           verbose=True, fix_leap=True)
 
     if plot_results:
         path_list = [
-            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-eyrewell-irrigated.nc",
-           # r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-oxford-irrigated.nc",
+            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\long_baseline\0-long-baseline-eyrewell-irrigated.nc",
+            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\long_baseline\0-long-baseline-oxford-irrigated.nc",
         ]
         plot_sims(data_paths=path_list, plot_ind=True, nindv=50, save_dir=None, show=True, figsize=(11, 8),
                   daily=False
