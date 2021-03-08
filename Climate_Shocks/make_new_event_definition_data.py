@@ -106,3 +106,9 @@ if __name__ == '__main__':
 
     # make anything esle needed
     get_monthly_smd_mean_detrended(True)
+
+    # todo run SWG
+    # todo run irrigation generator...
+    # todo run baseline
+    # todo run default PGR
+    # todo check for anything else!

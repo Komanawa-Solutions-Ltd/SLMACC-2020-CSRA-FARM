@@ -6,7 +6,7 @@ import warnings
 import pandas as pd
 import os
 import numpy as np
-from Storylines.check_storyline import get_acceptable_events
+from Storylines.check_storyline import get_acceptable_events, get_past_event_frequency
 from Climate_Shocks import climate_shocks_env
 import itertools
 import ksl_env
@@ -176,5 +176,33 @@ base_events[7] = ('C', 'A', 0)
 
 default_storyline_time = pd.date_range('2024-07-01', '2027-06-01', freq='MS')
 
+
+def make_irr_rest_for_all_events():
+    data = get_past_event_frequency().reset_index()
+    rest_keys = [50, 60, 75, 80, 90, 95, 99]
+    for i, m, s in data.loc[:, ['month', 'state']].itertuples(True, None):
+        for k in rest_keys:
+            data.loc[i, k] = map_irrigation(m, k/100, s.split('-')[1].replace('P', ''), 'A')
+    out_keys = ['month', 'state'] + rest_keys
+    data = data.loc[:, out_keys]
+    data.to_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'irrigation_rest_s_a.csv'))
+    pass
+
+
+def make_blank_storyline_sheet():
+    opts = make_sampling_options()
+    for m in range(1, 13):
+        temp = pd.Series(opts[m][:, 0]).str.replace('A', 'AT')
+        precip = pd.Series(opts[m][:, 1]).str.replace('A', 'AP')
+        opts[m] = '\n'.join(['-'.join([t, p]) for t, p in zip(temp, precip)])
+
+    outdata = pd.DataFrame(index=default_storyline_time)
+    outdata.loc[:, 'year'] = outdata.index.year
+    outdata.loc[:, 'month'] = outdata.index.month_name().str[:3]
+    months = outdata.index.month
+    outdata.loc[:, 'options'] = [opts[e] for e in months]
+    return outdata
+
+
 if __name__ == '__main__':
-    print(map_irrigation(1, 0.5, 'D', 'ND'))
+    make_irr_rest_for_all_events()

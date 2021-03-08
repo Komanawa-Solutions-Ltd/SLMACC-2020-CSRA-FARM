@@ -31,7 +31,7 @@ if __name__ == '__main__':
     for k, v in acceptable.items():
         out_data.loc[np.in1d(out_data.index, v), k] = True
     out = out_data.sum(axis=1)
-    out.loc[np.in1d(out.index, rests)] *= 2
+    out.loc[np.in1d(out.index, rests)] *= 3
     pass
     param = out.values
     total_combinations = 1
