@@ -125,12 +125,12 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
                          storyline_key=storyline_key,
                          outdir=outdir,
                          save_daily=save_daily, description=description, storyline_text=storyline_text, swg_dir=swg_dir,
-                         verbose=verbose, n_parallel=n_parallel)
+                         verbose=verbose, n_parallel=n_parallel, fix_leap=fix_leap)
         if padock_rest:
             _run_paddock_rest(storyline_key=storyline_key, outdir=outdir, storyline=storyline, nsims=nsims, mode=mode,
                               site=site, simlen=simlen,
                               save_daily=save_daily, description=description, storyline_text=storyline_text,
-                              swg_dir=swg_dir, verbose=verbose, n_parallel=n_parallel)
+                              swg_dir=swg_dir, verbose=verbose, n_parallel=n_parallel, fix_leap=fix_leap)
     t = time.time() - t
     if verbose:
         print(f'took {t / 60} min to run {nsims} sims paddock_rest{padock_rest}')
@@ -161,7 +161,7 @@ def get_irr_data(num_to_pull, storyline, simlen):
     return out
 
 
-def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, swg_dir):
+def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, swg_dir, fix_leap):
     """
 
     :param storyline: loaded storyline
@@ -197,7 +197,8 @@ def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, s
     else:
         raise ValueError('weird arg for mode: {}'.format(mode))
     # get weather data
-    weather_data = _get_weather_data(storyline=storyline, nsims=num_to_pull, simlen=simlen, swg_dir=swg_dir, site=site)
+    weather_data = _get_weather_data(storyline=storyline, nsims=num_to_pull, simlen=simlen, swg_dir=swg_dir, site=site,
+                                     fix_leap=fix_leap)
 
     # make all the other data
     for rest, weather in zip(rest_data, weather_data):
@@ -214,7 +215,7 @@ def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, s
 
 
 def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir,
-                     save_daily, description, storyline_text, swg_dir, verbose, n_parallel):
+                     save_daily, description, storyline_text, swg_dir, verbose, n_parallel, fix_leap):
     number_run = int(
         psutil.virtual_memory().available // memory_per_run * (simlen / 365) / n_parallel
     )
@@ -229,7 +230,7 @@ def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir
                                                                              nsims=nsims, mode=mode, site=site,
                                                                              chunks=chunks, current_c=c,
                                                                              nperc=number_run, simlen=simlen,
-                                                                             swg_dir=swg_dir)
+                                                                             swg_dir=swg_dir, fix_leap=fix_leap)
 
         all_out = np.zeros((len(out_variables), simlen, number_run)) * np.nan
         for i, (matrix_weather, days_harvest) in enumerate(zip(all_matrix_weathers, all_days_harvests)):
@@ -259,7 +260,7 @@ def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir
 
 
 def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simlen,
-                      save_daily, description, storyline_text, swg_dir, verbose, n_parallel):
+                      save_daily, description, storyline_text, swg_dir, verbose, n_parallel, fix_leap):
     """
     run storyline through paddock restrictions...
     :param storyline:
@@ -285,7 +286,7 @@ def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simle
                                                                              nsims=nsims, mode=mode, site=site,
                                                                              chunks=chunks, current_c=c,
                                                                              nperc=number_run, simlen=simlen,
-                                                                             swg_dir=swg_dir)
+                                                                             swg_dir=swg_dir, fix_leap=fix_leap)
 
         all_out = np.zeros((len(out_variables), simlen, len(levels) - 1, number_run)) * np.nan
         out_names = []
@@ -580,7 +581,7 @@ def _create_nc_file(outpath, number_run, month, doy, year, storyline_text, save_
     return nc_file
 
 
-def _get_weather_data(storyline, nsims, simlen, swg_dir, site):
+def _get_weather_data(storyline, nsims, simlen, swg_dir, site, fix_leap):
     out_array = np.zeros((simlen, len(measures_cor), nsims))
     i = 0
     if site == 'eyrewell':
@@ -594,7 +595,14 @@ def _get_weather_data(storyline, nsims, simlen, swg_dir, site):
     sy = storyline.year.iloc[0]
     ey = storyline.year.iloc[-1]
     em = storyline.month.iloc[-1]
-    out_index = pd.date_range(f'{sy}-{sm:02d}-1', f'{ey}-{em:02d}-{month_len[em]}')
+    out_index = pd.date_range(f'{sy}-{sm:02d}-1',
+                              f'{ey}-{em:02d}-{month_len[em]}')
+
+    if fix_leap:
+        out_index = out_index[~((out_index.month == 2) & (out_index.day == 29))]
+        out_index = pd.to_datetime(
+            [f'{y}-{m:02d}-{d:02d}' for y, m, d in zip(out_index.year, out_index.month, out_index.day)])
+
     for p, t, m in storyline.loc[:, ['precip_class', 'temp_class', 'month']].itertuples(False, None):
         temp = nc.Dataset(os.path.join(swg_dir, 'm{m:02d}-{t}-{p}-0_all.nc'.format(m=int(m), t=t, p=p)))
         idxs = np.random.randint(temp.dimensions['real'].size, size=(nsims,))
