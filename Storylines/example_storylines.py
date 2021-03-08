@@ -7,6 +7,7 @@ from Storylines.check_storyline import ensure_no_impossible_events
 import ksl_env
 import os
 
+# old and depreciated
 
 def build_example_storylines_for_greg(outdir):
     if not os.path.exists(outdir):

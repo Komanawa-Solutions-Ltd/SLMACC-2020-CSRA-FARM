@@ -164,7 +164,7 @@ def examine_means():
 
 
 
-def get_irrigation_generator():
+def get_irrigation_generator(recalc=False):
     nsims = 1e7
     nsims = int(nsims)
     input_data, block, sim_len, nmonths_comments = make_input_data_1month()
@@ -174,7 +174,7 @@ def get_irrigation_generator():
     generator_path = os.path.join(baseoutdir, 'irrigation_gen.nc')
     boot = MovingBlockBootstrapGenerator(input_data=input_data, blocktype='truncnormal', block=block,
                                          nsims=nsims, data_path=generator_path, sim_len=sim_len, nblocksize=50,
-                                         save_to_nc=True, comments=comments)
+                                         save_to_nc=True, comments=comments, recalc=recalc)
     return boot
 
 

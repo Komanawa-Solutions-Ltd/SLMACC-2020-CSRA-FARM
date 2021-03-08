@@ -22,7 +22,7 @@ def make_input_data():
     }
 
 
-    org_data = get_restriction_record('detrended', recalc=True)
+    org_data = get_restriction_record('detrended', recalc=False)
 
     input_data = {}
     sim_len = {}

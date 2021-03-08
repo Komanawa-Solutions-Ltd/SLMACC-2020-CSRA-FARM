@@ -7,7 +7,7 @@
  default google file stream locations are as follows:
  Matt Hanson : M
  Zeb Etheridge: Z
-
+#todo write up instructions on how to use (for me in 5 years)
  """
 import os
 from socket import gethostname

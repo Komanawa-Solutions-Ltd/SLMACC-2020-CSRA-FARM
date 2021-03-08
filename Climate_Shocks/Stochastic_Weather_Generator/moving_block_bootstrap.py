@@ -20,7 +20,7 @@ class MovingBlockBootstrapGenerator(object):
     datapath = None
 
     def __init__(self, input_data, blocktype, block, nsims, data_path=None, sim_len=None, nblocksize=None,
-                 save_to_nc=True, comments=''):
+                 save_to_nc=True, comments='', recalc=False):
         """
 
         :param input_data: 1d array or dict of 1d arrays, the data to resample
@@ -44,6 +44,7 @@ class MovingBlockBootstrapGenerator(object):
         :param save_to_nc: boolean if True save to nc and then open the dataset (don't keep all data in memory),
                            if False keep in memory as dataset.
         :param comments: str other comments to save to the netcdf file
+        :param recalc: boolean if True will do the bootstrapping even if the saved nc exists
         """
         self.comments = comments
         self.input_data = {}
@@ -153,7 +154,7 @@ class MovingBlockBootstrapGenerator(object):
         self.blocktype = blocktype
 
         if save_to_nc:
-            if not os.path.exists(self.datapath):
+            if not os.path.exists(self.datapath) or recalc:
                 self._make_data()
             self.dataset = nc.Dataset(self.datapath)
         else:

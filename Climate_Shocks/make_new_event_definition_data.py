@@ -8,17 +8,24 @@ import os
 import ksl_env
 import subprocess
 import sys
-from Climate_Shocks.note_worthy_events.rough_stats import make_data
-from Climate_Shocks.climate_shocks_env import event_def_path, supporting_data_dir
-from Climate_Shocks.note_worthy_events.final_event_recurance import get_org_data
-from Storylines.check_storyline import get_past_event_frequency, get_acceptable_events
-from Storylines.storyline_runs.run_SWG_for_all_months import generate_all_swg, generate_SWG_output_support
+import glob
 from BS_work.SWG.check_1_month_runs import make_event_prob
 from BS_work.SWG.SWG_wrapper import get_monthly_smd_mean_detrended
+from Climate_Shocks.note_worthy_events.rough_stats import make_data
+from Climate_Shocks.climate_shocks_env import event_def_path, supporting_data_dir, storyline_dir
+from Climate_Shocks.note_worthy_events.final_event_recurance import get_org_data
 from Climate_Shocks.note_worthy_events.inverse_percentile import calc_doy_per_from_historical
-
+from Storylines.check_storyline import get_past_event_frequency, get_acceptable_events
+from Storylines.storyline_runs.run_SWG_for_all_months import generate_all_swg, generate_SWG_output_support, \
+    clean_individual
+from Storylines.irrigation_mapper import get_irr_by_quantile
 
 if __name__ == '__main__':
+    # todo run before signoff
+    # todo check!
+    re_run_SWG = False
+    re_run_pgr = False
+
     prev_event_path = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\v5_detrend\detrend_event_data.csv")
     event_def_dir = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/v6_detrend")
     vcsn_version = 'detrended2'
@@ -94,8 +101,11 @@ if __name__ == '__main__':
     if result.returncode != 0:
         raise ChildProcessError('{}\n{}'.format(result.stdout, result.stderr))
 
-    # todo make quantile tables for the new event_data!, todo check!
-    data = calc_doy_per_from_historical('detrended2') #this should be the one used, others are for investigation
+    # make restriction mappers:
+    get_irr_by_quantile(recalc=True)
+
+    #  make quantile tables for the new event_data!, todo check!
+    data = calc_doy_per_from_historical('detrended2')  # this should be the one used, others are for investigation
     data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles_detrended_v2.csv'))
 
     # make probality of creating an event with SWG
@@ -107,8 +117,47 @@ if __name__ == '__main__':
     # make anything esle needed
     get_monthly_smd_mean_detrended(True)
 
-    # todo run SWG
-    # todo run irrigation generator...
-    # todo run baseline
-    # todo run default PGR
-    # todo check for anything else!
+    if re_run_SWG:
+        # run SWG
+        full_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SWG')
+        generate_all_swg(10000, True, full_dir)
+        clean_individual(full_dir)
+
+        # run irrigation generator...
+        from Climate_Shocks.Stochastic_Weather_Generator.irrigation_generator import get_irrigation_generator
+
+        get_irrigation_generator(recalc=True)
+
+    # run baseline
+    from Storylines.storyline_runs.base_scen import run_pasture_growth, default_pasture_growth_dir
+    from Pasture_Growth_Modelling.full_model_implementation import add_pasture_growth_anaomoly_to_nc
+
+    baseline_dir = os.path.join(default_pasture_growth_dir, 'baseline_sim_no_pad')
+    if re_run_pgr:
+        print('running baseline BASGRA scenario')
+        run_pasture_growth(storyline_path=os.path.join(storyline_dir, '0-baseline.csv'),
+                           outdir=baseline_dir,
+                           nsims=10000, padock_rest=False,
+                           save_daily=True, description='initial baseline run after the realisation cleaning',
+                           verbose=True)
+
+    # run default PGR
+    paths = glob.glob(os.path.join(baseline_dir, '*.nc'))
+    for p in paths:
+        print(f'adding pgra to {p}')
+        add_pasture_growth_anaomoly_to_nc(nc_path=p, recalc=True)
+
+    from Storylines.storyline_building_support import make_irr_rest_for_all_events,  make_blank_storyline_sheet
+    make_irr_rest_for_all_events()
+    make_blank_storyline_sheet()
+    from Climate_Shocks.make_transition_overview import get_all_zero_prob_transitions
+
+    get_all_zero_prob_transitions(save=True)  # todo this will not run without BS input
+
+    # other scripts worth re-running/ rethinking
+    # Storylines/storyline_runs/run_unique_events.py # re-run unique events to see any changes
+    # Storylines/storyline_building_support.py # re-consider base events
+    # Storylines/base_storylines.py # consider base storyline and base long storyline with major changes, along with ibasal
+    # Storylines/generate_random_storylines.py # it would be good to re-run random storylines
+    # Storylines/storyline_runs/base_scen_long.py # if major event change, running this to support ibasal set.
+    # Pasture_Growth_Modelling/basgra_parameter_sets.py # possibly re-set BASALI for major changes

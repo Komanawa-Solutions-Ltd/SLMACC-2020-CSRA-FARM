@@ -58,10 +58,11 @@ def get_params_doy_irr(mode, site='eyrewell'):
         params['reseed_CSTUB'] = 0
 
         # modify inital  # set from start of simulation month (7) mean
+        # todo worth re-thinking after major change to events
         if site == 'eyrewell':
-            params['BASALI'] = 0.747
+            params['BASALI'] = 0.747 #todo set
         elif site == 'oxford':
-            params['BASALI'] = 0.723
+            params['BASALI'] = 0.723 #todo set
         else:
             raise ValueError(f'unexpected value for site {site}')
 

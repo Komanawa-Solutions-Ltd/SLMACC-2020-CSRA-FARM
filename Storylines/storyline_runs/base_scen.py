@@ -23,8 +23,7 @@ if __name__ == '__main__':
         run_pasture_growth(storyline_path=os.path.join(storyline_dir, '0-baseline.csv'),
                            outdir=os.path.join(default_pasture_growth_dir, 'baseline_sim_no_pad'),
                            nsims=10000, padock_rest=False,
-                           save_daily=True, description='initial baseline run after the realisation cleaning, '
-                                                        'have not finalized irrigation restirctions',
+                           save_daily=True, description='initial baseline run after the realisation cleaning',
                            verbose=True)
 
     if plot_results:

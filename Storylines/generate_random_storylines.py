@@ -19,6 +19,7 @@ from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 # how do I want to store this? make 12 random seeds?, how will this affect the randomness...
 
 # todo 100 sims for these
+# todo worth a think if there are MAJOR event changes
 
 def generate_random_weather(n, use_default_seed=True):
     """
