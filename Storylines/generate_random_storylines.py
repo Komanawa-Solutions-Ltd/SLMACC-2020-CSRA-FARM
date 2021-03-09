@@ -18,8 +18,7 @@ from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 # make each storyline 1 year and then make random 3 year combinations of these.
 # how do I want to store this? make 12 random seeds?, how will this affect the randomness...
 
-# todo 100 sims for these
-# todo worth a think if there are MAJOR event changes
+
 
 def generate_random_weather(n, use_default_seed=True):
     """
@@ -96,7 +95,7 @@ def generate_random_suite(n, use_default_seed=True, save=True, return_story=Fals
     data.loc[:, 'year'] = data.index.year
     data.loc[:, 'month'] = data.index.month
 
-    # make into dataframes #todo
+    # make into dataframes
     out = []
     for i, (w1, w2, w3, i1, i2, i3) in enumerate(out_idxs):
         # year 1

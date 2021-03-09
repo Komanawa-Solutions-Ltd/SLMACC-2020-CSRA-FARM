@@ -704,7 +704,7 @@ def _get_baseline_pgr(site, mode, sim_mon_day, sim_years, daily, recalc=False):
     :param recalc: normal reacl
     :return: baseline name, baseline data
     """
-    # todo check that leap years are not messing with stuff...
+    # todo check that leap years are not messing with stuff..., they are start in BASGRA_NZ_PY
     story_nm = '0-baseline.csv'
     base_sim_path = os.path.join(default_pasture_growth_dir, "baseline_sim_no_pad", f"0-baseline-{site}-{mode}.nc")
     with open(os.path.join(climate_shocks_env.storyline_dir, story_nm), 'r') as f:

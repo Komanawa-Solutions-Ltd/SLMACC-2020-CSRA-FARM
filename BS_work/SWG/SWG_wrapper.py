@@ -322,7 +322,7 @@ def _merge_ncs(swg_dir, outpath, storyline, yml_txt):
         else:
             idx = (paths.str.contains(s))
 
-        for i, p in enumerate(paths.loc[idx]): #todo could write in chunks to speed this up
+        for i, p in enumerate(paths.loc[idx]):
             temp_read = nc.Dataset(os.path.join(swg_dir, p))
             if i == 0:
                 out_var = out.createVariable(s, float, ('day', 'w_var', 'real'), fill_value=np.nan)

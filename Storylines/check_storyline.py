@@ -90,8 +90,7 @@ def ensure_no_impossible_events(storyline): # takes longer to run this than the 
 
 
 def get_all_zero_prob_transitions(save=True):
-    trans_prob_dir = os.path.join(ksl_env.slmmac_dir, #todo update from root of this
-                                  r"BS_code\BS_Project_Final\IID\TransitionProbabilities")
+    trans_prob_dir = os.path.join(ksl_env.proj_root, 'BS_work/IID/TransitionProbabilities')
     trans = _read_trans(glob.glob(os.path.join(trans_prob_dir, '*_transitions.csv')))
     events = {e: [] for e in range(1, 13)}
     acceptable = get_acceptable_events()

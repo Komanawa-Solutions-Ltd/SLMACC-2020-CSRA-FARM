@@ -5,3 +5,4 @@
 from Storylines.generate_random_storylines import generate_random_suite
 
 #todo run random storylines
+# todo 100 sims for these
