@@ -172,15 +172,15 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=True):
                                  }, index=matrix_weather.index)
 
     # start harvesting at the same point
-    harv_days = pd.date_range(start=matrix_weather.index.min() + pd.DateOffset(days=5),
-                              end=matrix_weather.index.max(), freq=freq)
+    harv_days = pd.Series(pd.date_range(start=matrix_weather.index.min() + pd.DateOffset(days=5),
+                              end=matrix_weather.index.max(), freq=freq))
     if fix_leap:
         # move any harvests that fall on a leap day to the last day in feb.
-        idx = (harv_days.month == 2) & (harv_days.day == 29)
-        harv_days[idx] = pd.to_datetime([f'{y}]-02-28' for y in harv_days[idx].year])
+        idx = (harv_days.dt.month == 2) & (harv_days.dt.day == 29)
+        harv_days.loc[idx] = pd.to_datetime([f'{y}-02-28' for y in harv_days[idx].dt.year])
 
-    set_trig = [trig[m] for m in harv_days.month]
-    set_targ = [targ[m] for m in harv_days.month]
+    set_trig = [trig[m] for m in harv_days.dt.month]
+    set_targ = [targ[m] for m in harv_days.dt.month]
     days_harvest.loc[harv_days, 'harv_trig'] = set_trig
     days_harvest.loc[harv_days, 'harv_targ'] = set_targ
 
