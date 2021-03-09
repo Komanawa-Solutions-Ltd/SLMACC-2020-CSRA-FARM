@@ -29,6 +29,7 @@ def run_full_model_mp(storyline_path_mult,
                       mode_sites_mult=default_mode_sites,
                       swg_dir_mult=default_swg_dir,
                       pool_size=None,
+                      fix_leap=True,
                       verbose=False):
     """
     run a bunch of basgra models for storylines
@@ -104,7 +105,8 @@ def run_full_model_mp(storyline_path_mult,
             'description': args_n1d['description_mult'][i],
             'swg_dir': args_n1d['swg_dir_mult'][i],
             'verbose': verbose,
-            'n_parallel': pool_size
+            'n_parallel': pool_size,
+            'fix_leap': fix_leap
         }))
     t = time.time()
     multiprocessing.log_to_stderr(logging.DEBUG)

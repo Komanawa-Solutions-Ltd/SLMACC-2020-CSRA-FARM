@@ -31,8 +31,8 @@ def run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_
     weather = get_vcsn_record(site=site)
     rest = None
     params, doy_irr = get_params_doy_irr(mode)
-    matrix_weather = create_matrix_weather(mode, weather, rest)
-    days_harvest = create_days_harvest(mode, matrix_weather, site)
+    matrix_weather = create_matrix_weather(mode, weather, rest, fix_leap=False)
+    days_harvest = create_days_harvest(mode, matrix_weather, site, fix_leap=False)
     if not reseed:
         days_harvest.loc[:, 'reseed_trig'] = -1
     else:

@@ -49,7 +49,7 @@ def read_swg_data(paths):
         temp_out.loc[:, 'tmax'] = np.array(temp.variables['Tmax'])
         temp_out.loc[:, 'rain'] = np.array(temp.variables['PR_A'])
         temp_out.loc[:, 'pet'] = np.array(temp.variables['PEV'])
-        temp_out.loc[:, 'doy'] = temp_out.index.dayofyear
+        temp_out.loc[:, 'doy'] = temp_out.index.dayofyear # not a problem as functino is only used in checks
         temp_out.loc[:, 'year'] = temp_out.index.year
         temp_out.loc[:, 'month'] = temp_out.index.month
         temp_out.index.name = 'date'

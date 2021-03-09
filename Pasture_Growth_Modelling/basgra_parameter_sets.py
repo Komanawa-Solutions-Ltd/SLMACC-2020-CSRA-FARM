@@ -44,7 +44,7 @@ def get_params_doy_irr(mode, site='eyrewell'):
         # add irrigation parameters
         params['irr_frm_paw'] = 1
         params['IRRIGF'] = 1
-        doy_irr = list(range(245, 367)) + list(range(1, 122))
+        doy_irr = list(range(244, 367)) + list(range(1, 121))  # this will change slightly in leap years
 
         # reseed parameteres, set as mean of long term runs in june
         params['reseed_harv_delay'] = 20
@@ -103,7 +103,7 @@ def get_params_doy_irr(mode, site='eyrewell'):
     return params, doy_irr
 
 
-def create_days_harvest(mode, matrix_weather, site, fix_leap=False):
+def create_days_harvest(mode, matrix_weather, site, fix_leap=True):
     """
     get the days harvest data
     :param mode: 'dryland' or 'irrigated'
@@ -161,8 +161,6 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=False):
     if not isinstance(weed_dm_frac, dict):
         weed_dm_frac = {e: weed_dm_frac for e in range(1, 13)}
 
-    strs = ['{}-{:03d}'.format(e, f) for e, f in matrix_weather[['year', 'doy']].itertuples(False, None)]
-    dates = pd.to_datetime(strs, format='%Y-%j')
     days_harvest = pd.DataFrame({'year': matrix_weather.loc[:, 'year'],
                                  'doy': matrix_weather.loc[:, 'doy'],
                                  'frac_harv': np.ones(len(matrix_weather)),  # set filler values
@@ -171,13 +169,16 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=False):
                                  'weed_dm_frac': np.zeros(len(matrix_weather)),  # set filler values
                                  'reseed_trig': np.zeros(len(matrix_weather)) - 1,  # set flag to not reseed
                                  'reseed_basal': np.zeros(len(matrix_weather)),  # set filler values
-                                 })
+                                 }, index=matrix_weather.index)
 
     # start harvesting at the same point
-    harv_days = pd.date_range(start=dates.min() + pd.DateOffset(days=5), end=dates.max(), freq=freq)
+    harv_days = pd.date_range(start=matrix_weather.index.min() + pd.DateOffset(days=5),
+                              end=matrix_weather.index.max(), freq=freq)
     if fix_leap:
+        # move any harvests that fall on a leap day to the last day in feb.
         idx = (harv_days.month == 2) & (harv_days.day == 29)
         harv_days[idx] = pd.to_datetime([f'{y}]-02-28' for y in harv_days[idx].year])
+
     set_trig = [trig[m] for m in harv_days.month]
     set_targ = [targ[m] for m in harv_days.month]
     days_harvest.loc[harv_days, 'harv_trig'] = set_trig
@@ -189,9 +190,8 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=False):
     days_harvest.loc[harv_days, 'harv_targ'] = targ[harv_days.month]
 
     # set reseed dates
-    harv_days = dates.dayofyear == 152  # set to end of june as this is the end of the yield period.
-    days_harvest.loc[harv_days, 'reseed_trig'] = reseed_trig
-    days_harvest.loc[harv_days, 'reseed_basal'] = reseed_basal
+    days_harvest.loc[days_harvest.doy == 152, 'reseed_trig'] = reseed_trig
+    days_harvest.loc[days_harvest.doy == 152, 'reseed_basal'] = reseed_basal
 
     # set weed fraction
     for m in range(1, 13):
@@ -200,7 +200,7 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=False):
     return days_harvest
 
 
-def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest', fix_leap=False):
+def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest', fix_leap=True):
     """
 
     :param mode: one of ['irrigated', 'dryland']

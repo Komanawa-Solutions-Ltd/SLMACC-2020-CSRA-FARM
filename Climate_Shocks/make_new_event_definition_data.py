@@ -114,9 +114,6 @@ if __name__ == '__main__':
     generate_all_swg(1000, False, outdir=prob_dir)
     make_event_prob(prob_dir)
 
-    # make anything esle needed
-    get_monthly_smd_mean_detrended(True)
-
     if re_run_SWG:
         # run SWG
         full_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SWG')
@@ -139,7 +136,8 @@ if __name__ == '__main__':
                            outdir=baseline_dir,
                            nsims=10000, padock_rest=False,
                            save_daily=True, description='initial baseline run after the realisation cleaning',
-                           verbose=True)
+                           verbose=True,
+                           fix_leap=True)
 
     # run default PGR
     paths = glob.glob(os.path.join(baseline_dir, '*.nc'))

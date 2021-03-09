@@ -27,8 +27,8 @@ def calc_past_mean(fun, pg_mode, return_norm=True, freq='month'):
     weather = get_vcsn_record(site=site)
     rest = None
     params, doy_irr = get_params_doy_irr(mode)
-    matrix_weather = create_matrix_weather(mode, weather, rest)
-    days_harvest = create_days_harvest(mode, matrix_weather, site)
+    matrix_weather = create_matrix_weather(mode, weather, rest, fix_leap=False)
+    days_harvest = create_days_harvest(mode, matrix_weather, site, fix_leap=False)
     out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
     out.loc[:, 'per_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
 

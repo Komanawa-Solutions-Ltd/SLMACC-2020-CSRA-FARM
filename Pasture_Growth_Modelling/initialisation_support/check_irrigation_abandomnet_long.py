@@ -25,11 +25,11 @@ def create_irrigation_abandomnet_data(base_name, params, reseed_trig=-1, reseed_
     weather = get_vcsn_record(site=site)
     rest = get_restriction_record()
     p, doy_irr = get_params_doy_irr(mode)
-    matrix_weather = create_matrix_weather(mode, weather, rest)
+    matrix_weather = create_matrix_weather(mode, weather, rest, fix_leap=False)
     restrict = 1 - matrix_weather.loc[:, 'max_irr'] / 5
 
     matrix_weather.loc[:, 'max_irr'] = 5
-    days_harvest = create_days_harvest(mode, matrix_weather, site)
+    days_harvest = create_days_harvest(mode, matrix_weather, site, fix_leap=False)
 
     # set reseed days harvest
     idx = days_harvest.doy == 152

@@ -21,7 +21,7 @@ from Climate_Shocks import climate_shocks_env
 
 # add basgra nz functions
 ksl_env.add_basgra_nz_path()
-from basgra_python import run_basgra_nz
+from basgra_python import run_basgra_nz, get_month_day_to_nonleap_doy
 from supporting_functions.output_metadata import get_output_metadata
 
 # consider multiprocessing here???? no up a level (e.g. at teh storyline level)
@@ -76,10 +76,10 @@ month_len = {
 
 default_swg_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SWG')
 
-# todo make sure I never pull doy from index!!!! across all scripts !!!
+
 def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_sites, padock_rest=False,
                        save_daily=False, description='', swg_dir=default_swg_dir, verbose=True,
-                       n_parallel=1, fix_leap=False):
+                       n_parallel=1, fix_leap=True):
     """
     creates weather data, runs basgra and saves values to a netcdf
     :param storyline_path: path to the storyline
@@ -235,7 +235,7 @@ def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir
         all_out = np.zeros((len(out_variables), simlen, number_run)) * np.nan
         for i, (matrix_weather, days_harvest) in enumerate(zip(all_matrix_weathers, all_days_harvests)):
             restrict = 1 - matrix_weather.loc[:, 'max_irr'] / abs_max_irr
-            out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
+            out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False, run_365_calendar=fix_leap)
             out.loc[:, 'PER_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
 
             pg = pd.DataFrame(
@@ -306,7 +306,8 @@ def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simle
                 idx = (restrict > ll) & (restrict < lu)
                 matrix_weather_new.loc[idx, 'max_irr'] = abs_max_irr * ((restrict.loc[idx] - ll) / 0.25)
 
-                temp = run_basgra_nz(params, matrix_weather_new, days_harvest, doy_irr, verbose=False)
+                temp = run_basgra_nz(params, matrix_weather_new, days_harvest, doy_irr, verbose=False,
+                                     run_365_calendar=fix_leap)
                 temp.loc[:, 'PER_PAW'] = temp.loc[:, 'PAW'] / temp.loc[:, 'MXPAW']
                 temp.loc[:, 'PGR'] = calc_pasture_growth(temp, days_harvest, 'from_yield', '1D', resamp_fun='mean')
                 temp.loc[:, 'F_REST'] = restrict
@@ -611,11 +612,12 @@ def _get_weather_data(storyline, nsims, simlen, swg_dir, site, fix_leap):
         i += month_len[m]
         temp.close()
     outdata = []
+    mapper = get_month_day_to_nonleap_doy(key_doy=False)
     for s in range(nsims):
         t = pd.DataFrame(out_array[:, :, s], columns=measures_cor, index=out_index)
         t.index.name = 'date'
         t.loc[:, 'year'] = t.index.year
-        t.loc[:, 'doy'] = t.index.dayofyear
+        t.loc[:, 'doy'] = [mapper[(m, d)] for m, d in zip(t.index.month, t.index.day)]
         t.loc[:, 'month'] = t.index.month
         change_swg_units(t)
         outdata.append(t)
@@ -624,6 +626,13 @@ def _get_weather_data(storyline, nsims, simlen, swg_dir, site, fix_leap):
 
 
 def add_pasture_growth_anaomoly_to_nc(nc_path, recalc=False):
+    """
+    add the pasture growth anaomaly from basline sim where sim is greater in length than baseline, simply use the last
+    year of the baseline data to compare.  if the sim has leap days in it, then shift data and backfill data.
+    :param nc_path:
+    :param recalc:
+    :return:
+    """
     data = nc.Dataset(nc_path, 'a')
     site, mode = os.path.basename(nc_path).strip('.nc').split('-')[-2:]
     # monthly
@@ -712,7 +721,6 @@ def _get_baseline_pgr(site, mode, sim_mon_day, sim_years, daily, recalc=False):
     :param recalc: normal reacl
     :return: baseline name, baseline data
     """
-    # todo check that leap years are not messing with stuff..., they are start in BASGRA_NZ_PY
     story_nm = '0-baseline.csv'
     base_sim_path = os.path.join(default_pasture_growth_dir, "baseline_sim_no_pad", f"0-baseline-{site}-{mode}.nc")
     with open(os.path.join(climate_shocks_env.storyline_dir, story_nm), 'r') as f:
@@ -729,6 +737,8 @@ def _get_baseline_pgr(site, mode, sim_mon_day, sim_years, daily, recalc=False):
         with open(saved_data_path, 'r') as f:
             base_run_date = f.readline().strip()
         base_data = pd.read_csv(saved_data_path, skiprows=1)
+
+    # recalculate the pgr data
     else:
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
@@ -752,7 +762,46 @@ def _get_baseline_pgr(site, mode, sim_mon_day, sim_years, daily, recalc=False):
         base_data.to_csv(saved_data_path, mode='a')
 
     # get the base data aligned to the simdata (e.g. don't assume same time steps)
+    # manage longer data than baseline sim
+    max_year = sim_years.max()
+    base_years_max = base_data.year.max()
     base_data = base_data.set_index(['year', 'sim_mon_day'])
+
+    if max_year > base_years_max:
+        # set up expected data
+        fill_mon_day = base_data.index.levels[1]
+        fill_year = []
+        for v in fill_mon_day:
+            try:
+                base_data.loc[(base_years_max, v), 'PGR']
+                ov = base_years_max
+            except KeyError:
+                ov = base_years_max - 1
+            fill_year.append(ov)
+
+        fill_data = base_data.loc[zip(fill_year, fill_mon_day), 'PGR'].values
+        for y in range(0, max_year - base_years_max + 1):
+            for fm, fd in zip(fill_mon_day, fill_data):
+                base_data.loc[(base_years_max + y, fm), 'PGR'] = fd
+
+    # handle sims with leap years when sim does not have leap day
+    if daily and 366 in sim_mon_day:
+        # data has leap years...
+        mapper = get_month_day_to_nonleap_doy(True)
+        temp = pd.to_datetime(
+            [f'{y}-{mapper[doy][0]:02d}-{mapper[doy][1]:02d}' for y, doy in base_data.index.values])
+        base_data = base_data.reset_index()
+        base_data.loc[:, 'sim_mon_day'] = temp.dayofyear
+        base_data_temp = base_data.set_index(['year', 'sim_mon_day'])
+
+        base_data = pd.DataFrame(index=pd.date_range(temp.min(),temp.max()))
+        base_data.loc[:,'year'] = base_data.index.year
+        base_data.loc[:,'sim_mon_day'] = base_data.index.dayofyear
+        base_data.set_index(['year', 'sim_mon_day'], inplace=True)
+        base_data.loc[base_data_temp.index,'PGR'] = base_data_temp.loc[:,'PGR'].values
+        base_data.fillna('bfill', inplace=True)
+
+
     base_data = base_data.loc[zip(sim_years, sim_mon_day), 'PGR'].values
     assert sim_years.shape == base_data.shape
     return base_data, story_nm, storyline_text, base_run_date, base_sim_path

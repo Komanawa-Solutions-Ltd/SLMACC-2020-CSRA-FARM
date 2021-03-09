@@ -348,6 +348,7 @@ def _merge_ncs(swg_dir, outpath, storyline, yml_txt):
     out.yml = yml_txt
     out.sites = sites
 
+
 measures = ['PR_A', 'Tmax', 'Tmin', 'RSDS', 'PEV']
 measures_cor = ['rain', 'tmax', 'tmin', 'radn', 'pet']
 
@@ -370,21 +371,50 @@ rain_limits_wet = {
 }
 
 
-def get_monthly_smd_mean_detrended(recalc=False):
-    outpath = os.path.join(climate_shocks_env.supporting_data_dir, 'mean_montly_smd_detrend.csv')
+def get_month_day_to_nonleap_doy(key_doy=False):
+    """
+
+    :param key_doy: bool, if true the keys are doy, else keys are (month, dayofmonth)
+    :return: dictionary if not inverse: {(m,d}:doy} if inverse: {doy: (m,d)}
+    """
+    temp = pd.date_range('2025-01-01', '2025-12-31')  # a random non leap year
+    day = temp.day
+    month = temp.month
+    doy = temp.dayofyear
+    if key_doy:
+        out = {dd: (m, d) for m, d, dd in zip(month, day, doy)}
+    else:
+        out = {(m, d): dd for m, d, dd in zip(month, day, doy)}
+
+    return out
+
+
+def get_monthly_smd_mean_detrended(leap=False, recalc=False):
+    if leap:
+        add = '366_cal'
+    else:
+        add = '365_cal'
+
+    outpath = os.path.join(climate_shocks_env.supporting_data_dir, f'mean_montly_smd_detrend_{add}.csv')
 
     if not recalc and os.path.exists(outpath):
         average_smd = pd.read_csv(outpath, index_col=0)
         return average_smd.loc[:, 'smd'].to_dict()
 
     data = get_vcsn_record('detrended2').reset_index()
+    if not leap:
+        data = data.loc[~((data.date.dt.month == 2) & (data.date.dt.day == 29))]  # get rid of leap days
     average_start_year = 1981
     average_stop_year = 2010
     rain, pet, h2o_cap, h2o_start = data['rain'], data['pet'], 150, 1
 
     dates = data.loc[:, 'date']
-    doy = dates.dt.dayofyear
-
+    if leap:
+        doy = dates.dt.dayofyear
+    else:
+        # reset doy to 365 calander (e.g. no leap effect)
+        mapper = get_month_day_to_nonleap_doy(False)
+        doy = [mapper[(m, d)] for m, d in zip(dates.dt.month, dates.dt.day)]
     pet = np.atleast_1d(pet)
     rain = np.atleast_1d(rain)
 
