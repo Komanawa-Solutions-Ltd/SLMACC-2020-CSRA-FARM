@@ -243,7 +243,7 @@ def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest
         assert restriction_data is None, 'restriction data must be None in a dryland scenario'
         assert (weather_data.index.name ==
                 'date'), 'expected input data to have index of date'
-        assert (weather_data.index ==
+        assert (weather_data.index == #todo this needs work to run long BASGRA sim... make fix leap.
                 pd.date_range(weather_data.index.min(),
                               weather_data.index.max())).all(), 'weather and rest data must not be missing days'
 
