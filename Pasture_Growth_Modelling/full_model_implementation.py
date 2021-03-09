@@ -207,9 +207,9 @@ def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, s
         else:
             rest_temp = pd.DataFrame(data=rest, index=weather.index, columns=['frest'])
         matrix_weather = create_matrix_weather(mode, weather_data=weather, restriction_data=rest_temp,
-                                               rest_key='frest')
+                                               rest_key='frest', fix_leap=fix_leap)
         matrix_weathers.append(matrix_weather)
-        days_harvests.append(create_days_harvest(mode, matrix_weather, site))
+        days_harvests.append(create_days_harvest(mode, matrix_weather, site, fix_leap=fix_leap))
 
     return params, doy_irr, matrix_weathers, days_harvests
 

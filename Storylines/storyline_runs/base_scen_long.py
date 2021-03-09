@@ -11,6 +11,7 @@ from BS_work.SWG.SWG_wrapper import *
 if __name__ == '__main__':
     run_basgra = False  # to stop accidental re-run
     plot_results = True #todo look at
+    # todo need to update BASGRA_NZ_PY in order to run this
 
     if run_basgra:
         # run basgra

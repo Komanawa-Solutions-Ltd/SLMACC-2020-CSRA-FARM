@@ -60,9 +60,9 @@ def get_params_doy_irr(mode, site='eyrewell'):
         # modify inital  # set from start of simulation month (7) mean
         # todo worth re-thinking after major change to events
         if site == 'eyrewell':
-            params['BASALI'] = 0.747 #todo set
+            params['BASALI'] = 0.747  # todo set
         elif site == 'oxford':
-            params['BASALI'] = 0.723 #todo set
+            params['BASALI'] = 0.723  # todo set
         else:
             raise ValueError(f'unexpected value for site {site}')
 
@@ -103,7 +103,7 @@ def get_params_doy_irr(mode, site='eyrewell'):
     return params, doy_irr
 
 
-def create_days_harvest(mode, matrix_weather, site):
+def create_days_harvest(mode, matrix_weather, site, fix_leap=False):
     """
     get the days harvest data
     :param mode: 'dryland' or 'irrigated'
@@ -175,6 +175,9 @@ def create_days_harvest(mode, matrix_weather, site):
 
     # start harvesting at the same point
     harv_days = pd.date_range(start=dates.min() + pd.DateOffset(days=5), end=dates.max(), freq=freq)
+    if fix_leap:
+        idx = (harv_days.month == 2) & (harv_days.day == 29)
+        harv_days[idx] = pd.to_datetime([f'{y}]-02-28' for y in harv_days[idx].year])
     set_trig = [trig[m] for m in harv_days.month]
     set_targ = [targ[m] for m in harv_days.month]
     days_harvest.loc[harv_days, 'harv_trig'] = set_trig
@@ -197,7 +200,7 @@ def create_days_harvest(mode, matrix_weather, site):
     return days_harvest
 
 
-def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest'):
+def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest', fix_leap=False):
     """
 
     :param mode: one of ['irrigated', 'dryland']
@@ -217,9 +220,14 @@ def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest
         assert len(weather_data) == len(restriction_data), 'restriction and weather data must be the same length'
         assert (weather_data.index ==
                 restriction_data.index).all(), 'restriction data and weather data must have identical dates'
-        assert (weather_data.index ==
-                pd.date_range(weather_data.index.min(),
-                              weather_data.index.max())).all(), 'weather and rest data must not be missing days'
+        test_dates = pd.date_range(weather_data.index.min(),
+                                   weather_data.index.max())
+        if fix_leap:
+            test_dates = test_dates[~((test_dates.month == 2) & (test_dates.day == 29))]
+            test_dates = pd.to_datetime(
+                [f'{y}-{m:02d}-{d:02d}' for y, m, d in zip(test_dates.year, test_dates.month, test_dates.day)])
+
+        assert (weather_data.index == test_dates).all(), 'weather and rest data must not be missing days'
 
         weather_data = pd.merge(weather_data, restriction_data.loc[:, rest_key], left_index=True, right_index=True)
         matrix_weather = weather_data.loc[:, ['year',
@@ -243,9 +251,14 @@ def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest
         assert restriction_data is None, 'restriction data must be None in a dryland scenario'
         assert (weather_data.index.name ==
                 'date'), 'expected input data to have index of date'
-        assert (weather_data.index == #todo this needs work to run long BASGRA sim... make fix leap.
-                pd.date_range(weather_data.index.min(),
-                              weather_data.index.max())).all(), 'weather and rest data must not be missing days'
+        test_dates = pd.date_range(weather_data.index.min(),
+                                   weather_data.index.max())
+        if fix_leap:
+            test_dates = test_dates[~((test_dates.month == 2) & (test_dates.day == 29))]
+            test_dates = pd.to_datetime(
+                [f'{y}-{m:02d}-{d:02d}' for y, m, d in zip(test_dates.year, test_dates.month, test_dates.day)])
+
+        assert (weather_data.index == test_dates).all(), 'weather and rest data must not be missing days'
 
         matrix_weather = weather_data.loc[:, ['year',
                                               'doy',
