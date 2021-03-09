@@ -76,7 +76,7 @@ month_len = {
 
 default_swg_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SWG')
 
-
+# todo make sure I never pull doy from index!!!! across all scripts !!!
 def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_sites, padock_rest=False,
                        save_daily=False, description='', swg_dir=default_swg_dir, verbose=True,
                        n_parallel=1, fix_leap=False):
