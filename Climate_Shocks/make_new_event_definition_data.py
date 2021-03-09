@@ -21,11 +21,15 @@ from Storylines.storyline_runs.run_SWG_for_all_months import generate_all_swg, g
 from Storylines.irrigation_mapper import get_irr_by_quantile
 
 if __name__ == '__main__':
+    t = input('this will re-run most of the system are you sure you want to proceed '
+              'with make_new_event_definition_data.py \nY/N')
+    if t.lower() != 'y':
+        raise ValueError('stopped to prevent override')
     # todo run before signoff
-    # todo check!
-    re_run_SWG = False
-    re_run_pgr = False
+    # todo check this generates everything I need!
 
+    re_run_SWG = True
+    re_run_pgr = True
     prev_event_path = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\v5_detrend\detrend_event_data.csv")
     event_def_dir = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/v6_detrend")
     vcsn_version = 'detrended2'
@@ -150,7 +154,10 @@ if __name__ == '__main__':
     make_blank_storyline_sheet()
     from Climate_Shocks.make_transition_overview import get_all_zero_prob_transitions
 
-    get_all_zero_prob_transitions(save=True)  # todo this will not run without BS input
+    try:
+        get_all_zero_prob_transitions(save=True)  # this will not run without BS input
+    except Exception:
+        print('could not make zero transition probs')
 
     # other scripts worth re-running/ rethinking
     # Storylines/storyline_runs/run_unique_events.py # re-run unique events to see any changes
