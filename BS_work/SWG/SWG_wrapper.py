@@ -216,7 +216,7 @@ def _check_data_v1(swg_path, storyline, m, cold_months, wet_months, hot_months, 
 
     # calc SMA
     data.loc[:, 'sma'] = calc_smd_monthly(data.rain, data.pet, data.index) - data.loc[:, 'doy'].replace(
-        get_monthly_smd_mean_detrended())
+        get_monthly_smd_mean_detrended(leap=False))
 
     data.loc[:, 'wet'] = data.loc[:, 'rain'] >= 0.1
     data.loc[:, 'dry'] = data.loc[:, 'sma'] <= -15
@@ -390,54 +390,54 @@ def get_month_day_to_nonleap_doy(key_doy=False):
 
 
 def get_monthly_smd_mean_detrended(leap=False, recalc=False):
-    if leap:
-        add = '366_cal'
-    else:
-        add = '365_cal'
 
-    outpath = os.path.join(climate_shocks_env.supporting_data_dir, f'mean_montly_smd_detrend_{add}.csv')
+    outpath = os.path.join(climate_shocks_env.supporting_data_dir, 'mean_montly_smd_detrend.csv')
 
     if not recalc and os.path.exists(outpath):
         average_smd = pd.read_csv(outpath, index_col=0)
-        return average_smd.loc[:, 'smd'].to_dict()
 
-    data = get_vcsn_record('detrended2').reset_index()
-    if not leap:
-        data = data.loc[~((data.date.dt.month == 2) & (data.date.dt.day == 29))]  # get rid of leap days
-    average_start_year = 1981
-    average_stop_year = 2010
-    rain, pet, h2o_cap, h2o_start = data['rain'], data['pet'], 150, 1
-
-    dates = data.loc[:, 'date']
-    if leap:
-        doy = dates.dt.dayofyear
     else:
+        data = get_vcsn_record('detrended2').reset_index()
+
+        data = data.loc[~((data.date.dt.month == 2) & (data.date.dt.day == 29))]  # get rid of leap days
+        average_start_year = 1981
+        average_stop_year = 2010
+        rain, pet, h2o_cap, h2o_start = data['rain'], data['pet'], 150, 1
+
+        dates = data.loc[:, 'date']
+
+
+
         # reset doy to 365 calander (e.g. no leap effect)
         mapper = get_month_day_to_nonleap_doy(False)
         doy = [mapper[(m, d)] for m, d in zip(dates.dt.month, dates.dt.day)]
-    pet = np.atleast_1d(pet)
-    rain = np.atleast_1d(rain)
+        pet = np.atleast_1d(pet)
+        rain = np.atleast_1d(rain)
 
-    assert dates.shape == pet.shape == rain.shape, 'date, pet, rain must be same shape'
+        assert dates.shape == pet.shape == rain.shape, 'date, pet, rain must be same shape'
 
-    smd = calc_smd_monthly(rain, pet, dates,
-                           month_start=detrended_start_month,
-                           h2o_cap=150,
-                           a=0.0073,
-                           p=1, return_drn_aet=False)
+        smd = calc_smd_monthly(rain, pet, dates,
+                               month_start=detrended_start_month,
+                               h2o_cap=150,
+                               a=0.0073,
+                               p=1, return_drn_aet=False)
 
-    outdata = pd.DataFrame(data={'date': dates, 'doy': doy, 'pet': pet, 'rain': rain, 'smd': smd},
-                           )
+        outdata = pd.DataFrame(data={'date': dates, 'doy': doy, 'pet': pet, 'rain': rain, 'smd': smd},
+                               )
 
-    # calculate mean smd for doy
+        # calculate mean smd for doy
 
-    idx = (outdata.date.dt.year >= average_start_year) & (outdata.date.dt.year <= average_stop_year)
-    temp = outdata.loc[idx, ['doy', 'smd']]
-    average_smd = temp.groupby(doy).mean().set_index('doy')
-    average_smd.to_csv(outpath)
+        idx = (outdata.date.dt.year >= average_start_year) & (outdata.date.dt.year <= average_stop_year)
+        temp = outdata.loc[idx, ['doy', 'smd']]
+        average_smd = temp.groupby('doy').mean().fillna('bfill')
+        average_smd.to_csv(outpath)
 
-    return average_smd.loc[:, 'smd'].to_dict()
+    out = average_smd.loc[:, 'smd'].to_dict()
+    if leap:
+        raise NotImplementedError
+    return out
 
 
 if __name__ == '__main__':
+    print(get_monthly_smd_mean_detrended(False,True))
     pass

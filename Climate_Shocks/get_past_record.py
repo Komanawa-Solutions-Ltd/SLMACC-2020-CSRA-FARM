@@ -7,7 +7,7 @@ import ksl_env
 import os
 import pandas as pd
 import numpy as np
-from Climate_Shocks.climate_shocks_env import event_def_path
+from Climate_Shocks.climate_shocks_env import event_def_path, supporting_data_dir
 
 vcsn_keys = ('year', 'month', 'day', 'doy', 'pet', 'radn', 'tmax', 'tmin', 'rain')
 
@@ -25,7 +25,7 @@ def _get_eyrewell_detrended(version):
         data = pd.read_csv(os.path.join(os.path.dirname(event_def_path), 'detrended_vcsn_for_matt.csv'),
                            skiprows=3)
     elif version == 2:
-        data = pd.read_csv(os.path.join(os.path.dirname(event_def_path), 'detrended_vcsn_for_matt_v2.csv'),
+        data = pd.read_csv(os.path.join(supporting_data_dir, 'do_not_delete', 'detrended_vcsn_for_matt_v2.csv'),
                            skiprows=3)
     else:
         raise NotImplementedError()

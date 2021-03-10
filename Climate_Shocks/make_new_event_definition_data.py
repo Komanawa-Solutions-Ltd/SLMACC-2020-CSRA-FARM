@@ -10,15 +10,10 @@ import subprocess
 import sys
 import glob
 from BS_work.SWG.check_1_month_runs import make_event_prob
-from BS_work.SWG.SWG_wrapper import get_monthly_smd_mean_detrended
 from Climate_Shocks.note_worthy_events.rough_stats import make_data
 from Climate_Shocks.climate_shocks_env import event_def_path, supporting_data_dir, storyline_dir
 from Climate_Shocks.note_worthy_events.final_event_recurance import get_org_data
-from Climate_Shocks.note_worthy_events.inverse_percentile import calc_doy_per_from_historical
 from Storylines.check_storyline import get_past_event_frequency, get_acceptable_events
-from Storylines.storyline_runs.run_SWG_for_all_months import generate_all_swg, generate_SWG_output_support, \
-    clean_individual
-from Storylines.irrigation_mapper import get_irr_by_quantile
 
 if __name__ == '__main__':
     t = input('this will re-run most of the system are you sure you want to proceed '
@@ -26,7 +21,7 @@ if __name__ == '__main__':
     if t.lower() != 'y':
         raise ValueError('stopped to prevent override')
     # todo run before signoff
-    # todo check this generates everything I need!
+    # todo check this generates everything I need!, I ran on dickie on 10-03 at 3:45
 
     re_run_SWG = True
     re_run_pgr = True
@@ -105,6 +100,11 @@ if __name__ == '__main__':
     if result.returncode != 0:
         raise ChildProcessError('{}\n{}'.format(result.stdout, result.stderr))
 
+    from Climate_Shocks.note_worthy_events.inverse_percentile import calc_doy_per_from_historical
+    from Storylines.storyline_runs.run_SWG_for_all_months import generate_all_swg, generate_SWG_output_support, \
+        clean_individual
+    from Storylines.irrigation_mapper import get_irr_by_quantile
+
     # make restriction mappers:
     get_irr_by_quantile(recalc=True)
 
@@ -112,17 +112,21 @@ if __name__ == '__main__':
     data = calc_doy_per_from_historical('detrended2')  # this should be the one used, others are for investigation
     data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles_detrended_v2.csv'))
 
+    from BS_work.SWG.SWG_wrapper import get_monthly_smd_mean_detrended
+
+    get_monthly_smd_mean_detrended(False, True)
+
     # make probality of creating an event with SWG
     prob_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'id_prob')
     generate_SWG_output_support()
     generate_all_swg(1000, False, outdir=prob_dir)
-    make_event_prob(prob_dir)
+    make_event_prob(prob_dir)  # todo fell over here, on first attempt
 
     if re_run_SWG:
         # run SWG
         full_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SWG')
         generate_all_swg(10000, True, full_dir)
-        clean_individual(full_dir)
+        clean_individual(full_dir, duplicate=False)
 
         # run irrigation generator...
         from Climate_Shocks.Stochastic_Weather_Generator.irrigation_generator import get_irrigation_generator
@@ -149,7 +153,8 @@ if __name__ == '__main__':
         print(f'adding pgra to {p}')
         add_pasture_growth_anaomoly_to_nc(nc_path=p, recalc=True)
 
-    from Storylines.storyline_building_support import make_irr_rest_for_all_events,  make_blank_storyline_sheet
+    from Storylines.storyline_building_support import make_irr_rest_for_all_events, make_blank_storyline_sheet
+
     make_irr_rest_for_all_events()
     make_blank_storyline_sheet()
     from Climate_Shocks.make_transition_overview import get_all_zero_prob_transitions
