@@ -58,16 +58,16 @@ if __name__ == '__main__':
     weed_dict_1 = {
         1: 0.42,
         2: 0.30,
-        3: 0.35,
-        4: 0.3,
-        5: 0.45,
-        6: 0.6,
-        7: 0.5,
-        8: 0.4,
-        9: 0.3,
+        3: 0.33,
+        4: 0.32,
+        5: 0.46,
+        6: 0.59,
+        7: 0.70,
+        8: 0.57,
+        9: 0.33,
         10: 0.37,
         11: 0.62,
-        12: 0.60,
+        12: 0.62,
     }
     weed_dict_2 = {
         1: 0.42,
@@ -85,14 +85,14 @@ if __name__ == '__main__':
     }
 
     data = {
-        'weed: special1': run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_yield',
-                                                  fun='mean', reseed_trig=0.06, reseed_basal=0.1, basali=0.15,
-                                                  weed_dm_frac=weed_dict_1),
 
         'weed: special2': run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_yield',
                                                   fun='mean', reseed_trig=0.06, reseed_basal=0.1, basali=0.15,
-                                                  weed_dm_frac=weed_dict_2),
-        'irrigated_oxford': run_past_basgra_irrigated(site='oxford')
+                                                  weed_dm_frac=weed_dict_2,  use_defined_params_except_weed_dm_frac=False),
+        'weed: special1': run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_yield',
+                                                  fun='mean', reseed_trig=0.01133, reseed_basal=0.1589, basali=0.20835,
+                                                  weed_dm_frac=weed_dict_1,  use_defined_params_except_weed_dm_frac=False),
+        #'irrigated_oxford': run_past_basgra_irrigated(site='oxford')
 
     }
 
@@ -101,6 +101,6 @@ if __name__ == '__main__':
     out_vars = ['DM', 'YIELD', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'RAIN', 'EVAP', 'TRAN', 'per_PAW', 'pg', 'RESEEDED',
                 'pga_norm', 'BASAL']
     plot_multiple_results(data=data, out_vars=out_vars, rolling=90, label_rolling=True, label_main=False,
-                          main_kwargs={'alpha': 0.2},
+                          main_kwargs={'alpha': 0.8},
                           show=False)
     plot_multiple_monthly_results(data=data2, out_vars=['pg'], show=True, main_kwargs={'marker': 'o'})

@@ -23,7 +23,7 @@ from Pasture_Growth_Modelling.initialisation_support.comparison_support import m
 def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True):
     mode = 'irrigated'
     print('running: {}, {}, reseed: {}'.format(mode, site, reseed))
-    weather = get_vcsn_record(version='detrended2', site=site)
+    weather = get_vcsn_record(version='trended', site=site)
     rest = get_restriction_record()
     params, doy_irr = get_params_doy_irr(mode)
     matrix_weather = create_matrix_weather(mode, weather, rest, fix_leap=False)

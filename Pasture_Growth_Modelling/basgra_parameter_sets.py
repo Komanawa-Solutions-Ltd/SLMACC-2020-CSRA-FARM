@@ -60,9 +60,9 @@ def get_params_doy_irr(mode, site='eyrewell'):
         # modify inital  # set from start of simulation month (7) mean
         # todo worth re-thinking after major change to events
         if site == 'eyrewell':
-            params['BASALI'] = 0.747  # todo set
+            params['BASALI'] = 0.7808  # was before 10/3 0.747
         elif site == 'oxford':
-            params['BASALI'] = 0.723  # todo set
+            params['BASALI'] = 0.7507  # was before 10/3 0.723
         else:
             raise ValueError(f'unexpected value for site {site}')
 
@@ -79,7 +79,8 @@ def get_params_doy_irr(mode, site='eyrewell'):
 
         # modify inital values for dryland
         # set from a mid point value, left as it is part of the dryland 'optimisation' process
-        params['BASALI'] = 0.15
+        params['BASALI'] = 0.15  # think about this! average 0.2085 in long term baseline, but I'll keep it at present
+        # as it made very little difference in PGR
 
         # reseed parameteres, set as mean of long term runs in june
         params['reseed_harv_delay'] = 40
@@ -116,12 +117,14 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=True):
 
         weed_dm_frac = 0
         if site == 'eyrewell':
-            reseed_trig = 0.696
-            reseed_basal = 0.727
+            # ibasal set to 0.7808, was 0.747 before 10/3/2021
+            reseed_trig = 0.727  # was 0.696 before 10/3/2021 # 93.172 %
+            reseed_basal = 0.760  # was 0.727 before 10/3/2021 # 97.32 %
 
         elif site == 'oxford':
-            reseed_trig = 0.678
-            reseed_basal = 0.704
+            # ibasal set to 0.7507,  was 0.723 before 10/3/2021
+            reseed_trig = 0.704  # was 0.678 before 10/3/2021 # 93.77 %
+            reseed_basal = 0.7309  # was  0.704  before 10/3/2021 # 97.37 %
 
         else:
             raise NotImplementedError()
@@ -173,7 +176,7 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=True):
 
     # start harvesting at the same point
     harv_days = pd.Series(pd.date_range(start=matrix_weather.index.min() + pd.DateOffset(days=5),
-                              end=matrix_weather.index.max(), freq=freq))
+                                        end=matrix_weather.index.max(), freq=freq))
     if fix_leap:
         # move any harvests that fall on a leap day to the last day in feb.
         idx = (harv_days.dt.month == 2) & (harv_days.dt.day == 29)
