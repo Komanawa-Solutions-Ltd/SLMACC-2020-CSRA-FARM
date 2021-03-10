@@ -20,10 +20,10 @@ if __name__ == '__main__':
               'with make_new_event_definition_data.py \nY/N')
     if t.lower() != 'y':
         raise ValueError('stopped to prevent override')
-    # todo run before signoff
     # todo check this generates everything I need!, I ran on dickie on 10-03 at 3:45
 
-    re_run_SWG = True
+
+    re_run_SWG = False
     re_run_pgr = True
     prev_event_path = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\v5_detrend\detrend_event_data.csv")
     event_def_dir = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/v6_detrend")
@@ -116,13 +116,13 @@ if __name__ == '__main__':
 
     get_monthly_smd_mean_detrended(False, True)
 
-    # make probality of creating an event with SWG
-    prob_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'id_prob')
-    generate_SWG_output_support()
-    generate_all_swg(1000, False, outdir=prob_dir)
-    make_event_prob(prob_dir)  # todo fell over here, on first attempt
 
     if re_run_SWG:
+        # make probality of creating an event with SWG
+        prob_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'id_prob')
+        generate_SWG_output_support()
+        generate_all_swg(1000, False, outdir=prob_dir)
+        make_event_prob(prob_dir)
         # run SWG
         full_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SWG')
         generate_all_swg(10000, True, full_dir)

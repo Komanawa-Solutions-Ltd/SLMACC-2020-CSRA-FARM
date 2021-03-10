@@ -696,10 +696,10 @@ def add_pasture_growth_anaomoly_to_nc(nc_path, recalc=False):
         pga_an[:] = sim_data - base_data[:, np.newaxis]
 
         # cumulative
-        if 'd_PGRA_sum' not in data.variables.keys():
+        if 'd_PGRA_cum' not in data.variables.keys():
             pga_an = data.createVariable('d_PGRA_cum', float, ('sim_day', 'realisation'), fill_value=np.nan)
         else:
-            pga_an = data.variables['d_PGRA_sum']
+            pga_an = data.variables['d_PGRA_cum']
         pga_an.setncatts({'units': 'kgDM/ha/day',
                           'base_storyline_name': story_nm,
                           'base_storyline_text': storyline_text,
