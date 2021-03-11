@@ -5,6 +5,7 @@
 from Climate_Shocks.get_past_record import get_restriction_record
 import numpy as np
 from scipy.stats import pearsonr, truncnorm
+from Climate_Shocks.note_worthy_events.inverse_percentile import inverse_percentile
 
 
 def get_autocorrelation(x, lags=30):
@@ -21,25 +22,27 @@ def get_autocorrelation(x, lags=30):
 
 
 if __name__ == '__main__':
-
     import matplotlib.pyplot as plt
 
-    myclip_a = 4
-    myclip_b = 15
-    my_mean = 8
-    my_std = 1.5
-    a, b = (myclip_a - my_mean) / my_std, (myclip_b - my_mean) / my_std
-    x = truncnorm(a, b, loc=my_mean, scale=my_std).rvs(size=10000)  # .round().astype(int)
-    fig, ax = plt.subplots()
-    ax.hist(x, bins=2 * (15 - 4) + 1)
+    data = get_restriction_record('detrended').reset_index()
+    data = data.groupby(['year', 'month']).mean(False)
 
-    lags = 30
-    org_data = get_restriction_record('detrended')
-    for m in range(1, 13):
-        fig, ax = plt.subplots()
-        ax.set_title('month: {}'.format(m))
-        data = org_data.loc[org_data.month == m]
-        data = data.f_rest.values
-        auto = get_autocorrelation(data, lags)
-        ax.plot(range(lags), auto)
+    for (y, m), frest in data.loc[:, ['f_rest', ]].itertuples(True, None):
+        per, err = inverse_percentile(data.loc[(data.index.levels[0], m), 'f_rest'], frest)
+        data.loc[(y, m), 'rest_per'] = per
+        data.loc[(y, m), 'rest_per_err'] = err
+
+    data.set_index('date').loc[:, ['rest_per', 'rest_per_err']].plot()
+
+    fig, ax = plt.subplots()
+    ax.set_title('rest_per')
+    lags = 12
+    auto = get_autocorrelation(data.rest_per, lags)
+    ax.plot(range(lags), auto)
+    fig, ax = plt.subplots()
+    ax.set_title('restriction')
+    auto = get_autocorrelation(data.f_rest, lags)
+    ax.plot(range(lags), auto)
     plt.show()
+
+    pass
