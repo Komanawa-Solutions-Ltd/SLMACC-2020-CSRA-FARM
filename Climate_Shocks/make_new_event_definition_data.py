@@ -16,14 +16,12 @@ from Climate_Shocks.note_worthy_events.final_event_recurance import get_org_data
 from Storylines.check_storyline import get_past_event_frequency, get_acceptable_events
 
 if __name__ == '__main__':
-    t = input('this will re-run most of the system are you sure you want to proceed '
+    t = input('this will re-run most of the system and takes c. 15 HOURS are you sure you want to proceed '
               'with make_new_event_definition_data.py \nY/N')
     if t.lower() != 'y':
         raise ValueError('stopped to prevent override')
-    # todo check this generates everything I need!, I ran on dickie on 10-03 at 3:45
 
-
-    re_run_SWG = False
+    re_run_SWG = True
     re_run_pgr = True
     prev_event_path = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\v5_detrend\detrend_event_data.csv")
     event_def_dir = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/v6_detrend")
