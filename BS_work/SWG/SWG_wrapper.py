@@ -437,6 +437,17 @@ def get_monthly_smd_mean_detrended(leap=False, recalc=False):
         raise NotImplementedError
     return out
 
+def delete_single_ncs(indir):
+    """
+    deletes the single .nc files made by BS code, but keeps the amalgamated values
+    :param indir:
+    :return:
+    """
+    for d in os.listdir(indir):
+        p = os.path.join(indir,d)
+        if os.path.isdir(p):
+            print(f'removing {d}')
+            shutil.rmtree(p)
 
 if __name__ == '__main__':
     print(get_monthly_smd_mean_detrended(False,True))
