@@ -47,6 +47,8 @@ def make_exploritory_data(number=None):
 
     # correct shapes
     print(bad_sims)
+    months = dates.month
+    days = dates.day
     rain = np.delete(rain, bad_sims, axis=1)
     radn = np.delete(radn, bad_sims, axis=1)
     tmax = np.delete(tmax, bad_sims, axis=1)
