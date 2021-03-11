@@ -219,7 +219,7 @@ def calc_penman_pet(rad, temp, rh, wind_10=None, wind_2=None, psurf=None, mslp=N
     return pet
 
 
-def calc_smd_sma_wah_monthly(dates, rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv):
+def calc_smd_sma_wah_monthly(months, days, rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv):
     """
     calculate soil moisture deficit, soil moisture anomaly, and pet for weather at home data.  this is a convenience
     function for Bodeker Scientific.  the expected inputs which are nd arrays are expected to be 2d arrays of
@@ -228,8 +228,8 @@ def calc_smd_sma_wah_monthly(dates, rain, radn, tmax, tmin, rh_min, rh_max, wind
     input data contains nan values
     SMD is a monthly standardized dataset assumes a starting soil moisture for each month (see detrended_start_month
     object in this file)
-    :param dates: list array or series of datetime objects, it is imporant that pd.Series(dates) has .day and .month
-                  attributes.  the first day of each month is used to reset the SMD to a standard value.
+    :param months: integer months (1-12) an array of len(rain) or None if dates is passed
+    :param days: integer days of the month an array of len(rain) or None if dates is passed
     :param rain: precipitation (kg m-2 s-1), np.ndarray
     :param radn: radiation (W m-2), np.ndarray
     :param tmax: maximum temperature (k), np.ndarray
@@ -262,7 +262,7 @@ def calc_smd_sma_wah_monthly(dates, rain, radn, tmax, tmin, rh_min, rh_max, wind
     # run SMD/SMA
     pet = calc_penman_pet(rad=radn, temp=temp, rh=rh, wind_10=wind_10, wind_2=None, psurf=None, mslp=mslp,
                           elevation=elv)
-    smd = calc_smd_monthly(rain=rain, pet=pet, dates=dates,
+    smd = calc_smd_monthly(rain=rain, pet=pet, dates=None, months=months, days=days,
                            month_start=detrended_start_month,
                            h2o_cap=150,
                            a=0.0073,
@@ -366,7 +366,7 @@ detrended_start_month = {
 # calculated from historical SMD from detrended2 on first day of each month with a 10 day centered rolling window mean
 
 
-def calc_smd_monthly(rain, pet, dates,
+def calc_smd_monthly(rain, pet, dates=None, months=None, days=None,
                      month_start=detrended_start_month,
                      h2o_cap=150,
                      a=0.0073,
@@ -376,7 +376,9 @@ def calc_smd_monthly(rain, pet, dates,
     sets the start of each month to the delta of the month start value and the rain/pet on that day.
     :param rain: array of rain fall amounts, mm, shape = (time, *other dimensions (if needed))
     :param pet: array of pet amounts, mm, shape = (time, *other dimensions (if needed))
-    :param dates: array of datetime objects,  shape = (time,)
+    :param dates: array of datetime objects,  shape = (time,) or none and then months/days must be passed
+    :param months: integer months (1-12) an array of len(rain) or None if dates is passed
+    :param days: integer days of the month an array of len(rain) or None if dates is passed
     :param month_start: the SMD value to start each month with
     :param h2o_cap: maximum soil water capacity, mm, niwa uses 150mm as a standard
     :param a: "readily available" water coefficient (d mm-1)
@@ -389,9 +391,15 @@ def calc_smd_monthly(rain, pet, dates,
 
     assert isinstance(month_start, dict)
     assert set(month_start.keys()) == set(range(1, 13))
-    dates = pd.Series(np.atleast_1d(dates))
-    months = np.array([d.month for d in dates])
-    days = np.array([d.day for d in dates])
+    if dates is not None:
+        assert months is None and days is None, 'if dates is not none then months/days must be None'
+        dates = pd.Series(np.atleast_1d(dates))
+        months = np.array([d.month for d in dates])
+        days = np.array([d.day for d in dates])
+    else:
+        assert months is not None and days is not None, 'if dates is none then months/days must not be none'
+        months = np.atleast_1d(months)
+        days = np.atleast_1d(days)
     # make this work if float/ndarray passed
     if np.atleast_1d(pet).ndim == 1:
         array_d = 1  # 1d array or list, return 1d data
@@ -400,7 +408,8 @@ def calc_smd_monthly(rain, pet, dates,
     else:
         array_d = 2  # 2 or more dimensions return without modification
     assert rain.shape == pet.shape, 'rain and PET must be same shape'
-    assert dates.shape == pet.shape[0:1], 'dates must be the same shape as pet.shape[0:1]'
+    assert months.shape ==  days.shape == pet.shape[0:1], ('dates (or months and days) must be the same shape as '
+                                                           'pet.shape[0:1]')
     smd = np.zeros(pet.shape, float) * np.nan
     if return_drn_aet:
         drain = np.zeros(pet.shape, float) * np.nan

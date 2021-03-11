@@ -56,7 +56,7 @@ def make_exploritory_data(number=None):
     wind_10 = np.delete(wind_10, bad_sims, axis=1)
     mslp = np.delete(mslp, bad_sims, axis=1)
 
-    smd, sma, pet = calc_smd_sma_wah_monthly(dates, rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv=200)
+    smd, sma, pet = calc_smd_sma_wah_monthly(months, days, rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, elv=200)
     rain *= 84600
     return dates, rain, radn, tmax, tmin, rh_min, rh_max, wind_10, mslp, smd, sma, pet
 
