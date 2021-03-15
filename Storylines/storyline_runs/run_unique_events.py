@@ -101,7 +101,7 @@ def extract_data(outdir):
 
 
 if __name__ == '__main__':
-    run_pgr = True
+    run_pgr = False
     extract = True
     if run_pgr:
         make_storylines()
