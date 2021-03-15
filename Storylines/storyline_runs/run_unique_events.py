@@ -27,9 +27,9 @@ def make_storylines():
     options = make_sampling_options()
     years = default_storyline_time.year
     months = default_storyline_time.month
-    base_data = pd.DataFrame(index=default_storyline_time[0:12], columns=['precip_class', 'temp_class', 'rest'])
-    base_data.loc[:, 'month'] = months[0:12]
-    base_data.loc[:, 'year'] = years[0:12]
+    base_data = pd.DataFrame(index=default_storyline_time[0:24], columns=['precip_class', 'temp_class', 'rest'])
+    base_data.loc[:, 'month'] = months[0:24]
+    base_data.loc[:, 'year'] = years[0:24]
     base_data.loc[:, 'use_rest'] = 0.50
     for i in base_data.index:
         t, p, r = base_events[base_data.loc[i, 'month']]
@@ -101,10 +101,10 @@ def extract_data(outdir):
 
 
 if __name__ == '__main__':
-    run_pgr = False
+    run_pgr = True
     extract = True
     if run_pgr:
         make_storylines()
         run_pasture_growth()
     if extract:
-        extract_data(os.path.join(ksl_env.slmmac_dir, 'output_pgr', 'unique_events'))
+        extract_data(os.path.join(ksl_env.slmmac_dir, 'output_pgr', 'unique_events_v2'))
