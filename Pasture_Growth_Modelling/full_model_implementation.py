@@ -33,6 +33,8 @@ out_metadata = get_output_metadata()
 
 add_variables = {  # varaibles that are defined here and not in BASGRA
     'PGR': {'unit': 'kg dry matter/m2/day', 'description': 'pasture growth rate, calculated from yield'},
+    'PGRA': {'unit': '\u0394 kg dry matter/m2/day', 'description': 'pasture growth rate anomaly from baseline'},
+    'PGRA_cum': {'unit': '\u0394 kg dry matter/m2 to date', 'description': 'cumulative pasture growth rate anomaly from baseline'},
     'PER_PAW': {'unit': 'fraction', 'description': 'fraction of PAW (profile available water'},
     'F_REST': {'unit': 'fraction', 'description': 'fraction of irrigation restriction, '
                                                   '1=0 mm water available/day, '

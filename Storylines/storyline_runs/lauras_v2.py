@@ -55,7 +55,7 @@ def make_storylines():
         sl.loc[pd.isnull(sl.temp_class), 'temp_class'] = 'A'
         sl.loc[:, 'temp_class'] = sl.loc[:, 'temp_class'].str.replace('T', '').str.strip()
         map_storyline_rest(sl)
-        s2 = s.replace('/','-').replace('(','').replace(')','').replace(',','')
+        s2 = s.replace('/', '-').replace('(', '').replace(')', '').replace(',', '')
         sl.to_csv(os.path.join(story_dir, f'{s2}.csv'))
 
 
@@ -78,28 +78,28 @@ def run_pasture_growth_mp():
 def export_and_plot_data():
     export_all_in_pattern(base_outdir=outputs_dir,
                           patterns=[
-                              os.path.join(story_dir, '*.nc'),
-                              os.path.join(os.path.dirname(story_dir), 'baseline_sim_no_pad', '*.nc')
+                              os.path.join(base_pg_outdir, '*.nc'),
+                              os.path.join(os.path.dirname(base_pg_outdir), 'baseline_sim_no_pad', '*.nc')
                           ])
     for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
-        paths = glob.glob(os.path.join(story_dir, f'*{sm}.nc'))
+        paths = glob.glob(os.path.join(base_pg_outdir, f'*{sm}.nc'))
         for p in paths:
-            outdir = os.path.join(story_dir, 'plots', os.path.basename(p).replace('f-{sm}.nc', ''))
+            outdir = os.path.join(outputs_dir, sm, 'plots')
             if not os.path.exists(outdir):
                 os.makedirs(outdir)
-            data_paths = [p, f"D:/mh_unbacked/SLMACC_2020/pasture_growth_sims/baseline_sim_no_pad/0-baseline-{sm}.nc"]
+            data_paths = [p,
+                          os.path.join(os.path.dirname(base_pg_outdir), 'baseline_sim_no_pad', f'0-baseline-{sm}.nc')]
 
             plot_sims(data_paths,
                       plot_ind=False, nindv=100, save_dir=outdir, show=False, figsize=(20, 20),
-                      daily=False, ex_save=f'{sm}-')
+                      daily=False, ex_save=os.path.basename(p).replace('.nc', ''))
 
 
 if __name__ == '__main__':
-    run = True
+    run = False
     plot_export = True
-    export_csv = True
-    make_storylines()
     if run:
+        make_storylines()
         run_pasture_growth_mp()
     if plot_export:
         export_and_plot_data()
