@@ -13,7 +13,7 @@ from Pasture_Growth_Modelling.full_model_implementation import out_variables, ou
 
 
 def plot_sims(data_paths, plot_ind=False, plt_vars=out_variables, nindv=100, save_dir=None, show=False, figsize=(11,8),
-              daily=False):
+              daily=False, ex_save=''):
     """
     plot multiple basgra netcdf simulations, one plot per variable, with all datasets on the same plot
     :param data_paths: paths to the netcdf files
@@ -26,6 +26,7 @@ def plot_sims(data_paths, plot_ind=False, plt_vars=out_variables, nindv=100, sav
     :param figsize: figure size passed directly to plt.subplots
     :param daily: boolean, if True plot daily data, if False plot monthly data, note that daily data may not be
                   avalible for all sims
+    :param ex_save: additional str to add to front of file name
     :return:
     """
     assert np.in1d(plt_vars, out_variables).all(), (f'some variables {plt_vars} are not found in the '
@@ -82,7 +83,7 @@ def plot_sims(data_paths, plot_ind=False, plt_vars=out_variables, nindv=100, sav
         ax.legend()
     if save_dir is not None:
         for v, fig in figs.items():
-            fig.savefig(os.path.join(save_dir, f'{v}.png'))
+            fig.savefig(os.path.join(save_dir, f'{ex_save}{v}.png'))
             if not show:
                 plt.close(fig)
     if show:
