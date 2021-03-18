@@ -106,7 +106,7 @@ if __name__ == '__main__':
     # make restriction mappers:
     get_irr_by_quantile(recalc=True)
 
-    #  make quantile tables for the new event_data!, todo check!
+    #  make quantile tables for the new event_data!,
     data = calc_doy_per_from_historical('detrended2')  # this should be the one used, others are for investigation
     data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles_detrended_v2.csv'))
 
