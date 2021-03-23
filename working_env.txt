@@ -6,3 +6,5 @@ conda create  --channel conda-forge --name SLMMAC_20_CSRA python=3.7 numpy panda
 
 The choice for python 3.7 is based on the changes made in 3.8 which makes it harder to work with DLLS. I need this functionallity to run the pasture growth model.
 If you have any concerns with regards to this environement, please contact Matt@komanawa.com
+
+see: SLMMAC_environment.yml for direct export of the used environment.
