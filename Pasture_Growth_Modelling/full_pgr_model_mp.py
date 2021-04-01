@@ -45,6 +45,10 @@ def run_full_model_mp(storyline_path_mult,
     :param pool_size: if none use full processor pool otherwise specify
     :return:
     """
+    if verbose:
+        sp = start_process
+    else:
+        sp = silent_start_process
     log_path = f'{log_path}-{datetime.datetime.now().isoformat().replace(":", "-").split(".")[0]}.csv'
     if not os.path.exists(os.path.dirname(log_path)):
         os.makedirs(os.path.dirname(log_path))
@@ -111,7 +115,7 @@ def run_full_model_mp(storyline_path_mult,
     t = time.time()
     multiprocessing.log_to_stderr(logging.DEBUG)
     pool = multiprocessing.Pool(processes=pool_size,
-                                initializer=start_process)
+                                initializer=sp)
 
     results = pool.map_async(_rpg_mp, runs)
     pool_outputs = results.get()
@@ -130,6 +134,15 @@ def start_process():
     :return:
     """
     print('Starting', multiprocessing.current_process().name)
+    p = psutil.Process(os.getpid())
+    # set to lowest priority, this is windows only, on Unix use ps.nice(19)
+    p.nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)
+
+def silent_start_process():
+    """
+    function to run at the start of each multiprocess sets the priority lower
+    :return:
+    """
     p = psutil.Process(os.getpid())
     # set to lowest priority, this is windows only, on Unix use ps.nice(19)
     p.nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)

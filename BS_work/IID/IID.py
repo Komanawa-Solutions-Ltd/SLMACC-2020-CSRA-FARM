@@ -64,7 +64,8 @@ def run_IID(story_dict, outpath=None, verbose=False, comments=''):
                                 f"{len(trans_files)}, and ini_path exists {initial_path.exists()}")
 
     # loading probability matrices
-    print("loading probability matrices")
+    if verbose:
+        print("loading probability matrices")
     trans_dfs = {f.name.split("_")[0]: pd.read_csv(f, index_col=0, comment="#") for f in trans_files}
     initial_df = pd.read_csv(initial_path, index_col=0, comment="#")
     assert isinstance(story_dict, dict), 'storylines must be dictionaries'

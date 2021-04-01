@@ -76,7 +76,7 @@ def extract_data(outdir):
     for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
         paths = sorted(glob.glob(os.path.join(unique_events_pgr_dir, f'*{sm}.nc')))
         names = [os.path.basename(os.path.splitext(p)[0]) for p in paths]
-        outdata = pd.DataFrame(index=range(0, 12), columns=names,dtype=float)
+        outdata = pd.DataFrame(index=range(0, 24), columns=names,dtype=float)
         outdata.index.name = 'months since event month'
         for p, n in zip(paths, names):
             data = nc.Dataset(p)

@@ -24,20 +24,20 @@ for d in [random_pg_dir, random_sl_dir, gdrive_outdir]:
 
 
 def make_1_year_storylines():
-    n = 10  # todo how many?, check with this value!
+    n = 70000  # based on an arbirary 4 day run length over easter
     storylines = generate_random_suite(n, use_default_seed=True, save=False, return_story=True)
 
     # run IID
-    iid_prob = run_IID(story_dict={f'rsl-{k}': v for k, v in enumerate(storylines)}, verbose=True)
+    iid_prob = run_IID(story_dict={f'rsl-{k}': v for k, v in enumerate(storylines)}, verbose=False)
     iid_prob.set_index('ID')
     iid_prob.to_hdf(os.path.join(random_pg_dir, 'IID_probs_1yr.hdf'), 'prob', mode='w')  # save locally
     iid_prob.to_hdf(os.path.join(gdrive_outdir, 'IID_probs_1yr.hdf'), 'prob', mode='w')  # save on gdrive
 
     # save non-zero probability stories
-    for sl, (i, p) in zip(storylines, iid_prob.prob.to_dict().items()):
-        if p == 0:
+    for sl, (i, p) in zip(storylines, iid_prob.log10_prob.to_dict().items()):
+        if not np.isfinite(p):
             continue
-        name = f'rsl-{i}'  # todo how many zeros...
+        name = f'rsl-{i:06d}'
         sl.to_csv(os.path.join(random_sl_dir, f'{name}.csv'))
 
 
@@ -62,10 +62,10 @@ def create_1y_pg_data():
     data = pd.read_hdf(os.path.join(random_pg_dir, 'IID_probs_1yr.hdf'), 'prob')
     assert isinstance(data, pd.DataFrame)
     for site, mode in default_mode_sites:
-        key = f'{site}-{mode}'
+        key = f'{mode}-{site}'
         data.loc[:, f'{key}_yr1'] = np.nan
-        for i in data.index:
-            p = os.path.join(random_pg_dir, f'{i}-{key}.nc')
+        for i, idv in data.loc[:, ['ID']].itertuples(True, None):
+            p = os.path.join(random_pg_dir, f'{idv}-{key}.nc')
             if not os.path.exists(p):
                 continue
 
@@ -73,13 +73,13 @@ def create_1y_pg_data():
             data.loc[i, f'{key}_yr1'] = np.array(nc_data.variables['m_PGRA_cum'][-1, :]).mean()
             nc_data.close()
     data.to_hdf(os.path.join(random_pg_dir, 'IID_probs_pg_1y.hdf'), 'prob',
-                mode='w')  # todo could change dtype to add more
+                mode='w')
     data.to_hdf(os.path.join(gdrive_outdir, 'IID_probs_pg_1y.hdf'), 'prob',
-                mode='w')  # todo could change dtype to add more
+                mode='w')
 
 
 def create_3yr_suite(use_default_seed=True, save_to_gdrive=True):
-    n = 10  # todo how many, check this
+    n = 10  # todo how many, check this after running.
     data_1y = pd.read_hdf(os.path.join(random_pg_dir, 'IID_probs_pg_1y.hdf'), 'prob')
     assert isinstance(data_1y, pd.DataFrame)
     data_1y = data_1y.dropna()
@@ -97,7 +97,8 @@ def create_3yr_suite(use_default_seed=True, save_to_gdrive=True):
                                                         'pga1', 'pga2', 'pga3',
                                                         'cpga2', 'cpga3', 'prob'])
         prob = data_1y['log10_prob'].values[idxs].reshape((n, 3))
-        outdata.loc[:, 'log10_prob'] = prob.sum(axis=1) # note that I have changed the probability to be log10(probaility)
+        outdata.loc[:, 'log10_prob'] = prob.sum(
+            axis=1)  # note that I have changed the probability to be log10(probaility)
         pga = data_1y[f'{key}_yr1'].values[idxs].reshape(n, 3)
         outdata.loc[:, 'pga1'] = pga[:, 0]
         outdata.loc[:, 'pga2'] = pga[:, 1]
@@ -119,5 +120,26 @@ def get_3yr_suite():
     return pd.read_hdf(os.path.join(gdrive_outdir, 'IID_probs_pg_3y.hdf'), 'prob')
 
 
+"""
+    timeit_test(r'C:/Users/dumon/python_projects/SLMACC-2020-CSRA/Storylines/storyline_runs/run_random_suite.py',
+                ('make_1_year_storylines',  # 16 stories 0.366s
+                 # 'run_1year_basgra',  # 16 stories (full logical on dickie), 100 reals of 1 yr sim: 89.17002 seconds
+                 'create_1y_pg_data',  # 16 stories 0.197s
+                 ), n=100)  # 90s per 16 stories.
+                 
+    Memory: 10mb/16 stories, 1mb/16 stories in cloud
+    based on my math the 1yr suite should be c. 4-5gb in size in the cloud and c. 40-50gb on disk.
+    
+    
+"""
+
+
 if __name__ == '__main__':
-    pass  # todo check full process once IID is avalible!
+    t = input('are you sure you want to run this, it takes 4 days y/n')
+    if t != 'y':
+        raise ValueError('stopped re-running')
+
+    make_1_year_storylines()
+    run_1year_basgra()
+    create_1y_pg_data()
+    pass
