@@ -1,0 +1,17 @@
+# This file was created by https://github.com/bodekerscientific/weather-gen/blob/main/probability%20drive/SLMACC_prob_calc_w%40h.py
+# This is a transition probability matrix for month of Nov using weather@home batch 793 at [-43.372, 172.333]
+# monthly classified data retreived from 1_bias_corrected_all_months_classified_v2.csv 
+# The columns represent class for the month of Nov 
+# The rows represent the class for the next month 
+# The values represent the probability of that transition, with the column being the initial state and the row being the next state 
+# Column and row labels represent all the possible combinations of temp and precip classes (H,D,AT) and (W,D,AP) 
+,"AT,AP","AT,D","AT,W","C,AP","C,D","C,W","H,AP","H,D","H,W"
+"AT,AP",0.5021739130434782,0.4160839160839161,0.0,0.0,0.0,0.0,0.5660377358490566,0.4155844155844156,0.0
+"AT,D",0.07173913043478261,0.045454545454545456,0.0,0.0,0.0,0.0,0.0,0.025974025974025976,0.0
+"AT,W",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"C,AP",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"C,D",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"C,W",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+"H,AP",0.2217391304347826,0.2762237762237762,0.0,0.0,0.0,0.0,0.20754716981132076,0.2987012987012987,0.0
+"H,D",0.20434782608695654,0.26223776223776224,0.0,0.0,0.0,0.0,0.22641509433962265,0.2597402597402597,0.0
+"H,W",0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
