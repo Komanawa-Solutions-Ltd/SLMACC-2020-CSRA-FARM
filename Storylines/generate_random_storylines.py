@@ -50,14 +50,14 @@ def generate_random_weather(n, use_default_seed=True):
     out = np.concatenate(out, axis=1)
     return out
 
-
+# todo make a minimal restrictions option
 def generate_irrigation_suites(n, use_default_seed=True):
     # shape = (n,12)
     # autocorrelation between percentiles is 0.5 at 1 month and 0.2 at 2 months, so ignorring this is not soo
     # problematic.
     # this is compared to the auto correlation of the data set of 60% at 1 month and 0.3 at 2 months
     options = np.array([50, 60, 70, 80, 90, 95, 99]) / 100.
-    prob = np.array([10, 10, 10, 10, 5, 4, 1]) * 2 / 100 #todo check off with zeb
+    prob = np.array([10, 10, 10, 10, 5, 4, 1]) * 2 / 100
     if use_default_seed:
         seed = 278160
     else:

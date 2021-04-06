@@ -28,7 +28,7 @@ def make_1_year_storylines():
     storylines = generate_random_suite(n, use_default_seed=True, save=False, return_story=True)
 
     # run IID
-    iid_prob = run_IID(story_dict={f'rsl-{k}': v for k, v in enumerate(storylines)}, verbose=False)
+    iid_prob = run_IID(story_dict={f'rsl-{k:06d}': v for k, v in enumerate(storylines)}, verbose=False)
     iid_prob.set_index('ID')
     iid_prob.to_hdf(os.path.join(random_pg_dir, 'IID_probs_1yr.hdf'), 'prob', mode='w')  # save locally
     iid_prob.to_hdf(os.path.join(gdrive_outdir, 'IID_probs_1yr.hdf'), 'prob', mode='w')  # save on gdrive
@@ -75,10 +75,11 @@ def create_1y_pg_data():
     data.to_hdf(os.path.join(random_pg_dir, 'IID_probs_pg_1y.hdf'), 'prob',
                 mode='w')
     data.to_hdf(os.path.join(gdrive_outdir, 'IID_probs_pg_1y.hdf'), 'prob',
-                mode='w')
+                mode='w') #todo add cumulative production
 
+#todo add better than median restrictions
 
-def create_3yr_suite(use_default_seed=True, save_to_gdrive=True):
+def create_3yr_suite(use_default_seed=True, save_to_gdrive=True): #todo check will small suite
     n = 10  # todo how many, check this after running.
     data_1y = pd.read_hdf(os.path.join(random_pg_dir, 'IID_probs_pg_1y.hdf'), 'prob')
     assert isinstance(data_1y, pd.DataFrame)
@@ -103,7 +104,7 @@ def create_3yr_suite(use_default_seed=True, save_to_gdrive=True):
         outdata.loc[:, 'pga1'] = pga[:, 0]
         outdata.loc[:, 'pga2'] = pga[:, 1]
         outdata.loc[:, 'pga3'] = pga[:, 2]
-        outdata.loc[:, 'cpga2'] = pga[:, ].sum(axis=1)
+        outdata.loc[:, 'cpga2'] = pga[:, 0:2].sum(axis=1)
         outdata.loc[:, 'cpga3'] = pga.sum(axis=1)
 
         temp = idxs.reshape((n, 3))
@@ -140,6 +141,6 @@ if __name__ == '__main__':
         raise ValueError('stopped re-running')
 
     make_1_year_storylines()
-    run_1year_basgra()
+    #run_1year_basgra()
     create_1y_pg_data()
     pass
