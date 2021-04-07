@@ -250,7 +250,7 @@ if __name__ == '__main__':
 
     # todo final check and get good irr running!!!
     make_1_year_storylines(bad_irr=False)  # todo re-run once fixed IID
-    run_1year_basgra(bad_irr=False)
+    # run_1year_basgra(bad_irr=False)
     create_1y_pg_data(bad_irr=False)  # todo re-run once fixed IID
 
     pass
