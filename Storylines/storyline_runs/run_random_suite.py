@@ -112,11 +112,6 @@ def create_1y_pg_data(bad_irr=True):
             temp *= np.array([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30])[:, np.newaxis]
             temp = temp.sum(axis=0).mean()
             data.loc[i, f'{key}_pg_yr1'] = temp
-
-            temp = np.array(nc_data.variables['m_PGRA'])
-            temp *= np.array([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30])[:, np.newaxis]
-            temp = temp.sum(axis=0).mean()
-            data.loc[i, f'{key}_pgra_yr1_new'] = temp  # todo debugging
             nc_data.close()
     data.loc[:, 'irr_type'] = tp
     data.to_hdf(os.path.join(f'{random_pg_dir}{tnm}', f'IID_probs_pg_1y{tnm}.hdf'), 'prob',
@@ -246,13 +241,14 @@ if __name__ == '__main__':
     t = input('are you sure you want to run this, it takes 4 days y/n')
     if t != 'y':
         raise ValueError('stopped re-running')
-    #fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_bad_irr") #todo only run once as this fixes a mistake from previously
+    # only run next line of code once as this fixes a mistake from previously
+    #fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_bad_irr")
 
     make_1_year_storylines(bad_irr=True) #todo re-run once fixed IID
     # run_1year_basgra(bad_irr=True)
     create_1y_pg_data(bad_irr=True) #todo re-run once fixed IID
 
-    # todo get good irr running!!!
+    # todo final check and get good irr running!!!
     # make_1_year_storylines(bad_irr=False)  # todo re-run once fixed IID
     # run_1year_basgra(bad_irr=False)
     # create_1y_pg_data(bad_irr=False)  # todo re-run once fixed IID

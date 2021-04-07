@@ -24,13 +24,8 @@ def make_density_xy(x, y, nbins=300):
     zi = k(np.vstack([xi.flatten(), yi.flatten()])).reshape(xi.shape)
     return xi, yi, zi
 
-
-if __name__ == '__main__':
+def plot_prob_impact(x,y,num):
     fig, ax = plt.subplots()
-    num = 20
-    data = get_1yr_data()  # todo needs updating! and add in production and baseline for production
-    x = data.log10_prob
-    y = data['eyrewell-irrigated_yr1'] * -1
     ax.plot(x[0], y[0], c='k', label='Equal interval density')
     ax.scatter(x, y, alpha=0.2, label='Individual story')
     xi, yi, zi = make_density_xy(x, y, nbins=40)
@@ -49,5 +44,15 @@ if __name__ == '__main__':
     ticks = [-16., -14., -12., -10., -8., -6., -4.]
     ax.set_xticks(ticks)
     ax.set_xticklabels([f"$10^{{int(e)}}$" for e in ticks])
+    return fig, ax
+
+
+
+if __name__ == '__main__':
+    num = 20
+    data = get_1yr_data(bad_irr=True, good_irr=False)  # todo needs updating! and add in production and baseline for production
+    x = data.log10_prob
+    y = data['eyrewell-irrigated_pgra_yr1'] * -1
+    plot_prob_impact(x,y,num)
 
     plt.show()
