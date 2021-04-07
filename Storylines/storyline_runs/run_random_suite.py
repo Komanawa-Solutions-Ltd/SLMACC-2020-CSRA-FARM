@@ -14,14 +14,15 @@ from Storylines.generate_random_storylines import generate_random_suite
 from BS_work.IID.IID import run_IID
 from Pasture_Growth_Modelling.full_pgr_model_mp import run_full_model_mp, default_pasture_growth_dir, pgm_log_dir, \
     default_mode_sites
+from Pasture_Growth_Modelling.full_model_implementation import add_pasture_growth_anaomoly_to_nc
 
 random_pg_dir = os.path.join(default_pasture_growth_dir, 'random')
 random_sl_dir = os.path.join(temp_storyline_dir, 'random')
 gdrive_outdir = os.path.join(ksl_env.slmmac_dir, 'random_stories_prob')
 
 for d, tnm in itertools.product([random_pg_dir, random_sl_dir], ['_bad_irr', '_good_irr']):
-    if not os.path.exists(d):
-        os.makedirs(d)
+    if not os.path.exists(f'{d}{tnm}'):
+        os.makedirs(f'{d}{tnm}')
 
 if not os.path.exists(gdrive_outdir):
     os.makedirs(gdrive_outdir)
@@ -38,12 +39,13 @@ def make_1_year_storylines(bad_irr=True):
     else:
         tnm = '_good_irr'
     n = 70000  # based on an arbirary 4 day run length over easter
+    n = 10  # todo DADB
     storylines = generate_random_suite(n, use_default_seed=True, save=False, return_story=True, bad_irr=bad_irr)
 
     # run IID
     iid_prob = run_IID(story_dict={f'rsl-{k:06d}': v for k, v in enumerate(storylines)}, verbose=False)
     iid_prob.set_index('ID')
-    iid_prob.to_hdf(os.path.join(random_pg_dir, 'IID_probs_1yr.hdf'), 'prob', mode='w')  # save locally
+    iid_prob.to_hdf(os.path.join(f'{random_pg_dir}{tnm}', 'IID_probs_1yr.hdf'), 'prob', mode='w')  # save locally
     iid_prob.to_hdf(os.path.join(gdrive_outdir, f'IID_probs_1yr{tnm}.hdf'), 'prob', mode='w')  # save on gdrive
 
     # save non-zero probability stories
@@ -95,10 +97,11 @@ def create_1y_pg_data(bad_irr=True):
     assert isinstance(data, pd.DataFrame)
     for site, mode in default_mode_sites:
         key = f'{mode}-{site}'
-        data.loc[:, f'{key}_yr1'] = np.nan
+        data.loc[:, f'{key}_pg_yr1'] = np.nan
+        data.loc[:, f'{key}_pgra_yr1'] = np.nan
         for i, idv in data.loc[:, ['ID']].itertuples(True, None):
-            if i%1000 == 0:
-                print(f'starting to read sim {i}')
+            if i % 1000 == 0:
+                print(f'starting to read sim {i} for site: {site} and mode: {mode}')
             p = os.path.join(f'{random_pg_dir}{tnm}', f'{idv}-{key}.nc')
             if not os.path.exists(p):
                 continue
@@ -109,6 +112,11 @@ def create_1y_pg_data(bad_irr=True):
             temp *= np.array([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30])[:, np.newaxis]
             temp = temp.sum(axis=0).mean()
             data.loc[i, f'{key}_pg_yr1'] = temp
+
+            temp = np.array(nc_data.variables['m_PGRA'])
+            temp *= np.array([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30])[:, np.newaxis]
+            temp = temp.sum(axis=0).mean()
+            data.loc[i, f'{key}_pgra_yr1_new'] = temp  # todo debugging
             nc_data.close()
     data.loc[:, 'irr_type'] = tp
     data.to_hdf(os.path.join(f'{random_pg_dir}{tnm}', f'IID_probs_pg_1y{tnm}.hdf'), 'prob',
@@ -212,12 +220,41 @@ def get_3yr_suite(bad_irr=True, good_irr=True):
     
 """
 
+
+def fix_old_1yr_runs(base_dir):
+    paths = glob.glob(os.path.join(base_dir, '*.nc'))
+    pl = len(paths)
+    for i, p in enumerate(paths):
+        if i%1000 ==0:
+            print(f'{i} of {pl}')
+        data = nc.Dataset(p, mode='a')
+        # change years
+        data.variables['m_year'][:] = np.array([2025, 2025, 2025, 2025, 2025, 2025, 2026, 2026, 2026,
+                                             2026, 2026, 2026]) - 1
+        # add some metadata that a change happened in the description
+        data.description = data.description + (' storyline changed with fix_old_1yr_runs to '
+                                               'shift storyline start to july 2024 from 2025')
+        # fix storyline
+        data.storyline = [e.replace('2025', '2024').replace('2026', '2025') for e in data.storyline]
+
+        data.close()
+
+        # re-run add pgra
+        add_pasture_growth_anaomoly_to_nc(p)
+
 if __name__ == '__main__':
     t = input('are you sure you want to run this, it takes 4 days y/n')
     if t != 'y':
         raise ValueError('stopped re-running')
+    #fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_bad_irr") #todo only run once as this fixes a mistake from previously
 
-    # make_1_year_storylines(bad_irr=True)
+    make_1_year_storylines(bad_irr=True) #todo re-run once fixed IID
     # run_1year_basgra(bad_irr=True)
-    create_1y_pg_data(bad_irr=True)
+    create_1y_pg_data(bad_irr=True) #todo re-run once fixed IID
+
+    # todo get good irr running!!!
+    # make_1_year_storylines(bad_irr=False)  # todo re-run once fixed IID
+    # run_1year_basgra(bad_irr=False)
+    # create_1y_pg_data(bad_irr=False)  # todo re-run once fixed IID
+
     pass

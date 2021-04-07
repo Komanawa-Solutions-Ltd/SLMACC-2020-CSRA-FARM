@@ -33,7 +33,7 @@ months = [None,
           "Dec",
           ]
 
-def run_IID(story_dict, outpath=None, verbose=False, comments=''):
+def run_IID(story_dict, outpath=None, verbose=False, comments=''): #todo update for distance from median rather than from 0
     """
 
     :param storylines: dictionary of identifier: pd.DataFrame

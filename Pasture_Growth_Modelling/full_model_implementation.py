@@ -818,5 +818,5 @@ def fix_reseeded(nc_path):
 
 if __name__ == '__main__':
     add_pasture_growth_anaomoly_to_nc(
-        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad - Copy\0-baseline-eyrewell-irrigated.nc",
-        recalc=True)
+        r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_good_irr\rsl-000000-eyrewell-irrigated.nc",
+        recalc=False)

@@ -51,9 +51,11 @@ def generate_random_weather(n, use_default_seed=True):
     return out
 
 
-def generate_irrigation_suites(n, use_default_seed=True, bad_irr=True):  # todo check good irr!
+def generate_irrigation_suites(n, use_default_seed=True, bad_irr=True):
     """
-
+    Note this will not interlace good and bad irriagion systems, e.g. you can't go from 20th percentile to a 60th
+    percentile restrictions. I belive that this is generally reasonable as irrigation restrictions are highly
+    autocorrelated, but it is a limitation.
     :param n: number to generate
     :param use_default_seed: if True then use the default seed so it is reproduceable
     :param bad_irr: bool if True then create irrigation from 50-99th percentile if False 1-50th percentile
@@ -132,7 +134,7 @@ def generate_random_suite(n, use_default_seed=True, save=True, return_story=Fals
     data = pd.DataFrame(index=pd.date_range('2025-07-01', '2026-06-01', freq='MS'),
                         columns=['precip_class', 'temp_class', 'rest'])
     data.index.name = 'date'
-    data.loc[:, 'year'] = data.index.year
+    data.loc[:, 'year'] = data.index.year -1 # set to the start of the simulation to 2024 in order to match PGRA
     data.loc[:, 'month'] = data.index.month
 
     # make into dataframes
@@ -158,9 +160,6 @@ def generate_random_suite(n, use_default_seed=True, save=True, return_story=Fals
 
 
 if __name__ == '__main__':
-    out = generate_random_weather(3)
-    print(out)
-    out = generate_irrigation_suites(3)
-    print(out)
-    out = generate_random_suite(3, save=False, return_story=True)
+
+    out = generate_random_suite(5, save=False, return_story=True,bad_irr=False)
     print(out)
