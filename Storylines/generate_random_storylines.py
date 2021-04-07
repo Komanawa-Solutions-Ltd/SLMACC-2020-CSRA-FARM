@@ -50,38 +50,69 @@ def generate_random_weather(n, use_default_seed=True):
     out = np.concatenate(out, axis=1)
     return out
 
-# todo make a minimal restrictions option
-def generate_irrigation_suites(n, use_default_seed=True):
+
+def generate_irrigation_suites(n, use_default_seed=True, bad_irr=True):  # todo check good irr!
+    """
+
+    :param n: number to generate
+    :param use_default_seed: if True then use the default seed so it is reproduceable
+    :param bad_irr: bool if True then create irrigation from 50-99th percentile if False 1-50th percentile
+    :return:
+    """
     # shape = (n,12)
     # autocorrelation between percentiles is 0.5 at 1 month and 0.2 at 2 months, so ignorring this is not soo
     # problematic.
     # this is compared to the auto correlation of the data set of 60% at 1 month and 0.3 at 2 months
-    options = np.array([50, 60, 70, 80, 90, 95, 99]) / 100.
+    if bad_irr:
+        options = np.array([50, 60, 70, 80, 90, 95, 99]) / 100.
+    else:
+        options = np.array([50, 40, 30, 20, 10, 5, 1]) / 100.
     prob = np.array([10, 10, 10, 10, 5, 4, 1]) * 2 / 100
     if use_default_seed:
-        seed = 278160
+        if bad_irr:
+            seed = 278160
+        else:
+            seed = 158295
     else:
         seed = np.random.randint(1, 500000)
 
     out = np.zeros((n, 12))
     np.random.seed(seed)
-    out[:, 2:10] = np.random.choice(options, size=(n, 8), p=prob) # only sample for irrigation months
+    out[:, 2:10] = np.random.choice(options, size=(n, 8), p=prob)  # only sample for irrigation months
     return out
 
-def generate_random_suite(n, use_default_seed=True, save=True, return_story=False):
+
+def generate_random_suite(n, use_default_seed=True, save=True, return_story=False, bad_irr=True):
+    """
+
+    :param n: number to generate
+    :param use_default_seed: if True then use the default seed so it is reproduceable
+    :param save: bool if true then save to the temp storyline dirs random_{good|bad}_irr
+    :param return_story: bool it True retun the storylines
+    :param bad_irr: bool if True then create irrigation from 50-99th percentile if False 1-50th percentile
+    :return:
+    """
     if save:
-        outdir = os.path.join(temp_storyline_dir, 'random')
+        if bad_irr:
+            outdir = os.path.join(temp_storyline_dir, 'random_bad_irr')
+        else:
+            outdir = os.path.join(temp_storyline_dir, 'random_good_irr')
         if not os.path.exists(outdir):
             os.makedirs(outdir)
     if use_default_seed:
-        wseed = 106580
-        irseed = 310088
+        if bad_irr:
+            wseed = 106580
+            irseed = 310088
+        else:
+            wseed = 49102
+            irseed = 5215
+
 
     else:
         wseed = np.random.randint(1, 500000)
         irseed = np.random.randint(1, 500000)
 
-    irrigation = generate_irrigation_suites(n, use_default_seed)
+    irrigation = generate_irrigation_suites(n, use_default_seed, bad_irr=bad_irr)
     irr_len = len(irrigation)
     weather = generate_random_weather(n, use_default_seed)
     wea_len = len(weather)  # should be n, but for code clarity
@@ -125,10 +156,11 @@ def generate_random_suite(n, use_default_seed=True, save=True, return_story=Fals
     if return_story:
         return out
 
+
 if __name__ == '__main__':
     out = generate_random_weather(3)
     print(out)
     out = generate_irrigation_suites(3)
     print(out)
-    out = generate_random_suite(3,save=False, return_story=True)
+    out = generate_random_suite(3, save=False, return_story=True)
     print(out)

@@ -27,7 +27,7 @@ def make_density_xy(x, y, nbins=300):
 if __name__ == '__main__':
     fig, ax = plt.subplots()
     num=20
-    data = pd.read_hdf(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random\IID_probs_pg_1y.hdf").dropna()
+    data = pd.read_hdf(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random\IID_probs_pg_1y.hdf").dropna() # todo needs updating!
     x = data.log10_prob
     y = data['eyrewell-irrigated_yr1'] *-1
     ax.plot(x[0],y[0],c='k', label='Equal interval density')

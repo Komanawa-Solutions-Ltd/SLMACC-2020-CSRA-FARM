@@ -8,6 +8,7 @@ import glob
 import numpy as np
 import pandas as pd
 import netCDF4 as nc
+import itertools
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 from Storylines.generate_random_storylines import generate_random_suite
 from BS_work.IID.IID import run_IID
@@ -18,32 +19,53 @@ random_pg_dir = os.path.join(default_pasture_growth_dir, 'random')
 random_sl_dir = os.path.join(temp_storyline_dir, 'random')
 gdrive_outdir = os.path.join(ksl_env.slmmac_dir, 'random_stories_prob')
 
-for d in [random_pg_dir, random_sl_dir, gdrive_outdir]:
+for d, tnm in itertools.product([random_pg_dir, random_sl_dir], ['_bad_irr', '_good_irr']):
     if not os.path.exists(d):
         os.makedirs(d)
 
+if not os.path.exists(gdrive_outdir):
+    os.makedirs(gdrive_outdir)
 
-def make_1_year_storylines():
+
+def make_1_year_storylines(bad_irr=True):
+    """
+
+    :param bad_irr: bool if True then create irrigation from 50-99th percentile if False 1-50th percentile
+    :return:
+    """
+    if bad_irr:
+        tnm = '_bad_irr'
+    else:
+        tnm = '_good_irr'
     n = 70000  # based on an arbirary 4 day run length over easter
-    storylines = generate_random_suite(n, use_default_seed=True, save=False, return_story=True)
+    storylines = generate_random_suite(n, use_default_seed=True, save=False, return_story=True, bad_irr=bad_irr)
 
     # run IID
     iid_prob = run_IID(story_dict={f'rsl-{k:06d}': v for k, v in enumerate(storylines)}, verbose=False)
     iid_prob.set_index('ID')
     iid_prob.to_hdf(os.path.join(random_pg_dir, 'IID_probs_1yr.hdf'), 'prob', mode='w')  # save locally
-    iid_prob.to_hdf(os.path.join(gdrive_outdir, 'IID_probs_1yr.hdf'), 'prob', mode='w')  # save on gdrive
+    iid_prob.to_hdf(os.path.join(gdrive_outdir, f'IID_probs_1yr{tnm}.hdf'), 'prob', mode='w')  # save on gdrive
 
     # save non-zero probability stories
     for sl, (i, p) in zip(storylines, iid_prob.log10_prob.to_dict().items()):
         if not np.isfinite(p):
             continue
         name = f'rsl-{i:06d}'
-        sl.to_csv(os.path.join(random_sl_dir, f'{name}.csv'))
+        sl.to_csv(os.path.join(f'{random_sl_dir}{tnm}', f'{name}.csv'))
 
 
-def run_1year_basgra():
-    run_stories = glob.glob(os.path.join(random_sl_dir, 'rsl-*.csv'))
-    outdirs = [random_pg_dir for e in run_stories]
+def run_1year_basgra(bad_irr=True):
+    """
+
+    :param bad_irr: bool if True then create irrigation from 50-99th percentile if False 1-50th percentile
+    :return:
+    """
+    if bad_irr:
+        tnm = '_bad_irr'
+    else:
+        tnm = '_good_irr'
+    run_stories = glob.glob(os.path.join(f'{random_sl_dir}{tnm}', 'rsl-*.csv'))
+    outdirs = [f'{random_pg_dir}{tnm}' for e in run_stories]
     run_full_model_mp(
         storyline_path_mult=run_stories,
         outdir_mult=outdirs,
@@ -57,31 +79,80 @@ def run_1year_basgra():
     )
 
 
-def create_1y_pg_data():
-    # Autumn Drought Cumulative-rest-50-75-eyrewell-irrigated.nc
-    data = pd.read_hdf(os.path.join(random_pg_dir, 'IID_probs_1yr.hdf'), 'prob')
+def create_1y_pg_data(bad_irr=True):
+    """
+
+    :param bad_irr: bool if True then create irrigation from 50-99th percentile if False 1-50th percentile
+    :return:
+    """
+    if bad_irr:
+        tnm = '_bad_irr'
+        tp = 'bad'
+    else:
+        tp = 'good'
+        tnm = '_good_irr'  # Autumn Drought Cumulative-rest-50-75-eyrewell-irrigated.nc
+    data = pd.read_hdf(os.path.join(f'{random_pg_dir}{tnm}', 'IID_probs_1yr.hdf'), 'prob')
     assert isinstance(data, pd.DataFrame)
     for site, mode in default_mode_sites:
         key = f'{mode}-{site}'
         data.loc[:, f'{key}_yr1'] = np.nan
         for i, idv in data.loc[:, ['ID']].itertuples(True, None):
-            p = os.path.join(random_pg_dir, f'{idv}-{key}.nc')
+            if i%1000 == 0:
+                print(f'starting to read sim {i}')
+            p = os.path.join(f'{random_pg_dir}{tnm}', f'{idv}-{key}.nc')
             if not os.path.exists(p):
                 continue
 
             nc_data = nc.Dataset(p)
-            data.loc[i, f'{key}_yr1'] = np.array(nc_data.variables['m_PGRA_cum'][-1, :]).mean()
+            data.loc[i, f'{key}_pgra_yr1'] = np.array(nc_data.variables['m_PGRA_cum'][-1, :]).mean()
+            temp = np.array(nc_data.variables['m_PGR'])
+            temp *= np.array([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30])[:, np.newaxis]
+            temp = temp.sum(axis=0).mean()
+            data.loc[i, f'{key}_pg_yr1'] = temp
             nc_data.close()
-    data.to_hdf(os.path.join(random_pg_dir, 'IID_probs_pg_1y.hdf'), 'prob',
+    data.loc[:, 'irr_type'] = tp
+    data.to_hdf(os.path.join(f'{random_pg_dir}{tnm}', f'IID_probs_pg_1y{tnm}.hdf'), 'prob',
                 mode='w')
-    data.to_hdf(os.path.join(gdrive_outdir, 'IID_probs_pg_1y.hdf'), 'prob',
-                mode='w') #todo add cumulative production
+    data.to_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y{tnm}.hdf'), 'prob',
+                mode='w')
 
-#todo add better than median restrictions
 
-def create_3yr_suite(use_default_seed=True, save_to_gdrive=True): #todo check will small suite
+def get_1yr_data(bad_irr=True, good_irr=True):
+    """
+    get the 1 year data
+    :param bad_irr: bool if True return the data from the worse than median irrigation restriction suite
+    :param good_irr: bool if True return the data from the better than median irrigation restriction suite
+    :return:
+    """
+    assert any([bad_irr, good_irr])
+    good, bad = None, None
+    if bad_irr:
+        bad = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_1yr_bad_irr.hdf'), 'prob')
+
+    if good_irr:
+        good = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_1yr_good_irr.hdf'), 'prob')
+
+    return pd.concat([good, bad])
+
+
+def create_3yr_suite(use_default_seed=True,
+                     save_to_gdrive=True, bad_irr=True, good_irr=True):
+    """
+
+    :param use_default_seed:
+    :param save_to_gdrive: bool if True then save to the google drive
+    :param bad_irr: bool if True return the data from the worse than median irrigation restriction suite
+    :param good_irr: bool if True return the data from the better than median irrigation restriction suite
+    :return:
+    """
+    bad, good = '', ''
+    if bad_irr:
+        bad = 'bad'
+    if good_irr:
+        good = 'good'
+    # todo check will small suite
     n = 10  # todo how many, check this after running.
-    data_1y = pd.read_hdf(os.path.join(random_pg_dir, 'IID_probs_pg_1y.hdf'), 'prob')
+    data_1y = get_1yr_data(bad_irr=bad_irr, good_irr=good_irr)
     assert isinstance(data_1y, pd.DataFrame)
     data_1y = data_1y.dropna()
 
@@ -112,13 +183,20 @@ def create_3yr_suite(use_default_seed=True, save_to_gdrive=True): #todo check wi
         outdata.loc[:, 'scen2'] = temp[:, 1]
         outdata.loc[:, 'scen3'] = temp[:, 2]
 
-        outdata.to_hdf(os.path.join(random_pg_dir, 'IID_probs_pg_3y.hdf'), 'prob', mode='w')
+        outdata.to_hdf(os.path.join(os.path.dirname(random_pg_dir), f'IID_probs_pg_3y{bad}{good}.hdf'), 'prob',
+                       mode='w')
         if save_to_gdrive:
-            outdata.to_hdf(os.path.join(gdrive_outdir, 'IID_probs_pg_3y.hdf'), 'prob', mode='w')
+            outdata.to_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_3y{bad}{good}.hdf'), 'prob', mode='w')
 
 
-def get_3yr_suite():
-    return pd.read_hdf(os.path.join(gdrive_outdir, 'IID_probs_pg_3y.hdf'), 'prob')
+def get_3yr_suite(bad_irr=True, good_irr=True):
+    bad, good = '', ''
+    if bad_irr:
+        bad = 'bad'
+    if good_irr:
+        good = 'good'
+
+    return pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_3y{bad}{good}.hdf'), 'prob')
 
 
 """
@@ -134,13 +212,12 @@ def get_3yr_suite():
     
 """
 
-
 if __name__ == '__main__':
     t = input('are you sure you want to run this, it takes 4 days y/n')
     if t != 'y':
         raise ValueError('stopped re-running')
 
-    make_1_year_storylines()
-    #run_1year_basgra()
-    create_1y_pg_data()
+    # make_1_year_storylines(bad_irr=True)
+    # run_1year_basgra(bad_irr=True)
+    create_1y_pg_data(bad_irr=True)
     pass
