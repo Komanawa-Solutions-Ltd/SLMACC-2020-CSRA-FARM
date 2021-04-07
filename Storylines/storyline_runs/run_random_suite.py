@@ -39,7 +39,7 @@ def make_1_year_storylines(bad_irr=True):
     else:
         tnm = '_good_irr'
     n = 70000  # based on an arbirary 4 day run length over easter
-    n = 10  # todo DADB
+    #n = 10  # todo DADB
     storylines = generate_random_suite(n, use_default_seed=True, save=False, return_story=True, bad_irr=bad_irr)
 
     # run IID
@@ -130,10 +130,10 @@ def get_1yr_data(bad_irr=True, good_irr=True):
     assert any([bad_irr, good_irr])
     good, bad = None, None
     if bad_irr:
-        bad = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_1yr_bad_irr.hdf'), 'prob')
+        bad = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_bad_irr.hdf'), 'prob')
 
     if good_irr:
-        good = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_1yr_good_irr.hdf'), 'prob')
+        good = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_good_irr.hdf'), 'prob')
 
     return pd.concat([good, bad])
 
@@ -244,13 +244,13 @@ if __name__ == '__main__':
     # only run next line of code once as this fixes a mistake from previously
     #fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_bad_irr")
 
-    make_1_year_storylines(bad_irr=True) #todo re-run once fixed IID
+    # make_1_year_storylines(bad_irr=True) #todo re-run once fixed IID
     # run_1year_basgra(bad_irr=True)
-    create_1y_pg_data(bad_irr=True) #todo re-run once fixed IID
+    # create_1y_pg_data(bad_irr=True) #todo re-run once fixed IID
 
     # todo final check and get good irr running!!!
-    # make_1_year_storylines(bad_irr=False)  # todo re-run once fixed IID
-    # run_1year_basgra(bad_irr=False)
-    # create_1y_pg_data(bad_irr=False)  # todo re-run once fixed IID
+    make_1_year_storylines(bad_irr=False)  # todo re-run once fixed IID
+    run_1year_basgra(bad_irr=False)
+    create_1y_pg_data(bad_irr=False)  # todo re-run once fixed IID
 
     pass

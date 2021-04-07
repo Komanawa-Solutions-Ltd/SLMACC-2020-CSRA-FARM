@@ -43,7 +43,7 @@ def plot_prob_impact(x,y,num):
     ax.set_xlabel('Probability\nevents become more common -->')
     ticks = [-16., -14., -12., -10., -8., -6., -4.]
     ax.set_xticks(ticks)
-    ax.set_xticklabels([f"$10^{{int(e)}}$" for e in ticks])
+    ax.set_xticklabels(["$10^{" + str(int(e)) + "}$" for e in ticks])
     return fig, ax
 
 
@@ -51,6 +51,7 @@ def plot_prob_impact(x,y,num):
 if __name__ == '__main__':
     num = 20
     data = get_1yr_data(bad_irr=True, good_irr=False)  # todo needs updating! and add in production and baseline for production
+    data = data.dropna()
     x = data.log10_prob
     y = data['eyrewell-irrigated_pgra_yr1'] * -1
     plot_prob_impact(x,y,num)
