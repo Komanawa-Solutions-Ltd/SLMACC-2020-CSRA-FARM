@@ -33,6 +33,8 @@ def get_irr_by_quantile(recalc=False):
         for m1, m2 in itertools.product(*dnd):
             quantile = pd.read_csv(os.path.join(rest_dir, f'{m1}-{m2}_rest.csv'), index_col=0)
             quantile.columns = quantile.columns.astype(int)
+            temp = quantile.values
+            temp[np.isclose(temp,0)] = 0.00000001  # to ensure that proabilities are calculated
             out[f'{m1}-{m2}'] = quantile
         return out
 
@@ -47,12 +49,16 @@ def get_irr_by_quantile(recalc=False):
 
     out = {}
     for m1, m2 in itertools.product(*dnd):
-        outdata = pd.DataFrame(index=possible_quantiles, columns=irrig_season)
+        outdata = pd.DataFrame(index=possible_quantiles, columns=irrig_season, dtype=float)
         for m in irrig_season:
             temp = event_data.loc[:, m, :]
             temp = temp.loc[(temp.dnd == m2) & (temp.prev_dnd == m1)]
             outdata.loc[:, m] = temp.loc[:, 'rest'].quantile(possible_quantiles).fillna(0)
         out[f'{m1}-{m2}'] = outdata
+        temp = outdata.values
+        temp[np.isclose(temp,0)] = 0.00000001  # to ensure that proabilities are calculated
         outdata.to_csv(os.path.join(rest_dir, f'{m1}-{m2}_rest.csv'))
     return out
 
+if __name__ == '__main__':
+    get_irr_by_quantile(True)

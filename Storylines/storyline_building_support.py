@@ -55,7 +55,8 @@ def map_irrigation(m, rest_quantile, precip, prev_precip):
         return 0
     key = f'{prev_precip}-{precip}'.replace('W', 'ND').replace('A', 'ND')
     rest_quantile = round(rest_quantile, 2)
-    return round(_rest_data[key].loc[rest_quantile, m], 4)
+
+    return _rest_data[key].loc[rest_quantile, m]
 
 
 
@@ -72,11 +73,12 @@ base_rest_data = {
     11: 0.5,
     12: 0.5,
 
-    # non-irrigation seasons
-    5: 0.01,
-    6: 0.01,
-    7: 0.01,
-    8: 0.01,
+    # non-irrigation seasons, The baseline irrigation on non irrigation months must be zero so as not to calculate irr
+    # probability for these months.
+    5: 0,
+    6: 0,
+    7: 0,
+    8: 0,
 }
 
 base_events = {e: ('A', 'A', map_irrigation(e, base_rest_data[e], 'A', 'A')) for e in range(1, 13)}

@@ -33,11 +33,16 @@ months = [None,
           "Dec",
           ]
 
-def run_IID(story_dict, outpath=None, verbose=False, comments=''): #todo update for distance from median rather than from 0
+def run_IID(story_dict, outpath=None, verbose=False, comments='',
+            irr_prob_from_zero=True): #todo update for distance from median rather than from 0
     """
 
     :param storylines: dictionary of identifier: pd.DataFrame
     :param outdir: none or path, if path save data .csv
+    :param irr_prob_from_zero: bool, if True use default IID from BS, otherwise calculate the probability that
+                               an event as or more extreme(low or high) than the median occurs.  P ranges from 0.5-0
+                               storylines with a rest of 0 have a probability of 1 for the irrigation prob as these
+                               occur only in non irrigation seasons
     :return:
     """
     base_dir = os.path.dirname(__file__)
@@ -115,7 +120,12 @@ def run_IID(story_dict, outpath=None, verbose=False, comments=''): #todo update 
                         f = interp1d(x, y)
 
                         # multiplying the story prob by the irrigation restriction prob
-                        prob += np.log10(f(month1["rest"]))
+                        if irr_prob_from_zero:
+                            prob += np.log10(f(month1["rest"]))
+                        else:
+                            # probability that a event more extreme than the median event occurs
+                            # p ranges from 0-0.5 (e.g. closer to zero or closer to 1)
+                            prob += np.log10(0.5-np.abs(0.5-f(month1["rest"])))
                     else:
                         print(k, "no irrigation restriction CDF for this disaggregation due to lack of data")
                 else:

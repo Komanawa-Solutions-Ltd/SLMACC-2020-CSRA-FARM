@@ -40,7 +40,7 @@ def make_storylines():
         m_options = options[m]
         for t, p, r in m_options:
             if m in irrig_season:
-                rest_vals = [0.5, 0.75, 0.95]
+                rest_vals = [0.05, 0.25, 0.5, 0.75, 0.95]
             else:
                 rest_vals = [0]
             for rest in rest_vals:
@@ -101,6 +101,7 @@ def extract_data(outdir):
 
 
 if __name__ == '__main__':
+    # todo re-run with new lower than median events!
     run_pgr = False
     extract = True
     if run_pgr:

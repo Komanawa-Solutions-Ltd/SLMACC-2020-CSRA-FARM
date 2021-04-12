@@ -14,6 +14,7 @@ from Climate_Shocks.note_worthy_events.rough_stats import make_data
 from Climate_Shocks.climate_shocks_env import event_def_path, supporting_data_dir, storyline_dir
 from Climate_Shocks.note_worthy_events.final_event_recurance import get_org_data
 from Storylines.check_storyline import get_past_event_frequency, get_acceptable_events
+from Storylines.storyline_evaluation.storyline_eval_support import get_pgr_prob_baseline_stiched
 
 if __name__ == '__main__':
     t = input('this will re-run most of the system and takes c. 15 HOURS are you sure you want to proceed '
@@ -161,6 +162,13 @@ if __name__ == '__main__':
         get_all_zero_prob_transitions(save=True)  # this will not run without BS input
     except Exception:
         print('could not make zero transition probs')
+
+    print(get_pgr_prob_baseline_stiched(1,'eyrewell','irrigated', True, True))
+    print(get_pgr_prob_baseline_stiched(1,'oxford','irrigated', True, True))
+    print(get_pgr_prob_baseline_stiched(1,'oxford','dryland', True, True))
+    print(get_pgr_prob_baseline_stiched(1,'eyrewell','irrigated', False, True))
+    print(get_pgr_prob_baseline_stiched(1,'oxford','irrigated', False, True))
+    print(get_pgr_prob_baseline_stiched(1,'oxford','dryland', False, True))
 
     # other scripts worth re-running/ rethinking
     # Storylines/storyline_runs/run_unique_events.py # re-run unique events to see any changes
