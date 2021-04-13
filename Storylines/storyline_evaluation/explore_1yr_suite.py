@@ -279,3 +279,8 @@ if __name__ == '__main__':
                  pt_labels=True)
 
     plt.show()
+
+    #todo investigate why these are not finite:
+    # rsl-000014
+    # rsl-000015
+    # rsl-000023
