@@ -12,10 +12,12 @@ from Climate_Shocks.climate_shocks_env import storyline_dir
 from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growth, default_pasture_growth_dir
 from Pasture_Growth_Modelling.plot_full_model import plot_sims
 from BS_work.SWG.SWG_wrapper import *
+from Pasture_Growth_Modelling.export_to_csvs import export_all_in_pattern
 
 if __name__ == '__main__':
     run_basgra = False  # to stop accidental re-run
-    plot_results = True
+    plot_results = False
+    export=True
 
     if run_basgra:
         # run basgra
@@ -34,3 +36,7 @@ if __name__ == '__main__':
         plot_sims(data_paths=path_list, plot_ind=True, nindv=50, save_dir=None, show=True, figsize=(11, 8),
                   daily=False
                   )
+
+        if export:
+            export_all_in_pattern() #todo!!
+

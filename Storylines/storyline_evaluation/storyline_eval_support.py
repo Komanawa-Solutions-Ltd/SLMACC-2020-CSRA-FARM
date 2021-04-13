@@ -52,7 +52,7 @@ def get_pgr_prob_baseline_stiched(nyears, site, mode,irr_prop_from_zero, recalc=
     for i in range(nyears):
         outprob += prob
         outpgr += pgr
-    return outprob, outpgr
+    return outpgr, outprob
 
 
 if __name__ == '__main__':
