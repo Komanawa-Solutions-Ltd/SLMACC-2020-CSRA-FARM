@@ -101,7 +101,7 @@ def extract_data(outdir):
 
 
 if __name__ == '__main__':
-    # todo re-run with new lower than median events!
+    # todo re-run with new lower than median events!, check
     run_pgr = False
     extract = True
     if run_pgr:
