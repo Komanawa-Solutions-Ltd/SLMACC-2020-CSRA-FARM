@@ -35,7 +35,7 @@ months = [None,
 
 
 def run_IID(story_dict, outpath=None, verbose=False, comments='',
-            irr_prob_from_zero=True):
+            irr_prob_from_zero=True, add_irr_prob=True):
     """
 
     :param storylines: dictionary of identifier: pd.DataFrame
@@ -112,7 +112,7 @@ def run_IID(story_dict, outpath=None, verbose=False, comments='',
 
             # if month in story has a perscribed restriction value looking up that month / values CDF and interpolating
             # to find probability
-            if month1["rest"] != 0:
+            if month1["rest"] != 0 and add_irr_prob:
 
                 old_version = False
                 if old_version:  # switching to passing the data in rather than calculating with CDFs

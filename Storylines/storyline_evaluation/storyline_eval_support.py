@@ -15,6 +15,9 @@ def get_pgr_prob_baseline_stiched(nyears, site, mode, irr_prop_from_zero, recalc
     :param nyears:
     :return:
     """
+    add_irr_prob = True
+    if mode == 'dryland':
+        add_irr_prob = False
     if irr_prop_from_zero:
         t = 'irr_from_0'
     else:
@@ -38,7 +41,8 @@ def get_pgr_prob_baseline_stiched(nyears, site, mode, irr_prop_from_zero, recalc
             storyline.loc[i, 'rest'] = rest
             storyline.loc[i, 'rest_per'] = rest_per
         prob = run_IID({'base': storyline},
-                       irr_prob_from_zero=irr_prop_from_zero).set_index('ID').loc['base', 'log10_prob']
+                       irr_prob_from_zero=irr_prop_from_zero,
+                       add_irr_prob=add_irr_prob).set_index('ID').loc['base', 'log10_prob']
         temp = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir,
                                         f'baseline_data/{site}-{mode}-monthly.csv'),
                            skiprows=1
@@ -75,11 +79,12 @@ def calc_impact_prob(pgr, prob, stepsize=0.1, normalize=True):
     out_pgr = np.zeros(len(steps) - 1)
     for i, (l, u) in enumerate(zip(steps[0:-1], steps[1:])):
         out_pgr[i] = np.mean([l, u])
-        idx = (pgr >= l) & (pgr <u)
-        out_prob[i] = (10**prob[idx]).sum()
+        idx = (pgr >= l) & (pgr < u)
+        out_prob[i] = (10 ** prob[idx]).sum()
     if normalize:
-        out_prob *= 1/out_prob.sum()
+        out_prob *= 1 / out_prob.sum()
     return out_pgr, out_prob
+
 
 def calc_cumulative_impact_prob(pgr, prob, stepsize=0.1, more_production_than=True):
     """
@@ -96,13 +101,14 @@ def calc_cumulative_impact_prob(pgr, prob, stepsize=0.1, more_production_than=Tr
     out_prob = np.zeros(im_pgr.shape)
     if more_production_than:
         for i, v in enumerate(im_pgr):
-            out_prob[i] = im_prob[im_pgr>=v].sum()
+            out_prob[i] = im_prob[im_pgr >= v].sum()
     else:
         for i, v in enumerate(im_pgr):
-            out_prob[i] = im_prob[im_pgr<=v].sum()
+            out_prob[i] = im_prob[im_pgr <= v].sum()
     return im_pgr, out_prob
 
-#todo save probabilities for all previous runs as well as pg... here or elsewhere...
+
+# todo save probabilities for all previous runs as well as pg... here or elsewhere...
 
 if __name__ == '__main__':
     print(get_pgr_prob_baseline_stiched(1, 'eyrewell', 'irrigated', True, True))

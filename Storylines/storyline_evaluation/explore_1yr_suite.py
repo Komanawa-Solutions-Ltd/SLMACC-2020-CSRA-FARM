@@ -266,7 +266,8 @@ def plot_all_1yr(site, mode, num=20, outdir=None, other_scen=None, other_scen_lb
 
 # stats?, not now..., Though I could start digging into the reasons behind bad, and see what can reduce the impact!
 # set of impacts? and then running that?
-
+# todo run IID for dryland only??? so I get dryland probability (e.g. no reduction in irrigation)
+# todo how are we getting much more probable than baseline??? irrigation problem????
 
 if __name__ == '__main__':
     data = get_1yr_data(bad_irr=True, good_irr=False)  # todo start by re-running this!!!

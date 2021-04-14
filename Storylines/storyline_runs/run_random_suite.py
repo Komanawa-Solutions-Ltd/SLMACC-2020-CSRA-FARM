@@ -42,13 +42,21 @@ def make_1_year_storylines(bad_irr=True):
     storylines = generate_random_suite(n, use_default_seed=True, save=False, return_story=True, bad_irr=bad_irr)
 
     # run IID
-    iid_prob = run_IID(story_dict={f'rsl-{k:06d}': v for k, v in enumerate(storylines)}, verbose=False)
-    iid_prob.set_index('ID')
+    iid_prob = run_IID(story_dict={f'rsl-{k:06d}': v for k, v in enumerate(storylines)}, verbose=False,
+                       irr_prob_from_zero=False, add_irr_prob=True)
+    iid_prob.set_index('ID', inplace=True)
+    iid_prob.rename(columns={'log10_prob': 'log10_prob_irrigated'}, inplace=True)
+
+    temp = run_IID(story_dict={f'rsl-{k:06d}': v for k, v in enumerate(storylines)}, verbose=False,
+                   irr_prob_from_zero=False, add_irr_prob=False).set_index('ID')
+    iid_prob.loc[:, 'log10_prob_dryland'] = temp.loc[:, 'log10_prob']
+    iid_prob.reset_index(inplace=True)
+
     iid_prob.to_hdf(os.path.join(f'{random_pg_dir}{tnm}', 'IID_probs_1yr.hdf'), 'prob', mode='w')  # save locally
     iid_prob.to_hdf(os.path.join(gdrive_outdir, f'IID_probs_1yr{tnm}.hdf'), 'prob', mode='w')  # save on gdrive
 
     # save non-zero probability stories
-    for sl, (i, p) in zip(storylines, iid_prob.log10_prob.to_dict().items()):
+    for sl, (i, p) in zip(storylines, iid_prob.log10_prob_irrigated.to_dict().items()):
         if not np.isfinite(p):
             continue
         name = f'rsl-{i:06d}'
@@ -236,7 +244,7 @@ def fix_old_1yr_runs(base_dir):
 
 
 if __name__ == '__main__':
-    t = input('are you sure you want to run this, it takes 4 days y/n')
+    t = input('are you sure you want to run this, it takes 8 days to run basgra y/n')
     if t != 'y':
         raise ValueError('stopped re-running')
     # only run next line of code once as this fixes a mistake from previously
@@ -245,7 +253,6 @@ if __name__ == '__main__':
     make_1_year_storylines(bad_irr=True)
     # run_1year_basgra(bad_irr=True)
     create_1y_pg_data(bad_irr=True)
-    # todo check that good storylines do not have finite probablity but no PGR.
     make_1_year_storylines(bad_irr=False)
     # run_1year_basgra(bad_irr=False)
     create_1y_pg_data(bad_irr=False)
