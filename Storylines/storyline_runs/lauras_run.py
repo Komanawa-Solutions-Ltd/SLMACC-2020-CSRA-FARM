@@ -43,7 +43,7 @@ def make_storylines(rest_quantiles=[0.75, 0.95], no_irr_event=0.5):
         data.loc[:, 'month'] = data.index.month
         data.loc[:, 'rest'] = 0
         for i, y, m in data.loc[:, ['year', 'month']].itertuples(True, None):
-            t, p, r = base_events[m]
+            t, p, r, rp = base_events[m]
             data.loc[i, 'precip_class'] = p
             data.loc[i, 'temp_class'] = t
 

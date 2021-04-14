@@ -48,6 +48,7 @@ def make_storylines():
         sl.loc[:, 'rest'] = pd.to_numeric(sl.loc[:, 'rest'])
         sl.loc[pd.isnull(sl.rest), 'rest'] = 50
         sl.loc[:, 'rest'] *= 1 / 100
+        sl.loc[:, 'rest_per'] = sl.loc[:, 'rest']
         sl.loc[pd.isnull(sl.precip_class), 'precip_class'] = 'A'
         sl.loc[:, 'precip_class'] = sl.loc[:, 'precip_class'].str.replace('P', '').str.strip()
         sl.loc[pd.isnull(sl.temp_class) & (
@@ -96,10 +97,12 @@ def export_and_plot_data():
 
 
 if __name__ == '__main__':
+    make_st = True
     run = False
-    plot_export = True
-    if run:
+    plot_export = False
+    if make_st:
         make_storylines()
+    if run:
         run_pasture_growth_mp()
     if plot_export:
         export_and_plot_data()

@@ -39,7 +39,6 @@ def make_1_year_storylines(bad_irr=True):
     else:
         tnm = '_good_irr'
     n = 70000  # based on an arbirary 4 day run length over easter
-    #n = 10  # todo DADB
     storylines = generate_random_suite(n, use_default_seed=True, save=False, return_story=True, bad_irr=bad_irr)
 
     # run IID
@@ -138,68 +137,66 @@ def get_1yr_data(bad_irr=True, good_irr=True):
     return pd.concat([good, bad])
 
 
-def create_3yr_suite(use_default_seed=True,
-                     save_to_gdrive=True, bad_irr=True, good_irr=True):
+def create_nyr_suite(nyr, use_default_seed=True,
+                     save_to_gdrive=True):
     """
 
-    :param use_default_seed:
+    :param nyr: number of years long, options are: [2, 3, 4, 5, 6, 7, 8, 9, 10, 15]
+    :param use_default_seed: bool if true then use the default seed to keep reproducability
     :param save_to_gdrive: bool if True then save to the google drive
-    :param bad_irr: bool if True return the data from the worse than median irrigation restriction suite
-    :param good_irr: bool if True return the data from the better than median irrigation restriction suite
     :return:
     """
-    bad, good = '', ''
-    if bad_irr:
-        bad = 'bad'
-    if good_irr:
-        good = 'good'
+    assert isinstance(nyr, int)
     # todo check will small suite
-    n = 10  # todo how many, check this after running.
-    data_1y = get_1yr_data(bad_irr=bad_irr, good_irr=good_irr)
+    # todo i need to add rest per to all storylines !!!
+    n = int(5e8)  # todo finalize should yield a 16gb file
+    data_1y = get_1yr_data(bad_irr=True, good_irr=True)
     assert isinstance(data_1y, pd.DataFrame)
     data_1y = data_1y.dropna()
-
+    default_seeds = {
+        2: 471121,
+        3: 44383,
+        4: 80942,
+        5: 464015,
+        6: 246731,
+        7: 229599,
+        8: 182848,
+        9: 310694,
+        10: 367013,
+        15: 458445
+    }
     if use_default_seed:
-        seed = 496148
+        seed = default_seeds[nyr]
     else:
         seed = np.random.randint(1, 500000)
 
-    for site, mode in default_mode_sites:
+    outdata = pd.DataFrame(index=range(n))
+    for mode, site in default_mode_sites:
         key = f'{site}-{mode}'
         np.random.seed(seed)
-        idxs = np.random.randint(len(data_1y), size=(n * 3))
-        outdata = pd.DataFrame(index=range(n), columns=['scen1', 'scen2', 'scen3',
-                                                        'pga1', 'pga2', 'pga3',
-                                                        'cpga2', 'cpga3', 'prob'])
-        prob = data_1y['log10_prob'].values[idxs].reshape((n, 3))
+        idxs = np.random.randint(len(data_1y), size=(n * nyr))
+        prob = data_1y['log10_prob'].values[idxs].reshape((n, nyr))
         outdata.loc[:, 'log10_prob'] = prob.sum(
             axis=1)  # note that I have changed the probability to be log10(probaility)
-        pga = data_1y[f'{key}_yr1'].values[idxs].reshape(n, 3)
-        outdata.loc[:, 'pga1'] = pga[:, 0]
-        outdata.loc[:, 'pga2'] = pga[:, 1]
-        outdata.loc[:, 'pga3'] = pga[:, 2]
-        outdata.loc[:, 'cpga2'] = pga[:, 0:2].sum(axis=1)
-        outdata.loc[:, 'cpga3'] = pga.sum(axis=1)
+        pga = data_1y[f'{key}_pgra_yr1'].values[idxs].reshape(n, nyr)
+        outdata.loc[:, f'{key}_cpg'] = pga.sum(axis=1)
 
-        temp = idxs.reshape((n, 3))
-        outdata.loc[:, 'scen1'] = temp[:, 0]
-        outdata.loc[:, 'scen2'] = temp[:, 1]
-        outdata.loc[:, 'scen3'] = temp[:, 2]
+        pga = data_1y[f'{key}_pg_yr1'].values[idxs].reshape(n, nyr)
+        outdata.loc[:, f'{key}_cpg'] = pga.sum(axis=1)
 
-        outdata.to_hdf(os.path.join(os.path.dirname(random_pg_dir), f'IID_probs_pg_3y{bad}{good}.hdf'), 'prob',
-                       mode='w')
-        if save_to_gdrive:
-            outdata.to_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_3y{bad}{good}.hdf'), 'prob', mode='w')
+    if not use_default_seed:
+        temp = idxs.reshape((n, nyr))
+        for n in range(nyr):
+            outdata.loc[:, f'scen{n + 1}'] = temp[:, n]
+
+    outdata.to_hdf(os.path.join(os.path.dirname(random_pg_dir), f'IID_probs_pg_{nyr}y.hdf'), 'prob',
+                   mode='w')
+    if save_to_gdrive:
+        outdata.to_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_{nyr}y.hdf'), 'prob', mode='w')
 
 
-def get_3yr_suite(bad_irr=True, good_irr=True):
-    bad, good = '', ''
-    if bad_irr:
-        bad = 'bad'
-    if good_irr:
-        good = 'good'
-
-    return pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_3y{bad}{good}.hdf'), 'prob')
+def get_nyr_suite(nyr):
+    return pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_{nyr}y.hdf'), 'prob')
 
 
 """
@@ -220,12 +217,12 @@ def fix_old_1yr_runs(base_dir):
     paths = glob.glob(os.path.join(base_dir, '*.nc'))
     pl = len(paths)
     for i, p in enumerate(paths):
-        if i%1000 ==0:
+        if i % 1000 == 0:
             print(f'{i} of {pl}')
         data = nc.Dataset(p, mode='a')
         # change years
         data.variables['m_year'][:] = np.array([2025, 2025, 2025, 2025, 2025, 2025, 2026, 2026, 2026,
-                                             2026, 2026, 2026]) - 1
+                                                2026, 2026, 2026]) - 1
         # add some metadata that a change happened in the description
         data.description = data.description + (' storyline changed with fix_old_1yr_runs to '
                                                'shift storyline start to july 2024 from 2025')
@@ -237,20 +234,20 @@ def fix_old_1yr_runs(base_dir):
         # re-run add pgra
         add_pasture_growth_anaomoly_to_nc(p)
 
+
 if __name__ == '__main__':
     t = input('are you sure you want to run this, it takes 4 days y/n')
     if t != 'y':
         raise ValueError('stopped re-running')
     # only run next line of code once as this fixes a mistake from previously
-    #fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_bad_irr")
+    # fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_bad_irr")
 
-    # make_1_year_storylines(bad_irr=True) #todo re-run once fixed IID
+    make_1_year_storylines(bad_irr=True)
     # run_1year_basgra(bad_irr=True)
-    # create_1y_pg_data(bad_irr=True) #todo re-run once fixed IID
+    create_1y_pg_data(bad_irr=True)
 
-    # todo final check and get good irr running!!!
-    make_1_year_storylines(bad_irr=False)  # todo re-run once fixed IID
+    make_1_year_storylines(bad_irr=False)
     # run_1year_basgra(bad_irr=False)
-    create_1y_pg_data(bad_irr=False)  # todo re-run once fixed IID
+    create_1y_pg_data(bad_irr=False)
 
     pass

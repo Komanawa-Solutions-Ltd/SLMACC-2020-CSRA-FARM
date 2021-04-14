@@ -32,10 +32,11 @@ def get_pgr_prob_baseline_stiched(nyears, site, mode, irr_prop_from_zero, recalc
         storyline.loc[:, 'month'] = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
         storyline.loc[:, 'year'] = [2024, 2024, 2024, 2024, 2024, 2024, 2025, 2025, 2025, 2025, 2025, 2025, ]
         for i, m in storyline.loc[:, ['month']].itertuples(True, None):
-            temp, precip, rest = base_events[m]
+            temp, precip, rest, rest_per = base_events[m]
             storyline.loc[i, 'precip_class'] = precip
             storyline.loc[i, 'temp_class'] = temp
             storyline.loc[i, 'rest'] = rest
+            storyline.loc[i, 'rest_per'] = rest_per
         prob = run_IID({'base': storyline},
                        irr_prob_from_zero=irr_prop_from_zero).set_index('ID').loc['base', 'log10_prob']
         temp = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir,
@@ -101,7 +102,7 @@ def calc_cumulative_impact_prob(pgr, prob, stepsize=0.1, more_production_than=Tr
             out_prob[i] = im_prob[im_pgr<=v].sum()
     return im_pgr, out_prob
 
-
+#todo save probabilities for all previous runs
 
 if __name__ == '__main__':
     print(get_pgr_prob_baseline_stiched(1, 'eyrewell', 'irrigated', True, True))

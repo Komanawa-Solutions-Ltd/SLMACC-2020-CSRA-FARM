@@ -81,10 +81,10 @@ base_rest_data = {
     8: 0,
 }
 
-base_events = {e: ('A', 'A', map_irrigation(e, base_rest_data[e], 'A', 'A')) for e in range(1, 13)}
+base_events = {e: ('A', 'A', map_irrigation(e, base_rest_data[e], 'A', 'A'), base_rest_data[e]) for e in range(1, 13)}
 # todo need revisit with any new classifications updated 24-02-2021
-base_events[6] = ('C', 'A', 0)
-base_events[7] = ('C', 'A', 0)
+base_events[6] = ('C', 'A', 0, 0.5)
+base_events[7] = ('C', 'A', 0, 0.5)
 
 default_storyline_time = pd.date_range('2024-07-01', '2027-06-01', freq='MS')
 

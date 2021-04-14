@@ -54,7 +54,7 @@ def get_past_event_frequency():
 
 def ensure_no_impossible_events(storyline): # takes longer to run this than the IID
     assert isinstance(storyline, pd.DataFrame)
-    assert set(storyline.columns) == {'year', 'month', 'temp_class', 'precip_class', 'rest'}
+    assert set(storyline.columns) == {'year', 'month', 'temp_class', 'precip_class', 'rest', 'rest_per'}
     assert set(storyline.temp_class.unique()).issubset(['C', 'A', 'H']), 'unexpected classes for temp_class'
     assert set(storyline.precip_class.unique()).issubset(['W', 'A', 'D']), 'unexpected classes for precip_class'
     assert storyline.rest.max() <= 1, 'unexpected values for restrictions'

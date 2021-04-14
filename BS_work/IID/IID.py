@@ -33,6 +33,7 @@ months = [None,
           "Dec",
           ]
 
+
 def run_IID(story_dict, outpath=None, verbose=False, comments='',
             irr_prob_from_zero=True):
     """
@@ -112,24 +113,46 @@ def run_IID(story_dict, outpath=None, verbose=False, comments='',
             # if month in story has a perscribed restriction value looking up that month / values CDF and interpolating
             # to find probability
             if month1["rest"] != 0:
-                if month1["precip_combo"] is not None:
-                    ir_cdf_df = ir_dfs[month1["precip_combo"]]
-                    y = ir_cdf_df[months[month1["month"]]].values[1:-1]
-                    if np.sum(np.isnan(y)) == 0:
-                        x = ir_cdf_df.index[1:-1]
-                        f = interp1d(x, y)
 
-                        # multiplying the story prob by the irrigation restriction prob
-                        if irr_prob_from_zero:
-                            prob += np.log10(f(month1["rest"]))
+                old_version = False
+                if old_version:  # switching to passing the data in rather than calculating with CDFs
+                    if month1["precip_combo"] is not None:
+                        ir_cdf_df = ir_dfs[month1["precip_combo"]]
+                        y = ir_cdf_df[months[month1["month"]]].values[1:-1]
+                        if np.sum(np.isnan(y)) == 0:
+                            x = ir_cdf_df.index[1:-1]
+                            f = interp1d(x, y)
+
+                            # multiplying the story prob by the irrigation restriction prob
+                            if irr_prob_from_zero:
+                                if y.sum() == 0:
+                                    prob += np.log10(1)
+                                else:
+                                    prob += np.log10(f(month1["rest"]))
+                            else:
+                                # probability that a event more extreme than the median event occurs
+                                # p ranges from 0-0.5 (e.g. closer to zero or closer to 1)
+                                if y.sum() == 0:
+                                    prob += np.log10(1)
+                                else:
+                                    prob += np.log10(0.5 - np.abs(
+                                        0.5 - f(month1["rest"])))
                         else:
-                            # probability that a event more extreme than the median event occurs
-                            # p ranges from 0-0.5 (e.g. closer to zero or closer to 1)
-                            prob += np.log10(0.5-np.abs(0.5-f(month1["rest"])))
+                            print(k, "no irrigation restriction CDF for this disaggregation due to lack of data")
                     else:
-                        print(k, "no irrigation restriction CDF for this disaggregation due to lack of data")
+                        print(k,
+                              "cannot calculate IR prob for first month as no previous month disaggregation information")
                 else:
-                    print(k, "cannot calculate IR prob for first month as no previous month disaggregation information")
+                    # switched to defining restrictions in storylines by percentile rather than value and getting the
+                    # restriction from a look up table generated from the de-trened historical data.
+                    # todo document these changes!
+                    if irr_prob_from_zero:
+                        prob += np.log10(1 - month1['rest_per'])  # use the rest percenitle
+                    else:
+                        # probability that a event more extreme than the median event occurs
+                        # p ranges from 0-0.5 (e.g. closer to zero or closer to 1)
+                        prob += np.log10(0.5 - np.abs(0.5 - month1['rest_per']))
+
             if trans_dfs[months[month1["month"]]][month1["class"]].loc[month2["class"]] == 0:
                 print(k, f"{months[month1['month']]}  {month1['class']} to {month2['class']} zero prob transition")
             prob += np.log10(trans_dfs[months[month1["month"]]][month1["class"]].loc[month2["class"]])
@@ -158,6 +181,7 @@ def run_IID(story_dict, outpath=None, verbose=False, comments='',
             print(f"saved to story_probs.csv")
         return prob_df
 
+
 # methods for reformatting stories to fit our internal formatting
 def fix_temp(x):
     if x == "A":
@@ -178,6 +202,8 @@ def simplfy_precip(x):
         return x
     else:
         return "ND"
+
+
 if __name__ == '__main__':
     story_dir = Path("./example_storylines")  # default stories to test
     files = story_dir.glob("*.csv")
@@ -185,5 +211,6 @@ if __name__ == '__main__':
     t = run_IID(story_dict, verbose=True, comments='a test releating to example storylines', outpath=None)
     expected = pd.read_csv("story_probs.csv", comment="#")
     print(expected)
-    assert (np.isclose(np.log10(expected.prob.values), t.log10_prob.values)).all() #todo this will not work due to new data
+    assert (np.isclose(np.log10(expected.prob.values),
+                       t.log10_prob.values)).all()  # todo this will not work due to new data
     print('passed test')

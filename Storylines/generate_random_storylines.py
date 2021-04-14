@@ -132,7 +132,7 @@ def generate_random_suite(n, use_default_seed=True, save=True, return_story=Fals
     assert out_idxs.shape[1] == 2
 
     data = pd.DataFrame(index=pd.date_range('2025-07-01', '2026-06-01', freq='MS'),
-                        columns=['precip_class', 'temp_class', 'rest'])
+                        columns=['precip_class', 'temp_class', 'rest','rest_per'])
     data.index.name = 'date'
     data.loc[:, 'year'] = data.index.year -1 # set to the start of the simulation to 2024 in order to match PGRA
     data.loc[:, 'month'] = data.index.month
@@ -147,6 +147,7 @@ def generate_random_suite(n, use_default_seed=True, save=True, return_story=Fals
         temp.iloc[0:12, 0] = p.values
         temp.iloc[0:12, 1] = t.values
         temp.iloc[0:12, 2] = irrigation[i1]
+        temp.iloc[0:12, 3] = irrigation[i1]
 
         map_storyline_rest(temp)
 

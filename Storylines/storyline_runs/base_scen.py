@@ -17,7 +17,7 @@ from Pasture_Growth_Modelling.export_to_csvs import export_all_in_pattern
 if __name__ == '__main__':
     run_basgra = False  # to stop accidental re-run
     plot_results = False
-    export=True
+    export = True
 
     if run_basgra:
         # run basgra
@@ -31,12 +31,14 @@ if __name__ == '__main__':
     if plot_results:
         path_list = [
             r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-eyrewell-irrigated.nc",
-           # r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-oxford-irrigated.nc",
+            # r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-oxford-irrigated.nc",
         ]
         plot_sims(data_paths=path_list, plot_ind=True, nindv=50, save_dir=None, show=True, figsize=(11, 8),
                   daily=False
                   )
 
-        if export:
-            export_all_in_pattern() #todo!!
-
+    if export:
+        export_all_in_pattern(base_outdir=os.path.join(ksl_env.slmmac_dir, 'Final_Storylines', 'Baseline'),
+                              patterns=os.path.join(ksl_env.slmmac_dir_unbacked,
+                                                    "pasture_growth_sims/baseline_sim_no_pad/*.nc"),
+                              )

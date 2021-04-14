@@ -16,10 +16,11 @@ def get_baseline_storyline(save=False):
     data.loc[:, 'year'] = data.index.year
     data.loc[:, 'month'] = data.index.month
     for i, y, m in data.loc[:, ['year', 'month']].itertuples(True, None):
-        t, p, r = base_events[m]
+        t, p, r, rp = base_events[m]
         data.loc[i, 'precip_class'] = p
         data.loc[i, 'temp_class'] = t
         data.loc[i, 'rest'] = r
+        data.loc[i, 'rest_per'] = rp
 
     ensure_no_impossible_events(data)
     if save:
@@ -35,10 +36,12 @@ def get_baseline_storyline_long(save=False):
     data.loc[:, 'year'] = data.index.year
     data.loc[:, 'month'] = data.index.month
     for i, y, m in data.loc[:, ['year', 'month']].itertuples(True, None):
-        t, p, r = base_events[m]
+        t, p, r, rp = base_events[m]
         data.loc[i, 'precip_class'] = p
         data.loc[i, 'temp_class'] = t
         data.loc[i, 'rest'] = r
+        data.loc[i, 'rest_per'] = rp
+
 
     ensure_no_impossible_events(data)
     if save:
@@ -48,3 +51,4 @@ def get_baseline_storyline_long(save=False):
 
 if __name__ == '__main__':
     get_baseline_storyline_long(True)
+    get_baseline_storyline(True)

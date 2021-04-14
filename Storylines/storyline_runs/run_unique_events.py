@@ -32,7 +32,7 @@ def make_storylines():
     base_data.loc[:, 'year'] = years[0:24]
     base_data.loc[:, 'use_rest'] = 0.50
     for i in base_data.index:
-        t, p, r = base_events[base_data.loc[i, 'month']]
+        t, p, r, rp = base_events[base_data.loc[i, 'month']]
         base_data.loc[i, 'precip_class'] = p
         base_data.loc[i, 'temp_class'] = t
 
@@ -50,6 +50,7 @@ def make_storylines():
                 outdata.loc[idx, 'temp_class'] = t
                 outdata.loc[idx, 'use_rest'] = rest
                 outdata.loc[:, 'rest'] = outdata.loc[:, 'use_rest']
+                outdata.loc[:, 'rest_per'] = outdata.loc[:, 'use_rest']
                 map_storyline_rest(outdata)
                 outdata.to_csv(os.path.join(unique_events_storyline, f'm{m:02d}-{p}-{t}-{int(rest * 100)}.csv'))
 
@@ -102,10 +103,12 @@ def extract_data(outdir):
 
 if __name__ == '__main__':
     # todo re-run with new lower than median events!, check
+    mk_st = True
     run_pgr = False
-    extract = True
-    if run_pgr:
+    extract = False
+    if mk_st:
         make_storylines()
+    if run_pgr:
         run_pasture_growth()
     if extract:
         extract_data(os.path.join(ksl_env.slmmac_dir, 'output_pgr', 'unique_events_v2'))
