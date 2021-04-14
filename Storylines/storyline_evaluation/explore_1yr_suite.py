@@ -78,7 +78,7 @@ def plot_all_1yr(site, mode, num=20, outdir=None, other_scen=None, other_scen_lb
     ticks = [-16., -14., -12., -10., -8., -6., -4.]
     data = get_1yr_data(bad_irr=True, good_irr=False)
     data = data.dropna()
-    data = data.loc[np.isfinite(data.log10_prob)]  # todo why are some events prob infinite with new system
+    # data = data.loc[np.isfinite(data.log10_prob)]  # todo why are some events prob infinite with new system, should have fixed
     prg, prob = get_pgr_prob_baseline_stiched(1, site, mode, irr_prop_from_zero=False)
     prg = prg / 1000
     x = data.log10_prob
@@ -279,8 +279,3 @@ if __name__ == '__main__':
                  pt_labels=True)
 
     plt.show()
-
-    #todo investigate why these are not finite:
-    # rsl-000014
-    # rsl-000015
-    # rsl-000023

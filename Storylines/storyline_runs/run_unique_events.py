@@ -102,7 +102,6 @@ def extract_data(outdir):
 
 
 if __name__ == '__main__':
-    # todo re-run with new lower than median events!, check
     mk_st = True
     run_pgr = False
     extract = False

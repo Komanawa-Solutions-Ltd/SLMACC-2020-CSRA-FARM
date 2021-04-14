@@ -148,8 +148,8 @@ def create_nyr_suite(nyr, use_default_seed=True,
     """
     assert isinstance(nyr, int)
     # todo check will small suite
-    # todo i need to add rest per to all storylines !!!
     n = int(5e8)  # todo finalize should yield a 16gb file
+    n = 10
     data_1y = get_1yr_data(bad_irr=True, good_irr=True)
     assert isinstance(data_1y, pd.DataFrame)
     data_1y = data_1y.dropna()
