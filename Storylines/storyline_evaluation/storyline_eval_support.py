@@ -102,7 +102,7 @@ def calc_cumulative_impact_prob(pgr, prob, stepsize=0.1, more_production_than=Tr
             out_prob[i] = im_prob[im_pgr<=v].sum()
     return im_pgr, out_prob
 
-#todo save probabilities for all previous runs
+#todo save probabilities for all previous runs as well as pg... here or elsewhere...
 
 if __name__ == '__main__':
     print(get_pgr_prob_baseline_stiched(1, 'eyrewell', 'irrigated', True, True))

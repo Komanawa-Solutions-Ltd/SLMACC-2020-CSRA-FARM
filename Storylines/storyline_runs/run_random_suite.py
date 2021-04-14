@@ -245,7 +245,7 @@ if __name__ == '__main__':
     make_1_year_storylines(bad_irr=True)
     # run_1year_basgra(bad_irr=True)
     create_1y_pg_data(bad_irr=True)
-
+    # todo check that good storylines do not have finite probablity but no PGR.
     make_1_year_storylines(bad_irr=False)
     # run_1year_basgra(bad_irr=False)
     create_1y_pg_data(bad_irr=False)

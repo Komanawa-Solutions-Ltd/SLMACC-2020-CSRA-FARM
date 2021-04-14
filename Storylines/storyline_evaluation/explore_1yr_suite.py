@@ -76,7 +76,7 @@ def plot_all_1yr(site, mode, num=20, outdir=None, other_scen=None, other_scen_lb
     figsize = (10,8)
     plots = []
     ticks = [-16., -14., -12., -10., -8., -6., -4.]
-    data = get_1yr_data(bad_irr=True, good_irr=False)
+    data = get_1yr_data(bad_irr=True, good_irr=True)
     data = data.dropna()
     # data = data.loc[np.isfinite(data.log10_prob)]  # todo why are some events prob infinite with new system, should have fixed
     prg, prob = get_pgr_prob_baseline_stiched(1, site, mode, irr_prop_from_zero=False)
@@ -269,7 +269,7 @@ def plot_all_1yr(site, mode, num=20, outdir=None, other_scen=None, other_scen_lb
 
 
 if __name__ == '__main__':
-    data = get_1yr_data(bad_irr=True, good_irr=False)
+    data = get_1yr_data(bad_irr=True, good_irr=False)  # todo start by re-running this!!!
     data = data.dropna()
     data = data.loc[np.isfinite(data.log10_prob)]
     data.rename(columns={'ID': 'plotlabel', 'log10_prob': 'prob', 'eyrewell-irrigated_pg_yr1': 'pgr',
