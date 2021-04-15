@@ -74,6 +74,7 @@ def calc_impact_prob(pgr, prob, stepsize=0.1, normalize=True):
     pgr = np.atleast_1d(pgr)
     prob = np.atleast_1d(prob)
 
+
     step_decimals = len(str(stepsize).split('.')[-1])
     min_val = np.round(np.min(pgr) - stepsize, step_decimals)
     max_val = np.round(np.max(pgr) + stepsize, step_decimals)
