@@ -83,7 +83,6 @@ def run_IID(story_dict, outpath=None, verbose=False, comments='',
 
     # iterating through stories
     for k, v in story_dict.items():
-
         df = v.sort_values(["year", "month"])  # sorting to ensure
         if verbose:
             print(f"calculating story {k}")

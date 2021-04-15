@@ -4,8 +4,11 @@
  """
 import os
 import pandas as pd
+import netCDF4 as nc
+import glob
 import numpy as np
 from Storylines.storyline_building_support import base_events, climate_shocks_env, month_len
+from Pasture_Growth_Modelling.full_model_implementation import default_mode_sites
 from BS_work.IID.IID import run_IID
 
 
@@ -78,9 +81,9 @@ def calc_impact_prob(pgr, prob, stepsize=0.1, normalize=True):
     out_prob = np.zeros(len(steps) - 1)
     out_pgr = np.zeros(len(steps) - 1)
     for i, (l, u) in enumerate(zip(steps[0:-1], steps[1:])):
-        out_pgr[i] = np.mean([l, u])
+        out_pgr[i] = np.nanmean([l, u])
         idx = (pgr >= l) & (pgr < u)
-        out_prob[i] = (10 ** prob[idx]).sum()
+        out_prob[i] = np.nansum(10 ** (prob[idx]))
     if normalize:
         out_prob *= 1 / out_prob.sum()
     return out_pgr, out_prob
@@ -108,7 +111,40 @@ def calc_cumulative_impact_prob(pgr, prob, stepsize=0.1, more_production_than=Tr
     return im_pgr, out_prob
 
 
-# todo save probabilities for all previous runs as well as pg... here or elsewhere...
+def extract_additional_sims(story_dir, sim_dir, nyr):
+    storylines = glob.glob(os.path.join(story_dir, '*.csv'))
+    # run IID
+    data = run_IID(story_dict={os.path.basename(v).replace('.csv', ''): pd.read_csv(v) for v in storylines},
+                   verbose=False,
+                   irr_prob_from_zero=False, add_irr_prob=True)
+    data.set_index('ID', inplace=True)
+    data.rename(columns={'log10_prob': 'log10_prob_irrigated'}, inplace=True)
+
+    temp = run_IID(story_dict={os.path.basename(v).replace('.csv', ''): pd.read_csv(v) for v in storylines},
+                   verbose=False,
+                   irr_prob_from_zero=False, add_irr_prob=False).set_index('ID')
+    data.loc[:, 'log10_prob_dryland'] = temp.loc[:, 'log10_prob']
+    data.reset_index(inplace=True)
+
+    for mode, site in default_mode_sites:
+        key = f'{site}-{mode}'
+        data.loc[:, f'{key}_pg'] = np.nan
+        data.loc[:, f'{key}_pgra'] = np.nan
+        for i, idv in data.loc[:, ['ID']].itertuples(True, None):
+            if i % 10 == 0:
+                print(f'starting to read sim {i} for site: {site} and mode: {mode}')
+            p = os.path.join(sim_dir, f'{idv}-{key}.nc')
+
+            nc_data = nc.Dataset(p)
+            data.loc[i, f'{key}_pgra'] = np.array(nc_data.variables['m_PGRA_cum'][-1, :]).mean()
+            temp = np.array(nc_data.variables['m_PGR'])
+            temp *= np.repeat([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30], nyr)[:, np.newaxis]
+            temp = temp.sum(axis=0).mean()
+            data.loc[i, f'{key}_pg'] = temp
+            nc_data.close()
+    data.to_csv(os.path.join(sim_dir, f'IID_probs_pg.csv'))
+    return data
+
 
 if __name__ == '__main__':
     print(get_pgr_prob_baseline_stiched(1, 'eyrewell', 'irrigated', True, True))

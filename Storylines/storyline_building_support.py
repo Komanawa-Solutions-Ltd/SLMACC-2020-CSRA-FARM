@@ -9,6 +9,7 @@ from Storylines.check_storyline import get_acceptable_events, get_past_event_fre
 from Climate_Shocks import climate_shocks_env
 from Storylines.storyline_params import month_fchange, month_len, prev_month, irrig_season
 from Storylines.irrigation_mapper import get_irr_by_quantile
+from Pasture_Growth_Modelling.full_model_implementation import default_mode_sites
 
 
 # these are used by other  scripts

@@ -10,8 +10,10 @@ import os
 import itertools
 import glob
 from copy import deepcopy
-from Storylines.storyline_building_support import base_events, map_storyline_rest, default_storyline_time
+from Storylines.storyline_building_support import base_events, map_storyline_rest, default_storyline_time, \
+    default_mode_sites
 from Storylines.check_storyline import ensure_no_impossible_events
+from Storylines.storyline_evaluation.storyline_eval_support import extract_additional_sims
 from Climate_Shocks import climate_shocks_env
 from Pasture_Growth_Modelling.full_pgr_model_mp import default_pasture_growth_dir, run_full_model_mp, pgm_log_dir
 from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growth
@@ -96,13 +98,27 @@ def export_and_plot_data():
                       daily=False, ex_save=os.path.basename(p).replace('.nc', ''))
 
 
+def get_laura_v2_pg_prob(site, mode):
+    data = extract_additional_sims(story_dir, base_pg_outdir, 3)
+
+    rename_dict = {f'{site}-{mode}_pg': 'pgr', f'{site}-{mode}_pgra': 'pgra', f'log10_prob_{mode}': 'prob'}
+
+    data.loc[:, 'plotlabel'] = [f'{i}-{idv[0:10]}' for i, idv in data.loc[:, ['ID']].itertuples(True, None)]
+    data = data.rename(columns=rename_dict)
+    return data
+
+
 if __name__ == '__main__':
-    make_st = True
+    make_st = False
     run = False
     plot_export = False
+    pg_prob = True
     if make_st:
         make_storylines()
     if run:
         run_pasture_growth_mp()
     if plot_export:
         export_and_plot_data()
+    if pg_prob:
+        for mode, site in default_mode_sites:
+            get_laura_v2_pg_prob(site=site, mode=mode)

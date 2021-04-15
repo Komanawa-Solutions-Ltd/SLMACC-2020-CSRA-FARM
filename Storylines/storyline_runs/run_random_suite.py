@@ -7,7 +7,9 @@ import ksl_env
 import glob
 import numpy as np
 import pandas as pd
+import gc
 import netCDF4 as nc
+import psutil
 import itertools
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 from Storylines.generate_random_storylines import generate_random_suite
@@ -15,6 +17,7 @@ from BS_work.IID.IID import run_IID
 from Pasture_Growth_Modelling.full_pgr_model_mp import run_full_model_mp, default_pasture_growth_dir, pgm_log_dir, \
     default_mode_sites
 from Pasture_Growth_Modelling.full_model_implementation import add_pasture_growth_anaomoly_to_nc
+from Storylines.storyline_evaluation.storyline_eval_support import get_pgr_prob_baseline_stiched
 
 random_pg_dir = os.path.join(default_pasture_growth_dir, 'random')
 random_sl_dir = os.path.join(temp_storyline_dir, 'random')
@@ -142,6 +145,18 @@ def get_1yr_data(bad_irr=True, good_irr=True):
     if good_irr:
         good = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_good_irr.hdf'), 'prob')
 
+    for mode, site in default_mode_sites:
+        outpgr, outprob = get_pgr_prob_baseline_stiched(nyears=1, site=site, mode=mode, irr_prop_from_zero=False)
+        if good is not None:
+            temp = good
+        else:
+            temp = bad
+        temp.loc[-1, 'ID'] = 'baseline'
+        temp.loc[-1, f'log10_prob_{mode}'] = outprob
+        temp.loc[-1, f'{site}-{mode}_pg_yr1'] = outpgr
+        temp.loc[-1, f'{site}-{mode}_pgra_yr1'] = 0
+        temp.loc[-1, 'irr_type'] = 'baseline'
+
     return pd.concat([good, bad])
 
 
@@ -154,10 +169,9 @@ def create_nyr_suite(nyr, use_default_seed=True,
     :param save_to_gdrive: bool if True then save to the google drive
     :return:
     """
+    print(f'nyear: {nyr}')
     assert isinstance(nyr, int)
-    # todo check will small suite
-    n = int(5e8)  # todo finalize should yield a 16gb file
-    n = 10
+    n = int(2.5e8)
     data_1y = get_1yr_data(bad_irr=True, good_irr=True)
     assert isinstance(data_1y, pd.DataFrame)
     data_1y = data_1y.dropna()
@@ -178,33 +192,86 @@ def create_nyr_suite(nyr, use_default_seed=True,
     else:
         seed = np.random.randint(1, 500000)
 
-    outdata = pd.DataFrame(index=range(n))
+    mem = psutil.virtual_memory().available - 3e9  # leave 3 gb spare
+    total_mem_needed = np.zeros(1).nbytes * n * nyr * 4
+    chunks = int(np.ceil(total_mem_needed / mem)) * 2
+    print(f'running in {chunks} chunks')
+    chunk_size = int(np.ceil(n / chunks))
+
     for mode, site in default_mode_sites:
+        print('making dataframe')
+        outdata = pd.DataFrame(index=range(n), columns=['log10_prob_dryland', 'log10_prob_irrigated',
+                                                        f'{site}-{mode}_pgra_yr{nyr}',
+                                                        f'{site}-{mode}_pg_yr{nyr}'
+                                                        ], dtype=np.float32)
+        print(outdata.dtypes)
+        print('/n', mode, site)
         key = f'{site}-{mode}'
         np.random.seed(seed)
-        idxs = np.random.randint(len(data_1y), size=(n * nyr))
-        prob = data_1y['log10_prob'].values[idxs].reshape((n, nyr))
-        outdata.loc[:, 'log10_prob'] = prob.sum(
-            axis=1)  # note that I have changed the probability to be log10(probaility)
-        pga = data_1y[f'{key}_pgra_yr1'].values[idxs].reshape(n, nyr)
-        outdata.loc[:, f'{key}_cpg'] = pga.sum(axis=1)
+        temp_p = 10**data_1y.loc[:, f'log10_prob_{mode}']
+        idxs = np.random.choice(
+            np.arange(len(data_1y)),
+            size=(n * nyr),
+            p=temp_p/temp_p.sum()
+        ).reshape((n, nyr))
+        # todo need to use a random choice, give probabilites otherwise the priors don't make sense!!! and re-run
 
-        pga = data_1y[f'{key}_pg_yr1'].values[idxs].reshape(n, nyr)
-        outdata.loc[:, f'{key}_cpg'] = pga.sum(axis=1)
+        for c in range(chunks):
+            print(f'chunk: {c}')
+            start_idx = chunk_size * c
+            end_idx = chunk_size * (c + 1)
+            cs = chunk_size
+            if c == chunks - 1:
+                end_idx = n
+                cs = end_idx - start_idx
+            print('getting prob_dry')
+            prob = data_1y[f'log10_prob_dryland'].values[idxs[start_idx:end_idx]]
+            # note that I have changed the probability to be log10(probaility)
+            outdata.loc[start_idx:end_idx - 1, f'log10_prob_dryland'] = prob.sum(axis=1).astype(np.float32)
 
-    if not use_default_seed:
-        temp = idxs.reshape((n, nyr))
-        for n in range(nyr):
-            outdata.loc[:, f'scen{n + 1}'] = temp[:, n]
+            print('getting prob_irr')
+            prob = data_1y[f'log10_prob_irrigated'].values[idxs[start_idx:end_idx]]
+            # note that I have changed the probability to be log10(probaility)
+            outdata.loc[start_idx:end_idx - 1, f'log10_prob_irrigated'] = prob.sum(axis=1).astype(np.float32)
 
-    outdata.to_hdf(os.path.join(os.path.dirname(random_pg_dir), f'IID_probs_pg_{nyr}y.hdf'), 'prob',
-                   mode='w')
-    if save_to_gdrive:
-        outdata.to_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_{nyr}y.hdf'), 'prob', mode='w')
+            print('getting pgra')
+            pga = data_1y[f'{key}_pgra_yr1'].values[idxs[start_idx:end_idx]].reshape(cs, nyr)
+            outdata.loc[start_idx:end_idx - 1, f'{key}_pgra_yr{nyr}'] = pga.sum(axis=1).astype(np.float32)
+
+            print('getting pg')
+            pga = data_1y[f'{key}_pg_yr1'].values[idxs[start_idx:end_idx]].reshape(cs, nyr)
+            outdata.loc[start_idx:end_idx - 1, f'{key}_pg_yr{nyr}'] = pga.sum(axis=1).astype(np.float32)
+
+        if not use_default_seed:
+            print('recording indexes')
+            for n in range(nyr):
+                outdata.loc[:, f'scen_{n + 1}'] = idxs[:, n]
+
+        print(outdata.values.nbytes * 1e-9, f'gb for {mode} - {site}')
+        print(outdata.dtypes)
+        print(f'saving {mode} - {site} to local drive')
+        outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr', f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+        if not os.path.exists(os.path.dirname(outpath)):
+            os.makedirs(os.path.dirname(outpath))
+        np.save(outpath, outdata.values)
+        with open(outpath.replace('.npy', '.csv'), 'w') as f:
+            f.write(','.join(outdata.columns))
+        if save_to_gdrive:
+            print(f'saving {mode} - {site} to google drive')
+            outpath = os.path.join(gdrive_outdir, f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+            np.save(outpath, outdata.values)
+            with open(outpath.replace('.npy', '.csv'), 'w') as f:
+                f.write(','.join(outdata.columns))
+
+        print(f'finished {mode} - {site}')
+        gc.collect()
 
 
-def get_nyr_suite(nyr):
-    return pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_{nyr}y.hdf'), 'prob')
+def get_nyr_suite(nyr, site, mode):
+    outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr', f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+    out = np.load(outpath)
+    out = pd.DataFrame(out, columns=pd.read_csv(outpath.replace('.npy', '.csv')).columns)
+    return out
 
 
 """
@@ -250,11 +317,17 @@ if __name__ == '__main__':
     # only run next line of code once as this fixes a mistake from previously
     # fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_bad_irr")
 
-    make_1_year_storylines(bad_irr=True)
+    # make_1_year_storylines(bad_irr=True)
     # run_1year_basgra(bad_irr=True)
-    create_1y_pg_data(bad_irr=True)
-    make_1_year_storylines(bad_irr=False)
+    # create_1y_pg_data(bad_irr=True)
+    # make_1_year_storylines(bad_irr=False)
     # run_1year_basgra(bad_irr=False)
-    create_1y_pg_data(bad_irr=False)
+    # create_1y_pg_data(bad_irr=False)
+    import time
 
+    t = time.time()
+    create_nyr_suite(3, True, False)
+    create_nyr_suite(5, True, False) # todo hit memory error here
+    create_nyr_suite(10, True, False)
+    print((time.time() - t) / 60, 'minutes to run 2.5e8 sims')
     pass
