@@ -194,7 +194,7 @@ def create_nyr_suite(nyr, use_default_seed=True,
 
     mem = psutil.virtual_memory().available - 3e9  # leave 3 gb spare
     total_mem_needed = np.zeros(1).nbytes * n * nyr * 4
-    chunks = int(np.ceil(total_mem_needed / mem)) * 2
+    chunks = int(np.ceil(total_mem_needed / mem)) * 5
     print(f'running in {chunks} chunks')
     chunk_size = int(np.ceil(n / chunks))
 
@@ -214,7 +214,6 @@ def create_nyr_suite(nyr, use_default_seed=True,
             size=(n * nyr),
             p=temp_p/temp_p.sum()
         ).reshape((n, nyr))
-        # todo need to use a random choice, give probabilites otherwise the priors don't make sense!!! and re-run
 
         for c in range(chunks):
             print(f'chunk: {c}')
@@ -326,7 +325,7 @@ if __name__ == '__main__':
     import time
 
     t = time.time()
-    create_nyr_suite(3, True, False)
+    # create_nyr_suite(3, True, False)
     create_nyr_suite(5, True, False) # todo hit memory error here
     create_nyr_suite(10, True, False)
     print((time.time() - t) / 60, 'minutes to run 2.5e8 sims')
