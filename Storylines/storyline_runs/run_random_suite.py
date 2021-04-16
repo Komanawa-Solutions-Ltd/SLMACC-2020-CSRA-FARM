@@ -329,9 +329,9 @@ if __name__ == '__main__':
     import time
 
     t = time.time()
-    create_nyr_suite(2, True, False)
+    # create_nyr_suite(2, True, False)
     # create_nyr_suite(3, True, False)
     # create_nyr_suite(5, True, False)
-    # create_nyr_suite(10, True, False) # todo hit memory error here
+    # create_nyr_suite(10, True, False)
     print((time.time() - t) / 60, 'minutes to run 2.5e8 sims')
     pass

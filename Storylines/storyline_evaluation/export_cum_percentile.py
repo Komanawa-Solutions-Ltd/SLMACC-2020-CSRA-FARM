@@ -44,8 +44,8 @@ def export_cum_percentile(nyr, outdir, step_size=0.1):
 
 
 if __name__ == '__main__':
-    export_cum_percentile(1, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'1yr'))
-    export_cum_percentile(2, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'2yr')) #todo run this
-    export_cum_percentile(3, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'3yr'))
-    export_cum_percentile(5, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'5yr'))
-    export_cum_percentile(10, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'10yr'))
+    #export_cum_percentile(1, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'1yr'))
+    export_cum_percentile(2, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'2yr'))
+    #export_cum_percentile(3, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'3yr'))
+    #export_cum_percentile(5, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'5yr'))
+    #export_cum_percentile(10, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'10yr'))
