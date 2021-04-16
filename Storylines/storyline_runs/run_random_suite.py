@@ -172,6 +172,9 @@ def create_nyr_suite(nyr, use_default_seed=True,
     print(f'nyear: {nyr}')
     assert isinstance(nyr, int)
     n = int(2.5e8)
+    if nyr>5:
+        n = int(2.5e7)
+
     data_1y = get_1yr_data(bad_irr=True, good_irr=True)
     assert isinstance(data_1y, pd.DataFrame)
     data_1y = data_1y.dropna()
@@ -209,10 +212,11 @@ def create_nyr_suite(nyr, use_default_seed=True,
         key = f'{site}-{mode}'
         np.random.seed(seed)
         temp_p = 10**data_1y.loc[:, f'log10_prob_{mode}']
+        p = temp_p/temp_p.sum()
         idxs = np.random.choice(
-            np.arange(len(data_1y)),
+            np.arange(len(data_1y), dtype=np.uint32),
             size=(n * nyr),
-            p=temp_p/temp_p.sum()
+            p=p
         ).reshape((n, nyr))
 
         for c in range(chunks):
@@ -325,8 +329,9 @@ if __name__ == '__main__':
     import time
 
     t = time.time()
+    create_nyr_suite(2, True, False)
     # create_nyr_suite(3, True, False)
-    create_nyr_suite(5, True, False) # todo hit memory error here
-    create_nyr_suite(10, True, False)
+    # create_nyr_suite(5, True, False)
+    # create_nyr_suite(10, True, False) # todo hit memory error here
     print((time.time() - t) / 60, 'minutes to run 2.5e8 sims')
     pass
