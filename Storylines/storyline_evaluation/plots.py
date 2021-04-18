@@ -156,12 +156,10 @@ def plot_3yr_additional(get_add_fun, other_scen_lbl, pt_labels=True, save=False)
 if __name__ == '__main__':
     # plot_1yr(True, True)
     #plot_1yr_additional(get_laura_v2_1yr_pg_prob, 'lauras_v2_1yr', save=True, pt_labels=True)
-    plot_2yr_additional(get_laura_v2_1yr_2yr_pg_prob, 'lauras_v2_2yr', save=True, pt_labels=False)
+    #plot_2yr_additional(get_laura_v2_1yr_2yr_pg_prob, 'lauras_v2_2yr', save=True, pt_labels=False)
     #plot_3yr_additional(get_laura_v2_pg_prob, 'lauras_v2', pt_labels=True, save=True)
     # plot_2yr_no_additional(True)
     # plot_3yr_no_additional(True)
     # plot_5yr_no_additional(True)
     # plot_10yr_no_additional(True)
-
-    # todo plot with additional lauras sims for 2 year events, check
     pass
