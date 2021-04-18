@@ -63,7 +63,7 @@ def plot_prob_impact(x, y, num, figsize):
 
 def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
                  other_scen_lbl='other storylines', step_size=0.1,
-                 pt_labels=False, close=False):
+                 pt_labels=False, close=False, additional_alpha=1):
     """
     plot all of the 1 year randoms +- other scenarios
     :param site: eyrewell or oxford
@@ -118,31 +118,37 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
 
     # pgra
     _plot_pgra(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
-               other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, outdir, close)
+               other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, outdir, close,
+               additional_alpha=additional_alpha)
 
     # PGR
     _plt_pgr(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
-             other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, prg, outdir, close)
+             other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, prg, outdir, close,
+             additional_alpha=additional_alpha)
 
     # % PGR
     _plt_pgr_per(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
-                 other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, prg, outdir, close)
+                 other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, prg, outdir, close,
+                 additional_alpha=additional_alpha)
 
     # histogram prob + historgam for PGRA
     _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add, other_scen, add_color,
-                  other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, outdir, close)
+                  other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, outdir, close,
+                  additional_alpha=additional_alpha)
 
     # plot impact probability
     _plot_impact_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_scen, add_color,
-                      other_scen_lbl, pt_labels, base_color, base_lw, base_ls, step_size, outdir, close)
+                      other_scen_lbl, pt_labels, base_color, base_lw, base_ls, step_size, outdir, close,
+                      additional_alpha=additional_alpha)
 
     # plot cumulative probability
     _plt_cum_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_scen, add_color,
-                  other_scen_lbl, pt_labels, base_color, base_lw, base_ls, step_size, outdir, close)
+                  other_scen_lbl, pt_labels, base_color, base_lw, base_ls, step_size, outdir, close,
+                  additional_alpha=additional_alpha)
 
 
 def _plot_pgra(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
-               other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, outdir, close):
+               other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, outdir, close, additional_alpha):
     print('plotting PGRA')
     start_time = time.time()
     y = data[f'{site}-{mode}_pgra_yr{nyr}'].values * -1 / 1000
@@ -160,7 +166,7 @@ def _plot_pgra(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_sce
                 tb = ax.annotate(l, (xi, yi / 1000 * -1))
                 tb.set_bbox(dict(facecolor='w', alpha=0.3,edgecolor='none'))
         ax.scatter(other_scen['prob'], other_scen['pgra'] / 1000 * -1, marker='^',
-                   s=60, c=add_color, label=other_scen_lbl,zorder=10)
+                   s=60, c=add_color, alpha=additional_alpha, label=other_scen_lbl,zorder=10)
 
     ax.axhline(0, c=base_color, lw=base_lw, ls=base_ls, label='baseline impact')
     ax.axvline(prob, c=base_color, lw=base_lw, ls=base_ls, label='baseline probability')
@@ -181,7 +187,7 @@ def _plot_pgra(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_sce
 
 
 def _plt_pgr(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
-             other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, prg, outdir, close):
+             other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, prg, outdir, close, additional_alpha):
     print('plotting PGR')
     start_time = time.time()
     y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
@@ -196,7 +202,7 @@ def _plt_pgr(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen,
             for l, xi, yi in other_scen[['plotlabel', 'prob', 'pgr']].itertuples(False, None):
                 tb = ax.annotate(l, (xi, yi / 1000))
                 tb.set_bbox(dict(facecolor='w', alpha=0.3,edgecolor='none'))
-        ax.scatter(other_scen['prob'], other_scen['pgr'] / 1000, marker='^', c=add_color, label=other_scen_lbl,
+        ax.scatter(other_scen['prob'], other_scen['pgr'] / 1000, marker='^', c=add_color, alpha=additional_alpha, label=other_scen_lbl,
                    zorder=10)
 
     ax.axhline(prg, c=base_color, lw=base_lw, ls=base_ls, label='baseline impact')
@@ -218,7 +224,7 @@ def _plt_pgr(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen,
 
 
 def _plt_pgr_per(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
-                 other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, prg, outdir, close):
+                 other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, prg, outdir, close, additional_alpha):
     print('plotting percent pgr')
     start_time = time.time()
     y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000 / prg * 100
@@ -233,7 +239,7 @@ def _plt_pgr_per(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_s
             for l, xi, yi in other_scen[['plotlabel', 'prob', 'pgr']].itertuples(False, None):
                 tb = ax.annotate(l, (xi, yi / prg / 1000 * 100))
                 tb.set_bbox(dict(facecolor='w', alpha=0.3,edgecolor='none'))
-        ax.scatter(other_scen['prob'], other_scen['pgr'] / 1000 / prg * 100, marker='^', c=add_color,
+        ax.scatter(other_scen['prob'], other_scen['pgr'] / 1000 / prg * 100, marker='^', c=add_color, alpha=additional_alpha,
                    label=other_scen_lbl, zorder=10)
 
     ax.axhline(100, c=base_color, lw=base_lw, ls=base_ls, label='baseline impact')
@@ -253,7 +259,7 @@ def _plt_pgr_per(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_s
 
 
 def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add, other_scen, add_color,
-                  other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, outdir, close):
+                  other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, outdir, close, additional_alpha):
     print('plotting raw histogram')
     start_time = time.time()
     bins = 500
@@ -269,7 +275,7 @@ def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add,
                 tlab = other_scen_lbl
             else:
                 tlab = None
-            ax1.axvline(xi, c=add_color, ls='--', label=tlab, zorder=10)
+            ax1.axvline(xi, c=add_color, alpha=additional_alpha, ls='--', label=tlab, zorder=10)
             if pt_labels:
                 ylab_pos = ty.max() * (0.95 - 90 / num_others * i / 100)
                 tb = ax1.annotate(l, (xi, ylab_pos))
@@ -291,7 +297,7 @@ def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add,
                 tlab = other_scen_lbl
             else:
                 tlab = None
-            ax2.axvline(xi / 1000, c=add_color, ls='--', label=tlab, zorder=10)
+            ax2.axvline(xi / 1000, c=add_color, alpha=additional_alpha, ls='--', label=tlab, zorder=10)
             if pt_labels:
                 ylab_pos = ty.max() * (0.95 - 90 / num_others * i / 100)
                 tb = ax2.annotate(l, (xi / 1000, ylab_pos))
@@ -314,7 +320,7 @@ def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add,
 
 
 def _plot_impact_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_scen, add_color,
-                      other_scen_lbl, pt_labels, base_color, base_lw, base_ls, step_size, outdir, close):
+                      other_scen_lbl, pt_labels, base_color, base_lw, base_ls, step_size, outdir, close, additional_alpha):
     print('plotting impact probability')
     start_time = time.time()
     y = data[f'{site}-{mode}_pgra_yr{nyr}'] / 1000
@@ -330,7 +336,7 @@ def _plot_impact_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, ot
                 tlab = other_scen_lbl
             else:
                 tlab = None
-            ax1.axvline(xi / 1000, c=add_color, ls='--', label=tlab, zorder=10)
+            ax1.axvline(xi / 1000, c=add_color, alpha=additional_alpha, ls='--', label=tlab, zorder=10)
             if pt_labels:
                 ylab_pos = cum_prob.max() * (0.95 - 90 / num_others * i / 100)
                 tb = ax1.annotate(l, (xi / 1000, ylab_pos))
@@ -355,7 +361,7 @@ def _plot_impact_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, ot
 
 
 def _plt_cum_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_scen, add_color,
-                  other_scen_lbl, pt_labels, base_color, base_lw, base_ls, step_size, outdir, close):
+                  other_scen_lbl, pt_labels, base_color, base_lw, base_ls, step_size, outdir, close, additional_alpha):
     print('plot cumulative probability')
     start_time = time.time()
     y = data[f'{site}-{mode}_pgra_yr{nyr}'] / 1000
@@ -371,7 +377,7 @@ def _plt_cum_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_
                 tlab = other_scen_lbl
             else:
                 tlab = None
-            ax1.axvline(xi / 1000, c=add_color, ls='--', label=tlab, zorder=10)
+            ax1.axvline(xi / 1000, c=add_color, alpha=additional_alpha, ls='--', label=tlab, zorder=10)
             if pt_labels:
                 ylab_pos = cum_prob.max() * (0.95 - 90 / num_others * i / 100)
                 tb = ax1.annotate(l, (xi / 1000, ylab_pos))
@@ -393,7 +399,7 @@ def _plt_cum_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_
                 tlab = other_scen_lbl
             else:
                 tlab = None
-            ax2.axvline(xi / 1000, c=add_color, ls='--', label=tlab, zorder=10)
+            ax2.axvline(xi / 1000, c=add_color, alpha=additional_alpha, ls='--', label=tlab, zorder=10)
             if pt_labels:
                 ylab_pos = cum_prob.max() * (0.95 - 90 / num_others * i / 100)
                 tb = ax2.annotate(l, (xi / 1000, ylab_pos))

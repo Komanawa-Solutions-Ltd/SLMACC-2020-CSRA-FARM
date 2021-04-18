@@ -20,7 +20,7 @@ from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growt
 from Pasture_Growth_Modelling.plot_full_model import plot_sims
 from Pasture_Growth_Modelling.export_to_csvs import export_all_in_pattern
 
-name = 'lauras_v2'
+name = 'lauras_v2_1yr'
 story_dir = os.path.join(climate_shocks_env.temp_storyline_dir, name)
 if not os.path.exists(story_dir):
     os.makedirs(story_dir)
@@ -43,7 +43,7 @@ def make_storylines():
                               columns=pd.MultiIndex.from_arrays([header_1, header_2]), data=test.iloc[3:].values)
     good_stories = list(set(storylines.columns.get_level_values(0)) - {'Storyline Name'})
 
-    for s in sorted(good_stories):
+    for j, s in enumerate(sorted(good_stories)):
         print(s)
         sl = storylines.loc[:, s].reset_index()
         assert sl.shape == (36, 5), f'shape problem with {s}'
@@ -59,7 +59,8 @@ def make_storylines():
         sl.loc[:, 'temp_class'] = sl.loc[:, 'temp_class'].str.replace('T', '').str.strip()
         map_storyline_rest(sl)
         s2 = s.replace('/', '-').replace('(', '').replace(')', '').replace(',', '')
-        sl.to_csv(os.path.join(story_dir, f'{s2}.csv'))
+        for i in range(3):
+            sl.iloc[i*12:i*12+12].to_csv(os.path.join(story_dir, f'{j+1}-yr{i+1}-{s2[0:10]}.csv'))
 
 
 def run_pasture_growth_mp():
@@ -69,7 +70,7 @@ def run_pasture_growth_mp():
         storyline_path_mult=paths,
         outdir_mult=outdirs,
         nsims_mult=1000,
-        log_path=os.path.join(pgm_log_dir, 'lauras'),
+        log_path=os.path.join(pgm_log_dir, 'lauras_1yr'),
         description_mult='a first run of Lauras storylines',
         padock_rest_mult=False,
         save_daily_mult=True,
@@ -98,14 +99,34 @@ def export_and_plot_data():
                       daily=False, ex_save=os.path.basename(p).replace('.nc', ''))
 
 
-def get_laura_v2_pg_prob(site, mode):
-    data = extract_additional_sims(story_dir, base_pg_outdir, 3)
+def get_laura_v2_1yr_pg_prob(site, mode):
+    data = extract_additional_sims(story_dir, base_pg_outdir, 1)
 
     rename_dict = {f'{site}-{mode}_pg': 'pgr', f'{site}-{mode}_pgra': 'pgra', f'log10_prob_{mode}': 'prob'}
 
-    data.loc[:, 'plotlabel'] = [f'{i}-{idv[0:10]}' for i, idv in data.loc[:, ['ID']].itertuples(True, None)]
+    data.loc[:, 'plotlabel'] = [idv for i, idv in data.loc[:, ['ID']].itertuples(True, None)]
     data = data.rename(columns=rename_dict)
     return data
+
+def get_laura_v2_1yr_2yr_pg_prob(site, mode):
+    outdata = pd.DataFrame(columns=['pgr', 'pgra', 'prob', 'plotlabel'])
+    data = extract_additional_sims(story_dir, base_pg_outdir, 1)
+
+    rename_dict = {f'{site}-{mode}_pg': 'pgr', f'{site}-{mode}_pgra': 'pgra', f'log10_prob_{mode}': 'prob'}
+
+    data.loc[:, 'plotlabel'] = [idv for i, idv in data.loc[:, ['ID']].itertuples(True, None)]
+    data = data.rename(columns=rename_dict)
+
+    for i, (y1, y2) in enumerate(itertools.product(data.index, data.index)):
+        outdata.loc[i, 'plotlabel'] = f'{y1}-{y2}'
+        outdata.loc[i,'prob'] = data.loc[y1,'prob'] + data.loc[y2,'prob']
+        outdata.loc[i,'pgra'] = data.loc[y1,'pgra'] + data.loc[y2,'pgra']
+        outdata.loc[i,'pgr'] = data.loc[y1,'pgr'] + data.loc[y2,'pgr']
+
+    for k in ['pgr','pgra','prob']:
+        outdata.loc[:,k] = pd.to_numeric(outdata.loc[:,k])
+    outdata = outdata.drop_duplicates(['pgra','prob'])
+    return outdata.astype(float,errors='ignore')
 
 
 if __name__ == '__main__':
@@ -121,4 +142,5 @@ if __name__ == '__main__':
         export_and_plot_data()
     if pg_prob:
         for mode, site in default_mode_sites:
-            get_laura_v2_pg_prob(site=site, mode=mode)
+            get_laura_v2_1yr_2yr_pg_prob(site, mode)
+            get_laura_v2_1yr_pg_prob(site=site, mode=mode)
