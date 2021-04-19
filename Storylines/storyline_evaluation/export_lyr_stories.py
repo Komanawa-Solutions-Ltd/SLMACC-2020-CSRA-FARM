@@ -6,6 +6,7 @@ import shutil
 import ksl_env
 import os
 import pandas as pd
+import glob
 import numpy as np
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, default_mode_sites, random_sl_dir
 
@@ -51,6 +52,29 @@ def export_1yr_stories(output_dir, n, anamoly, site, mode, tolerance):
         shutil.copyfile(src=os.path.join(f'{random_sl_dir}_{irr_type}_irr', f'{idv}.csv'),
                         dst=os.path.join(output_dir, f'{site}-{mode}', f'{i:05d}-{idv}_{irr_type}-irr.csv'))
 
+    # todo sumerize
+    paths = glob.glob(os.path.join(output_dir, f'{site}-{mode}', f'*-irr.csv'))
+    counts_with_irr = {e: {} for e in range(1, 13)}
+    counts_wo_irr = {e: {} for e in range(1, 13)}
+    for p in paths:
+        data = pd.read_csv(p).set_index('month')
+        for m in range(1, 13):
+            t = counts_with_irr[m]
+            k = f'{data.loc[m, "precip_class"]}P-{data.loc[m, "temp_class"]}T-{data.loc[m, "rest_per"]}R'
+            if k in t.keys():
+                t[k] += 1
+            else:
+                t[k] = 1
+            t = counts_wo_irr[m]
+            k = f'{data.loc[m, "precip_class"]}P-{data.loc[m, "temp_class"]}T'
+            if k in t.keys():
+                t[k] += 1
+            else:
+                t[k] = 1
+    counts_with_irr = pd.DataFrame(counts_with_irr)
+    counts_wo_irr = pd.DataFrame(counts_wo_irr)
+    counts_with_irr.to_csv(os.path.join(d, 'counts_with_irrigation.csv'))
+    counts_wo_irr.to_csv(os.path.join(d, 'counts_without_irrigation.csv'))
     # sl.to_csv(os.path.join(f'{random_sl_dir}{tnm}', f'{name}.csv')) directory...
 
 
