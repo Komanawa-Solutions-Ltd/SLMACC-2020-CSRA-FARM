@@ -20,7 +20,7 @@ from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growt
 from Pasture_Growth_Modelling.plot_full_model import plot_sims
 from Pasture_Growth_Modelling.export_to_csvs import export_all_in_pattern
 
-name = 'lauras_v2_1yr'
+name = 'lauras_autum_drought_1yr'
 story_dir = os.path.join(climate_shocks_env.temp_storyline_dir, name)
 if not os.path.exists(story_dir):
     os.makedirs(story_dir)
@@ -34,7 +34,7 @@ for d in [story_dir, base_pg_outdir, outputs_dir]:
 
 
 def make_storylines():
-    test = pd.read_excel(os.path.join(ksl_env.slmmac_dir, r"storylines\blank_storylineWS120321.xlsx"), skiprows=2,
+    test = pd.read_excel(os.path.join(ksl_env.slmmac_dir, r"storylines\autum_drought.xlsx"), skiprows=2,
                          index_col=[0, 1, 2, 3], header=None)
     header_1 = test.iloc[0].ffill().values
     header_2 = test.iloc[1].values
@@ -59,7 +59,7 @@ def make_storylines():
         sl.loc[:, 'temp_class'] = sl.loc[:, 'temp_class'].str.replace('T', '').str.strip()
         map_storyline_rest(sl)
         s2 = s.replace('/', '-').replace('(', '').replace(')', '').replace(',', '')
-        for i in range(3):
+        for i in range(1):
 
             out = sl.iloc[i*12:i*12+12]
             out.loc[:,'year'] += -i
@@ -90,7 +90,7 @@ def export_and_plot_data():
                               os.path.join(os.path.dirname(base_pg_outdir), 'baseline_sim_no_pad', '*.nc')
                           ])
     for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
-        data = get_laura_v2_1yr_pg_prob(sm.split('-')[0],sm.split('-')[1])
+        data = get_laura_v2_1yr_pg_prob(sm.split('-')[0], sm.split('-')[1])
         data.to_csv(os.path.join(outputs_dir, f'IID_probs_pg.csv'))
         paths = glob.glob(os.path.join(base_pg_outdir, f'*{sm}.nc'))
         for p in paths:
@@ -138,8 +138,8 @@ def get_laura_v2_1yr_2yr_pg_prob(site, mode):
 if __name__ == '__main__':
     #todo check final results!
     re_run = False
-    make_st = True
-    run = True
+    make_st = False
+    run = False
     plot_export = True
     pg_prob = True
     if make_st:

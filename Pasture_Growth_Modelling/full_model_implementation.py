@@ -81,7 +81,7 @@ default_swg_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SW
 
 def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_sites, padock_rest=False,
                        save_daily=False, description='', swg_dir=default_swg_dir, verbose=True,
-                       n_parallel=1, fix_leap=True):
+                       n_parallel=1, fix_leap=True, re_run=True):
     """
     creates weather data, runs basgra and saves values to a netcdf
     :param storyline_path: path to the storyline
@@ -122,6 +122,10 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
 
     assert isinstance(nsims, int), 'nsims must be an integer instead {}: {}'.format(nsims, type(nsims))
     for mode, site in mode_sites:
+        outpath = os.path.join(outdir, '{}-{}-{}.nc'.format(storyline_key, site, mode))
+        if not re_run and os.path.exists(outpath):
+            print(f'skipping {os.path.basename(outpath)}')
+            continue
 
         _run_simple_rest(storyline=storyline, nsims=nsims, mode=mode, site=site, simlen=simlen,
                          storyline_key=storyline_key,
