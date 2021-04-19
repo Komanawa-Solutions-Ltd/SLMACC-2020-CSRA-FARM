@@ -60,7 +60,10 @@ def make_storylines():
         map_storyline_rest(sl)
         s2 = s.replace('/', '-').replace('(', '').replace(')', '').replace(',', '')
         for i in range(3):
-            sl.iloc[i*12:i*12+12].to_csv(os.path.join(story_dir, f'{j+1}-yr{i+1}-{s2[0:10]}.csv'))
+
+            out = sl.iloc[i*12:i*12+12]
+            out.loc[:,'year'] += -i
+            out.to_csv(os.path.join(story_dir, f'{j+1}-yr{i+1}-{s2}.csv'))
 
 
 def run_pasture_growth_mp():
@@ -104,7 +107,7 @@ def get_laura_v2_1yr_pg_prob(site, mode):
 
     rename_dict = {f'{site}-{mode}_pg': 'pgr', f'{site}-{mode}_pgra': 'pgra', f'log10_prob_{mode}': 'prob'}
 
-    data.loc[:, 'plotlabel'] = [idv for i, idv in data.loc[:, ['ID']].itertuples(True, None)]
+    data.loc[:, 'plotlabel'] = [idv[0:12] for i, idv in data.loc[:, ['ID']].itertuples(True, None)]
     data = data.rename(columns=rename_dict)
     return data
 
@@ -130,9 +133,10 @@ def get_laura_v2_1yr_2yr_pg_prob(site, mode):
 
 
 if __name__ == '__main__':
-    make_st = False
-    run = False
-    plot_export = False
+    #todo check final results!
+    make_st = True
+    run = True
+    plot_export = True
     pg_prob = True
     if make_st:
         make_storylines()
