@@ -11,9 +11,9 @@ from Storylines.storyline_params import month_fchange, month_len, prev_month, ir
 from Storylines.irrigation_mapper import get_irr_by_quantile
 from Pasture_Growth_Modelling.full_model_implementation import default_mode_sites
 
-
 # these are used by other  scripts
 month_fchange, month_len, prev_month, irrig_season = month_fchange, month_len, prev_month, irrig_season
+
 
 # make all possible events
 def make_sampling_options():
@@ -60,9 +60,23 @@ def map_irrigation(m, rest_quantile, precip, prev_precip):
     return _rest_data[key].loc[rest_quantile, m]
 
 
+def map_irr_quantile_from_rest(m, rest_val, precip, prev_precip):
+    print(m) #todo DADB
+    if m in (5, 6, 7, 8,):  # non irrigation months
+        return 1
+    key = f'{prev_precip}-{precip}'.replace('W', 'ND').replace('A', 'ND')
+
+    temp = _rest_data[key].loc[:, m].reset_index()
+    t = np.abs(rest_val - temp.loc[:, m])
+    idx = np.isclose(t, t.min())
+
+    temp = temp.loc[idx]
+    idx = np.argmin(np.abs(0.5 - temp.loc[:, 'index']))
+
+    return temp.loc[:,'index'].iloc[idx]
+
 
 _rest_data = get_irr_by_quantile()
-
 
 base_rest_data = {
     1: 0.5,
@@ -95,7 +109,7 @@ def make_irr_rest_for_all_events():
     rest_keys = [50, 60, 75, 80, 90, 95, 99]
     for i, m, s in data.loc[:, ['month', 'state']].itertuples(True, None):
         for k in rest_keys:
-            data.loc[i, k] = map_irrigation(m, k/100, s.split('-')[1].replace('P', ''), 'A')
+            data.loc[i, k] = map_irrigation(m, k / 100, s.split('-')[1].replace('P', ''), 'A')
     out_keys = ['month', 'state'] + rest_keys
     data = data.loc[:, out_keys]
     data.to_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'irrigation_rest_s_a.csv'))
@@ -114,7 +128,7 @@ def make_blank_storyline_sheet():
     outdata.loc[:, 'month'] = outdata.index.month_name().str[:3]
     months = outdata.index.month
     outdata.loc[:, 'options'] = [opts[e] for e in months]
-    outdata.to_csv(os.path.join(climate_shocks_env.supporting_data_dir,'blank_storyline.csv'))
+    outdata.to_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'blank_storyline.csv'))
     return outdata
 
 
