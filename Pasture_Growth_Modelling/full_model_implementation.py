@@ -161,7 +161,7 @@ def get_irr_data(num_to_pull, storyline, simlen):
         out[:, idx: idx + month_len[m]] = irr_gen.get_data(num_to_pull, key=key, mean=r,
                                                            tolerance=get_rest_tolerance(r),
                                                            max_replacement_level=0.1,
-                                                           under_level='raise')
+                                                           under_level='warn')
         idx += month_len[m]
 
     return out

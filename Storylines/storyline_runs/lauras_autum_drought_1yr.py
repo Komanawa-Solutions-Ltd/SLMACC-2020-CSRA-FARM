@@ -136,7 +136,6 @@ def get_laura_v2_1yr_2yr_pg_prob(site, mode):
 
 
 if __name__ == '__main__':
-    #todo check final results!
     re_run = False
     make_st = False
     run = False

@@ -20,7 +20,7 @@ if __name__ == '__main__':
     plot_results = False
     export = False
     prob_pg = True
-
+    # todo why is baseline oxford irrgated lower than oxford dryland in months 10, 11
     if run_basgra:
         # run basgra
         print('running BASGRA')

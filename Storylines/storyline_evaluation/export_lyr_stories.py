@@ -52,7 +52,7 @@ def export_1yr_stories(output_dir, n, anamoly, site, mode, tolerance):
         shutil.copyfile(src=os.path.join(f'{random_sl_dir}_{irr_type}_irr', f'{idv}.csv'),
                         dst=os.path.join(output_dir, f'{site}-{mode}', f'{i:05d}-{idv}_{irr_type}-irr.csv'))
 
-    # todo sumerize
+    # sumerize
     paths = glob.glob(os.path.join(output_dir, f'{site}-{mode}', f'*-irr.csv'))
     counts_with_irr = {e: {} for e in range(1, 13)}
     counts_wo_irr = {e: {} for e in range(1, 13)}

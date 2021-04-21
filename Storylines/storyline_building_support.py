@@ -61,7 +61,6 @@ def map_irrigation(m, rest_quantile, precip, prev_precip):
 
 
 def map_irr_quantile_from_rest(m, rest_val, precip, prev_precip):
-    print(m) #todo DADB
     if m in (5, 6, 7, 8,):  # non irrigation months
         return 1
     key = f'{prev_precip}-{precip}'.replace('W', 'ND').replace('A', 'ND')

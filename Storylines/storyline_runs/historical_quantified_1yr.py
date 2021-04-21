@@ -36,7 +36,6 @@ for d in [story_dir, base_pg_outdir, outputs_dir]:
 
 def make_storylines():
     inv_month_fchange = {v: k for k, v in month_fchange.items()}
-    # todo make from catagorized verions of the past.
     data = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'event_definition_data_fixed.csv'),
                        comment='#')
     data.loc[:, 'rest_cum'] = [rc / month_len[inv_month_fchange[m]] for rc, m in
@@ -44,10 +43,9 @@ def make_storylines():
     data = data.set_index(['year', 'month'])
 
     for y in range(1972, 2019):
-        print(y) #todo DADB
         t = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, ]) + y
         tm = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', ]
-        idx = list(zip(t, tm))  # todo
+        idx = list(zip(t, tm))
         temp = pd.DataFrame(index=np.arange(12),
                             columns=['year', 'month', 'temp_class', 'precip_class', 'rest', 'rest_per']
                             )
@@ -122,13 +120,13 @@ if __name__ == '__main__':
     # todo check final results!
     re_run = False
     make_st = True
-    run = False
-    plot_export = False
-    pg_prob = False
+    run = True
+    plot_export = True
+    pg_prob = True
     if make_st:
         make_storylines()
     if run:
-        run_pasture_growth_mp(re_run)
+        run_pasture_growth_mp(re_run) # todo several of these died on the irrgation thing need to just warn rather than pass
     if plot_export:
         export_and_plot_data()
     if pg_prob:
