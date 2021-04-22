@@ -18,13 +18,14 @@ from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, c
 from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growth, calc_pasture_growth_anomaly
 from Pasture_Growth_Modelling.initialisation_support.validate_dryland_v2 import get_horarata_data_old, \
     make_mean_comparison
+from Pasture_Growth_Modelling.initialisation_support.comparison_support import get_witchmore
 from Pasture_Growth_Modelling.initialisation_support.inital_long_term_runs import run_past_basgra_irrigated
 
 
 def run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_dmh', fun='mean',
                             reseed_trig=0.06, reseed_basal=0.1, basali=0.2, weed_dm_frac=0.05,
                             use_defined_params_except_weed_dm_frac=True):
-    if not isinstance(weed_dm_frac, dict):
+    if not isinstance(weed_dm_frac, dict) and weed_dm_frac is not None:
         weed_dm_frac = {e: weed_dm_frac for e in range(1, 13)}
     mode = 'dryland'
     print('running: {}, {}, reseed: {}'.format(mode, site, reseed))
@@ -40,8 +41,9 @@ def run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_
             days_harvest.loc[days_harvest.reseed_trig > 0, 'reseed_trig'] = reseed_trig
             days_harvest.loc[days_harvest.reseed_trig > 0, 'reseed_basal'] = reseed_basal
             params['BASALI'] = basali
-    for m in range(1, 13):
-        days_harvest.loc[days_harvest.index.month == m, 'weed_dm_frac'] = weed_dm_frac[m]
+    if weed_dm_frac is not None:
+        for m in range(1, 13):
+            days_harvest.loc[days_harvest.index.month == m, 'weed_dm_frac'] = weed_dm_frac[m]
     out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
     out.loc[:, 'per_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
     pg = pd.DataFrame(calc_pasture_growth(out, days_harvest, mode=pg_mode, resamp_fun=fun, freq='1d'))
@@ -69,38 +71,46 @@ if __name__ == '__main__':
         11: 0.62,
         12: 0.62,
     }
-    weed_dict_2 = {
-        1: 0,
-        2: 0,
-        3: 0,
-        4: 0,
-        5: 0,
-        6: 0,
-        7: 0,
-        8: 0,
-        9: 0,
-        10: 0,
-        11: 0,
-        12: 0,
+    weed_dict_2 = {  #todo I generally like this more, baseline PG is not more than
+        1: 0.42,
+        2: 0.30,
+        3: 0.25, #todo should there be a second peak in an average year, yes in horoata data, but no in whichmore. dicuss with WS
+        4: 0.20, #todo should there be a second peak in an average year, yes in horoata data, but no in whichmore. dicuss with WS
+        5: 0.30,
+        6: 0.20,
+        7: 0.20,
+        8: 0.20,
+        9: 0.23,
+        10: 0.30,
+        11: 0.60,
+        12: 0.62,
     }
-
+    # todo thikning of calibrating dryland to average spring conditions and then the horoata peak and then flat tail.... discuss with WS.
     data = {
 
         'weed: special2': run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_yield',
                                                   fun='mean', reseed_trig=0.06, reseed_basal=0.1, basali=0.15,
                                                   weed_dm_frac=weed_dict_2,  use_defined_params_except_weed_dm_frac=True),
-        'weed: special1': run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_yield',
-                                                  fun='mean', reseed_trig=0.01133, reseed_basal=0.1589, basali=0.20835,
-                                                  weed_dm_frac=weed_dict_1,  use_defined_params_except_weed_dm_frac=True),
-        'irrigated_oxford': run_past_basgra_irrigated(site='oxford')
+
+        'dryland_trended': run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True,
+                                                   pg_mode='from_yield',
+                                                   fun='mean', reseed_trig=0.01133, reseed_basal=0.1589, basali=0.20835,
+                                                   weed_dm_frac=None, use_defined_params_except_weed_dm_frac=True),
+
+        'irrigated_oxford_trended': run_past_basgra_irrigated(site='oxford'),
+        'irrigated_eyrewell_trended': run_past_basgra_irrigated(site='eyrewell'),
 
     }
 
     data2 = {e: make_mean_comparison(v, fun) for e, v in data.items()}
     data2['horata'] = get_horarata_data_old()
+    data2['witchmore'] = get_witchmore()
     out_vars = ['DM', 'YIELD', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'RAIN', 'EVAP', 'TRAN', 'per_PAW', 'pg', 'RESEEDED',
                 'pga_norm', 'BASAL']
-    plot_multiple_results(data=data, out_vars=out_vars, rolling=90, label_rolling=True, label_main=False,
-                          main_kwargs={'alpha': 0.8},
-                          show=False)
-    plot_multiple_monthly_results(data=data2, out_vars=['pg'], show=True, main_kwargs={'marker': 'o'})
+    if False:
+        plot_multiple_results(data=data, out_vars=out_vars, rolling=90, label_rolling=True, label_main=False,
+                              main_kwargs={'alpha': 0.8},
+                              show=False)
+    for k, v in data2.items():
+        print(k, ': ', v.pg.sum())
+    plot_multiple_monthly_results(data=data2, out_vars=['pgr'], show=True, main_kwargs={'marker': 'o'})

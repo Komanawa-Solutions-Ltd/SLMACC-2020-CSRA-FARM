@@ -16,9 +16,23 @@ ksl_env.add_basgra_nz_path()
 from basgra_python import run_basgra_nz, get_month_day_to_nonleap_doy
 from supporting_functions.output_metadata import get_output_metadata
 
+weed_dict_2 = {
+    1: 0.42,
+    2: 0.30,
+    3: 0.33,
+    4: 0.32,
+    5: 0.30,
+    6: 0.30,
+    7: 0.30,
+    8: 0.30,
+    9: 0.20,
+    10: 0.37,
+    11: 0.62,
+    12: 0.62,
+}
 
 def compare_oxford_irr_dry(save=False):
-    nsims = 10
+    nsims = 100
     storyline = get_baseline_storyline()
     simlen = np.array([month_len[e] for e in storyline.month]).sum()
     params_dry, doy_irr, all_matrix_weathers, all_days_harvests_dry = _gen_input(storyline=storyline,
@@ -34,23 +48,51 @@ def compare_oxford_irr_dry(save=False):
                                                                                  chunks=1, current_c=1,
                                                                                  nperc=nsims, simlen=simlen,
                                                                                  swg_dir=default_swg_dir, fix_leap=True)
+    params_irr_eyre, doy_irr_eyre, all_matrix_weathers_eyre, all_days_harvests_irr_eyre = _gen_input(
+        storyline=storyline,
+        nsims=nsims, mode='irrigated',
+        site='eyrewell',
+        chunks=1, current_c=1,
+        nperc=nsims, simlen=simlen,
+        swg_dir=default_swg_dir, fix_leap=True)
 
     all_out_dry = np.zeros((len(out_variables), simlen, nsims)) * np.nan
+    all_out_dry_monk = np.zeros((len(out_variables), simlen, nsims)) * np.nan
     all_out_irr = np.zeros((len(out_variables), simlen, nsims)) * np.nan
-    for i, (matrix_weather, days_harvest_irr, days_harvest_dry) in enumerate(zip(all_matrix_weathers,
-                                                                                 all_days_harvests_irr,
-                                                                                 all_days_harvests_dry)):
+    all_out_irr_eyre = np.zeros((len(out_variables), simlen, nsims)) * np.nan
+    for i, (
+    matrix_weather, days_harvest_irr, days_harvest_dry, matrix_weather_eyre, days_harvest_irr_eyre) in enumerate(
+            zip(all_matrix_weathers,
+                all_days_harvests_irr,
+                all_days_harvests_dry, all_matrix_weathers_eyre, all_days_harvests_irr_eyre)):
         if i % 10 == 0:
             print(i)
         restrict = 1 - matrix_weather.loc[:, 'max_irr'] / abs_max_irr
         out = run_basgra_nz(params_irr, matrix_weather, days_harvest_irr, doy_irr, verbose=False, run_365_calendar=True)
         out.loc[:, 'PER_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
-
         pg = pd.DataFrame(
             calc_pasture_growth(out, days_harvest_irr, mode='from_yield', resamp_fun='mean', freq='1d'))
         out.loc[:, 'PGR'] = pg.loc[:, 'pg']
         out.loc[:, 'F_REST'] = restrict
         all_out_irr[:, :, i] = out.loc[:, out_variables].values.transpose()
+
+        # run eyrewell
+        pg = pd.DataFrame(
+            calc_pasture_growth(out, days_harvest_irr, mode='from_yield', resamp_fun='mean', freq='1d'))
+        out.loc[:, 'PGR'] = pg.loc[:, 'pg']
+        out.loc[:, 'F_REST'] = restrict
+        all_out_irr[:, :, i] = out.loc[:, out_variables].values.transpose()
+
+        restrict = 1 - matrix_weather.loc[:, 'max_irr'] / abs_max_irr
+        out = run_basgra_nz(params_irr_eyre, matrix_weather_eyre, days_harvest_irr_eyre, doy_irr_eyre, verbose=False,
+                            run_365_calendar=True)
+        out.loc[:, 'PER_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
+        pg = pd.DataFrame(
+            calc_pasture_growth(out, days_harvest_irr_eyre, mode='from_yield', resamp_fun='mean', freq='1d'))
+        out.loc[:, 'PGR'] = pg.loc[:, 'pg']
+        out.loc[:, 'F_REST'] = restrict
+        all_out_irr_eyre[:, :, i] = out.loc[:, out_variables].values.transpose()
+
 
         # run dryland
         matrix_weather.loc[:, 'max_irr'] = 0
@@ -66,19 +108,45 @@ def compare_oxford_irr_dry(save=False):
         out.loc[:, 'F_REST'] = restrict
         all_out_dry[:, :, i] = out.loc[:, out_variables].values.transpose()
 
+        # run dryland monk
+        for m in range(1, 13):
+            days_harvest_dry.loc[days_harvest_dry.index.month == m, 'weed_dm_frac'] = weed_dict_2[m]
+        matrix_weather.loc[:, 'max_irr'] = 0
+        matrix_weather.loc[:, 'irr_trig'] = 0
+        matrix_weather.loc[:, 'irr_targ'] = 0
+        restrict = 1 - matrix_weather.loc[:, 'max_irr'] / abs_max_irr
+        out = run_basgra_nz(params_dry, matrix_weather, days_harvest_dry, doy_irr, verbose=False, run_365_calendar=True)
+        out.loc[:, 'PER_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
+
+        pg = pd.DataFrame(
+            calc_pasture_growth(out, days_harvest_dry, mode='from_yield', resamp_fun='mean', freq='1d'))
+        out.loc[:, 'PGR'] = pg.loc[:, 'pg']
+        out.loc[:, 'F_REST'] = restrict
+        all_out_dry_monk[:, :, i] = out.loc[:, out_variables].values.transpose()
+
     all_out_dry = pd.DataFrame(np.nanmean(all_out_dry, axis=2).transpose(), columns=out_variables,
+                               index=matrix_weather.index)
+    all_out_dry_monk = pd.DataFrame(np.nanmean(all_out_dry_monk, axis=2).transpose(), columns=out_variables,
                                index=matrix_weather.index)
     all_out_irr = pd.DataFrame(np.nanmean(all_out_irr, axis=2).transpose(), columns=out_variables,
                                index=matrix_weather.index)
+    all_out_irr_eyre = pd.DataFrame(np.nanmean(all_out_irr_eyre, axis=2).transpose(), columns=out_variables,
+                               index=matrix_weather.index)
     if save:
         all_out_irr.to_csv("D:\mh_unbacked\SLMACC_2020\one_off_data\irr_baseline.csv")
+        all_out_irr_eyre.to_csv("D:\mh_unbacked\SLMACC_2020\one_off_data\dry_baseline.csv")
         all_out_dry.to_csv("D:\mh_unbacked\SLMACC_2020\one_off_data\dry_baseline.csv")
+        all_out_dry_monk.to_csv("D:\mh_unbacked\SLMACC_2020\one_off_data\dry_monk_baseline.csv")
     all_out_irr.loc[:, 'pg'] = all_out_irr.loc[:, 'PGR']
+    all_out_irr_eyre.loc[:, 'pg'] = all_out_irr_eyre.loc[:, 'PGR']
     all_out_dry.loc[:, 'pg'] = all_out_dry.loc[:, 'PGR']
+    all_out_dry_monk.loc[:, 'pg'] = all_out_dry_monk.loc[:, 'PGR']
     data = {
 
-        'dryland_baseline': all_out_dry,
-        'irrigated_oxford': all_out_irr
+               'dryland_monkeying': all_out_dry_monk,
+               'dryland_baseline': all_out_dry,
+               'irrigated_oxford': all_out_irr,
+               'irrigated_eyrewell':all_out_irr_eyre,
 
     }
     fun = 'mean'
@@ -88,5 +156,5 @@ def compare_oxford_irr_dry(save=False):
 
 
 if __name__ == '__main__':
-    compare_oxford_irr_dry()  # todo check and debug!, multiple years showing....  # tod start here!  # todo why cant we just normalise to historical data??? e.g. v3?
+    compare_oxford_irr_dry(False)  # todo check and debug!, multiple years showing....  # tod start here!  # todo why cant we just normalise to historical data??? e.g. v3?
     # todo is this the problem of year 1 not being close to year 2 etc.

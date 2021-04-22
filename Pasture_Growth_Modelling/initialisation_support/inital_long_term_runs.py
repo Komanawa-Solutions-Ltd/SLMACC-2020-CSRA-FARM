@@ -20,11 +20,11 @@ from Pasture_Growth_Modelling.initialisation_support.comparison_support import m
     get_horarata_data_old, get_indicative_irrigated
 
 
-def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True):
+def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True, version='trended'):
     mode = 'irrigated'
     print('running: {}, {}, reseed: {}'.format(mode, site, reseed))
-    weather = get_vcsn_record(version='trended', site=site)
-    rest = get_restriction_record()
+    weather = get_vcsn_record(version=version, site=site)
+    rest = get_restriction_record(version=version)
     params, doy_irr = get_params_doy_irr(mode)
     matrix_weather = create_matrix_weather(mode, weather, rest, fix_leap=False)
     days_harvest = create_days_harvest(mode, matrix_weather, site, fix_leap=False)
