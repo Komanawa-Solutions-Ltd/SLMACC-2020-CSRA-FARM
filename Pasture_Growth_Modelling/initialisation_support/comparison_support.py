@@ -37,6 +37,25 @@ def make_mean_comparison(out, fun):
     return out_sum
 
 
+def make_mean_comparison_suite(out, fun):
+    out.loc[:, 'month'] = out.index.month
+    out_norm = out.groupby(['month', 'year']).agg({'pg': fun}).reset_index().astype(float)
+    months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
+    out = {'pg': [[] for e in range(12)], 'pgr': [[] for e in range(12)]}
+    for i, m in enumerate(months):
+        out['pg'][i].extend(out_norm.loc[out_norm.month == m, 'pg'] * ndays[m])
+        out['pgr'][i].extend(out_norm.loc[out_norm.month == m, 'pg'])
+
+    return out
+
+def make_total_suite(out):
+    out.loc[:, 'month'] = out.index.month
+    out.loc[:,'pg'] = [e for e,m in out.loc[:,['pg','month']].itertuples(False,None)]
+    out_norm = out.groupby(['year']).agg({'pg': 'sum'}).reset_index().astype(float)
+    return out_norm
+
+
+
 def get_horarata_data():
     out = pd.read_csv(
         ksl_env.shared_drives(r"Z2003_SLMACC\pasture_growth_modelling\dryland tuning\hororata_dryland.csv"))

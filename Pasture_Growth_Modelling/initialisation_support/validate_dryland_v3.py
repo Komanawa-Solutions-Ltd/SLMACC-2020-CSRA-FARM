@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import os
 import ksl_env
+import matplotlib.pyplot as plt
 
 # add basgra nz functions
 ksl_env.add_basgra_nz_path()
@@ -18,7 +19,7 @@ from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, c
 from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growth, calc_pasture_growth_anomaly
 from Pasture_Growth_Modelling.initialisation_support.validate_dryland_v2 import get_horarata_data_old, \
     make_mean_comparison
-from Pasture_Growth_Modelling.initialisation_support.comparison_support import get_witchmore
+from Pasture_Growth_Modelling.initialisation_support.comparison_support import get_witchmore, make_mean_comparison_suite, make_total_suite
 from Pasture_Growth_Modelling.initialisation_support.inital_long_term_runs import run_past_basgra_irrigated
 
 
@@ -71,12 +72,12 @@ if __name__ == '__main__':
         11: 0.62,
         12: 0.62,
     }
-    weed_dict_2 = {  #todo I generally like this more, baseline PG is not more than
+    weed_dict_2 = {  # todo I generally like this more, baseline PG is not more than
         1: 0.42,
         2: 0.30,
-        3: 0.25, #todo should there be a second peak in an average year, yes in horoata data, but no in whichmore. dicuss with WS
-        4: 0.20, #todo should there be a second peak in an average year, yes in horoata data, but no in whichmore. dicuss with WS
-        5: 0.30,
+        3: 0.27,
+        4: 0.25,
+        5: 0.27,
         6: 0.20,
         7: 0.20,
         8: 0.20,
@@ -90,7 +91,8 @@ if __name__ == '__main__':
 
         'weed: special2': run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_yield',
                                                   fun='mean', reseed_trig=0.06, reseed_basal=0.1, basali=0.15,
-                                                  weed_dm_frac=weed_dict_2,  use_defined_params_except_weed_dm_frac=True),
+                                                  weed_dm_frac=weed_dict_2,
+                                                  use_defined_params_except_weed_dm_frac=True),
 
         'dryland_trended': run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True,
                                                    pg_mode='from_yield',
@@ -103,6 +105,8 @@ if __name__ == '__main__':
     }
 
     data2 = {e: make_mean_comparison(v, fun) for e, v in data.items()}
+    data3 = {e: make_mean_comparison_suite(v, fun) for e, v in data.items()}
+    data4 = {e: make_total_suite(v) for e, v in data.items()}
     data2['horata'] = get_horarata_data_old()
     data2['witchmore'] = get_witchmore()
     out_vars = ['DM', 'YIELD', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'RAIN', 'EVAP', 'TRAN', 'per_PAW', 'pg', 'RESEEDED',
@@ -113,4 +117,16 @@ if __name__ == '__main__':
                               show=False)
     for k, v in data2.items():
         print(k, ': ', v.pg.sum())
+    months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
+    for k, v in data3.items():
+        fig, ax = plt.subplots()
+        ax.boxplot(v['pgr'], labels=months)
+        ax.set_ylim(-10,110)
+        ax.set_title(k)
+    fig, ax = plt.subplots()
+    temp_ks = data4.keys()
+    temp_data = [data4[k].pg.values for k in temp_ks]
+    ax.boxplot(temp_data, labels=temp_ks)
+
     plot_multiple_monthly_results(data=data2, out_vars=['pgr'], show=True, main_kwargs={'marker': 'o'})
+    # TODO update documentation with this new calibration!
