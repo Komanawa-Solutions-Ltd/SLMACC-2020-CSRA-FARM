@@ -99,7 +99,7 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
         data = get_nyr_suite(nyr, site=site, mode=mode)
 
     data = data.dropna()
-    prg, prob = get_pgr_prob_baseline_stiched(nyr, site, mode, irr_prop_from_zero=False)
+    prg, prob = get_pgr_prob_baseline_stiched(nyr, site, mode, irr_prop_from_zero=False) #todo prob will no longer exist if we switch baselines
     prg = prg / 1000
     x = data.loc[:, f'log10_prob_{mode}']
     if other_scen is None:

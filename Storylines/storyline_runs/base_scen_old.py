@@ -14,6 +14,8 @@ from Pasture_Growth_Modelling.plot_full_model import plot_sims
 from BS_work.SWG.SWG_wrapper import *
 from Pasture_Growth_Modelling.export_to_csvs import export_all_in_pattern
 from Storylines.storyline_evaluation.storyline_eval_support import extract_additional_sims
+import warnings
+warnings.warn('this is the old baseline, it is depreciated!!!!')
 
 if __name__ == '__main__':
     run_basgra = False  # to stop accidental re-run

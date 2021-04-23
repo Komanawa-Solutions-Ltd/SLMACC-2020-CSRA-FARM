@@ -7,6 +7,8 @@ from Storylines.check_storyline import ensure_no_impossible_events
 from Climate_Shocks import climate_shocks_env
 import os
 from Storylines.storyline_building_support import base_events
+import warnings
+warnings.warn('this is the old baseline, it is depreciated!!!!')
 
 
 def get_baseline_storyline(save=False):

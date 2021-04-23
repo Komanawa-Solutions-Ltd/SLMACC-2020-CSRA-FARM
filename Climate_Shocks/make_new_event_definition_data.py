@@ -132,8 +132,8 @@ if __name__ == '__main__':
 
         get_irrigation_generator(recalc=True)
 
-    # run baseline
-    from Storylines.storyline_runs.base_scen import run_pasture_growth, default_pasture_growth_dir
+    # run baseline #todo this will cause problems if we switch to a new baseline!
+    from Storylines.storyline_runs.base_scen_old import run_pasture_growth, default_pasture_growth_dir
     from Pasture_Growth_Modelling.full_model_implementation import add_pasture_growth_anaomoly_to_nc
 
     baseline_dir = os.path.join(default_pasture_growth_dir, 'baseline_sim_no_pad')
@@ -150,7 +150,7 @@ if __name__ == '__main__':
     paths = glob.glob(os.path.join(baseline_dir, '*.nc'))
     for p in paths:
         print(f'adding pgra to {p}')
-        add_pasture_growth_anaomoly_to_nc(nc_path=p, recalc=True)
+        add_pasture_growth_anaomoly_to_nc(nc_path=p, recalc=True) #todo will need to add new pasture growth anamoly to baseline
 
     from Storylines.storyline_building_support import make_irr_rest_for_all_events, make_blank_storyline_sheet
 
@@ -173,7 +173,7 @@ if __name__ == '__main__':
     # other scripts worth re-running/ rethinking
     # Storylines/storyline_runs/run_unique_events.py # re-run unique events to see any changes
     # Storylines/storyline_building_support.py # re-consider base events
-    # Storylines/base_storylines.py # consider base storyline and base long storyline with major changes, along with ibasal
+    # Storylines/base_storylines_old.py # consider base storyline and base long storyline with major changes, along with ibasal
     # Storylines/generate_random_storylines.py # it would be good to re-run random storylines
     # Storylines/storyline_runs/base_scen_long.py # if major event change, running this to support ibasal set.
     # Pasture_Growth_Modelling/basgra_parameter_sets.py # possibly re-set BASALI for major changes

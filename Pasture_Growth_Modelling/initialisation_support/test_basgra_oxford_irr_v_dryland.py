@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from Pasture_Growth_Modelling.full_model_implementation import _gen_input, default_swg_dir, month_len, abs_max_irr, \
     out_variables, calc_pasture_growth
-from Storylines.base_storylines import get_baseline_storyline
+from Storylines.base_storylines_old import get_baseline_storyline
 from Pasture_Growth_Modelling.initialisation_support.validate_dryland_v3 import make_mean_comparison, \
     get_horarata_data_old, plot_multiple_monthly_results
 
