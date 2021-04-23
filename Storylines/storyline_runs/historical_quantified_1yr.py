@@ -117,7 +117,7 @@ def get_historical_1yr_pg_prob(site, mode):
 
 
 if __name__ == '__main__':
-    # todo check final results!
+    #todo re-run dryland, should be good once I sort the baseline stuff
     re_run = False
     make_st = True
     run = True
@@ -126,7 +126,7 @@ if __name__ == '__main__':
     if make_st:
         make_storylines()
     if run:
-        run_pasture_growth_mp(re_run) # todo several of these died on the irrgation thing need to just warn rather than pass
+        run_pasture_growth_mp(re_run)
     if plot_export:
         export_and_plot_data()
     if pg_prob:

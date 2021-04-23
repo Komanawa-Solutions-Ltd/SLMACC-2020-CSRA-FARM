@@ -115,7 +115,6 @@ if __name__ == '__main__':
 
     get_monthly_smd_mean_detrended(False, True)
 
-
     if re_run_SWG:
         # make probality of creating an event with SWG
         prob_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'id_prob')
@@ -132,25 +131,12 @@ if __name__ == '__main__':
 
         get_irrigation_generator(recalc=True)
 
-    # run baseline #todo this will cause problems if we switch to a new baseline!
-    from Storylines.storyline_runs.base_scen_old import run_pasture_growth, default_pasture_growth_dir
-    from Pasture_Growth_Modelling.full_model_implementation import add_pasture_growth_anaomoly_to_nc
+    # run baseline
+    from Pasture_Growth_Modelling.historical_average_baseline import get_historical_average_baseline
 
-    baseline_dir = os.path.join(default_pasture_growth_dir, 'baseline_sim_no_pad')
-    if re_run_pgr:
-        print('running baseline BASGRA scenario')
-        run_pasture_growth(storyline_path=os.path.join(storyline_dir, '0-baseline.csv'),
-                           outdir=baseline_dir,
-                           nsims=10000, padock_rest=False,
-                           save_daily=True, description='initial baseline run after the realisation cleaning',
-                           verbose=True,
-                           fix_leap=True)
-
-    # run default PGR
-    paths = glob.glob(os.path.join(baseline_dir, '*.nc'))
-    for p in paths:
-        print(f'adding pgra to {p}')
-        add_pasture_growth_anaomoly_to_nc(nc_path=p, recalc=True) #todo will need to add new pasture growth anamoly to baseline
+    get_historical_average_baseline('eyrewell', 'irrigated', [2024], True)
+    get_historical_average_baseline('oxford', 'irrigated', [2024], True)
+    get_historical_average_baseline('oxford', 'dryland', [2024], True)
 
     from Storylines.storyline_building_support import make_irr_rest_for_all_events, make_blank_storyline_sheet
 
@@ -163,12 +149,9 @@ if __name__ == '__main__':
     except Exception:
         print('could not make zero transition probs')
 
-    print(get_pgr_prob_baseline_stiched(1,'eyrewell','irrigated', True, True))
-    print(get_pgr_prob_baseline_stiched(1,'oxford','irrigated', True, True))
-    print(get_pgr_prob_baseline_stiched(1,'oxford','dryland', True, True))
-    print(get_pgr_prob_baseline_stiched(1,'eyrewell','irrigated', False, True))
-    print(get_pgr_prob_baseline_stiched(1,'oxford','irrigated', False, True))
-    print(get_pgr_prob_baseline_stiched(1,'oxford','dryland', False, True))
+    print(get_pgr_prob_baseline_stiched(1, 'eyrewell', 'irrigated'))
+    print(get_pgr_prob_baseline_stiched(1, 'oxford', 'irrigated'))
+    print(get_pgr_prob_baseline_stiched(1, 'oxford', 'dryland'))
 
     # other scripts worth re-running/ rethinking
     # Storylines/storyline_runs/run_unique_events.py # re-run unique events to see any changes

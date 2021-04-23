@@ -99,7 +99,7 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
         data = get_nyr_suite(nyr, site=site, mode=mode)
 
     data = data.dropna()
-    prg, prob = get_pgr_prob_baseline_stiched(nyr, site, mode, irr_prop_from_zero=False) #todo prob will no longer exist if we switch baselines
+    prg = get_pgr_prob_baseline_stiched(nyr, site, mode)
     prg = prg / 1000
     x = data.loc[:, f'log10_prob_{mode}']
     if other_scen is None:
@@ -118,22 +118,22 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
 
     # pgra
     _plot_pgra(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
-               other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, outdir, close,
+               other_scen_lbl, pt_labels, base_color, base_lw, base_ls, outdir, close,
                additional_alpha=additional_alpha)
 
     # PGR
     _plt_pgr(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
-             other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, prg, outdir, close,
+             other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prg, outdir, close,
              additional_alpha=additional_alpha)
 
     # % PGR
     _plt_pgr_per(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
-                 other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, prg, outdir, close,
+                 other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prg, outdir, close,
                  additional_alpha=additional_alpha)
 
     # histogram prob + historgam for PGRA
     _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add, other_scen, add_color,
-                  other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, outdir, close,
+                  other_scen_lbl, pt_labels, base_color, base_lw, base_ls, outdir, close,
                   additional_alpha=additional_alpha)
 
     # plot impact probability
@@ -148,7 +148,7 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
 
 
 def _plot_pgra(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
-               other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, outdir, close, additional_alpha):
+               other_scen_lbl, pt_labels, base_color, base_lw, base_ls, outdir, close, additional_alpha):
     print('plotting PGRA')
     start_time = time.time()
     y = data[f'{site}-{mode}_pgra_yr{nyr}'].values * -1 / 1000
@@ -169,7 +169,6 @@ def _plot_pgra(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_sce
                    s=60, c=add_color, alpha=additional_alpha, label=other_scen_lbl,zorder=10)
 
     ax.axhline(0, c=base_color, lw=base_lw, ls=base_ls, label='baseline impact')
-    ax.axvline(prob, c=base_color, lw=base_lw, ls=base_ls, label='baseline probability')
     ax.legend()
 
     nm = (f'{site}-{mode}_pgra')
@@ -187,7 +186,7 @@ def _plot_pgra(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_sce
 
 
 def _plt_pgr(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
-             other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, prg, outdir, close, additional_alpha):
+             other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prg, outdir, close, additional_alpha):
     print('plotting PGR')
     start_time = time.time()
     y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
@@ -206,7 +205,6 @@ def _plt_pgr(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen,
                    zorder=10)
 
     ax.axhline(prg, c=base_color, lw=base_lw, ls=base_ls, label='baseline impact')
-    ax.axvline(prob, c=base_color, lw=base_lw, ls=base_ls, label='baseline probability')
     ax.legend()
 
     nm = f'{site}-{mode}_pgr'
@@ -224,7 +222,7 @@ def _plt_pgr(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen,
 
 
 def _plt_pgr_per(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
-                 other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, prg, outdir, close, additional_alpha):
+                 other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prg, outdir, close, additional_alpha):
     print('plotting percent pgr')
     start_time = time.time()
     y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000 / prg * 100
@@ -243,7 +241,6 @@ def _plt_pgr_per(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_s
                    label=other_scen_lbl, zorder=10)
 
     ax.axhline(100, c=base_color, lw=base_lw, ls=base_ls, label='baseline impact')
-    ax.axvline(prob, c=base_color, lw=base_lw, ls=base_ls, label='baseline probability')
     ax.legend()
 
     nm = f'{site}-{mode}_per_pgr'
@@ -259,7 +256,7 @@ def _plt_pgr_per(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_s
 
 
 def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add, other_scen, add_color,
-                  other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prob, outdir, close, additional_alpha):
+                  other_scen_lbl, pt_labels, base_color, base_lw, base_ls, outdir, close, additional_alpha):
     print('plotting raw histogram')
     start_time = time.time()
     bins = 500
@@ -281,7 +278,6 @@ def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add,
                 tb = ax1.annotate(l, (xi, ylab_pos))
                 tb.set_bbox(dict(facecolor='w', alpha=0.3,edgecolor='none'))
 
-    ax1.axvline(prob, c=base_color, lw=base_lw, ls=base_ls, label='baseline probability')
     ax1.set_ylabel('Count')
     ax1.set_xticks(ticks)
     ax1.set_xticklabels(["$10^{" + str(int(e)) + "}$" for e in ticks])

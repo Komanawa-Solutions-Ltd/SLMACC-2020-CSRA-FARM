@@ -90,7 +90,7 @@ def export_and_plot_data():
                               os.path.join(os.path.dirname(base_pg_outdir), 'baseline_sim_no_pad', '*.nc')
                           ])
     for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
-        data = get_laura_v2_1yr_pg_prob(sm.split('-')[0], sm.split('-')[1])
+        data = get_laura_autumn_1yr_pg_prob(sm.split('-')[0], sm.split('-')[1])
         data.to_csv(os.path.join(outputs_dir, f'IID_probs_pg.csv'))
         paths = glob.glob(os.path.join(base_pg_outdir, f'*{sm}.nc'))
         for p in paths:
@@ -105,7 +105,7 @@ def export_and_plot_data():
                       daily=False, ex_save=os.path.basename(p).replace('.nc', ''))
 
 
-def get_laura_v2_1yr_pg_prob(site, mode):
+def get_laura_autumn_1yr_pg_prob(site, mode):
     data = extract_additional_sims(story_dir, base_pg_outdir, 1)
 
     rename_dict = {f'{site}-{mode}_pg': 'pgr', f'{site}-{mode}_pgra': 'pgra', f'log10_prob_{mode}': 'prob'}
@@ -114,31 +114,11 @@ def get_laura_v2_1yr_pg_prob(site, mode):
     data = data.rename(columns=rename_dict)
     return data
 
-def get_laura_v2_1yr_2yr_pg_prob(site, mode):
-    outdata = pd.DataFrame(columns=['pgr', 'pgra', 'prob', 'plotlabel'])
-    data = extract_additional_sims(story_dir, base_pg_outdir, 1)
-
-    rename_dict = {f'{site}-{mode}_pg': 'pgr', f'{site}-{mode}_pgra': 'pgra', f'log10_prob_{mode}': 'prob'}
-
-    data.loc[:, 'plotlabel'] = [idv for i, idv in data.loc[:, ['ID']].itertuples(True, None)]
-    data = data.rename(columns=rename_dict)
-
-    for i, (y1, y2) in enumerate(itertools.product(data.index, data.index)):
-        outdata.loc[i, 'plotlabel'] = f'{y1}-{y2}'
-        outdata.loc[i,'prob'] = data.loc[y1,'prob'] + data.loc[y2,'prob']
-        outdata.loc[i,'pgra'] = data.loc[y1,'pgra'] + data.loc[y2,'pgra']
-        outdata.loc[i,'pgr'] = data.loc[y1,'pgr'] + data.loc[y2,'pgr']
-
-    for k in ['pgr','pgra','prob']:
-        outdata.loc[:,k] = pd.to_numeric(outdata.loc[:,k])
-    outdata = outdata.drop_duplicates(['pgra','prob'])
-    return outdata.astype(float,errors='ignore')
-
-
 if __name__ == '__main__':
+    #todo re-run full, should be good once I sort the baseline stuff
     re_run = False
-    make_st = False
-    run = False
+    make_st = True
+    run = True
     plot_export = True
     pg_prob = True
     if make_st:
@@ -149,5 +129,4 @@ if __name__ == '__main__':
         export_and_plot_data()
     if pg_prob:
         for mode, site in default_mode_sites:
-            get_laura_v2_1yr_2yr_pg_prob(site, mode)
-            get_laura_v2_1yr_pg_prob(site=site, mode=mode)
+            get_laura_autumn_1yr_pg_prob(site=site, mode=mode)

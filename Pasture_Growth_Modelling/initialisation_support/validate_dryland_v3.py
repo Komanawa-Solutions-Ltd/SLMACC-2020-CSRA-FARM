@@ -21,9 +21,9 @@ from Pasture_Growth_Modelling.initialisation_support.validate_dryland_v2 import 
     make_mean_comparison
 from Pasture_Growth_Modelling.initialisation_support.comparison_support import get_witchmore, make_mean_comparison_suite, make_total_suite
 from Pasture_Growth_Modelling.initialisation_support.inital_long_term_runs import run_past_basgra_irrigated
+from Pasture_Growth_Modelling.historical_average_baseline import run_past_basgra_dryland, run_past_basgra_irrigated
 
-
-def run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_dmh', fun='mean',
+def run_mod_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_dmh', fun='mean',
                             reseed_trig=0.06, reseed_basal=0.1, basali=0.2, weed_dm_frac=0.05,
                             use_defined_params_except_weed_dm_frac=True):
     if not isinstance(weed_dm_frac, dict) and weed_dm_frac is not None:
@@ -54,7 +54,6 @@ def run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_
         return out, (params, doy_irr, matrix_weather, days_harvest)
     return out
 
-
 if __name__ == '__main__':
     fun = 'mean'
 
@@ -72,7 +71,7 @@ if __name__ == '__main__':
         11: 0.62,
         12: 0.62,
     }
-    weed_dict_2 = {  # todo I generally like this more, baseline PG is not more than
+    weed_dict_2 = {  # this is currently the calibration dataset
         1: 0.42,
         2: 0.30,
         3: 0.27,
@@ -86,18 +85,14 @@ if __name__ == '__main__':
         11: 0.60,
         12: 0.62,
     }
-    # todo thikning of calibrating dryland to average spring conditions and then the horoata peak and then flat tail.... discuss with WS.
     data = {
 
-        'weed: special2': run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_yield',
+        'weed: special2': run_mod_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_yield',
                                                   fun='mean', reseed_trig=0.06, reseed_basal=0.1, basali=0.15,
                                                   weed_dm_frac=weed_dict_2,
                                                   use_defined_params_except_weed_dm_frac=True),
 
-        'dryland_trended': run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True,
-                                                   pg_mode='from_yield',
-                                                   fun='mean', reseed_trig=0.01133, reseed_basal=0.1589, basali=0.20835,
-                                                   weed_dm_frac=None, use_defined_params_except_weed_dm_frac=True),
+        'dryland_trended': run_past_basgra_dryland(site='oxford'),
 
         'irrigated_oxford_trended': run_past_basgra_irrigated(site='oxford'),
         'irrigated_eyrewell_trended': run_past_basgra_irrigated(site='eyrewell'),

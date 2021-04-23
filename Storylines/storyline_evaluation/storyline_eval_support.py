@@ -10,14 +10,16 @@ import numpy as np
 from Storylines.storyline_building_support import base_events, climate_shocks_env, month_len
 from Pasture_Growth_Modelling.full_model_implementation import default_mode_sites
 from BS_work.IID.IID import run_IID
+from Pasture_Growth_Modelling.historical_average_baseline import get_historical_average_baseline
 
 
-def get_pgr_prob_baseline_stiched(nyears, site, mode, irr_prop_from_zero, recalc=False): #todo this will need to be updated!!!! if we swich baselines
+def get_pgr_prob_baseline_stiched_old(nyears, site, mode, irr_prop_from_zero, recalc=False):
     """
     this uses the addition method
     :param nyears:
     :return:
     """
+    raise ValueError('old version, depreciated')
     add_irr_prob = True
     if mode == 'dryland':
         add_irr_prob = False
@@ -53,13 +55,27 @@ def get_pgr_prob_baseline_stiched(nyears, site, mode, irr_prop_from_zero, recalc
         pgr = np.sum([temp.loc[(y, m), 'PGR'] * month_len[m] for y, m in storyline.loc[:, ['year',
                                                                                            'month']].itertuples(False,
                                                                                                                 None)])
-        np.save(save_path, [prob, pgr], False)
-
     outprob, outpgr = 0, 0
     for i in range(nyears):
         outprob += prob
         outpgr += pgr
     return outpgr, outprob
+
+
+def get_pgr_prob_baseline_stiched(nyears, site, mode):
+    """
+    this uses the addition method
+    :param nyears:
+    :return:
+    """
+
+    pgr, date_run = get_historical_average_baseline(site, mode, [2024])  # just one year of data
+    pgr = pgr.PGR.sum()
+
+    outpgr = 0
+    for i in range(nyears):
+        outpgr += pgr
+    return outpgr
 
 
 def calc_impact_prob(pgr, prob, stepsize=0.1, normalize=True):
@@ -73,7 +89,6 @@ def calc_impact_prob(pgr, prob, stepsize=0.1, normalize=True):
     """
     pgr = np.atleast_1d(pgr)
     prob = np.atleast_1d(prob)
-
 
     step_decimals = len(str(stepsize).split('.')[-1])
     min_val = np.round(np.min(pgr) - stepsize, step_decimals)
@@ -148,9 +163,6 @@ def extract_additional_sims(story_dir, sim_dir, nyr):
 
 
 if __name__ == '__main__':
-    print(get_pgr_prob_baseline_stiched(1, 'eyrewell', 'irrigated', True, True))
-    print(get_pgr_prob_baseline_stiched(1, 'oxford', 'irrigated', True, True))
-    print(get_pgr_prob_baseline_stiched(1, 'oxford', 'dryland', True, True))
-    print(get_pgr_prob_baseline_stiched(1, 'eyrewell', 'irrigated', False, True))
-    print(get_pgr_prob_baseline_stiched(1, 'oxford', 'irrigated', False, True))
-    print(get_pgr_prob_baseline_stiched(1, 'oxford', 'dryland', False, True))
+    print(get_pgr_prob_baseline_stiched(1, 'eyrewell', 'irrigated'))
+    print(get_pgr_prob_baseline_stiched(1, 'oxford', 'irrigated'))
+    print(get_pgr_prob_baseline_stiched(1, 'oxford', 'dryland'))

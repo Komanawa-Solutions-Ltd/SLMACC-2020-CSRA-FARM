@@ -136,6 +136,7 @@ def get_laura_v2_1yr_2yr_pg_prob(site, mode):
 
 
 if __name__ == '__main__':
+    #todo re-run dryland, should be good once I sort baseline
     re_run = False
     make_st = True
     run = True

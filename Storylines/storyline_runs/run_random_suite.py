@@ -87,7 +87,11 @@ def run_1year_basgra(bad_irr=True):
                          'Storylines/storyline_runs/run_random_suite.py for details',
         padock_rest_mult=False,
         save_daily_mult=False,
-        verbose=False
+        verbose=False,
+        #mode_sites_mult=default_mode_sites,
+        mode_sites_mult=(('dryland', 'oxford'), ), #todo DADB just to re-run dryland only!
+        re_run=False # and additional safety
+
     )
 
 
@@ -144,18 +148,6 @@ def get_1yr_data(bad_irr=True, good_irr=True):
 
     if good_irr:
         good = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_good_irr.hdf'), 'prob')
-
-    for mode, site in default_mode_sites:
-        outpgr, outprob = get_pgr_prob_baseline_stiched(nyears=1, site=site, mode=mode, irr_prop_from_zero=False)
-        if good is not None:
-            temp = good
-        else:
-            temp = bad
-        temp.loc[-1, 'ID'] = 'baseline'
-        temp.loc[-1, f'log10_prob_{mode}'] = outprob
-        temp.loc[-1, f'{site}-{mode}_pg_yr1'] = outpgr
-        temp.loc[-1, f'{site}-{mode}_pgra_yr1'] = 0
-        temp.loc[-1, 'irr_type'] = 'baseline'
 
     return pd.concat([good, bad])
 
@@ -291,44 +283,48 @@ def get_nyr_suite(nyr, site, mode):
 """
 
 
-def fix_old_1yr_runs(base_dir):
+def fix_old_1yr_runs(base_dir, change_storyline_time=False): #todo I should re-run this!
     paths = glob.glob(os.path.join(base_dir, '*.nc'))
     pl = len(paths)
     for i, p in enumerate(paths):
         if i % 1000 == 0:
             print(f'{i} of {pl}')
-        data = nc.Dataset(p, mode='a')
-        # change years
-        data.variables['m_year'][:] = np.array([2025, 2025, 2025, 2025, 2025, 2025, 2026, 2026, 2026,
-                                                2026, 2026, 2026]) - 1
-        # add some metadata that a change happened in the description
-        data.description = data.description + (' storyline changed with fix_old_1yr_runs to '
-                                               'shift storyline start to july 2024 from 2025')
-        # fix storyline
-        data.storyline = [e.replace('2025', '2024').replace('2026', '2025') for e in data.storyline]
+        if change_storyline_time:
+            data = nc.Dataset(p, mode='a')
+            # change years
+            data.variables['m_year'][:] = np.array([2025, 2025, 2025, 2025, 2025, 2025, 2026, 2026, 2026,
+                                                    2026, 2026, 2026]) - 1
+            # add some metadata that a change happened in the description
+            data.description = data.description + (' storyline changed with fix_old_1yr_runs to '
+                                                   'shift storyline start to july 2024 from 2025')
+            # fix storyline
+            data.storyline = [e.replace('2025', '2024').replace('2026', '2025') for e in data.storyline]
 
-        data.close()
+            data.close()
 
-        # re-run add pgra
-        add_pasture_growth_anaomoly_to_nc(p)
+            # re-run add pgra
+            add_pasture_growth_anaomoly_to_nc(p)
 
 
 if __name__ == '__main__':
+    #todo re-run dryland, should be good to go once I fix the baseline stuff
+    # todo check all re-runs!!!!
     t = input('are you sure you want to run this, it takes 8 days to run basgra y/n')
     if t != 'y':
         raise ValueError('stopped re-running')
     # only run next line of code once as this fixes a mistake from previously
-    # fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_bad_irr")
+    #fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_bad_irr", False)
+    #fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_good_irr", False)
 
-    # make_1_year_storylines(bad_irr=True)
-    # run_1year_basgra(bad_irr=True)
-    # create_1y_pg_data(bad_irr=True)
-    # make_1_year_storylines(bad_irr=False)
-    # run_1year_basgra(bad_irr=False)
-    # create_1y_pg_data(bad_irr=False)
+    make_1_year_storylines(bad_irr=True)
+    run_1year_basgra(bad_irr=True)
+    create_1y_pg_data(bad_irr=True)
+    make_1_year_storylines(bad_irr=False)
+    run_1year_basgra(bad_irr=False)
+    create_1y_pg_data(bad_irr=False)
     import time
 
-    t = time.time()
+    t = time.time() # todo remake these after checking the above
     # create_nyr_suite(2, True, False)
     # create_nyr_suite(3, True, False)
     # create_nyr_suite(5, True, False)

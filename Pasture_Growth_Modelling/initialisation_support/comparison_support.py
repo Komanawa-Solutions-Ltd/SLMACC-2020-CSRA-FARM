@@ -88,7 +88,7 @@ def get_witchmore():
     # conditions in New Zealand
     out = pd.DataFrame(index=(range(12)))
     out.loc[:, 'month'] = range(1, 13)
-    out.loc[:, 'pgr'] = [15, 10, 12, 10, 10, 10, 10, 10, 30, 60, 40, 19]  # todo
+    out.loc[:, 'pgr'] = [15, 10, 12, 10, 10, 10, 10, 10, 30, 60, 40, 19]
     out.loc[:, 'pg'] = out.loc[:, 'pgr'] * [ndays[e] for e in out.month]
     out.set_index('month', inplace=True)
     return out

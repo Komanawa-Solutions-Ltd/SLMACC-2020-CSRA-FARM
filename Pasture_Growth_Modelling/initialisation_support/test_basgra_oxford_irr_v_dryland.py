@@ -156,5 +156,4 @@ def compare_oxford_irr_dry(save=False):
 
 
 if __name__ == '__main__':
-    compare_oxford_irr_dry(False)  # todo check and debug!, multiple years showing....  # tod start here!  # todo why cant we just normalise to historical data??? e.g. v3?
-    # todo is this the problem of year 1 not being close to year 2 etc.
+    compare_oxford_irr_dry(False)

@@ -111,7 +111,7 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=True):
     :return:
     """
     if mode == 'irrigated':
-        freq = '15D'  # days # todo should this be monthly
+        freq = '15D'  # days
         trig = {m: 1501 for m in range(1, 13)}  # kg harvestable dry matter by month
         targ = {m: 1500 for m in range(1, 13)}  # kg harvestable dry matter by month
 
