@@ -87,7 +87,7 @@ def export_and_plot_data():
     export_all_in_pattern(base_outdir=outputs_dir,
                           patterns=[
                               os.path.join(base_pg_outdir, '*.nc'),
-                              os.path.join(os.path.dirname(base_pg_outdir), 'baseline_sim_no_pad', '*.nc')
+                              os.path.join(os.path.dirname(base_pg_outdir), 'baseline_sim_no_pad', '*.nc') #todo need to redo with new baseline!
                           ])
     for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
         data = get_laura_autumn_1yr_pg_prob(sm.split('-')[0], sm.split('-')[1])
@@ -98,7 +98,7 @@ def export_and_plot_data():
             if not os.path.exists(outdir):
                 os.makedirs(outdir)
             data_paths = [p,
-                          os.path.join(os.path.dirname(base_pg_outdir), 'baseline_sim_no_pad', f'0-baseline-{sm}.nc')]
+                          os.path.join(os.path.dirname(base_pg_outdir), 'baseline_sim_no_pad', f'0-baseline-{sm}.nc')] #todo need to re-do with new baseline!
 
             plot_sims(data_paths,
                       plot_ind=False, nindv=100, save_dir=outdir, show=False, figsize=(20, 20),
@@ -117,8 +117,8 @@ def get_laura_autumn_1yr_pg_prob(site, mode):
 if __name__ == '__main__':
     #todo re-run full, should be good once I sort the baseline stuff
     re_run = False
-    make_st = True
-    run = True
+    make_st = False
+    run = False
     plot_export = True
     pg_prob = True
     if make_st:

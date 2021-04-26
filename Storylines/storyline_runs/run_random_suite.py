@@ -316,13 +316,15 @@ if __name__ == '__main__':
     #fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_bad_irr", False)
     #fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_good_irr", False)
 
+    import time
+    t = time.time()
     make_1_year_storylines(bad_irr=True)
     run_1year_basgra(bad_irr=True)
     create_1y_pg_data(bad_irr=True)
     make_1_year_storylines(bad_irr=False)
     run_1year_basgra(bad_irr=False)
     create_1y_pg_data(bad_irr=False)
-    import time
+    print((time.time() - t) / 60, 'minutes to run 2.5e8 sims')
 
     t = time.time() # todo remake these after checking the above
     # create_nyr_suite(2, True, False)
