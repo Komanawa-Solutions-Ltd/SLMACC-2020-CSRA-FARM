@@ -283,7 +283,7 @@ def get_nyr_suite(nyr, site, mode):
 """
 
 
-def fix_old_1yr_runs(base_dir, change_storyline_time=False): #todo I should re-run this!
+def fix_old_1yr_runs(base_dir, change_storyline_time=False):
     paths = glob.glob(os.path.join(base_dir, '*.nc'))
     pl = len(paths)
     for i, p in enumerate(paths):
@@ -309,6 +309,8 @@ def fix_old_1yr_runs(base_dir, change_storyline_time=False): #todo I should re-r
 if __name__ == '__main__':
     #todo re-run dryland, should be good to go once I fix the baseline stuff
     # todo check all re-runs!!!!
+    # todo do I need to re-run with new ibasal?
+
     t = input('are you sure you want to run this, it takes 8 days to run basgra y/n')
     if t != 'y':
         raise ValueError('stopped re-running')

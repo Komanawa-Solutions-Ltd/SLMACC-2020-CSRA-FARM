@@ -64,7 +64,7 @@ def run_past_basgra_dryland(return_inputs=False, site='eyrewell', reseed=True):
     return out
 
 
-def get_historical_average_baseline(site, mode, years, recalc=False):
+def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False):
     """
     get the historical average baseline data.  Do I assue a July start? or return the whole year
     :param site:
@@ -93,24 +93,32 @@ def get_historical_average_baseline(site, mode, years, recalc=False):
             f.write(f'{run_date}\n')
         out.to_csv(save_path, mode='a')
 
-    pass
-    all_data = out.groupby('month').mean()['pg'].to_dict()
+    out.loc[:, 'PER_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
+    if key == 'PGR':
+        all_data = out.groupby('month').mean()['pg'].to_dict()
+    elif key in ['PGRA', 'PGRA_cum', 'F_REST']:
+        all_data = None
+    else:
+        all_data = out.groupby('month').mean()[key].to_dict()
 
     outdata = []
     for y in years:
-        temp = pd.DataFrame(index=range(0,365), columns=['month', 'year', 'doy', 'PGR'])
-        temp.loc[:,'doy'] = np.arange(1,366)
-        temp.loc[:,'year'] = y
-        temp.loc[:,'month'] = month = pd.to_datetime([f'2025-{d}' for d in np.arange(1,366)],
-                                                     format='%Y-%j').month.values
-        temp.loc[:,'PGR'] = [all_data[m] for m in month]
+        temp = pd.DataFrame(index=range(0, 365), columns=['month', 'year', 'doy', key])
+        temp.loc[:, 'doy'] = np.arange(1, 366)
+        temp.loc[:, 'year'] = y
+        temp.loc[:, 'month'] = month = pd.to_datetime([f'2025-{d}' for d in np.arange(1, 366)],
+                                                      format='%Y-%j').month.values
+        if key in ['PGRA', 'PGRA_cum', 'F_REST']:
+            temp.loc[:, key] = np.nan
+        else:
+            temp.loc[:, key] = [all_data[m] for m in month]
         outdata.append(temp)
 
     outdata = pd.concat(outdata)
 
     return outdata, run_date
 
+
 if __name__ == '__main__':
-    get_historical_average_baseline('eyrewell', 'irrigated', [2024, 2025], True)
-    get_historical_average_baseline('oxford', 'irrigated', [2024, 2025], True)
-    get_historical_average_baseline('oxford', 'dryland', [2024, 2025], True)
+    t, rd = get_historical_average_baseline('oxford', 'dryland', [2024], 'BASAL')
+    pass

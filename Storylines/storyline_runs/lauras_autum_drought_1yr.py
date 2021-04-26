@@ -86,10 +86,10 @@ def run_pasture_growth_mp(re_run):
 def export_and_plot_data():
     export_all_in_pattern(base_outdir=outputs_dir,
                           patterns=[
-                              os.path.join(base_pg_outdir, '*.nc'),
-                              os.path.join(os.path.dirname(base_pg_outdir), 'baseline_sim_no_pad', '*.nc') #todo need to redo with new baseline!
+                              os.path.join(base_pg_outdir, '*.nc')
                           ])
     for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
+        site, mode = sm.split('-')
         data = get_laura_autumn_1yr_pg_prob(sm.split('-')[0], sm.split('-')[1])
         data.to_csv(os.path.join(outputs_dir, f'IID_probs_pg.csv'))
         paths = glob.glob(os.path.join(base_pg_outdir, f'*{sm}.nc'))
@@ -97,12 +97,11 @@ def export_and_plot_data():
             outdir = os.path.join(outputs_dir, sm, 'plots')
             if not os.path.exists(outdir):
                 os.makedirs(outdir)
-            data_paths = [p,
-                          os.path.join(os.path.dirname(base_pg_outdir), 'baseline_sim_no_pad', f'0-baseline-{sm}.nc')] #todo need to re-do with new baseline!
+            data_paths = [p]
 
             plot_sims(data_paths,
                       plot_ind=False, nindv=100, save_dir=outdir, show=False, figsize=(20, 20),
-                      daily=False, ex_save=os.path.basename(p).replace('.nc', ''))
+                      daily=False, ex_save=os.path.basename(p).replace('.nc', ''), site=site, mode=mode)
 
 
 def get_laura_autumn_1yr_pg_prob(site, mode):
@@ -116,9 +115,11 @@ def get_laura_autumn_1yr_pg_prob(site, mode):
 
 if __name__ == '__main__':
     #todo re-run full, should be good once I sort the baseline stuff
+    # todo do I need to re-run with new ibasal?
+
     re_run = False
-    make_st = False
-    run = False
+    make_st = True
+    run = True
     plot_export = True
     pg_prob = True
     if make_st:

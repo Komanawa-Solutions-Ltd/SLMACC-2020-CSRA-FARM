@@ -103,6 +103,8 @@ def extract_data(outdir):
 
 if __name__ == '__main__':
     #todo re-run dryland, should be good to go once I finish baseline stuff
+    # todo do I need to re-run with new ibasal?
+
     mk_st = True
     run_pgr = True
     extract = True

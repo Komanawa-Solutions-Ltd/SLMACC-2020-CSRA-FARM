@@ -87,7 +87,7 @@ def export_and_plot_data():
     export_all_in_pattern(base_outdir=outputs_dir,
                           patterns=[
                               os.path.join(base_pg_outdir, '*.nc'),
-                              os.path.join(os.path.dirname(base_pg_outdir), 'baseline_sim_no_pad', '*.nc') # todo
+
                           ])
     for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
         data = get_laura_v2_1yr_pg_prob(sm.split('-')[0],sm.split('-')[1])
@@ -97,9 +97,7 @@ def export_and_plot_data():
             outdir = os.path.join(outputs_dir, sm, 'plots')
             if not os.path.exists(outdir):
                 os.makedirs(outdir)
-            data_paths = [p,
-                          os.path.join(os.path.dirname(base_pg_outdir), 'baseline_sim_no_pad', f'0-baseline-{sm}.nc')] # todo
-
+            data_paths = [p]
             plot_sims(data_paths,
                       plot_ind=False, nindv=100, save_dir=outdir, show=False, figsize=(20, 20),
                       daily=False, ex_save=os.path.basename(p).replace('.nc', ''))
@@ -137,9 +135,11 @@ def get_laura_v2_1yr_2yr_pg_prob(site, mode):
 
 if __name__ == '__main__':
     #todo re-run dryland, should be good once I sort baseline
+    # todo do I need to re-run with new ibasal?
+
     re_run = False
-    make_st = False
-    run = False
+    make_st = True
+    run = True
     plot_export = True
     pg_prob = True
     if make_st:

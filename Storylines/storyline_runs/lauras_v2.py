@@ -109,6 +109,7 @@ def get_laura_v2_pg_prob(site, mode):
 
 
 if __name__ == '__main__':
+    # todo I'm not re-running as I'm trying to move away from multi year storyies...
     make_st = False
     run = False
     plot_export = False
