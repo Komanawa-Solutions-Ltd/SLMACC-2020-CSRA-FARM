@@ -50,9 +50,8 @@ def make_storylines():  # todo make detrended storylines!
     rest.loc[:, 'year'] = rest.index.year
     rest = rest.loc[~((rest.month == 2) & (rest.day == 29))]
     rest.loc[:, 'f_rest'] = [rc / month_len[m] for rc, m in
-                            rest.loc[:, ['f_rest', 'month']].itertuples(False, None)]
+                             rest.loc[:, ['f_rest', 'month']].itertuples(False, None)]
     rest = rest.groupby(['year', 'month']).sum()
-
 
     # calc SMA
     data.loc[:, 'sma'] = calc_smd_monthly(data.rain, data.pet, data.index) - data.loc[:, 'doy'].replace(
@@ -66,7 +65,7 @@ def make_storylines():  # todo make detrended storylines!
     data = data.groupby(['year', 'month']).sum()
 
     # todo below not right
-    ndays_wet= { # todo definition hard coded in
+    ndays_wet = {  # todo definition hard coded in
         'org': {  # this is the best value!
             5: 14,
             6: 11,
@@ -95,22 +94,23 @@ def make_storylines():  # todo make detrended storylines!
                             )
         temp.loc[:, 'year'] = [2024, 2024, 2024, 2024, 2024, 2024, 2025, 2025, 2025, 2025, 2025, 2025, ]
         temp.loc[:, 'month'] = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, ]
-        #todo events hard coded in
+        # todo events hard coded in
         temp.loc[:, 'rest'] = rest.loc[idx, 'f_rest'].round(2).values
 
         temp.loc[:, 'temp_class'] = 'A'
-        idx2 = data.loc[idx, 'hot'] >=7
+        idx2 = data.loc[idx, 'hot'] >= 7
         temp.loc[idx2.values, 'temp_class'] = 'H'
-        idx2 = data.loc[idx, 'cold'] >=10
+        idx2 = data.loc[idx, 'cold'] >= 10
         temp.loc[idx2.values, 'temp_class'] = 'C'
 
         temp.loc[:, 'precip_class'] = 'A'
-        idx2 = data.loc[idx, 'dry'] >=10
+        idx2 = data.loc[idx, 'dry'] >= 10
         temp.loc[idx2.values, 'precip_class'] = 'D'
-        idx2 = data.loc[idx, 'wet'] >=[ndays_wet['org'][m] for m in temp.loc[:,'month']]
+        temp.loc[np.in1d(temp.month, [6, 7, 8]), 'precip_class'] = 'A'
+        idx2 = data.loc[idx, 'wet'] >= [ndays_wet['org'][m] for m in temp.loc[:, 'month']]
         temp.loc[idx2.values, 'precip_class'] = 'W'
 
-        temp.loc[:, 'precip_class_prev'] = temp.loc[:,'precip_class'].shift(1).fillna('A') #todo check
+        temp.loc[:, 'precip_class_prev'] = temp.loc[:, 'precip_class'].shift(1).fillna('A')  # todo check
         temp.loc[:, 'rest_per'] = [
             map_irr_quantile_from_rest(m=m,
                                        rest_val=rq,

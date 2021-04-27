@@ -121,6 +121,12 @@ def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False, 
 
 
 if __name__ == '__main__':
+
+    for v in ['trended', 'detrended2']: #todo no detrended for oxford...
+        t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version=v)
+        t, rd = get_historical_average_baseline('oxford', 'irrigated', [2024], 'PGR', version=v)
+        t, rd = get_historical_average_baseline('oxford', 'dryland', [2024], 'PGR', version=v)
+
     t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version='trended')
     t2, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version='detrended2')
     import matplotlib.pyplot as plt
