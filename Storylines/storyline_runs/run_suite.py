@@ -5,11 +5,12 @@
 import subprocess
 import sys
 
-if __name__ == '__main__':
+if __name__ == '__main__': #todo!!! this cant run as it is missing site, mode for the plotting function!!!
     paths = [  # todo check that this worked, also IBASAL, aslo manage the todos in these files related to ibasal
         r'C:\Users\dumon\python_projects\SLMACC-2020-CSRA\Storylines\storyline_runs\lauras_autum_drought_1yr.py',
         r'C:\Users\dumon\python_projects\SLMACC-2020-CSRA\Storylines\storyline_runs\lauras_v2_1yr.py',
-        r'C:\Users\dumon\python_projects\SLMACC-2020-CSRA\Storylines\storyline_runs\historical_quantified_1yr.py',
+        r'C:\Users\dumon\python_projects\SLMACC-2020-CSRA\Storylines\storyline_runs\historical_quantified_1yr_detrend.py',
+        r'C:\Users\dumon\python_projects\SLMACC-2020-CSRA\Storylines\storyline_runs\historical_quantified_1yr_trend.py',
         r'C:\Users\dumon\python_projects\SLMACC-2020-CSRA\Storylines\storyline_runs\run_unique_events.py',
 
     ]

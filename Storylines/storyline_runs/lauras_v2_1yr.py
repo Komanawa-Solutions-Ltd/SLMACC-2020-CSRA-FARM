@@ -90,6 +90,7 @@ def export_and_plot_data():
 
                           ])
     for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
+        site, mode = sm.split('-')
         data = get_laura_v2_1yr_pg_prob(sm.split('-')[0],sm.split('-')[1])
         data.to_csv(os.path.join(outputs_dir, f'IID_probs_pg.csv'))
         paths = glob.glob(os.path.join(base_pg_outdir, f'*{sm}.nc'))
@@ -100,7 +101,7 @@ def export_and_plot_data():
             data_paths = [p]
             plot_sims(data_paths,
                       plot_ind=False, nindv=100, save_dir=outdir, show=False, figsize=(20, 20),
-                      daily=False, ex_save=os.path.basename(p).replace('.nc', ''))
+                      daily=False, ex_save=os.path.basename(p).replace('.nc', ''), site=site, mode=mode)
 
 
 def get_laura_v2_1yr_pg_prob(site, mode):

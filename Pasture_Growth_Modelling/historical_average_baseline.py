@@ -18,6 +18,7 @@ ksl_env.add_basgra_nz_path()
 from basgra_python import run_basgra_nz
 
 
+# todo baseline trended, detrended, or average from historical quantified, trended/detrened?
 def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True, version='trended'):
     mode = 'irrigated'
     print('running: {}, {}, reseed: {}'.format(mode, site, reseed))
@@ -42,10 +43,10 @@ def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True,
     return out
 
 
-def run_past_basgra_dryland(return_inputs=False, site='eyrewell', reseed=True):
+def run_past_basgra_dryland(return_inputs=False, site='eyrewell', reseed=True, version='trended'):
     mode = 'dryland'
     print('running: {}, {}, reseed: {}'.format(mode, site, reseed))
-    weather = get_vcsn_record(site=site)
+    weather = get_vcsn_record(site=site, version=version)
     rest = None
     params, doy_irr = get_params_doy_irr(mode)
     matrix_weather = create_matrix_weather(mode, weather, rest, fix_leap=False)
@@ -64,7 +65,7 @@ def run_past_basgra_dryland(return_inputs=False, site='eyrewell', reseed=True):
     return out
 
 
-def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False):
+def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False, version='trended'):
     """
     get the historical average baseline data.  Do I assue a July start? or return the whole year
     :param site:
@@ -74,18 +75,18 @@ def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False):
     :return:
     """
     save_path = os.path.join(climate_shocks_env.supporting_data_dir,
-                             'baseline_data', f'historical_average-{site}-{mode}.csv')
+                             'baseline_data', f'historical_average-{site}-{mode}-{version}.csv')
     if os.path.exists(save_path) and not recalc:
         with open(save_path, 'r') as f:
             run_date = f.readline().strip()
         out = pd.read_csv(save_path, skiprows=1)
     else:
         if site == 'oxford' and mode == 'dryland':
-            out = run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True)
+            out = run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, version=version)
         elif site == 'oxford' and mode == 'irrigated':
-            out = run_past_basgra_irrigated(site='oxford')
+            out = run_past_basgra_irrigated(site='oxford', version=version)
         elif site == 'eyrewell' and mode == 'irrigated':
-            out = run_past_basgra_irrigated(site='eyrewell')
+            out = run_past_basgra_irrigated(site='eyrewell', version=version)
         else:
             raise ValueError(f'wierd values for site,mode {site}-{mode}')
         run_date = datetime.datetime.now().isoformat()
@@ -120,5 +121,12 @@ def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False):
 
 
 if __name__ == '__main__':
-    t, rd = get_historical_average_baseline('oxford', 'dryland', [2024], 'BASAL')
+    t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version='trended')
+    t2, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version='detrended2')
+    import matplotlib.pyplot as plt
+
+    plt.plot(t.month, t.PGR, label='trended')
+    plt.plot(t2.month, t2.PGR, label='detrended')
+    plt.legend()
+    plt.show()
     pass

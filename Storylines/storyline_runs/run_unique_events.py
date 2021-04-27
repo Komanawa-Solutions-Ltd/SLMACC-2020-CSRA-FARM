@@ -113,4 +113,4 @@ if __name__ == '__main__':
     if run_pgr:
         run_pasture_growth()
     if extract:
-        extract_data(os.path.join(ksl_env.slmmac_dir, 'output_pgr', 'unique_events_v2'))
+        extract_data(os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'unique_events_v2'))

@@ -86,7 +86,7 @@ def get_restriction_record(version='trended', recalc=False):
         data_path = os.path.join(os.path.dirname(event_def_path), 'restriction_record.csv')
         dt_format = '%Y-%m-%d'
         raw_data_path = ksl_env.shared_drives(r"Z2003_SLMACC\WIL data\OSHB_WaimakRiverData_withRestrictionInfo.xlsx")
-    elif version =='detrended':
+    elif version == 'detrended' or version == 'detrended2':
         dt_format = '%Y-%m-%d'
         data_path = os.path.join(os.path.dirname(event_def_path), 'restriction_record_detrend.csv')
     else:
@@ -103,7 +103,7 @@ def get_restriction_record(version='trended', recalc=False):
             'take': float,
         }
         data = pd.read_csv(data_path, dtype=int_keys)
-        data.loc[:, 'date'] = pd.to_datetime(data.loc[:, 'date'],format=dt_format)
+        data.loc[:, 'date'] = pd.to_datetime(data.loc[:, 'date'], format=dt_format)
         data.set_index('date', inplace=True)
         data.sort_index(inplace=True)
 
@@ -117,7 +117,8 @@ def get_restriction_record(version='trended', recalc=False):
         data = data.loc[(data.year <= 2019) & (data.year >= 1972)]
         data = data.groupby(['day', 'month', 'year']).mean().reset_index()
 
-        strs = ['{}-{:02d}-{:02d}'.format(y, m, d) for y, m, d in data[['year', 'month', 'day']].itertuples(False, None)]
+        strs = ['{}-{:02d}-{:02d}'.format(y, m, d) for y, m, d in
+                data[['year', 'month', 'day']].itertuples(False, None)]
         data.loc[:, 'date'] = pd.Series(pd.to_datetime(strs))
         data.loc[:, 'doy'] = data.date.dt.dayofyear
         data = data.set_index('date')
@@ -140,14 +141,14 @@ def get_restriction_record(version='trended', recalc=False):
     outdata = outdata.combine_first(data)
 
     outdata = outdata.fillna(method='ffill')
-    outdata.loc[:,'day'] = outdata.index.day
-    outdata.loc[:,'year'] = outdata.index.year
-    outdata.loc[:,'month'] = outdata.index.month
-    outdata.loc[:,'doy'] = outdata.index.dayofyear
-
+    outdata.loc[:, 'day'] = outdata.index.day
+    outdata.loc[:, 'year'] = outdata.index.year
+    outdata.loc[:, 'month'] = outdata.index.month
+    outdata.loc[:, 'doy'] = outdata.index.dayofyear
 
     outdata.to_csv(data_path)
     return outdata
+
 
 if __name__ == '__main__':
     test = get_vcsn_record()
