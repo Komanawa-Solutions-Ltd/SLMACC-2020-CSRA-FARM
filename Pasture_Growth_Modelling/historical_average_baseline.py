@@ -130,11 +130,10 @@ def export_true_historical():
     outdata.index.name = 'month'
     for site, mode in zip(['eyrewell', 'oxford', 'oxford'], ['irrigated', 'irrigated', 'dryland']):
         t, rd = get_historical_average_baseline(site, mode, [2024], 'PGR', version='trended')
-        t = t.loc[:,['month','PGR']].drop_duplicates().set_index('month')
-        outdata.loc[months,f'{site}-{mode}'] = t.loc[months,'PGR']
-        outdata.loc['total', f'{site}-{mode}'] = np.sum([t.loc[m,'PGR'] * month_len[m] for m in months])
+        t = t.loc[:, ['month', 'PGR']].drop_duplicates().set_index('month')
+        outdata.loc[months, f'{site}-{mode}'] = t.loc[months, 'PGR']
+        outdata.loc['total', f'{site}-{mode}'] = np.sum([t.loc[m, 'PGR'] * month_len[m] for m in months])
     outdata.to_csv(os.path.join(outdir, 'baseline_scen_pg.csv'))
-
 
 
 if __name__ == '__main__':
