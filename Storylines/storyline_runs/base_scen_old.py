@@ -18,14 +18,14 @@ import warnings
 warnings.warn('this is the old baseline, it is depreciated!!!!')
 
 if __name__ == '__main__':
-    run_basgra = False  # to stop accidental re-run
+    run_basgra = True  # to stop accidental re-run
     plot_results = False
-    export = False
+    export = True
     prob_pg = True
     if run_basgra:
         # run basgra
         print('running BASGRA')
-        run_pasture_growth(storyline_path=os.path.join(storyline_dir, '0-baseline.csv'),
+        run_pasture_growth(storyline_path=os.path.join(storyline_dir, '0-baseline_1yr.csv'),
                            outdir=os.path.join(default_pasture_growth_dir, 'baseline_sim_no_pad'),
                            nsims=10000, padock_rest=False,
                            save_daily=True, description='initial baseline run after the realisation cleaning',
@@ -34,14 +34,17 @@ if __name__ == '__main__':
     if plot_results:
         path_list = [
             r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-eyrewell-irrigated.nc",
-            # r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-oxford-irrigated.nc",
+            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-oxford-irrigated.nc",
+            r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-oxford-dryland.nc",
+
         ]
-        plot_sims(data_paths=path_list, plot_ind=True, nindv=50, save_dir=None, show=True, figsize=(11, 8),
-                  daily=False
-                  )
+        for p in path_list:
+            plot_sims(data_paths=p, plot_ind=True, nindv=50, save_dir=None, show=True, figsize=(11, 8),
+                      daily=False,
+                      )
 
     if export:
-        export_all_in_pattern(base_outdir=os.path.join(ksl_env.slmmac_dir, 'Final_Storylines', 'Baseline'),
+        export_all_in_pattern(base_outdir=os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'Baseline'),
                               patterns=os.path.join(ksl_env.slmmac_dir_unbacked,
                                                     "pasture_growth_sims/baseline_sim_no_pad/*.nc"),
                               )
@@ -49,3 +52,4 @@ if __name__ == '__main__':
     if prob_pg:
         data = extract_additional_sims(storyline_dir,
                                        os.path.join(default_pasture_growth_dir, 'baseline_sim_no_pad'), 3)
+        data.to_csv(os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'Baseline','prob_iid_pg.csv'))

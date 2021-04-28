@@ -11,6 +11,7 @@ from Climate_Shocks import climate_shocks_env
 from Climate_Shocks.get_past_record import get_vcsn_record, get_restriction_record
 from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, create_days_harvest, \
     create_matrix_weather
+from Storylines.storyline_building_support import month_len
 from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growth, calc_pasture_growth_anomaly
 
 # add basgra nz functions
@@ -120,12 +121,28 @@ def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False, 
     return outdata, run_date
 
 
-if __name__ == '__main__':
+def export_true_historical():
+    outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'true_historical_average_trended')
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+    months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
+    outdata = pd.DataFrame(index=[7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 'total'])
+    outdata.index.name = 'month'
+    for site, mode in zip(['eyrewell', 'oxford', 'oxford'], ['irrigated', 'irrigated', 'dryland']):
+        t, rd = get_historical_average_baseline(site, mode, [2024], 'PGR', version='trended')
+        t = t.loc[:,['month','PGR']].drop_duplicates().set_index('month')
+        outdata.loc[months,f'{site}-{mode}'] = t.loc[months,'PGR']
+        outdata.loc['total', f'{site}-{mode}'] = np.sum([t.loc[m,'PGR'] * month_len[m] for m in months])
+    outdata.to_csv(os.path.join(outdir, 'baseline_scen_pg.csv'))
 
-    for v in ['trended', 'detrended2']: #todo no detrended for oxford...
-        t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version=v)
-        t, rd = get_historical_average_baseline('oxford', 'irrigated', [2024], 'PGR', version=v)
-        t, rd = get_historical_average_baseline('oxford', 'dryland', [2024], 'PGR', version=v)
+
+
+if __name__ == '__main__':
+    export_true_historical()
+    # for v in ['trended', 'detrended2']: #todo no detrended for oxford...
+    #    t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version=v)
+    #    t, rd = get_historical_average_baseline('oxford', 'irrigated', [2024], 'PGR', version=v)
+    #    t, rd = get_historical_average_baseline('oxford', 'dryland', [2024], 'PGR', version=v)
 
     t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version='trended')
     t2, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version='detrended2')
