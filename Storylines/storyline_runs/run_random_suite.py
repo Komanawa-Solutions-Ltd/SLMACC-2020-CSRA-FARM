@@ -315,6 +315,7 @@ if __name__ == '__main__':
     if t != 'y':
         raise ValueError('stopped re-running')
     # only run next line of code once as this fixes a mistake from previously
+    #todo re-run all of these once baseline is sorted works!, need to do for all runs and then add to the readme file.
     #fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_bad_irr", False)
     #fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_good_irr", False)
 
