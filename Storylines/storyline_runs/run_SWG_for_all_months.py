@@ -14,7 +14,7 @@ from Storylines.storyline_building_support import make_sampling_options
 from BS_work.SWG.SWG_multiprocessing import run_swg_mp
 
 individual_dir = os.path.join(climate_shocks_env.temp_storyline_dir, 'individual_runs')
-log_dir = r"D:\mh_unbacked\SLMACC_2020\SWG_runs\logs"
+log_dir = os.path.join(ksl_env.slmmac_dir_unbacked, "SWG_runs/logs")
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 

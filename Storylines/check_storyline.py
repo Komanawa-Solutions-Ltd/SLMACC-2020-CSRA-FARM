@@ -48,7 +48,7 @@ def get_past_event_frequency():
     events.loc[:, 'precip'] = events.loc[:, 'precip'].replace({k: v for k, v in zip(_vals, precips)})
     events.loc[:, 'temp'] = events.loc[:, 'temp'].replace({k: v for k, v in zip(_vals, temps)})
     events.loc[:, 'state'] = ['{}-{}'.format(t, p) for t, p in zip(events.temp, events.precip)]
-    events = events.groupby(['month', 'state']).count()
+    events = events.groupby(['month', 'state']).count()/48 # makes this a fraction
     return events
 
 

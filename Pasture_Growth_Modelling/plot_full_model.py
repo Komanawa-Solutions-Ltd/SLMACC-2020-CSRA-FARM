@@ -17,7 +17,7 @@ default_outvars = [e for e in out_variables] + ['PGRA', 'PGRA_cum']
 
 def plot_sims(data_paths, plot_ind=False, plt_vars=default_outvars, nindv=100, save_dir=None, show=False,
               figsize=(11, 8),
-              daily=False, ex_save='', plot_baseline=True, site=None, mode=None):  # todo pass through site,mode
+              daily=False, ex_save='', plot_baseline=True, site=None, mode=None):
     """
     plot multiple basgra netcdf simulations, one plot per variable, with all datasets on the same plot
     :param data_paths: paths to the netcdf files
@@ -78,11 +78,10 @@ def plot_sims(data_paths, plot_ind=False, plt_vars=default_outvars, nindv=100, s
             data = np.array(temp.variables[f'{app}_{v}'])
             fix, ax = figs[v], axs[v]
             ax.plot(x, np.nanmean(data, axis=1), c=c, label=f'mean {pname}', linewidth=3, marker='o')
-            if plot_baseline:
+            if plot_baseline: # todo could add all average baseline sim... think about
                 base, run_date = get_historical_average_baseline(site, mode, years=x.year.unique(), key=v)
                 base = base.set_index(['year', 'month']).drop(columns='doy')
                 base = base.loc[zip(x.year, x.month)].reset_index().drop_duplicates().loc[:, v]
-                # todo get temp the right length
                 ax.plot(x, base, c='grey', label=f'historical mean {pname}', linewidth=3, marker='o')
 
     for v in plt_vars:

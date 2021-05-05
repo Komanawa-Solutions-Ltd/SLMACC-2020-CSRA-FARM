@@ -199,6 +199,7 @@ def _get_possible_months():
 
 
 def _check_data_v1(swg_path, storyline, m, cold_months, wet_months, hot_months, dry_months,
+                   # todo check
                    return_full_results=False):
     """
     check that a single realisation is correct
@@ -209,46 +210,53 @@ def _check_data_v1(swg_path, storyline, m, cold_months, wet_months, hot_months, 
     """
 
     storyline = storyline.loc[np.in1d(storyline.month, m)]
+    storyline.loc[:, 'month_mapper'] = storyline.loc[:, 'month']
     storyline = storyline.set_index(['year', 'month'])
 
     data = read_swg_data(swg_path)[0]
     data = data.loc[np.in1d(data.month, m)]
 
-    # calc SMA
+    # calc SMA # todo event data hard coded in
     data.loc[:, 'sma'] = calc_smd_monthly(data.rain, data.pet, data.index) - data.loc[:, 'doy'].replace(
         get_monthly_smd_mean_detrended(leap=False))
+    data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
 
-    data.loc[:, 'wet'] = data.loc[:, 'rain'] >= 0.1
-    data.loc[:, 'dry'] = data.loc[:, 'sma'] <= -15
-    data.loc[:, 'hot'] = data.loc[:, 'tmax'] >= 25
-    data.loc[:, 'cold'] = ((data.loc[:, 'tmin'] +
-                            data.loc[:, 'tmax']) / 2).rolling(3).mean().fillna(method='bfill') <= 7
+    data = data.grouby(['year', 'month']).mean()
 
-    temp = data.loc[:, ['year', 'month', 'wet',
-                        'dry', 'hot', 'cold']].groupby(['year', 'month']).sum()
-    storyline.loc[temp.index, ['wet', 'dry', 'hot', 'cold']] = temp.loc[:, ['wet', 'dry', 'hot', 'cold']]
-    storyline.reset_index(inplace=True)
+    upper_limit = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'upper_limit.csv'), index_col=0)
+    lower_limit = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'lower_limit.csv'), index_col=0)
 
+    # set bases
     storyline.loc[:, 'swg_precip_class'] = 'A'
-    storyline.loc[((storyline.wet >= storyline.month.replace(rain_limits_wet)) &
-                   np.in1d(storyline.month, wet_months)), 'swg_precip_class'] = 'W'
-    # dry out weighs wet if both happen
-    storyline.loc[((storyline.dry >= 10) &
-                   np.in1d(storyline.month, dry_months)), 'swg_precip_class'] = 'D'
-
     storyline.loc[:, 'swg_temp_class'] = 'A'
-    storyline.loc[(storyline.hot >= 7) & np.in1d(storyline.month, hot_months), 'swg_temp_class'] = 'H'
-    storyline.loc[(storyline.cold >= 10) & np.in1d(storyline.month, cold_months), 'swg_temp_class'] = 'C'
+
+    # set wet
+    var = 'sma'
+    idx = data.loc[storyline.index, var] >= storyline.loc[:, 'month_mapper'].replace(upper_limit.loc[:, var].to_dict())
+    storyline.loc[idx, 'swg_precip_class'] = 'W'
+    # set dry
+    idx = data.loc[storyline.index, var] <= storyline.loc[:, 'month_mapper'].replace(lower_limit.loc[:, var].to_dict())
+    storyline.loc[idx, 'swg_precip_class'] = 'D'
+
+    # set hot
+    var = 'tmean'
+    idx = data.loc[storyline.index, var] >= storyline.loc[:, 'month_mapper'].replace(upper_limit.loc[:, var].to_dict())
+    storyline.loc[idx, 'swg_temp_class'] = 'H'
+
+    # set cold
+    var = 'tmean'
+    idx = data.loc[storyline.index, var] <= storyline.loc[:, 'month_mapper'].replace(lower_limit.loc[:, var].to_dict())
+    storyline.loc[idx, 'swg_temp_class'] = 'C'
 
     num_dif = (~((storyline.temp_class == storyline.swg_temp_class) & (
             storyline.precip_class == storyline.swg_precip_class))).sum()
     if not return_full_results:
         return num_dif > 0
 
-    hot = storyline.hot.max()
-    cold = storyline.cold.max()
-    wet = storyline.wet.max()
-    dry = storyline.dry.max()
+    hot = 0  # this is just a hack....
+    cold = 0  # this is just a hack....
+    wet = 0  # this is just a hack....
+    dry = 0  # this is just a hack....
 
     where_same = ((storyline.temp_class == storyline.swg_temp_class) & (
             storyline.precip_class == storyline.swg_precip_class))
@@ -390,7 +398,6 @@ def get_month_day_to_nonleap_doy(key_doy=False):
 
 
 def get_monthly_smd_mean_detrended(leap=False, recalc=False):
-
     outpath = os.path.join(climate_shocks_env.supporting_data_dir, 'mean_montly_smd_detrend.csv')
 
     if not recalc and os.path.exists(outpath):
@@ -405,8 +412,6 @@ def get_monthly_smd_mean_detrended(leap=False, recalc=False):
         rain, pet, h2o_cap, h2o_start = data['rain'], data['pet'], 150, 1
 
         dates = data.loc[:, 'date']
-
-
 
         # reset doy to 365 calander (e.g. no leap effect)
         mapper = get_month_day_to_nonleap_doy(False)
@@ -437,6 +442,7 @@ def get_monthly_smd_mean_detrended(leap=False, recalc=False):
         raise NotImplementedError
     return out
 
+
 def delete_single_ncs(indir):
     """
     deletes the single .nc files made by BS code, but keeps the amalgamated values
@@ -444,11 +450,12 @@ def delete_single_ncs(indir):
     :return:
     """
     for d in os.listdir(indir):
-        p = os.path.join(indir,d)
+        p = os.path.join(indir, d)
         if os.path.isdir(p):
             print(f'removing {d}')
             shutil.rmtree(p)
 
+
 if __name__ == '__main__':
-    print(get_monthly_smd_mean_detrended(False,True))
+    print(get_monthly_smd_mean_detrended(False, True))
     pass

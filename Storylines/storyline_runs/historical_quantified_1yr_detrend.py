@@ -30,14 +30,14 @@ if not os.path.exists(story_dir):
     os.makedirs(story_dir)
 
 base_pg_outdir = os.path.join(default_pasture_growth_dir, name)
-outputs_dir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', name)
+outputs_dir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', name)
 
 for d in [story_dir, base_pg_outdir, outputs_dir]:
     if not os.path.exists(d):
         os.makedirs(d)
 
 
-def make_storylines():  # todo make detrended storylines!
+def make_storylines():
     data = get_vcsn_record('detrended2')
     data.loc[:, 'day'] = data.index.day
     data.loc[:, 'month'] = data.index.month
@@ -64,8 +64,8 @@ def make_storylines():  # todo make detrended storylines!
                             data.loc[:, 'tmax']) / 2).rolling(3).mean().fillna(method='bfill') <= 7
     data = data.groupby(['year', 'month']).sum()
 
-    # todo below not right
     ndays_wet = {  # todo definition hard coded in
+        # todo CHange to NEW EVENTS!
         'org': {  # this is the best value!
             5: 14,
             6: 11,
@@ -95,6 +95,7 @@ def make_storylines():  # todo make detrended storylines!
         temp.loc[:, 'year'] = [2024, 2024, 2024, 2024, 2024, 2024, 2025, 2025, 2025, 2025, 2025, 2025, ]
         temp.loc[:, 'month'] = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, ]
         # todo events hard coded in
+        # todo CHange to NEW EVENTS!
         temp.loc[:, 'rest'] = rest.loc[idx, 'f_rest'].round(2).values
 
         temp.loc[:, 'temp_class'] = 'A'
@@ -110,7 +111,7 @@ def make_storylines():  # todo make detrended storylines!
         idx2 = data.loc[idx, 'wet'] >= [ndays_wet['org'][m] for m in temp.loc[:, 'month']]
         temp.loc[idx2.values, 'precip_class'] = 'W'
 
-        temp.loc[:, 'precip_class_prev'] = temp.loc[:, 'precip_class'].shift(1).fillna('A')  # todo check
+        temp.loc[:, 'precip_class_prev'] = temp.loc[:, 'precip_class'].shift(1).fillna('A')
         temp.loc[:, 'rest_per'] = [
             map_irr_quantile_from_rest(m=m,
                                        rest_val=rq,
@@ -172,8 +173,7 @@ def get_historical_1yr_pg_prob(site, mode):
 
 
 if __name__ == '__main__':
-    # todo re-run dryland, should be good once I sort the baseline stuff
-    # todo do I need to re-run with new ibasal?
+    # todo re-run with new event data
     re_run = False
     make_st = True
     run = True

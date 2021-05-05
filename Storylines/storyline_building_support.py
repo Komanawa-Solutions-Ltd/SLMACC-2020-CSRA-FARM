@@ -9,7 +9,6 @@ from Storylines.check_storyline import get_acceptable_events, get_past_event_fre
 from Climate_Shocks import climate_shocks_env
 from Storylines.storyline_params import month_fchange, month_len, prev_month, irrig_season
 from Storylines.irrigation_mapper import get_irr_by_quantile
-from Pasture_Growth_Modelling.full_model_implementation import default_mode_sites
 
 # these are used by other  scripts
 month_fchange, month_len, prev_month, irrig_season = month_fchange, month_len, prev_month, irrig_season
@@ -96,9 +95,9 @@ base_rest_data = {
 }
 
 base_events = {e: ('A', 'A', map_irrigation(e, base_rest_data[e], 'A', 'A'), base_rest_data[e]) for e in range(1, 13)}
-# todo need revisit with any new classifications updated 24-02-2021
-base_events[6] = ('C', 'A', 0, 0.5)
-base_events[7] = ('C', 'A', 0, 0.5)
+# todo need revisit with any new classifications updated 5-05-2021
+base_events[6] = ('A', 'A', 0, 0.5)
+base_events[7] = ('A', 'A', 0, 0.5)
 
 default_storyline_time = pd.date_range('2024-07-01', '2027-06-01', freq='MS')
 

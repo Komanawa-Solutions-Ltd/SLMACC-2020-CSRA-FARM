@@ -27,7 +27,7 @@ if not os.path.exists(story_dir):
     os.makedirs(story_dir)
 
 base_pg_outdir = os.path.join(default_pasture_growth_dir, name)
-outputs_dir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', name)
+outputs_dir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', name)
 
 for d in [story_dir, base_pg_outdir, outputs_dir]:
     if not os.path.exists(d):
@@ -116,8 +116,6 @@ def get_historical_1yr_pg_prob(site, mode):
 
 
 if __name__ == '__main__':
-    #todo re-run dryland, should be good once I sort the baseline stuff
-    # todo do I need to re-run with new ibasal?
     re_run = False
     make_st = True
     run = True

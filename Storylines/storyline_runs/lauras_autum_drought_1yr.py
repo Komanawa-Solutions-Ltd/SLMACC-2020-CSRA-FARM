@@ -26,7 +26,7 @@ if not os.path.exists(story_dir):
     os.makedirs(story_dir)
 
 base_pg_outdir = os.path.join(default_pasture_growth_dir, name)
-outputs_dir = os.path.join(ksl_env.slmmac_dir,'outputs_for_ws', name)
+outputs_dir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', name)
 
 for d in [story_dir, base_pg_outdir, outputs_dir]:
     if not os.path.exists(d):
@@ -54,16 +54,15 @@ def make_storylines():
         sl.loc[pd.isnull(sl.precip_class), 'precip_class'] = 'A'
         sl.loc[:, 'precip_class'] = sl.loc[:, 'precip_class'].str.replace('P', '').str.strip()
         sl.loc[pd.isnull(sl.temp_class) & (
-            np.in1d(sl.month, [6, 7])), 'temp_class'] = 'C'  # todo defaults hard coded in...
+            np.in1d(sl.month, [6, 7])), 'temp_class'] = 'A'  # todo defaults hard coded in...
         sl.loc[pd.isnull(sl.temp_class), 'temp_class'] = 'A'
         sl.loc[:, 'temp_class'] = sl.loc[:, 'temp_class'].str.replace('T', '').str.strip()
         map_storyline_rest(sl)
         s2 = s.replace('/', '-').replace('(', '').replace(')', '').replace(',', '')
         for i in range(1):
-
-            out = sl.iloc[i*12:i*12+12]
-            out.loc[:,'year'] += -i
-            out.to_csv(os.path.join(story_dir, f'{j+1}-yr{i+1}-{s2}.csv'))
+            out = sl.iloc[i * 12:i * 12 + 12]
+            out.loc[:, 'year'] += -i
+            out.to_csv(os.path.join(story_dir, f'{j + 1}-yr{i + 1}-{s2}.csv'))
 
 
 def run_pasture_growth_mp(re_run):
@@ -113,10 +112,8 @@ def get_laura_autumn_1yr_pg_prob(site, mode):
     data = data.rename(columns=rename_dict)
     return data
 
-if __name__ == '__main__':
-    #todo re-run full, should be good once I sort the baseline stuff
-    # todo do I need to re-run with new ibasal?
 
+if __name__ == '__main__':
     re_run = False
     make_st = True
     run = True

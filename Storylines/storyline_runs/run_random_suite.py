@@ -19,9 +19,10 @@ from Pasture_Growth_Modelling.full_pgr_model_mp import run_full_model_mp, defaul
 from Pasture_Growth_Modelling.full_model_implementation import add_pasture_growth_anaomoly_to_nc
 from Storylines.storyline_evaluation.storyline_eval_support import get_pgr_prob_baseline_stiched
 
-random_pg_dir = os.path.join(default_pasture_growth_dir, 'random')
-random_sl_dir = os.path.join(temp_storyline_dir, 'random')
-gdrive_outdir = os.path.join(ksl_env.slmmac_dir, 'random_stories_prob')
+name = 'random'
+random_pg_dir = os.path.join(default_pasture_growth_dir, name)
+random_sl_dir = os.path.join(temp_storyline_dir, name)
+gdrive_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', name)
 
 for d, tnm in itertools.product([random_pg_dir, random_sl_dir], ['_bad_irr', '_good_irr']):
     if not os.path.exists(f'{d}{tnm}'):
@@ -88,9 +89,8 @@ def run_1year_basgra(bad_irr=True):
         padock_rest_mult=False,
         save_daily_mult=False,
         verbose=False,
-        #mode_sites_mult=default_mode_sites,
-        mode_sites_mult=(('dryland', 'oxford'), ), #todo DADB just to re-run dryland only!
-        re_run=False # and additional safety
+        mode_sites_mult=default_mode_sites,
+        re_run=False  # and additional safety
 
     )
 
@@ -164,7 +164,7 @@ def create_nyr_suite(nyr, use_default_seed=True,
     print(f'nyear: {nyr}')
     assert isinstance(nyr, int)
     n = int(2.5e8)
-    if nyr>5:
+    if nyr > 5:
         n = int(2.5e7)
 
     data_1y = get_1yr_data(bad_irr=True, good_irr=True)
@@ -203,8 +203,8 @@ def create_nyr_suite(nyr, use_default_seed=True,
         print('/n', mode, site)
         key = f'{site}-{mode}'
         np.random.seed(seed)
-        temp_p = 10**data_1y.loc[:, f'log10_prob_{mode}']
-        p = temp_p/temp_p.sum()
+        temp_p = 10 ** data_1y.loc[:, f'log10_prob_{mode}']
+        p = temp_p / temp_p.sum()
         idxs = np.random.choice(
             np.arange(len(data_1y), dtype=np.uint32),
             size=(n * nyr),
@@ -307,19 +307,14 @@ def fix_old_1yr_runs(base_dir, change_storyline_time=False):
 
 
 if __name__ == '__main__':
-    #todo re-run dryland, should be good to go once I fix the baseline stuff
-    # todo check all re-runs!!!!
-    # todo do I need to re-run with new ibasal?
+    # todo re-run once new event data is confirmed
 
     t = input('are you sure you want to run this, it takes 8 days to run basgra y/n')
     if t != 'y':
         raise ValueError('stopped re-running')
-    # only run next line of code once as this fixes a mistake from previously
-    #todo re-run all of these once baseline is sorted works!, need to do for all runs and then add to the readme file.
-    #fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_bad_irr", False)
-    #fix_old_1yr_runs(r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\random_good_irr", False)
 
     import time
+
     t = time.time()
     make_1_year_storylines(bad_irr=True)
     run_1year_basgra(bad_irr=True)
@@ -327,12 +322,6 @@ if __name__ == '__main__':
     make_1_year_storylines(bad_irr=False)
     run_1year_basgra(bad_irr=False)
     create_1y_pg_data(bad_irr=False)
-    print((time.time() - t) / 60, 'minutes to run 2.5e8 sims')
+    print((time.time() - t) / 60, 'minutes to run 140k * 3  sims')
 
-    t = time.time() # todo remake these after checking the above
-    # create_nyr_suite(2, True, False)
-    # create_nyr_suite(3, True, False)
-    # create_nyr_suite(5, True, False)
-    # create_nyr_suite(10, True, False)
-    print((time.time() - t) / 60, 'minutes to run 2.5e8 sims')
     pass

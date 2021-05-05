@@ -19,7 +19,6 @@ ksl_env.add_basgra_nz_path()
 from basgra_python import run_basgra_nz
 
 
-# todo baseline trended, detrended, or average from historical quantified, trended/detrened?
 def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True, version='trended'):
     mode = 'irrigated'
     print('running: {}, {}, reseed: {}'.format(mode, site, reseed))
@@ -138,7 +137,7 @@ def export_true_historical():
 
 if __name__ == '__main__':
     export_true_historical()
-    # for v in ['trended', 'detrended2']: #todo no detrended for oxford...
+    # for v in ['trended', 'detrended2']: #no detrended for oxford...
     #    t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version=v)
     #    t, rd = get_historical_average_baseline('oxford', 'irrigated', [2024], 'PGR', version=v)
     #    t, rd = get_historical_average_baseline('oxford', 'dryland', [2024], 'PGR', version=v)

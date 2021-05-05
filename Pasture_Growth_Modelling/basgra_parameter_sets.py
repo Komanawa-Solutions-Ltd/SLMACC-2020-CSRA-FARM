@@ -79,7 +79,7 @@ def get_params_doy_irr(mode, site='eyrewell'):
 
         # modify inital values for dryland
         # set from a mid point value, left as it is part of the dryland 'optimisation' process
-        params['BASALI'] = 0.0976  # todo rethinking with new calibration0.15
+        params['BASALI'] = 0.0976  # changed with new calibration from 0.15
         # think about this! average 0.2085 in long term baseline, but I'll keep it at present
         # as it made very little difference in PGR
 
@@ -138,8 +138,8 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=True):
         trig.update({m: 801 for m in [12, 1, 2, 3]})  # kg harvestable dry matter
         targ.update({m: 800 for m in [12, 1, 2, 3]})  # kg harvestable dry matter
 
-        reseed_trig = 0.059  # todo up
-        reseed_basal = 0.090  # todo up
+        reseed_trig = 0.059
+        reseed_basal = 0.090
 
         weed_dm_frac = {
             1: 0.42,

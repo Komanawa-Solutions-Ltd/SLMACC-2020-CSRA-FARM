@@ -28,7 +28,7 @@ def inverse_percentile(a, value, bootstrap=True):
     return per, err
 
 
-def calc_doy_per_from_historical(version='detrended2'):
+def calc_doy_per_from_historical(version='detrended2'): #todo this is wrong!!! and needs to be updated for new percentiles!!! BEFORE PASSING TO BS
     data = get_vcsn_record(version).reset_index()
     data.loc[:, 'month'] = data.date.dt.month
     data.loc[:, 'day'] = data.date.dt.day

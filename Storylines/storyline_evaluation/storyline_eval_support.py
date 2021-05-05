@@ -62,7 +62,7 @@ def get_pgr_prob_baseline_stiched_old(nyears, site, mode, irr_prop_from_zero, re
     return outpgr, outprob
 
 
-def get_pgr_prob_baseline_stiched(nyears, site, mode):
+def get_pgr_prob_baseline_stiched(nyears, site, mode):  # using historical baseline so no prob values.
     """
     this uses the addition method
     :param nyears:

@@ -15,6 +15,7 @@ from BS_work.SWG.SWG_wrapper import *
 from Pasture_Growth_Modelling.export_to_csvs import export_all_in_pattern
 from Storylines.storyline_evaluation.storyline_eval_support import extract_additional_sims
 import warnings
+
 warnings.warn('this is the old baseline, it is depreciated!!!!')
 
 if __name__ == '__main__':
@@ -44,7 +45,7 @@ if __name__ == '__main__':
                       )
 
     if export:
-        export_all_in_pattern(base_outdir=os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'Baseline'),
+        export_all_in_pattern(base_outdir=os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'Baseline'),
                               patterns=os.path.join(ksl_env.slmmac_dir_unbacked,
                                                     "pasture_growth_sims/baseline_sim_no_pad/*.nc"),
                               )
@@ -52,4 +53,4 @@ if __name__ == '__main__':
     if prob_pg:
         data = extract_additional_sims(storyline_dir,
                                        os.path.join(default_pasture_growth_dir, 'baseline_sim_no_pad'), 3)
-        data.to_csv(os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'Baseline','prob_iid_pg.csv'))
+        data.to_csv(os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'Baseline', 'prob_iid_pg.csv'))
