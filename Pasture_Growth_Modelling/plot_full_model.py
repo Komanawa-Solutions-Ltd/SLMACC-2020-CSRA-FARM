@@ -78,7 +78,7 @@ def plot_sims(data_paths, plot_ind=False, plt_vars=default_outvars, nindv=100, s
             data = np.array(temp.variables[f'{app}_{v}'])
             fix, ax = figs[v], axs[v]
             ax.plot(x, np.nanmean(data, axis=1), c=c, label=f'mean {pname}', linewidth=3, marker='o')
-            if plot_baseline: # todo could add all average baseline sim... think about
+            if plot_baseline:
                 base, run_date = get_historical_average_baseline(site, mode, years=x.year.unique(), key=v)
                 base = base.set_index(['year', 'month']).drop(columns='doy')
                 base = base.loc[zip(x.year, x.month)].reset_index().drop_duplicates().loc[:, v]

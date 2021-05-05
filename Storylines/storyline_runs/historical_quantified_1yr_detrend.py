@@ -38,80 +38,26 @@ for d in [story_dir, base_pg_outdir, outputs_dir]:
 
 
 def make_storylines():
-    data = get_vcsn_record('detrended2')
-    data.loc[:, 'day'] = data.index.day
-    data.loc[:, 'month'] = data.index.month
-    data.loc[:, 'year'] = data.index.year
-    data = data.loc[~((data.month == 2) & (data.day == 29))]
-
-    rest = get_restriction_record('detrended2')
-    rest.loc[:, 'day'] = rest.index.day
-    rest.loc[:, 'month'] = rest.index.month
-    rest.loc[:, 'year'] = rest.index.year
-    rest = rest.loc[~((rest.month == 2) & (rest.day == 29))]
-    rest.loc[:, 'f_rest'] = [rc / month_len[m] for rc, m in
-                             rest.loc[:, ['f_rest', 'month']].itertuples(False, None)]
-    rest = rest.groupby(['year', 'month']).sum()
-
-    # calc SMA
-    data.loc[:, 'sma'] = calc_smd_monthly(data.rain, data.pet, data.index) - data.loc[:, 'doy'].replace(
-        get_monthly_smd_mean_detrended(leap=False))
-
-    data.loc[:, 'wet'] = data.loc[:, 'rain'] >= 0.1
-    data.loc[:, 'dry'] = data.loc[:, 'sma'] <= -15
-    data.loc[:, 'hot'] = data.loc[:, 'tmax'] >= 25
-    data.loc[:, 'cold'] = ((data.loc[:, 'tmin'] +
-                            data.loc[:, 'tmax']) / 2).rolling(3).mean().fillna(method='bfill') <= 7
-    data = data.groupby(['year', 'month']).sum()
-
-    ndays_wet = {  # todo definition hard coded in
-        # todo CHange to NEW EVENTS!
-        'org': {  # this is the best value!
-            5: 14,
-            6: 11,
-            7: 11,
-            8: 13,
-            9: 13,
-        }
-    }
-    for v in ndays_wet.values():
-        v.update({
-            1: 99,
-            2: 99,
-            3: 99,
-            4: 99,
-            10: 99,
-            11: 99,
-            12: 99,
-        })
+    inv_month_fchange = {v: k for k, v in month_fchange.items()}
+    data = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'event_definition_data_fixed.csv'),
+                       comment='#')
+    data.loc[:, 'rest_cum'] = [rc / month_len[inv_month_fchange[m]] for rc, m in
+                               data.loc[:, ['rest_cum', 'month']].itertuples(False, None)]
+    data = data.set_index(['year', 'month'])
 
     for y in range(1972, 2019):
         t = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, ]) + y
-        tm = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, ]
+        tm = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', ]
         idx = list(zip(t, tm))
         temp = pd.DataFrame(index=np.arange(12),
                             columns=['year', 'month', 'temp_class', 'precip_class', 'rest', 'rest_per']
                             )
         temp.loc[:, 'year'] = [2024, 2024, 2024, 2024, 2024, 2024, 2025, 2025, 2025, 2025, 2025, 2025, ]
         temp.loc[:, 'month'] = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, ]
-        # todo events hard coded in
-        # todo CHange to NEW EVENTS!
-        temp.loc[:, 'rest'] = rest.loc[idx, 'f_rest'].round(2).values
-
-        temp.loc[:, 'temp_class'] = 'A'
-        idx2 = data.loc[idx, 'hot'] >= 7
-        temp.loc[idx2.values, 'temp_class'] = 'H'
-        idx2 = data.loc[idx, 'cold'] >= 10
-        temp.loc[idx2.values, 'temp_class'] = 'C'
-
-        temp.loc[:, 'precip_class'] = 'A'
-        idx2 = data.loc[idx, 'dry'] >= 10
-        temp.loc[idx2.values, 'precip_class'] = 'D'
-        temp.loc[np.in1d(temp.month, [6, 7, 8]), 'precip_class'] = 'A'
-        idx2 = data.loc[idx, 'wet'] >= [ndays_wet['org'][m] for m in temp.loc[:, 'month']]
-        temp.loc[idx2.values, 'precip_class'] = 'W'
-
-        temp.loc[:, 'precip_class_prev'] = temp.loc[:, 'precip_class'].shift(1).fillna('A')
+        temp.loc[:, 'temp_class'] = data.loc[idx, 'temp_class'].str.replace('T', '').values
+        temp.loc[:, 'precip_class'] = data.loc[idx, 'precip_class'].str.replace('P', '').values
+        temp.loc[:, 'precip_class_prev'] = data.loc[idx, 'prev_precip'].str.replace('P', '').values
+        temp.loc[:, 'rest'] = data.loc[idx, 'rest_cum'].round(2).values
         temp.loc[:, 'rest_per'] = [
             map_irr_quantile_from_rest(m=m,
                                        rest_val=rq,
@@ -131,8 +77,8 @@ def run_pasture_growth_mp(re_run):
         storyline_path_mult=paths,
         outdir_mult=outdirs,
         nsims_mult=1000,
-        log_path=os.path.join(pgm_log_dir, 'lauras_1yr'),
-        description_mult='a first run of Lauras storylines',
+        log_path=os.path.join(pgm_log_dir, name),
+        description_mult='quantified historical de-trended data',
         padock_rest_mult=False,
         save_daily_mult=True,
         verbose=False,
@@ -173,7 +119,6 @@ def get_historical_1yr_pg_prob(site, mode):
 
 
 if __name__ == '__main__':
-    # todo re-run with new event data
     re_run = False
     make_st = True
     run = True

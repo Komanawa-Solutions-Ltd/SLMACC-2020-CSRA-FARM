@@ -73,7 +73,7 @@ def run_pasture_growth_mp(re_run):
         storyline_path_mult=paths,
         outdir_mult=outdirs,
         nsims_mult=1000,
-        log_path=os.path.join(pgm_log_dir, 'lauras_1yr'),
+        log_path=os.path.join(pgm_log_dir, name),
         description_mult='a first run of Lauras storylines',
         padock_rest_mult=False,
         save_daily_mult=True,

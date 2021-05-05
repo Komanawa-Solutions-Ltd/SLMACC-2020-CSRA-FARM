@@ -364,7 +364,7 @@ def Precipitation_function_fit(PR_amounts):
     bin_centres = (np.array(bin_edge[0:len(bin_edge) - 1]) + np.array(bin_edge[1:len(bin_edge)])) / 2
 
     p0 = [0., 0., 0., 0.]
-    coeff, var_matrix = curve_fit(exp_curve_func, bin_centres, cdf, p0=p0, maxfev=10000)
+    coeff, var_matrix = curve_fit(exp_curve_func, bin_centres, cdf, p0=p0, maxfev=100000)
 
     if log_curve_func(0.00, *coeff) < 0:
         new_coeff = np.array([0., 0., 0., 0.])

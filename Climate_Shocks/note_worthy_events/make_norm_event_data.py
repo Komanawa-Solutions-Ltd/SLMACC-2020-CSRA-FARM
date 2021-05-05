@@ -9,9 +9,9 @@ from Climate_Shocks.get_past_record import get_restriction_record, get_vcsn_reco
 from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_smd_monthly
 from BS_work.SWG.SWG_wrapper import get_monthly_smd_mean_detrended
 from Climate_Shocks.climate_shocks_env import supporting_data_dir
+from Pasture_Growth_Modelling.historical_average_baseline import get_historical_average_baseline
 
-
-def make_data(save, save_paths):  # todo add new system to write up, CHECK
+def make_data(save, save_paths):  # todo add new system to write up
     """
     make the final data for greg
     :param org_data: from final_event_recurance import get_org_data
@@ -69,8 +69,8 @@ def make_data(save, save_paths):  # todo add new system to write up, CHECK
     data = data.reset_index().sort_values(['year', 'month'])
 
     # get previous states.
-    for k in ['temp', 'precip', 'rest_cum']:
-        data.loc[:, 'prev_{}'.format(k)] = data.loc[:, k].shift(1)
+    for k in ['temp_class', 'precip_class', 'rest_cum']:
+        data.loc[:, 'prev_{}'.format(k)] = data.loc[:, k].shift(1).fillna(0)
 
     if save:
         for path in save_paths:

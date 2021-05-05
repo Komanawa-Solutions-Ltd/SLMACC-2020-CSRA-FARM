@@ -221,7 +221,7 @@ def _check_data_v1(swg_path, storyline, m, cold_months, wet_months, hot_months, 
         get_monthly_smd_mean_detrended(leap=False))
     data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2
 
-    data = data.grouby(['year', 'month']).mean()
+    data = data.groupby(['year', 'month']).mean()
 
     upper_limit = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'upper_limit.csv'), index_col=0)
     lower_limit = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'lower_limit.csv'), index_col=0)
@@ -258,6 +258,7 @@ def _check_data_v1(swg_path, storyline, m, cold_months, wet_months, hot_months, 
     wet = 0  # this is just a hack....
     dry = 0  # this is just a hack....
 
+    storyline = storyline.reset_index()
     where_same = ((storyline.temp_class == storyline.swg_temp_class) & (
             storyline.precip_class == storyline.swg_precip_class))
 

@@ -14,6 +14,9 @@ from Climate_Shocks import climate_shocks_env
 from Storylines.storyline_building_support import base_events, map_storyline_rest, default_storyline_time, \
     default_mode_sites, map_irr_quantile_from_rest, month_fchange, month_len
 from Storylines.check_storyline import ensure_no_impossible_events
+from Climate_Shocks.get_past_record import get_restriction_record, get_vcsn_record
+from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_smd_monthly
+from BS_work.SWG.SWG_wrapper import get_monthly_smd_mean_detrended
 from Storylines.storyline_evaluation.storyline_eval_support import extract_additional_sims
 from Climate_Shocks import climate_shocks_env
 from Pasture_Growth_Modelling.full_pgr_model_mp import default_pasture_growth_dir, run_full_model_mp, pgm_log_dir
@@ -34,27 +37,76 @@ for d in [story_dir, base_pg_outdir, outputs_dir]:
         os.makedirs(d)
 
 
-def make_storylines():
-    inv_month_fchange = {v: k for k, v in month_fchange.items()}
-    data = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'event_definition_data_fixed.csv'),
-                       comment='#')
-    data.loc[:, 'rest_cum'] = [rc / month_len[inv_month_fchange[m]] for rc, m in
-                               data.loc[:, ['rest_cum', 'month']].itertuples(False, None)]
-    data = data.set_index(['year', 'month'])
+def make_storylines(): #todo check
+    data = pd.DataFrame(index=pd.MultiIndex.from_product([range(1, 13), range(1972, 2020)], names=['month', 'year']),
+                        columns=['temp_class', 'precip_class', 'rest', 'rest_cum'], dtype=float)
+
+    vcsn = get_vcsn_record('trended')
+    vcsn.loc[:, 'sma'] = calc_smd_monthly(vcsn.rain, vcsn.pet, vcsn.index) - vcsn.loc[:, 'doy'].replace(
+        get_monthly_smd_mean_detrended(leap=False, recalc=True))
+    vcsn.loc[:, 'tmean'] = (vcsn.loc[:, 'tmax'] + vcsn.loc[:, 'tmin']) / 2
+    vcsn.loc[:, 'month_mapper'] = vcsn.loc[:, 'month'].astype(int)
+
+    # make, save the cutoffs for use in checking functions!
+    vcsn = vcsn.groupby(['month', 'year']).mean()
+    upper_limit = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'upper_limit.csv'), index_col=0)
+    lower_limit = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'lower_limit.csv'), index_col=0)
+
+
+    rest_rec = get_restriction_record('trended').groupby(['month', 'year']).sum().loc[:, 'f_rest']
+
+    data.loc[:, ['rest', 'rest_cum']] = 0
+    data.loc[:, ['temp_class', 'precip_class']] = 'A'
+    data.loc[rest_rec.index, 'rest_cum'] = rest_rec
+    data = pd.merge(data, vcsn, right_index=True, left_index=True)
+    data.loc[:, 'rest_cum'] = [rc / month_len[m] for rc, m in
+                               data.loc[:, ['rest_cum', 'month_mapper']].itertuples(False, None)]
+
+    # set hot
+    var = 'tmean'
+    idx = data.loc[:, var] >= data.loc[:, 'month_mapper'].replace(upper_limit.loc[:, var].to_dict())
+    data.loc[idx, 'temp_class'] = 'H'
+
+    # set cold
+    var = 'tmean'
+    idx = data.loc[:, var] <= data.loc[:, 'month_mapper'].replace(lower_limit.loc[:, var].to_dict())
+    data.loc[idx, 'temp_class'] = 'C'
+
+    # set wet
+    var = 'sma'  # negative is dry positive is wet
+    idx = data.loc[:, var] >= data.loc[:, 'month_mapper'].replace(upper_limit.loc[:, var].to_dict())
+    data.loc[idx, 'precip_class'] = 'W'
+
+    # set dry
+    var = 'sma'  # negative is dry positive is wet
+    idx = data.loc[:, var] <= data.loc[:, 'month_mapper'].replace(lower_limit.loc[:, var].to_dict())
+    data.loc[idx, 'precip_class'] = 'D'
+
+    # re-order data
+    data = data.reset_index().sort_values(['year', 'month'])
+
+    # get previous states.
+    for k in ['temp_class', 'precip_class', 'rest_cum']:
+        data.loc[:, 'prev_{}'.format(k)] = data.loc[:, k].shift(1).fillna(0)
+
 
     for y in range(1972, 2019):
         t = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, ]) + y
-        tm = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', ]
+        tm = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, ]
         idx = list(zip(t, tm))
         temp = pd.DataFrame(index=np.arange(12),
                             columns=['year', 'month', 'temp_class', 'precip_class', 'rest', 'rest_per']
                             )
         temp.loc[:, 'year'] = [2024, 2024, 2024, 2024, 2024, 2024, 2025, 2025, 2025, 2025, 2025, 2025, ]
         temp.loc[:, 'month'] = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, ]
-        temp.loc[:, 'temp_class'] = data.loc[idx, 'temp_class'].str.replace('T', '').values
-        temp.loc[:, 'precip_class'] = data.loc[idx, 'precip_class'].str.replace('P', '').values
-        temp.loc[:, 'precip_class_prev'] = data.loc[idx, 'prev_precip'].str.replace('P', '').values
+        # todo events hard coded in
         temp.loc[:, 'rest'] = data.loc[idx, 'rest_cum'].round(2).values
+
+        temp.loc[:, 'temp_class'] = data.loc[idx, 'temp_class']
+
+        temp.loc[:, 'precip_class'] = data.loc[idx, 'precip_class']
+
+        temp.loc[:, 'precip_class_prev'] = temp.loc[:, 'precip_class'].shift(1).fillna('A')
         temp.loc[:, 'rest_per'] = [
             map_irr_quantile_from_rest(m=m,
                                        rest_val=rq,
@@ -74,8 +126,8 @@ def run_pasture_growth_mp(re_run):
         storyline_path_mult=paths,
         outdir_mult=outdirs,
         nsims_mult=1000,
-        log_path=os.path.join(pgm_log_dir, 'lauras_1yr'),
-        description_mult='a first run of Lauras storylines',
+        log_path=os.path.join(pgm_log_dir, name),
+        description_mult='historical quantified trended data',
         padock_rest_mult=False,
         save_daily_mult=True,
         verbose=False,
