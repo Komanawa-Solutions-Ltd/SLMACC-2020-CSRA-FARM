@@ -38,7 +38,8 @@ def make_storyline_files():
 def generate_SWG_output_support(vcfs=default_vcf, base_dirs=default_base_dir):
     make_storyline_files()
     # delete the old outputs
-    shutil.rmtree(os.path.join(default_base_dir, 'Output'))
+    if os.path.exists(os.path.join(os.path.join(default_base_dir, 'Output'))):
+        shutil.rmtree(os.path.join(default_base_dir, 'Output'))
 
     print('running SWG to create the output files')
     storylines = []

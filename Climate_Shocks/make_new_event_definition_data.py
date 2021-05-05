@@ -104,11 +104,11 @@ if __name__ == '__main__':
     if re_run_SWG:
         # make probality of creating an event with SWG
         prob_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'id_prob')
-        generate_SWG_output_support()
+        generate_SWG_output_support() # this will run one of each which makes things faster, but requires a pool of 1
         generate_all_swg(1000, False, outdir=prob_dir)
         from BS_work.SWG.check_1_month_runs import make_event_prob
         make_event_prob(prob_dir)
-        raise NotImplementedError # todo DADB
+        raise NotImplementedError # todo DADB, and run after checking everything !!!!
         # run SWG
         full_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SWG')
         generate_all_swg(10000, True, full_dir)
