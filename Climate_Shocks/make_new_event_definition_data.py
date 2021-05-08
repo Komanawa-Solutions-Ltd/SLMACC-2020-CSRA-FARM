@@ -14,15 +14,13 @@ from Climate_Shocks.note_worthy_events.make_norm_event_data import make_data
 from Climate_Shocks.climate_shocks_env import event_def_path, supporting_data_dir
 from Storylines.check_storyline import get_past_event_frequency, get_acceptable_events
 
-
 if __name__ == '__main__':
     t = input('this will re-run most of the system and takes c. 15 HOURS are you sure you want to proceed '
               'with make_new_event_definition_data.py \nY/N')
     if t.lower() != 'y':
         raise ValueError('stopped to prevent override')
 
-    re_run_SWG = True
-    re_run_pgr = True
+    re_run_SWG = False
 
     event_def_dir = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/norm")
     if not os.path.exists(event_def_dir):
@@ -72,7 +70,6 @@ if __name__ == '__main__':
     if result.returncode != 0:
         raise ChildProcessError('{}\n{}'.format(result.stdout, result.stderr))
 
-
     # make restriction probabiliities
     print('making restriction probability tables')
     rest_to_cdf = os.path.join(root_dir, r'BS_work\f_rest_to_cdf.py')
@@ -96,20 +93,18 @@ if __name__ == '__main__':
     data = calc_doy_per_from_historical('detrended2')  # this should be the one used, others are for investigation
     data.to_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles_detrended_v2.csv'))
 
-
     from BS_work.SWG.SWG_wrapper import get_monthly_smd_mean_detrended
 
     get_monthly_smd_mean_detrended(False, True)
 
     if re_run_SWG:
-        # todo m04-C-D-0 did not run, need to consider possibly just remove
         # make probality of creating an event with SWG
         prob_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'id_prob')
-        # todo uncomment after DB generate_SWG_output_support() # this will run one of each which makes things faster, but requires a pool of 1
-        # todo uncomment after DB generate_all_swg(1000, False, outdir=prob_dir)
+        generate_SWG_output_support()  # this will run one of each which makes things faster, but requires a pool of 1
+        generate_all_swg(1000, False, outdir=prob_dir)
         from BS_work.SWG.check_1_month_runs import make_event_prob
+
         make_event_prob(prob_dir)
-        raise NotImplementedError # todo DADB, and run after checking everything !!!!
         # run SWG
         full_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SWG')
         generate_all_swg(10000, True, full_dir)
@@ -123,9 +118,9 @@ if __name__ == '__main__':
     # run historical baseline
     from Pasture_Growth_Modelling.historical_average_baseline import get_historical_average_baseline
 
-    get_historical_average_baseline('eyrewell', 'irrigated', [2024], True)
-    get_historical_average_baseline('oxford', 'irrigated', [2024], True)
-    get_historical_average_baseline('oxford', 'dryland', [2024], True)
+    get_historical_average_baseline(site='eyrewell', mode='irrigated', years=[2024], recalc=True)
+    get_historical_average_baseline(site='oxford', mode='irrigated', years=[2024], recalc=True)
+    get_historical_average_baseline(site='oxford', mode='dryland', years=[2024], recalc=True)
 
     from Storylines.storyline_building_support import make_irr_rest_for_all_events, make_blank_storyline_sheet
 
@@ -139,9 +134,12 @@ if __name__ == '__main__':
         print('could not make zero transition probs')
 
     from Storylines.storyline_evaluation.storyline_eval_support import get_pgr_prob_baseline_stiched
+
     print(get_pgr_prob_baseline_stiched(1, 'eyrewell', 'irrigated'))
     print(get_pgr_prob_baseline_stiched(1, 'oxford', 'irrigated'))
     print(get_pgr_prob_baseline_stiched(1, 'oxford', 'dryland'))
+
+    # todo check full results
 
     # other scripts worth re-running/ rethinking
     # Storylines/storyline_runs/run_unique_events.py # re-run unique events to see any changes

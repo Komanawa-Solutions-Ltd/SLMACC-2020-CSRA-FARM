@@ -100,9 +100,9 @@ def generate_all_swg(n, n_is_final, outdir, vcfs=default_vcf, base_dirs=default_
 
 def clean_individual(ind_dir, duplicate=True, merge=True):
     for p in os.listdir(ind_dir):
-        if '.nc' in p:
+        if '.nc' in p: # these are already grouped datasets.  individual months are in folders
             continue
-        swg_dir = os.path.join(ind_dir, p)
+        swg_dir = os.path.join(ind_dir, p) # todo this could benefit from multiprocessing, re-write if I need to re-run it
         t = clean_swg(swg_dir=swg_dir, yml_path=os.path.join(swg_dir, 'ind.yml'),
                       duplicate=duplicate, merge=merge, nc_outpath=os.path.join(ind_dir, '{}_all.nc'.format(p)))
         print('{}: removed: {}'.format(p, len(t)))

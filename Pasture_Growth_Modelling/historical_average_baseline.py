@@ -76,6 +76,8 @@ def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False, 
     """
     save_path = os.path.join(climate_shocks_env.supporting_data_dir,
                              'baseline_data', f'historical_average-{site}-{mode}-{version}.csv')
+    if not os.path.exists(os.path.dirname(save_path)):
+        os.makedirs(os.path.dirname(save_path))
     if os.path.exists(save_path) and not recalc:
         with open(save_path, 'r') as f:
             run_date = f.readline().strip()

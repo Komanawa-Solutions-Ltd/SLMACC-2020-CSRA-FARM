@@ -12,7 +12,8 @@ from Storylines.irrigation_mapper import get_irr_by_quantile
 from Pasture_Growth_Modelling.basgra_parameter_sets import default_mode_sites
 
 # these are used by other  scripts
-month_fchange, month_len, prev_month, irrig_season = month_fchange, month_len, prev_month, irrig_season, default_mode_sites
+month_fchange, month_len, prev_month, irrig_season, default_mode_sites = month_fchange, month_len, prev_month, irrig_season, default_mode_sites
+
 
 # make all possible events
 def make_sampling_options():
@@ -71,7 +72,7 @@ def map_irr_quantile_from_rest(m, rest_val, precip, prev_precip):
     temp = temp.loc[idx]
     idx = np.argmin(np.abs(0.5 - temp.loc[:, 'index']))
 
-    return temp.loc[:,'index'].iloc[idx]
+    return temp.loc[:, 'index'].iloc[idx]
 
 
 _rest_data = get_irr_by_quantile()

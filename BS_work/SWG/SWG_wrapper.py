@@ -361,24 +361,6 @@ def _merge_ncs(swg_dir, outpath, storyline, yml_txt):
 measures = ['PR_A', 'Tmax', 'Tmin', 'RSDS', 'PEV']
 measures_cor = ['rain', 'tmax', 'tmin', 'radn', 'pet']
 
-rain_limits_wet = {
-    # non wet months
-    1: 40,
-    2: 40,
-    3: 40,
-    4: 40,
-    10: 40,
-    11: 40,
-    12: 40,
-
-    # wet months
-    5: 14,
-    6: 11,
-    7: 11,
-    8: 13,
-    9: 13,
-}
-
 
 def get_month_day_to_nonleap_doy(key_doy=False):
     """

@@ -69,7 +69,7 @@ def make_data(save, save_paths):  # todo add new system to write up
     data = data.reset_index().sort_values(['year', 'month'])
 
     # get previous states.
-    for k in ['temp_class', 'precip_class', 'rest_cum']:
+    for k in ['temp', 'precip', 'rest_cum']:
         data.loc[:, 'prev_{}'.format(k)] = data.loc[:, k].shift(1).fillna(0)
 
     if save:
