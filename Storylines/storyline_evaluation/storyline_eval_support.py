@@ -151,13 +151,16 @@ def extract_additional_sims(story_dir, sim_dir, nyr):
                 print(f'starting to read sim {i} for site: {site} and mode: {mode}')
             p = os.path.join(sim_dir, f'{idv}-{key}.nc')
 
-            nc_data = nc.Dataset(p)
-            data.loc[i, f'{key}_pgra'] = np.array(nc_data.variables['m_PGRA_cum'][-1, :]).mean()
-            temp = np.array(nc_data.variables['m_PGR'])
-            temp *= np.repeat([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30], nyr)[:, np.newaxis]
-            temp = temp.sum(axis=0).mean()
-            data.loc[i, f'{key}_pg'] = temp
-            nc_data.close()
+            try:
+                nc_data = nc.Dataset(p)
+                data.loc[i, f'{key}_pgra'] = np.array(nc_data.variables['m_PGRA_cum'][-1, :]).mean()
+                temp = np.array(nc_data.variables['m_PGR'])
+                temp *= np.repeat([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30], nyr)[:, np.newaxis]
+                temp = temp.sum(axis=0).mean()
+                data.loc[i, f'{key}_pg'] = temp
+                nc_data.close()
+            except FileNotFoundError:
+                pass
     data.to_csv(os.path.join(sim_dir, f'IID_probs_pg.csv'))
     return data
 

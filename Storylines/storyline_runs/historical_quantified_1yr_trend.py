@@ -37,7 +37,7 @@ for d in [story_dir, base_pg_outdir, outputs_dir]:
         os.makedirs(d)
 
 
-def make_storylines(): #todo check
+def make_storylines():  # todo check
     data = pd.DataFrame(index=pd.MultiIndex.from_product([range(1, 13), range(1972, 2020)], names=['month', 'year']),
                         columns=['temp_class', 'precip_class', 'rest', 'rest_cum'], dtype=float)
 
@@ -51,7 +51,6 @@ def make_storylines(): #todo check
     vcsn = vcsn.groupby(['month', 'year']).mean()
     upper_limit = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'upper_limit.csv'), index_col=0)
     lower_limit = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'lower_limit.csv'), index_col=0)
-
 
     rest_rec = get_restriction_record('trended').groupby(['month', 'year']).sum().loc[:, 'f_rest']
 
@@ -88,7 +87,7 @@ def make_storylines(): #todo check
     # get previous states.
     for k in ['temp_class', 'precip_class', 'rest_cum']:
         data.loc[:, 'prev_{}'.format(k)] = data.loc[:, k].shift(1).fillna(0)
-
+    data = data.set_index(['year', 'month'])
 
     for y in range(1972, 2019):
         t = np.array([0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, ]) + y
@@ -102,9 +101,9 @@ def make_storylines(): #todo check
         # todo events hard coded in
         temp.loc[:, 'rest'] = data.loc[idx, 'rest_cum'].round(2).values
 
-        temp.loc[:, 'temp_class'] = data.loc[idx, 'temp_class']
+        temp.loc[:, 'temp_class'] = data.loc[idx, 'temp_class'].values
 
-        temp.loc[:, 'precip_class'] = data.loc[idx, 'precip_class']
+        temp.loc[:, 'precip_class'] = data.loc[idx, 'precip_class'].values
 
         temp.loc[:, 'precip_class_prev'] = temp.loc[:, 'precip_class'].shift(1).fillna('A')
         temp.loc[:, 'rest_per'] = [
@@ -169,8 +168,8 @@ def get_historical_1yr_pg_prob(site, mode):
 
 if __name__ == '__main__':
     re_run = False
-    make_st = True
-    run = True
+    make_st = False
+    run = False
     plot_export = True
     pg_prob = True
     if make_st:

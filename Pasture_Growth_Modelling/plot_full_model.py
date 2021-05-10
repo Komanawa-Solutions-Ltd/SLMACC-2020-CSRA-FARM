@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.cm import get_cmap
 from Pasture_Growth_Modelling.full_model_implementation import out_variables, out_metadata, month_len
-from Pasture_Growth_Modelling.historical_average_baseline import get_historical_average_baseline
+from Pasture_Growth_Modelling.historical_average_baseline import get_historical_average_baseline, \
+    get_historical_median_baseline
 
 default_outvars = [e for e in out_variables] + ['PGRA', 'PGRA_cum']
 
@@ -78,11 +79,16 @@ def plot_sims(data_paths, plot_ind=False, plt_vars=default_outvars, nindv=100, s
             data = np.array(temp.variables[f'{app}_{v}'])
             fix, ax = figs[v], axs[v]
             ax.plot(x, np.nanmean(data, axis=1), c=c, label=f'mean {pname}', linewidth=3, marker='o')
-            if plot_baseline:
+            if plot_baseline: #todo add median
                 base, run_date = get_historical_average_baseline(site, mode, years=x.year.unique(), key=v)
                 base = base.set_index(['year', 'month']).drop(columns='doy')
                 base = base.loc[zip(x.year, x.month)].reset_index().drop_duplicates().loc[:, v]
-                ax.plot(x, base, c='grey', label=f'historical mean {pname}', linewidth=3, marker='o')
+                ax.plot(x, base, c='grey', label=f'historical mean {pname}', linewidth=2, marker='o', ls='--')
+
+                base, run_date = get_historical_median_baseline(site, mode, years=x.year.unique(), key=v)
+                base = base.set_index(['year', 'month']).drop(columns='doy')
+                base = base.loc[zip(x.year, x.month)].reset_index().drop_duplicates().loc[:, v]
+                ax.plot(x, base, c='darkgrey', label=f'historical median {pname}', linewidth=2, marker='o', ls='--')
 
     for v in plt_vars:
         fig, ax = figs[v], axs[v]

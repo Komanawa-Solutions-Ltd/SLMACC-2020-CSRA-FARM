@@ -121,6 +121,62 @@ def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False, 
 
     return outdata, run_date
 
+def get_historical_median_baseline(site, mode, years, key='PGR', recalc=False, version='trended'):
+    """
+    get the historical average baseline data.  Do I assue a July start? or return the whole year
+    :param site:
+    :param mode:
+    :param years: list of years (e.g. 2024, 2025)
+    :param recalc: bool if True recalc the data
+    :return:
+    """
+    save_path = os.path.join(climate_shocks_env.supporting_data_dir,
+                             'baseline_data', f'historical_average-{site}-{mode}-{version}.csv')
+    if not os.path.exists(os.path.dirname(save_path)):
+        os.makedirs(os.path.dirname(save_path))
+    if os.path.exists(save_path) and not recalc:
+        with open(save_path, 'r') as f:
+            run_date = f.readline().strip()
+        out = pd.read_csv(save_path, skiprows=1)
+    else:
+        if site == 'oxford' and mode == 'dryland':
+            out = run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, version=version)
+        elif site == 'oxford' and mode == 'irrigated':
+            out = run_past_basgra_irrigated(site='oxford', version=version)
+        elif site == 'eyrewell' and mode == 'irrigated':
+            out = run_past_basgra_irrigated(site='eyrewell', version=version)
+        else:
+            raise ValueError(f'wierd values for site,mode {site}-{mode}')
+        run_date = datetime.datetime.now().isoformat()
+        with open(save_path, 'w') as f:
+            f.write(f'{run_date}\n')
+        out.to_csv(save_path, mode='a')
+
+    out.loc[:, 'PER_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
+    if key == 'PGR':
+        all_data = out.groupby('month').median()['pg'].to_dict()
+    elif key in ['PGRA', 'PGRA_cum', 'F_REST']:
+        all_data = None
+    else:
+        all_data = out.groupby('month').median()[key].to_dict()
+
+    outdata = []
+    for y in years:
+        temp = pd.DataFrame(index=range(0, 365), columns=['month', 'year', 'doy', key])
+        temp.loc[:, 'doy'] = np.arange(1, 366)
+        temp.loc[:, 'year'] = y
+        temp.loc[:, 'month'] = month = pd.to_datetime([f'2025-{d}' for d in np.arange(1, 366)],
+                                                      format='%Y-%j').month.values
+        if key in ['PGRA', 'PGRA_cum', 'F_REST']:
+            temp.loc[:, key] = np.nan
+        else:
+            temp.loc[:, key] = [all_data[m] for m in month]
+        outdata.append(temp)
+
+    outdata = pd.concat(outdata)
+
+    return outdata, run_date
+
 
 def export_true_historical():
     outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'true_historical_average_trended')

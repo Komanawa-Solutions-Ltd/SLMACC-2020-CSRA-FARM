@@ -6,11 +6,12 @@ import os
 import numpy as np
 import pandas as pd
 import netCDF4 as nc
+import itertools
 import glob
 from copy import deepcopy
 import ksl_env
 from Storylines.storyline_building_support import make_sampling_options, base_events, default_storyline_time, \
-    map_storyline_rest, irrig_season
+    map_storyline_rest, irrig_season, month_len
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 from Pasture_Growth_Modelling.full_pgr_model_mp import run_full_model_mp, default_pasture_growth_dir, pgm_log_dir
 
@@ -74,17 +75,24 @@ def extract_data(outdir):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
+    for sm, var, cum in itertools.product(['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated'],
+                                          ['PGRA', 'PGR'],
+                                          [True, False]):
         paths = sorted(glob.glob(os.path.join(unique_events_pgr_dir, f'*{sm}.nc')))
         names = [os.path.basename(os.path.splitext(p)[0]) for p in paths]
-        outdata = pd.DataFrame(index=range(0, 24), columns=names,dtype=float)
+        outdata = pd.DataFrame(index=range(0, 24), columns=names, dtype=float)
         outdata.index.name = 'months since event month'
         for p, n in zip(paths, names):
             data = nc.Dataset(p)
             months = np.array(data.variables['m_month'])
             idx = np.where(months == int(n.split('-')[0].replace('m', '')))[0][0]
-            use_data = np.nanmean(np.array(data.variables['m_PGRA'][idx:]), axis=1)
-            outdata.loc[range(len(use_data)), n] = use_data
+            use_data = np.nanmean(np.array(data.variables[f'm_{var}'][idx:]), axis=1)
+            if cum:
+                cum_nm = 'monthly_total'
+                outdata.loc[range(len(use_data)), n] = use_data * month_len[int(n.split('-')[0].replace('m',''))]
+            else:
+                cum_nm = 'daily_total'
+                outdata.loc[range(len(use_data)), n] = use_data
 
             data.close()
         outdata = outdata.round(2).transpose()
@@ -98,16 +106,16 @@ def extract_data(outdir):
                                   'precip',
                                   'temp',
                                   'rest'] + temp]
-        outdata.to_csv(os.path.join(outdir, f'{sm}-PGA-singe_events.csv'))
+        outdata.to_csv(os.path.join(outdir, f'{sm}-{var}-{cum_nm}-singe_events.csv'))
 
 
 if __name__ == '__main__':
-    mk_st = True
-    run_pgr = True
+    mk_st = False #todo remake as True
+    run_pgr = False #todo remake as True
     extract = True
     if mk_st:
         make_storylines()
     if run_pgr:
         run_pasture_growth()
     if extract:
-        extract_data(os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws','norm', 'unique_events_v2'))
+        extract_data(os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'unique_events_v2'))
