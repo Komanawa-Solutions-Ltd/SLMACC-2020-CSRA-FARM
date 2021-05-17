@@ -141,7 +141,7 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=True):
         reseed_trig = 0.059
         reseed_basal = 0.090
 
-        weed_dm_frac = {
+        weed_dm_frac = { # todo pull this into documentation
             1: 0.42,
             2: 0.30,
             3: 0.27,
@@ -150,10 +150,10 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=True):
             6: 0.20,
             7: 0.20,
             8: 0.20,
-            9: 0.23,
-            10: 0.30,
-            11: 0.60,
-            12: 0.62,
+            9: 0.13,
+            10: 0.22,
+            11: 0.53,
+            12: 0.60,
         }
 
     else:

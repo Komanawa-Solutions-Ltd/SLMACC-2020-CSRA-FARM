@@ -82,7 +82,8 @@ def run_pasture_growth_mp(re_run):
         padock_rest_mult=False,
         save_daily_mult=True,
         verbose=False,
-        re_run=re_run
+        re_run=re_run,
+        mode_sites_mult=mode_sites
 
     )
 
@@ -117,9 +118,13 @@ def get_historical_1yr_pg_prob(site, mode):
     data = data.rename(columns=rename_dict)
     return data
 
-
+mode_sites = ( # todo note for future
+        ('dryland', 'oxford'),
+        # ('irrigated', 'eyrewell'),
+        # ('irrigated', 'oxford'),
+    )
 if __name__ == '__main__':
-    re_run = False
+    re_run = True
     make_st = True
     run = True
     plot_export = True

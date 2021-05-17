@@ -23,11 +23,18 @@ if __name__ == '__main__':
     plot_results = True
     export = True
     prob_pg = True
+    mode_sites = ( # todo note for future
+        ('dryland', 'oxford'),
+        # ('irrigated', 'eyrewell'),
+        # ('irrigated', 'oxford'),
+    )
+
     if run_basgra:
         # run basgra
         print('running BASGRA')
         run_pasture_growth(storyline_path=os.path.join(storyline_dir, '0-baseline_1yr.csv'),
                            outdir=os.path.join(default_pasture_growth_dir, 'baseline_sim_no_pad'),
+                           mode_sites=mode_sites,
                            nsims=10000, padock_rest=False,
                            save_daily=True, description='initial baseline run after the realisation cleaning',
                            verbose=True)
@@ -44,8 +51,8 @@ if __name__ == '__main__':
             base_dir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'Baseline', f'{site}-{mode}', 'plots')
             if not os.path.exists(base_dir):
                 os.makedirs(base_dir)
-            plot_sims(data_paths=[p], plot_ind=False, nindv=50, save_dir=base_dir, show=False, figsize=(11, 8),
-                      daily=False, plot_baseline=True, site=site, mode=mode
+            plot_sims(data_paths=[p], plot_ind=True, nindv=50, save_dir=base_dir, show=False, figsize=(11, 8),
+                      daily=False, plot_baseline=True, site=site, mode=mode, func=np.nanmedian
                       )
 
     if export:

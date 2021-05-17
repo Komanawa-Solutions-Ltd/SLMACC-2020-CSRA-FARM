@@ -25,22 +25,29 @@ def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True,
     weather = get_vcsn_record(version=version, site=site)
     rest = get_restriction_record(version=version)
     params, doy_irr = get_params_doy_irr(mode)
-    matrix_weather = create_matrix_weather(mode, weather, rest, fix_leap=False)
-    days_harvest = create_days_harvest(mode, matrix_weather, site, fix_leap=False)
+    all_out = []
+    for y in range(1972, 2019):
+        temp_weather = weather.loc[(weather.index>=f'{y}-07-01') & (weather.index<f'{y+1}-07-01')]
+        temp_rest = rest.loc[(rest.index>=f'{y}-07-01') & (rest.index<f'{y+1}-07-01')]
 
-    if not reseed:
-        days_harvest.loc[:, 'reseed_trig'] = -1
+        matrix_weather = create_matrix_weather(mode, temp_weather, temp_rest, fix_leap=False)
+        days_harvest = create_days_harvest(mode, matrix_weather, site, fix_leap=False)
 
-    out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
-    out.loc[:, 'per_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
+        if not reseed:
+            days_harvest.loc[:, 'reseed_trig'] = -1
 
-    pg = pd.DataFrame(calc_pasture_growth(out, days_harvest, mode='from_yield', resamp_fun='mean', freq='1d'))
-    out.loc[:, 'pg'] = pg.loc[:, 'pg']
-    out = calc_pasture_growth_anomaly(out, fun='mean')
+        out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
+        out.loc[:, 'per_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
+
+        pg = pd.DataFrame(calc_pasture_growth(out, days_harvest, mode='from_yield', resamp_fun='mean', freq='1d'))
+        out.loc[:, 'pg'] = pg.loc[:, 'pg']
+        all_out.append(out)
+    all_out = pd.concat(all_out)
+    all_out = calc_pasture_growth_anomaly(all_out, fun='mean')
 
     if return_inputs:
-        return out, (params, doy_irr, matrix_weather, days_harvest)
-    return out
+        return all_out, (params, doy_irr, matrix_weather, days_harvest)
+    return all_out
 
 
 def run_past_basgra_dryland(return_inputs=False, site='eyrewell', reseed=True, version='trended'):
@@ -49,20 +56,26 @@ def run_past_basgra_dryland(return_inputs=False, site='eyrewell', reseed=True, v
     weather = get_vcsn_record(site=site, version=version)
     rest = None
     params, doy_irr = get_params_doy_irr(mode)
-    matrix_weather = create_matrix_weather(mode, weather, rest, fix_leap=False)
-    days_harvest = create_days_harvest(mode, matrix_weather, site, fix_leap=False)
-    if not reseed:
-        days_harvest.loc[:, 'reseed_trig'] = -1
+    all_out = []
+    for y in range(1972, 2019):
+        temp_weather = weather.loc[(weather.index>=f'{y}-07-01') & (weather.index<f'{y+1}-07-01')]
 
-    out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
-    out.loc[:, 'per_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
-    pg = pd.DataFrame(calc_pasture_growth(out, days_harvest, mode='from_yield', resamp_fun='mean', freq='1d'))
-    out.loc[:, 'pg'] = pg.loc[:, 'pg']
-    out = calc_pasture_growth_anomaly(out, fun='mean')
+        matrix_weather = create_matrix_weather(mode, temp_weather, rest, fix_leap=False)
+        days_harvest = create_days_harvest(mode, matrix_weather, site, fix_leap=False)
+        if not reseed:
+            days_harvest.loc[:, 'reseed_trig'] = -1
+
+        out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
+        out.loc[:, 'per_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
+        pg = pd.DataFrame(calc_pasture_growth(out, days_harvest, mode='from_yield', resamp_fun='mean', freq='1d'))
+        out.loc[:, 'pg'] = pg.loc[:, 'pg']
+        all_out.append(out)
+    all_out = pd.concat(all_out)
+    all_out = calc_pasture_growth_anomaly(all_out, fun='mean')
 
     if return_inputs:
-        return out, (params, doy_irr, matrix_weather, days_harvest)
-    return out
+        return all_out, (params, doy_irr, matrix_weather, days_harvest)
+    return all_out
 
 
 def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False, version='trended'):
@@ -194,11 +207,10 @@ def export_true_historical():
 
 
 if __name__ == '__main__':
-    export_true_historical()
-    # for v in ['trended', 'detrended2']: #no detrended for oxford...
-    #    t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version=v)
-    #    t, rd = get_historical_average_baseline('oxford', 'irrigated', [2024], 'PGR', version=v)
-    #    t, rd = get_historical_average_baseline('oxford', 'dryland', [2024], 'PGR', version=v)
+    for v in ['trended']: #no detrended for oxford...
+       t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version=v, recalc=True)
+       t, rd = get_historical_average_baseline('oxford', 'irrigated', [2024], 'PGR', version=v, recalc=True)
+       t, rd = get_historical_average_baseline('oxford', 'dryland', [2024], 'PGR', version=v, recalc=True)
 
     t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version='trended')
     t2, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version='detrended2')
@@ -208,4 +220,5 @@ if __name__ == '__main__':
     plt.plot(t2.month, t2.PGR, label='detrended')
     plt.legend()
     plt.show()
+    export_true_historical()
     pass

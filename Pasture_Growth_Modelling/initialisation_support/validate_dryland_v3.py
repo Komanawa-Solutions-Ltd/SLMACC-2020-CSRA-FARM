@@ -86,13 +86,13 @@ if __name__ == '__main__':
         12: 0.62,
     }
     data = {
+        'dryland_trended': run_past_basgra_dryland(site='oxford'),
 
         'weed: special2': run_mod_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_yield',
                                                   fun='mean', reseed_trig=0.06, reseed_basal=0.1, basali=0.15,
                                                   weed_dm_frac=weed_dict_2,
                                                   use_defined_params_except_weed_dm_frac=True),
 
-        'dryland_trended': run_past_basgra_dryland(site='oxford'),
 
         'irrigated_oxford_trended': run_past_basgra_irrigated(site='oxford'),
         'irrigated_eyrewell_trended': run_past_basgra_irrigated(site='eyrewell'),

@@ -68,7 +68,8 @@ def run_pasture_growth():
                       description_mult='to run each event indivdually',
                       padock_rest_mult=False,
                       save_daily_mult=False,
-                      verbose=False)
+                      verbose=False,
+                      mode_sites_mult=mode_sites)
 
 
 def extract_data(outdir):
@@ -108,10 +109,15 @@ def extract_data(outdir):
                                   'rest'] + temp]
         outdata.to_csv(os.path.join(outdir, f'{sm}-{var}-{cum_nm}-singe_events.csv'))
 
+mode_sites = ( # todo note for future
+        ('dryland', 'oxford'),
+        # ('irrigated', 'eyrewell'),
+        # ('irrigated', 'oxford'),
+    )
 
 if __name__ == '__main__':
-    mk_st = False #todo remake as True
-    run_pgr = False #todo remake as True
+    mk_st = True
+    run_pgr = True
     extract = True
     if mk_st:
         make_storylines()
