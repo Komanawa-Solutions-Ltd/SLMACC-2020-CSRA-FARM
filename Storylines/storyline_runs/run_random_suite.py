@@ -125,7 +125,7 @@ def create_1y_pg_data(bad_irr=True):
             temp = np.array(nc_data.variables['m_PGR'])
             temp *= np.array([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30])[:, np.newaxis]
             temp = temp.sum(axis=0).mean()
-            data.loc[i, f'{key}_pg_yr1'] = temp
+            data.loc[i, f'{key}_pg_yr1'] = temp # todo pull out monthly data...
             nc_data.close()
     data.loc[:, 'irr_type'] = tp
     data.to_hdf(os.path.join(f'{random_pg_dir}{tnm}', f'IID_probs_pg_1y{tnm}.hdf'), 'prob',
