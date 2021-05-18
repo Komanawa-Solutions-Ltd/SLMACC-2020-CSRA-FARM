@@ -32,7 +32,7 @@ if not os.path.exists(gdrive_outdir):
     os.makedirs(gdrive_outdir)
 
 
-def make_1_year_storylines(bad_irr=True):
+def make_1_year_storylines(bad_irr=True): # todo consider getting rid of all events in June and July (to simplify transition probabilities)
     """
 
     :param bad_irr: bool if True then create irrigation from 50-99th percentile if False 1-50th percentile

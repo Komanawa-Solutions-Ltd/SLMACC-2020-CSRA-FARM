@@ -116,8 +116,8 @@ mode_sites = ( # todo note for future
     )
 
 if __name__ == '__main__':
-    mk_st = True
-    run_pgr = True
+    mk_st = False
+    run_pgr = False
     extract = True
     if mk_st:
         make_storylines()

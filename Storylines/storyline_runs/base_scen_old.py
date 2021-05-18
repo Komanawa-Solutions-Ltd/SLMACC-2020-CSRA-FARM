@@ -19,7 +19,7 @@ import warnings
 warnings.warn('this is the old baseline, it is depreciated!!!!')
 
 if __name__ == '__main__':
-    run_basgra = True   # to stop accidental re-run
+    run_basgra = False   # to stop accidental re-run
     plot_results = True
     export = True
     prob_pg = True

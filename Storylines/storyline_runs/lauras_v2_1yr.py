@@ -140,9 +140,9 @@ mode_sites = ( # todo note for future
         # ('irrigated', 'oxford'),
     )
 if __name__ == '__main__':
-    re_run = True
-    make_st = True
-    run = True
+    re_run = False
+    make_st = False
+    run = False
     plot_export = True
     pg_prob = True
     if make_st:
