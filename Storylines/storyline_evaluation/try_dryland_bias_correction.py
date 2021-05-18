@@ -12,6 +12,9 @@ from Pasture_Growth_Modelling.historical_average_baseline import get_historical_
 
 
 def try_bias_correction():  # todo check on this, does this 'fix' our problems
+    outdir = os.path.join(ksl_env.slmmac_dir,'outputs_for_ws', 'norm','historical_trended v historical plots')
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
 
     historical = run_past_basgra_dryland(site='oxford')
     historical.loc[:, 'year'] = historical.loc[:, 'year'].astype(int)
@@ -46,6 +49,7 @@ def try_bias_correction():  # todo check on this, does this 'fix' our problems
         ax.set_title(m)
         pass
     fig.tight_layout()
+    fig.savefig(os.path.join(outdir,'time_series.png'))
     baseline = \
     pd.read_csv(os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm\Baseline\oxford-dryland\m_PGR.csv"),
                 skiprows=1).loc[0].iloc[1:13]
@@ -60,8 +64,9 @@ def try_bias_correction():  # todo check on this, does this 'fix' our problems
     ax.plot(range(12), baseline.loc[idx] * [temp2[e] for e in idx], c='k', label='baseline corrected')
     ax.set_xticklabels(idx)
     ax.legend()
+    fig.savefig(os.path.join(outdir,'boxplots.png'))
 
-    plt.show()
+
 
 
 if __name__ == '__main__':
