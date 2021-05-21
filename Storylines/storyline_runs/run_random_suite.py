@@ -78,7 +78,7 @@ def run_1year_basgra(bad_irr=True):
     else:
         tnm = '_good_irr'
     run_stories = glob.glob(os.path.join(f'{random_sl_dir}{tnm}', 'rsl-*.csv'))
-    outdirs = [f'{random_pg_dir}{tnm}' for e in run_stories]
+    outdirs = [f'{random_pg_dir}{tnm}' for e in run_stories] #todo easy to slim this down if needed
     run_full_model_mp(
         storyline_path_mult=run_stories,
         outdir_mult=outdirs,
