@@ -7,8 +7,10 @@ import pandas as pd
 import numpy as np
 import os
 from copy import deepcopy
+
+import ksl_env
 from Storylines.check_storyline import get_past_event_frequency
-from Storylines.storyline_building_support import map_storyline_rest
+from Storylines.storyline_building_support import map_storyline_rest, prev_month
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 
 
@@ -17,6 +19,57 @@ from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 # make each storyline a pick of a bunch of restriction profiles (hand made to allow autocorrelation
 # make each storyline 1 year and then make random 3 year combinations of these.
 # how do I want to store this? make 12 random seeds?, how will this affect the randomness...
+
+def generate_random_weather_mcmc(n, use_default_seed=True, nmaxiterations=10000, recalc=False):  # todo finish and check and incorporate!
+    """
+    generate random weather, where the weather data in the next month is dependent on the transition probabilites and
+    the previous month's state.  data is for July-June and July is specified as 'A-A'
+    :param n: number of sims
+    :param use_default_seed: if True then use the defualt seeds which are entirely reproducable
+    :param nmaxiterations: the maximum iterations allowed in the while loop
+    :param recalc: if True then recalc
+    :return:
+    """
+    assert isinstance(n, int)
+    save_path = os.path.join(ksl_env.slmmac_dir, 'random_weather', f'random_weather_size_{n}.npy')
+
+    if os.path.exists(save_path) and not recalc:
+        outdata = np.load(save_path)
+        return outdata
+
+    # todo get trans_probabilities
+    trans_probs = {
+        # m, dataframe, dataframe cols/idxs = {t}-{p}
+    }
+
+    # get seeds
+    if use_default_seed:
+        np.random.seed(458444)
+    seeds = np.random.randint(1, 500000, (n * 12 * 100))
+    outdata = np.full(size=(n, 12), fill_value='z-z')
+    seed_idx = 0
+    for i in range(n):
+        np.random.seed(seeds[seed_idx])
+        seed_idx += 1
+        new_array = np.full(size=(12,), fill_value='x-x')
+        new_array[0] = 'A-A'
+        breaks_idx = 0
+        while (outdata == new_array).all(axis=1).any():  # to prevent duplicates
+            breaks_idx += 1
+            if breaks_idx > nmaxiterations:
+                raise ValueError(f'broken while loop more than {nmaxiterations} iterations')
+
+            for mi, m in enumerate([8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]):
+                prev_month = prev_month[m]
+                prev_state = new_array[mi]
+                np.random.seed(seeds[seed_idx])
+                seed_idx += 1
+                options = trans_probs[prev_month].index.values
+                probs = trans_probs[prev_month][prev_state].values
+                new_array[mi + 1] = np.random.choice(options, p=probs)
+        outdata[i] = new_array
+    np.save(save_path, outdata)
+    return outdata
 
 
 def generate_random_weather(n, use_default_seed=True):
@@ -132,9 +185,9 @@ def generate_random_suite(n, use_default_seed=True, save=True, return_story=Fals
     assert out_idxs.shape[1] == 2
 
     data = pd.DataFrame(index=pd.date_range('2025-07-01', '2026-06-01', freq='MS'),
-                        columns=['precip_class', 'temp_class', 'rest','rest_per'])
+                        columns=['precip_class', 'temp_class', 'rest', 'rest_per'])
     data.index.name = 'date'
-    data.loc[:, 'year'] = data.index.year -1 # set to the start of the simulation to 2024 in order to match PGRA
+    data.loc[:, 'year'] = data.index.year - 1  # set to the start of the simulation to 2024 in order to match PGRA
     data.loc[:, 'month'] = data.index.month
 
     # make into dataframes
@@ -161,6 +214,5 @@ def generate_random_suite(n, use_default_seed=True, save=True, return_story=Fals
 
 
 if __name__ == '__main__':
-
-    out = generate_random_suite(5, save=False, return_story=True,bad_irr=False)
+    out = generate_random_suite(5, save=False, return_story=True, bad_irr=False)
     print(out)
