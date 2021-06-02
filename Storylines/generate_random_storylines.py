@@ -10,7 +10,7 @@ from copy import deepcopy
 
 import ksl_env
 from Storylines.check_storyline import get_past_event_frequency
-from Storylines.storyline_building_support import map_storyline_rest, prev_month
+from Storylines.storyline_building_support import map_storyline_rest, prev_month, month_fchange
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 
 
@@ -20,7 +20,8 @@ from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 # make each storyline 1 year and then make random 3 year combinations of these.
 # how do I want to store this? make 12 random seeds?, how will this affect the randomness...
 
-def generate_random_weather_mcmc(n, use_default_seed=True, nmaxiterations=10000, recalc=False):  # todo finish and check and incorporate!
+def generate_random_weather_mcmc(n, use_default_seed=True, nmaxiterations=10000,
+                                 recalc=False):  # todo check and incorporate!
     """
     generate random weather, where the weather data in the next month is dependent on the transition probabilites and
     the previous month's state.  data is for July-June and July is specified as 'A-A'
@@ -37,10 +38,28 @@ def generate_random_weather_mcmc(n, use_default_seed=True, nmaxiterations=10000,
         outdata = np.load(save_path)
         return outdata
 
-    # todo get trans_probabilities
+    # get trans_probabilities
     trans_probs = {
         # m, dataframe, dataframe cols/idxs = {t}-{p}
     }
+    mapper = {
+        "AT,AP": "A-A",
+        "AT,D": "A-D",
+        "AT,W": "A-W",
+        "C,AP": "C-A",
+        "C,D": "C-D",
+        "C,W": "C-W",
+        "H,AP": "H-A",
+        "H,D": "H-D",
+        "H,W": "H-W"
+    }
+
+    for m in range(13):
+        temp = pd.read_csv(os.path.join(ksl_env.proj_root,
+                                        f'BS_work/IID/TransitionProbabilities/{month_fchange[m]}_transitions.csv'),
+                           comment='#', index_col=0)
+        temp.index = [mapper[e] for e in temp.index]
+        temp.columns = [mapper[e] for e in temp.columns]
 
     # get seeds
     if use_default_seed:
@@ -60,12 +79,12 @@ def generate_random_weather_mcmc(n, use_default_seed=True, nmaxiterations=10000,
                 raise ValueError(f'broken while loop more than {nmaxiterations} iterations')
 
             for mi, m in enumerate([8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]):
-                prev_month = prev_month[m]
+                prev_st_month = prev_month[m]
                 prev_state = new_array[mi]
                 np.random.seed(seeds[seed_idx])
                 seed_idx += 1
-                options = trans_probs[prev_month].index.values
-                probs = trans_probs[prev_month][prev_state].values
+                options = trans_probs[prev_st_month].index.values
+                probs = trans_probs[prev_st_month][prev_state].values
                 new_array[mi + 1] = np.random.choice(options, p=probs)
         outdata[i] = new_array
     np.save(save_path, outdata)
