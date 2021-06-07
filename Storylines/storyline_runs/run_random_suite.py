@@ -318,22 +318,29 @@ def fix_old_1yr_runs(base_dir, change_storyline_time=False):
 
 if __name__ == '__main__':
     # todo re-run once new event data is confirmed
+    run_chunks = []
+    make_stories = True
+    run_basgra = False
+    extract_data = False
+    if make_stories:
+        make_1_year_storylines(bad_irr=True)
+        make_1_year_storylines(bad_irr=False)
 
-    t = input('are you sure you want to run this, it takes 8 days to run basgra y/n')
-    if t != 'y':
-        raise ValueError('stopped re-running')
+    if run_basgra:
 
-    import time
+        t = input('are you sure you want to run this, it takes 8 days to run basgra y/n')
+        if t != 'y':
+            raise ValueError('stopped re-running')
 
-    t = time.time()
+        import time
+        run_1year_basgra(bad_irr=True)
+        run_1year_basgra(bad_irr=False)
 
-    # todo rejig to run in chunks!
-    make_1_year_storylines(bad_irr=True)
-    run_1year_basgra(bad_irr=True)
-    create_1y_pg_data(bad_irr=True)
-    make_1_year_storylines(bad_irr=False)
-    run_1year_basgra(bad_irr=False)
-    create_1y_pg_data(bad_irr=False)
-    print((time.time() - t) / 60, 'minutes to run 140k * 3  sims')
+        t = time.time()
 
-    pass
+        print((time.time() - t) / 60, 'minutes to run 140k * 3  sims')
+
+    if extract_data:
+        create_1y_pg_data(bad_irr=True)
+        create_1y_pg_data(bad_irr=False)
+

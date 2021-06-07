@@ -32,7 +32,10 @@ def generate_random_weather_mcmc(n, use_default_seed=True, nmaxiterations=10000,
     :return:
     """
     assert isinstance(n, int)
-    save_path = os.path.join(ksl_env.slmmac_dir, 'random_weather', f'random_weather_size_{n}.npy')
+    base_dir = os.path.join(ksl_env.slmmac_dir, 'random_weather')
+    if not os.path.exists(base_dir):
+        os.makedirs(base_dir)
+    save_path = os.path.join(base_dir, f'random_weather_size_{n}.npy')
 
     if os.path.exists(save_path) and not recalc:
         outdata = np.load(save_path)
@@ -54,26 +57,27 @@ def generate_random_weather_mcmc(n, use_default_seed=True, nmaxiterations=10000,
         "H,W": "H-W"
     }
 
-    for m in range(13):
+    for m in range(1, 13):
         temp = pd.read_csv(os.path.join(ksl_env.proj_root,
                                         f'BS_work/IID/TransitionProbabilities/{month_fchange[m]}_transitions.csv'),
                            comment='#', index_col=0)
         temp.index = [mapper[e] for e in temp.index]
         temp.columns = [mapper[e] for e in temp.columns]
+        trans_probs[m] = temp
 
     # get seeds
     if use_default_seed:
         np.random.seed(458444)
     seeds = np.random.randint(1, 500000, (n * 12 * 100))
-    outdata = np.full(size=(n, 12), fill_value='z-z')
+    outdata = np.full(shape=(n, 12), fill_value='z-z')
     seed_idx = 0
     for i in range(n):
         np.random.seed(seeds[seed_idx])
         seed_idx += 1
-        new_array = np.full(size=(12,), fill_value='x-x')
+        new_array = np.full(shape=(12,), fill_value='x-x')
         new_array[0] = 'A-A'
         breaks_idx = 0
-        while (outdata == new_array).all(axis=1).any():  # to prevent duplicates
+        while (outdata == new_array).all(axis=1).any() or 'x-x' in new_array:  # to prevent duplicates
             breaks_idx += 1
             if breaks_idx > nmaxiterations:
                 raise ValueError(f'broken while loop more than {nmaxiterations} iterations')
@@ -188,7 +192,7 @@ def generate_random_suite(n, use_default_seed=True, save=True, return_story=Fals
 
     irrigation = generate_irrigation_suites(n, use_default_seed, bad_irr=bad_irr)
     irr_len = len(irrigation)
-    weather = generate_random_weather(n, use_default_seed)
+    weather = generate_random_weather_mcmc(n, use_default_seed, recalc=True)
     wea_len = len(weather)  # should be n, but for code clarity
 
     # generate random options
@@ -233,5 +237,5 @@ def generate_random_suite(n, use_default_seed=True, save=True, return_story=Fals
 
 
 if __name__ == '__main__':
-    out = generate_random_suite(5, save=False, return_story=True, bad_irr=False)
+    out = generate_random_suite(1000)
     print(out)

@@ -81,12 +81,13 @@ def plot_1_yr_storylines(storylines, title, outdir=None, show=False, ax=None):
 
 
 if __name__ == '__main__':
-    base_dir_trend = r"C:\matt_modelling_unbackedup\SLMACC_2020_norm\temp_storyline_files\historical_quantified_1yr_trend"
-    base_dir_detrend = r"C:\matt_modelling_unbackedup\SLMACC_2020_norm\temp_storyline_files\historical_quantified_1yr_detrend"
-    laura = r"C:\matt_modelling_unbackedup\SLMACC_2020_norm\temp_storyline_files\lauras_v2_1yr"
-    for base_dir, title in zip([base_dir_trend, base_dir_detrend, laura], ['trend', 'detrend', 'lauras']):
+    base_dir_trend = r"D:\mh_unbacked\SLMACC_2020_norm\temp_storyline_files\historical_quantified_1yr_trend"
+    base_dir_detrend = r"D:\mh_unbacked\SLMACC_2020_norm\temp_storyline_files\historical_quantified_1yr_detrend"
+    small_random = r"D:\mh_unbacked\SLMACC_2020_norm\temp_storyline_files\random_bad_irr"
+    for base_dir, title in zip([base_dir_trend, base_dir_detrend, small_random], ['trend', 'detrend', 'small_rand']):
         paths = [os.path.join(base_dir, e) for e in os.listdir(base_dir)]
         storylines = [pd.read_csv(e) for e in paths]
         plot_1_yr_storylines(storylines, title, show=False)
 
     plt.show()
+
