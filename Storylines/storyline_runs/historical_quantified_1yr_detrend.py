@@ -118,10 +118,10 @@ def get_historical_1yr_pg_prob(site, mode):
     data = data.rename(columns=rename_dict)
     return data
 
-mode_sites = ( # todo note for future
+mode_sites = (
         ('dryland', 'oxford'),
-        # ('irrigated', 'eyrewell'),
-        # ('irrigated', 'oxford'),
+        ('irrigated', 'eyrewell'),
+        ('irrigated', 'oxford'),
     )
 if __name__ == '__main__':
     re_run = False

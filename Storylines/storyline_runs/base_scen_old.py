@@ -23,10 +23,10 @@ if __name__ == '__main__':
     plot_results = True
     export = True
     prob_pg = True
-    mode_sites = ( # todo note for future
+    mode_sites = (
         ('dryland', 'oxford'),
-        # ('irrigated', 'eyrewell'),
-        # ('irrigated', 'oxford'),
+        ('irrigated', 'eyrewell'),
+        ('irrigated', 'oxford'),
     )
 
     if run_basgra:

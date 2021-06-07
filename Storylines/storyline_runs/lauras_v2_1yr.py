@@ -134,10 +134,10 @@ def get_laura_v2_1yr_2yr_pg_prob(site, mode):
     outdata = outdata.drop_duplicates(['pgra','prob'])
     return outdata.astype(float,errors='ignore')
 
-mode_sites = ( # todo note for future
+mode_sites = (
         ('dryland', 'oxford'),
-        # ('irrigated', 'eyrewell'),
-        # ('irrigated', 'oxford'),
+        ('irrigated', 'eyrewell'),
+        ('irrigated', 'oxford'),
     )
 if __name__ == '__main__':
     re_run = False

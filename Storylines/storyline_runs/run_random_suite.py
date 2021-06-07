@@ -32,7 +32,7 @@ if not os.path.exists(gdrive_outdir):
     os.makedirs(gdrive_outdir)
 
 
-def make_1_year_storylines(bad_irr=True): # todo consider getting rid of all events in June and July (to simplify transition probabilities)
+def make_1_year_storylines(bad_irr=True):
     """
 
     :param bad_irr: bool if True then create irrigation from 50-99th percentile if False 1-50th percentile
@@ -67,10 +67,12 @@ def make_1_year_storylines(bad_irr=True): # todo consider getting rid of all eve
         sl.to_csv(os.path.join(f'{random_sl_dir}{tnm}', f'{name}.csv'))
 
 
-def run_1year_basgra(bad_irr=True):
+def run_1year_basgra(bad_irr=True, start=0, end=None):
     """
 
     :param bad_irr: bool if True then create irrigation from 50-99th percentile if False 1-50th percentile
+    :param start: int, start index
+    :param end: None or int, end index, stories[start:end] will be run, helpful for chunking data
     :return:
     """
     if bad_irr:
@@ -78,11 +80,15 @@ def run_1year_basgra(bad_irr=True):
     else:
         tnm = '_good_irr'
     run_stories = glob.glob(os.path.join(f'{random_sl_dir}{tnm}', 'rsl-*.csv'))
-    outdirs = [f'{random_pg_dir}{tnm}' for e in run_stories] #todo easy to slim this down if needed
+    if end is None:
+        end = len(run_stories)
+    assert isinstance(end, int) and isinstance(start, int)
+    run_stories = run_stories[start:end]
+    outdirs = [f'{random_pg_dir}{tnm}' for e in run_stories]
     run_full_model_mp(
         storyline_path_mult=run_stories,
         outdir_mult=outdirs,
-        nsims_mult=100,
+        nsims_mult=96,
         log_path=os.path.join(pgm_log_dir, 'random'),
         description_mult='random 1 year storylines, see Storylines/generate_random_storylines.py and '
                          'Storylines/storyline_runs/run_random_suite.py for details',
@@ -112,7 +118,9 @@ def create_1y_pg_data(bad_irr=True):
     for site, mode in default_mode_sites:
         key = f'{mode}-{site}'
         data.loc[:, f'{key}_pg_yr1'] = np.nan
-        data.loc[:, f'{key}_pgra_yr1'] = np.nan
+        for m in [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]:
+            data.loc[:, f'{key}_pg_m{m:02d}'] = np.nan
+
         for i, idv in data.loc[:, ['ID']].itertuples(True, None):
             if i % 1000 == 0:
                 print(f'starting to read sim {i} for site: {site} and mode: {mode}')
@@ -121,11 +129,13 @@ def create_1y_pg_data(bad_irr=True):
                 continue
 
             nc_data = nc.Dataset(p)
-            data.loc[i, f'{key}_pgra_yr1'] = np.array(nc_data.variables['m_PGRA_cum'][-1, :]).mean()
             temp = np.array(nc_data.variables['m_PGR'])
             temp *= np.array([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30])[:, np.newaxis]
-            temp = temp.sum(axis=0).mean()
-            data.loc[i, f'{key}_pg_yr1'] = temp # todo pull out monthly data...
+            temp = np.nanmean(temp, axis=1)
+            for j, m in enumerate([7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]):
+                data.loc[:, f'{key}_pg_m{m:02d}'] = temp[i]
+            temp = temp.sum()
+            data.loc[i, f'{key}_pg_yr1'] = temp  #
             nc_data.close()
     data.loc[:, 'irr_type'] = tp
     data.to_hdf(os.path.join(f'{random_pg_dir}{tnm}', f'IID_probs_pg_1y{tnm}.hdf'), 'prob',
@@ -316,6 +326,8 @@ if __name__ == '__main__':
     import time
 
     t = time.time()
+
+    # todo rejig to run in chunks!
     make_1_year_storylines(bad_irr=True)
     run_1year_basgra(bad_irr=True)
     create_1y_pg_data(bad_irr=True)

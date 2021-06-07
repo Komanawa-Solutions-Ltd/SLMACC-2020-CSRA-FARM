@@ -10,7 +10,7 @@ from matplotlib.patches import Patch
 import os
 
 
-def plot_1_yr_storylines(storylines, title, outdir=None, show=False, ax=None):  # todo test
+def plot_1_yr_storylines(storylines, title, outdir=None, show=False, ax=None):
     """
 
     :param storylines: list of 1 year storylines (pd.DataFrames with an index other than month)
