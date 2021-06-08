@@ -43,15 +43,18 @@ def make_1_year_storylines(bad_irr=True):
     else:
         tnm = '_good_irr'
     n = 70000  # based on an arbirary 4 day run length over easter
+    print('generating random suite')
     storylines = generate_random_suite(n, use_default_seed=True, save=False, return_story=True, bad_irr=bad_irr)
 
     # run IID
-    iid_prob = run_IID(story_dict={f'rsl-{k:06d}': v for k, v in enumerate(storylines)}, verbose=False,
+    print('calculating irrigated prob')
+    iid_prob = run_IID(story_dict={f'rsl-{k:06d}': v for k, v in enumerate(storylines)}, verbose=True,
                        irr_prob_from_zero=False, add_irr_prob=True)
     iid_prob.set_index('ID', inplace=True)
     iid_prob.rename(columns={'log10_prob': 'log10_prob_irrigated'}, inplace=True)
 
-    temp = run_IID(story_dict={f'rsl-{k:06d}': v for k, v in enumerate(storylines)}, verbose=False,
+    print('calculating dryland prob')
+    temp = run_IID(story_dict={f'rsl-{k:06d}': v for k, v in enumerate(storylines)}, verbose=True,
                    irr_prob_from_zero=False, add_irr_prob=False).set_index('ID')
     iid_prob.loc[:, 'log10_prob_dryland'] = temp.loc[:, 'log10_prob']
     iid_prob.reset_index(inplace=True)
@@ -60,6 +63,7 @@ def make_1_year_storylines(bad_irr=True):
     iid_prob.to_hdf(os.path.join(gdrive_outdir, f'IID_probs_1yr{tnm}.hdf'), 'prob', mode='w')  # save on gdrive
 
     # save non-zero probability stories
+    print('saving storylines')
     for sl, (i, p) in zip(storylines, iid_prob.log10_prob_irrigated.to_dict().items()):
         if not np.isfinite(p):
             continue

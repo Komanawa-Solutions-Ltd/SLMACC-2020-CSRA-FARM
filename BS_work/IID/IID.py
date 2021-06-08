@@ -34,7 +34,7 @@ months = [None,
           ]
 
 
-def run_IID(story_dict, outpath=None, verbose=False, comments='', #todo IID transion probabilities are not right
+def run_IID(story_dict, outpath=None, verbose=False, comments='',
             irr_prob_from_zero=True, add_irr_prob=True):
     """
 

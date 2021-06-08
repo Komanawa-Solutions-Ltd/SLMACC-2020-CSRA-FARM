@@ -72,6 +72,8 @@ def generate_random_weather_mcmc(n, use_default_seed=True, nmaxiterations=10000,
     outdata = np.full(shape=(n, 12), fill_value='z-z')
     seed_idx = 0
     for i in range(n):
+        if i % 1000 == 0:
+            print(f'generating storyline {i} of {n}')
         np.random.seed(seeds[seed_idx])
         seed_idx += 1
         new_array = np.full(shape=(12,), fill_value='x-x')
@@ -192,7 +194,7 @@ def generate_random_suite(n, use_default_seed=True, save=True, return_story=Fals
 
     irrigation = generate_irrigation_suites(n, use_default_seed, bad_irr=bad_irr)
     irr_len = len(irrigation)
-    weather = generate_random_weather_mcmc(n, use_default_seed, recalc=True)
+    weather = generate_random_weather_mcmc(n, use_default_seed, recalc=False)
     wea_len = len(weather)  # should be n, but for code clarity
 
     # generate random options
@@ -215,7 +217,10 @@ def generate_random_suite(n, use_default_seed=True, save=True, return_story=Fals
 
     # make into dataframes
     out = []
+    print('making into dataframes')
     for i, (w1, i1) in enumerate(out_idxs):
+        if i% 1000 == 0:
+            print(f'making {i} of {n} into dataframes')
         # year 1
         temp = deepcopy(data)
         t = pd.Series(weather[w1]).str.split('-').str[0]
