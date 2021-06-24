@@ -109,10 +109,10 @@ def extract_data(outdir):
                                   'rest'] + temp]
         outdata.to_csv(os.path.join(outdir, f'{sm}-{var}-{cum_nm}-singe_events.csv'))
 
-mode_sites = ( # todo note for future
+mode_sites = (
         ('dryland', 'oxford'),
-        # ('irrigated', 'eyrewell'),
-        # ('irrigated', 'oxford'),
+        ('irrigated', 'eyrewell'),
+        ('irrigated', 'oxford'),
     )
 
 if __name__ == '__main__':

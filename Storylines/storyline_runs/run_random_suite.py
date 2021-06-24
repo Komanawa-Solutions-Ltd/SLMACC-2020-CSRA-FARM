@@ -323,14 +323,16 @@ def fix_old_1yr_runs(base_dir, change_storyline_time=False):
 if __name__ == '__main__':
     # todo re-run once new event data is confirmed
     run_chunks = []
-    make_stories = True
-    run_basgra = False
-    extract_data = False
+    make_stories = False
+    run_basgra_bad = True
+    run_basgra_good = False
+    extract_data_bad = True
+    extract_data_good = False
     if make_stories:
         make_1_year_storylines(bad_irr=True)
         make_1_year_storylines(bad_irr=False)
 
-    if run_basgra:
+    if run_basgra_bad:
 
         t = input('are you sure you want to run this, it takes 8 days to run basgra y/n')
         if t != 'y':
@@ -338,13 +340,25 @@ if __name__ == '__main__':
 
         import time
         run_1year_basgra(bad_irr=True)
+
+        t = time.time()
+
+        print((time.time() - t) / 60, 'minutes to run 140k * 3  sims')
+    if run_basgra_good:
+
+        t = input('are you sure you want to run this, it takes 8 days to run basgra y/n')
+        if t != 'y':
+            raise ValueError('stopped re-running')
+
+        import time
         run_1year_basgra(bad_irr=False)
 
         t = time.time()
 
         print((time.time() - t) / 60, 'minutes to run 140k * 3  sims')
 
-    if extract_data:
+    if extract_data_bad:
         create_1y_pg_data(bad_irr=True)
+    if extract_data_good:
         create_1y_pg_data(bad_irr=False)
 

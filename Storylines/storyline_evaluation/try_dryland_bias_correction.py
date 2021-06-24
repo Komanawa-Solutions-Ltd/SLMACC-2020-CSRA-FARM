@@ -11,7 +11,7 @@ from Pasture_Growth_Modelling.historical_average_baseline import get_historical_
     run_past_basgra_dryland
 
 
-def try_bias_correction():  # todo check on this, does this 'fix' our problems
+def try_bias_correction():
     outdir = os.path.join(ksl_env.slmmac_dir,'outputs_for_ws', 'norm','historical_trended v historical plots')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
@@ -71,4 +71,3 @@ def try_bias_correction():  # todo check on this, does this 'fix' our problems
 
 if __name__ == '__main__':
     try_bias_correction()
-    # todo show this to zeb

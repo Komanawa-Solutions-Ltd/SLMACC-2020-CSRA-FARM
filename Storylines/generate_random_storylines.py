@@ -21,7 +21,7 @@ from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 # how do I want to store this? make 12 random seeds?, how will this affect the randomness...
 
 def generate_random_weather_mcmc(n, use_default_seed=True, nmaxiterations=10000,
-                                 recalc=False):  # todo check and incorporate!
+                                 recalc=False):
     """
     generate random weather, where the weather data in the next month is dependent on the transition probabilites and
     the previous month's state.  data is for July-June and July is specified as 'A-A'
