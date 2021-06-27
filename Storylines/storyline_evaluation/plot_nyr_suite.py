@@ -93,8 +93,7 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
 
     figsize = (16.5, 9.25)
     if nyr == 1:
-        # data = get_1yr_data(bad_irr=True, good_irr=True)
-        data = get_1yr_data(bad_irr=True, good_irr=False)  # todo DADB!!!
+        data = get_1yr_data(bad_irr=True, good_irr=True)
     else:
         print('reading data')
         data = get_nyr_suite(nyr, site=site, mode=mode)
@@ -389,7 +388,7 @@ def _plt_cum_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_
                                                     prob=x, stepsize=step_size,
                                                     more_production_than=False)
     ax2.bar(cum_pgr, cum_prob, width=step_size / 2, color='grey')
-    ax2.set_title('Non-exceedance probability')  # todo these may be switched... look at
+    ax2.set_title('Non-exceedance probability')
     ax2.set_xlabel('Pasture growth anomaly tons DM/Ha/year')
     if plt_add:
         for i, (l, xi) in enumerate(other_scen[['plotlabel', 'pg']].itertuples(False, None)):

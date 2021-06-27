@@ -317,12 +317,13 @@ def fix_old_1yr_runs(base_dir, change_storyline_time=False):
 
 if __name__ == '__main__':
     # todo re-run once new event data is confirmed
+    # todo look at transition probabilities from years on an impact scale....
     run_chunks = []
     make_stories = False
     run_basgra_bad = False
-    run_basgra_good = False
-    extract_data_bad = True
-    extract_data_good = False
+    run_basgra_good = True
+    extract_data_bad = False
+    extract_data_good = True
     if make_stories:
         make_1_year_storylines(bad_irr=True)
         make_1_year_storylines(bad_irr=False)
