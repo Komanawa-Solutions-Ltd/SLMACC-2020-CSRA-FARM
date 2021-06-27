@@ -137,7 +137,7 @@ def create_1y_pg_data(bad_irr=True):
             temp *= np.array([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30])[:, np.newaxis]
             temp = np.nanmean(temp, axis=1)
             for j, m in enumerate([7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]):
-                data.loc[:, f'{key}_pg_m{m:02d}'] = temp[i]
+                data.loc[i, f'{key}_pg_m{m:02d}'] = temp[j]
             temp = temp.sum()
             data.loc[i, f'{key}_pg_yr1'] = temp  #
             nc_data.close()
@@ -210,7 +210,6 @@ def create_nyr_suite(nyr, use_default_seed=True,
     for mode, site in default_mode_sites:
         print('making dataframe')
         outdata = pd.DataFrame(index=range(n), columns=['log10_prob_dryland', 'log10_prob_irrigated',
-                                                        f'{site}-{mode}_pgra_yr{nyr}',
                                                         f'{site}-{mode}_pg_yr{nyr}'
                                                         ], dtype=np.float32)
         print(outdata.dtypes)
@@ -242,10 +241,6 @@ def create_nyr_suite(nyr, use_default_seed=True,
             prob = data_1y[f'log10_prob_irrigated'].values[idxs[start_idx:end_idx]]
             # note that I have changed the probability to be log10(probaility)
             outdata.loc[start_idx:end_idx - 1, f'log10_prob_irrigated'] = prob.sum(axis=1).astype(np.float32)
-
-            print('getting pgra')
-            pga = data_1y[f'{key}_pgra_yr1'].values[idxs[start_idx:end_idx]].reshape(cs, nyr)
-            outdata.loc[start_idx:end_idx - 1, f'{key}_pgra_yr{nyr}'] = pga.sum(axis=1).astype(np.float32)
 
             print('getting pg')
             pga = data_1y[f'{key}_pg_yr1'].values[idxs[start_idx:end_idx]].reshape(cs, nyr)
@@ -324,7 +319,7 @@ if __name__ == '__main__':
     # todo re-run once new event data is confirmed
     run_chunks = []
     make_stories = False
-    run_basgra_bad = True
+    run_basgra_bad = False
     run_basgra_good = False
     extract_data_bad = True
     extract_data_good = False

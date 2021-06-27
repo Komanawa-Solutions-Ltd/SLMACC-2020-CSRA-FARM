@@ -71,7 +71,7 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
     :param nyr: number of years in the sim... default 1 year
     :param num: number of bins for the density plot
     :param outdir: None or directory (will be made) to save the plots to
-    :param other_scen: none or dataframe with keys: 'plotlabel', 'pgr', 'pgra', 'prob'
+    :param other_scen: none or dataframe with keys: 'plotlabel', 'pgr', 'prob'
     :param other_scen_lbl: a label for the other data for the legend, default is 'other storylines'
     :param pt_labels: bool if True label the other scens with the plotlabel scheme
     :param step_size: float the step size for binning the pasture growth data
@@ -87,13 +87,14 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
     num_others = 0
     if other_scen is not None:
         assert isinstance(other_scen, pd.DataFrame)
-        assert np.in1d(['plotlabel', 'pgr', 'pgra', 'prob'], other_scen.columns).all(), other_scen.columns
+        assert np.in1d(['plotlabel', 'pgr', 'prob'], other_scen.columns).all(), other_scen.columns
         plt_add = True
         num_others = len(other_scen)
 
     figsize = (16.5, 9.25)
     if nyr == 1:
-        data = get_1yr_data(bad_irr=True, good_irr=True)
+        # data = get_1yr_data(bad_irr=True, good_irr=True)
+        data = get_1yr_data(bad_irr=True, good_irr=False)  # todo DADB!!!
     else:
         print('reading data')
         data = get_nyr_suite(nyr, site=site, mode=mode)
@@ -116,11 +117,6 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
         if not os.path.exists(outdir):
             os.makedirs(outdir)
 
-    # pgra
-    _plot_pgra(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
-               other_scen_lbl, pt_labels, base_color, base_lw, base_ls, outdir, close,
-               additional_alpha=additional_alpha)
-
     # PGR
     _plt_pgr(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
              other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prg, outdir, close,
@@ -131,7 +127,7 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
                  other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prg, outdir, close,
                  additional_alpha=additional_alpha)
 
-    # histogram prob + historgam for PGRA
+    # histogram prob + historgam for PGR
     _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add, other_scen, add_color,
                   other_scen_lbl, pt_labels, base_color, base_lw, base_ls, outdir, close,
                   additional_alpha=additional_alpha)
@@ -164,9 +160,9 @@ def _plot_pgra(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_sce
         if pt_labels:
             for l, xi, yi in other_scen[['plotlabel', 'prob', 'pgra']].itertuples(False, None):
                 tb = ax.annotate(l, (xi, yi / 1000 * -1))
-                tb.set_bbox(dict(facecolor='w', alpha=0.3,edgecolor='none'))
+                tb.set_bbox(dict(facecolor='w', alpha=0.3, edgecolor='none'))
         ax.scatter(other_scen['prob'], other_scen['pgra'] / 1000 * -1, marker='^',
-                   s=60, c=add_color, alpha=additional_alpha, label=other_scen_lbl,zorder=10)
+                   s=60, c=add_color, alpha=additional_alpha, label=other_scen_lbl, zorder=10)
 
     ax.axhline(0, c=base_color, lw=base_lw, ls=base_ls, label='baseline impact')
     ax.legend()
@@ -200,8 +196,9 @@ def _plt_pgr(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen,
         if pt_labels:
             for l, xi, yi in other_scen[['plotlabel', 'prob', 'pgr']].itertuples(False, None):
                 tb = ax.annotate(l, (xi, yi / 1000))
-                tb.set_bbox(dict(facecolor='w', alpha=0.3,edgecolor='none'))
-        ax.scatter(other_scen['prob'], other_scen['pgr'] / 1000, marker='^', c=add_color, alpha=additional_alpha, label=other_scen_lbl,
+                tb.set_bbox(dict(facecolor='w', alpha=0.3, edgecolor='none'))
+        ax.scatter(other_scen['prob'], other_scen['pgr'] / 1000, marker='^', c=add_color, alpha=additional_alpha,
+                   label=other_scen_lbl,
                    zorder=10)
 
     ax.axhline(prg, c=base_color, lw=base_lw, ls=base_ls, label='baseline impact')
@@ -236,8 +233,9 @@ def _plt_pgr_per(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_s
         if pt_labels:
             for l, xi, yi in other_scen[['plotlabel', 'prob', 'pgr']].itertuples(False, None):
                 tb = ax.annotate(l, (xi, yi / prg / 1000 * 100))
-                tb.set_bbox(dict(facecolor='w', alpha=0.3,edgecolor='none'))
-        ax.scatter(other_scen['prob'], other_scen['pgr'] / 1000 / prg * 100, marker='^', c=add_color, alpha=additional_alpha,
+                tb.set_bbox(dict(facecolor='w', alpha=0.3, edgecolor='none'))
+        ax.scatter(other_scen['prob'], other_scen['pgr'] / 1000 / prg * 100, marker='^', c=add_color,
+                   alpha=additional_alpha,
                    label=other_scen_lbl, zorder=10)
 
     ax.axhline(100, c=base_color, lw=base_lw, ls=base_ls, label='baseline impact')
@@ -260,7 +258,7 @@ def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add,
     print('plotting raw histogram')
     start_time = time.time()
     bins = 500
-    y = data[f'{site}-{mode}_pgra_yr{nyr}'] / 1000
+    y = data[f'{site}-{mode}_pgr_yr{nyr}'] / 1000
     fig, (ax1, ax2) = plt.subplots(2, figsize=figsize)
     ty, tx, t0 = ax1.hist(x, bins=bins, color='grey')
     ax1.set_title('Probability Histogram')
@@ -276,7 +274,7 @@ def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add,
             if pt_labels:
                 ylab_pos = ty.max() * (0.95 - 90 / num_others * i / 100)
                 tb = ax1.annotate(l, (xi, ylab_pos))
-                tb.set_bbox(dict(facecolor='w', alpha=0.3,edgecolor='none'))
+                tb.set_bbox(dict(facecolor='w', alpha=0.3, edgecolor='none'))
 
     ax1.set_ylabel('Count')
     ax1.set_xticks(ticks)
@@ -284,11 +282,11 @@ def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add,
     ax1.legend()
 
     ty, tx, t0 = ax2.hist(y, bins=bins, color='grey')
-    ax2.set_xlabel('Pasture growth anomaly tons DM/Ha/year\nimpact increases <--')
+    ax2.set_xlabel('Pasture growth tons DM/Ha/year\nimpact increases <--')
     ax2.set_title('PG anomaly Histogram')
     ax2.set_ylabel('Count')
     if plt_add:
-        for i, (l, xi) in enumerate(other_scen[['plotlabel', 'pgra']].itertuples(False, None)):
+        for i, (l, xi) in enumerate(other_scen[['plotlabel', 'pgr']].itertuples(False, None)):
             if i == 0:
                 tlab = other_scen_lbl
             else:
@@ -297,7 +295,7 @@ def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add,
             if pt_labels:
                 ylab_pos = ty.max() * (0.95 - 90 / num_others * i / 100)
                 tb = ax2.annotate(l, (xi / 1000, ylab_pos))
-                tb.set_bbox(dict(facecolor='w', alpha=0.3,edgecolor='none'))
+                tb.set_bbox(dict(facecolor='w', alpha=0.3, edgecolor='none'))
 
     ax2.axvline(0, c=base_color, lw=base_lw, ls=base_ls, label='baseline impact')
     ax2.legend()
@@ -316,18 +314,19 @@ def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add,
 
 
 def _plot_impact_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_scen, add_color,
-                      other_scen_lbl, pt_labels, base_color, base_lw, base_ls, step_size, outdir, close, additional_alpha):
+                      other_scen_lbl, pt_labels, base_color, base_lw, base_ls, step_size, outdir, close,
+                      additional_alpha):
     print('plotting impact probability')
     start_time = time.time()
-    y = data[f'{site}-{mode}_pgra_yr{nyr}'] / 1000
+    y = data[f'{site}-{mode}_pgr_yr{nyr}'] / 1000
     cum_pgr, cum_prob = calc_impact_prob(pgr=y,
                                          prob=x, stepsize=step_size)
     fig, ax1 = plt.subplots(figsize=figsize)
     ax1.bar(cum_pgr, cum_prob, width=step_size / 2, color='grey')
     ax1.set_title('Impact Probability Histogram')
-    ax1.set_xlabel('Pasture growth anomaly tons DM/Ha/year\nimpact increases <--')
+    ax1.set_xlabel('Pasture growth tons DM/Ha/year\nimpact increases <--')
     if plt_add:
-        for i, (l, xi) in enumerate(other_scen[['plotlabel', 'pgra']].itertuples(False, None)):
+        for i, (l, xi) in enumerate(other_scen[['plotlabel', 'pgr']].itertuples(False, None)):
             if i == 0:
                 tlab = other_scen_lbl
             else:
@@ -336,9 +335,10 @@ def _plot_impact_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, ot
             if pt_labels:
                 ylab_pos = cum_prob.max() * (0.95 - 90 / num_others * i / 100)
                 tb = ax1.annotate(l, (xi / 1000, ylab_pos))
-                tb.set_bbox(dict(facecolor='w', alpha=0.3,edgecolor='none'))
+                tb.set_bbox(dict(facecolor='w', alpha=0.3, edgecolor='none'))
 
-    ax1.axvline(0, c=base_color, lw=base_lw, ls=base_ls, label='baseline pasture growth')
+    ax1.axvline(get_pgr_prob_baseline_stiched(nyr, site, mode), c=base_color, lw=base_lw, ls=base_ls,
+                label='baseline pasture growth')
     ax1.set_ylabel('Probability of an event (sum to 1)')
     ax1.legend()
 
@@ -360,15 +360,15 @@ def _plt_cum_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_
                   other_scen_lbl, pt_labels, base_color, base_lw, base_ls, step_size, outdir, close, additional_alpha):
     print('plot cumulative probability')
     start_time = time.time()
-    y = data[f'{site}-{mode}_pgra_yr{nyr}'] / 1000
+    y = data[f'{site}-{mode}_pgr_yr{nyr}'] / 1000
     cum_pgr, cum_prob = calc_cumulative_impact_prob(pgr=y,
                                                     prob=x, stepsize=step_size)
     fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=figsize)
     ax1.bar(cum_pgr, cum_prob, width=step_size / 2, color='grey')
     ax1.set_title('Exceedance probability')
-    ax1.set_xlabel('Pasture growth anomaly tons DM/Ha/year\nimpact increases <--')
+    ax1.set_xlabel('Pasture growth tons DM/Ha/year')
     if plt_add:
-        for i, (l, xi) in enumerate(other_scen[['plotlabel', 'pgra']].itertuples(False, None)):
+        for i, (l, xi) in enumerate(other_scen[['plotlabel', 'pgr']].itertuples(False, None)):
             if i == 0:
                 tlab = other_scen_lbl
             else:
@@ -377,20 +377,21 @@ def _plt_cum_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_
             if pt_labels:
                 ylab_pos = cum_prob.max() * (0.95 - 90 / num_others * i / 100)
                 tb = ax1.annotate(l, (xi / 1000, ylab_pos))
-                tb.set_bbox(dict(facecolor='w', alpha=0.3,edgecolor='none'))
+                tb.set_bbox(dict(facecolor='w', alpha=0.3, edgecolor='none'))
 
-    ax1.axvline(0, c=base_color, lw=base_lw, ls=base_ls, label='baseline pasture growth')
-    ax1.set_ylabel('Probability of an event with \nequal or greater Pasture growth anomaly')
+    ax1.axvline(get_pgr_prob_baseline_stiched(nyr, site, mode), c=base_color, lw=base_lw, ls=base_ls,
+                label='baseline pasture growth')
+    ax1.set_ylabel('Probability of an event with \nequal or lower Pasture growth')
     ax1.legend()
 
     cum_pgr, cum_prob = calc_cumulative_impact_prob(pgr=y,
                                                     prob=x, stepsize=step_size,
                                                     more_production_than=False)
     ax2.bar(cum_pgr, cum_prob, width=step_size / 2, color='grey')
-    ax2.set_title('Non-exceedance probability')
-    ax2.set_xlabel('Pasture growth anomaly tons DM/Ha/year\nimpact increases <--')
+    ax2.set_title('Non-exceedance probability')  # todo these may be switched... look at
+    ax2.set_xlabel('Pasture growth anomaly tons DM/Ha/year')
     if plt_add:
-        for i, (l, xi) in enumerate(other_scen[['plotlabel', 'pgra']].itertuples(False, None)):
+        for i, (l, xi) in enumerate(other_scen[['plotlabel', 'pgr']].itertuples(False, None)):
             if i == 0:
                 tlab = other_scen_lbl
             else:
@@ -399,10 +400,11 @@ def _plt_cum_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_
             if pt_labels:
                 ylab_pos = cum_prob.max() * (0.95 - 90 / num_others * i / 100)
                 tb = ax2.annotate(l, (xi / 1000, ylab_pos))
-                tb.set_bbox(dict(facecolor='w', alpha=0.3,edgecolor='none'))
+                tb.set_bbox(dict(facecolor='w', alpha=0.3, edgecolor='none'))
 
-    ax2.axvline(0, c=base_color, lw=base_lw, ls=base_ls, label='baseline pasture growth')
-    ax2.set_ylabel('Probability of an event with \nequal or less Pasture growth anomaly')
+    ax2.axvline(get_pgr_prob_baseline_stiched(nyr, site, mode),
+                c=base_color, lw=base_lw, ls=base_ls, label='baseline pasture growth')
+    ax2.set_ylabel('Probability of an event with \nequal or greater Pasture growth')
     ax2.legend()
 
     nm = f'{site}-{mode}_exceed_prob'
