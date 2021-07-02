@@ -179,7 +179,7 @@ def create_nyr_suite(nyr, use_default_seed=True,
     assert isinstance(nyr, int)
     n = int(2.5e8)
     if nyr > 5:
-        n = int(2.5e7)
+        n = int(2.5e8)
 
     data_1y = get_1yr_data(bad_irr=True, good_irr=True)
     assert isinstance(data_1y, pd.DataFrame)

@@ -157,9 +157,9 @@ def plot_3yr_additional(get_add_fun, other_scen_lbl, pt_labels=True, save=False)
 
 if __name__ == '__main__':
     # todo re-run all with new event data, check
-    plot_1yr(True, True)
-    plot_2yr_no_additional(True)
-    plot_3yr_no_additional(True)
+    #plot_1yr(True, True)
+    #plot_2yr_no_additional(True)
+    #plot_3yr_no_additional(True)
     plot_5yr_no_additional(True)
     plot_10yr_no_additional(True)
     #
