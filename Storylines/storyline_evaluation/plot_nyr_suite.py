@@ -141,6 +141,20 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
                   other_scen_lbl, pt_labels, base_color, base_lw, base_ls, step_size, outdir, close,
                   additional_alpha=additional_alpha)
 
+    # todo export key data
+    if outdir is not None:
+        y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
+        cum_pgr, cum_prob = calc_impact_prob(pgr=y,
+                                             prob=x, stepsize=step_size)
+        temp = pd.DataFrame({'prob': cum_prob, 'pg': cum_pgr})
+        temp.to_csv(os.path.join(outdir, f'{site}-{mode}_{nyr}yr_impact_prob.csv'))
+
+        y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
+        cum_pgr, cum_prob = calc_cumulative_impact_prob(pgr=y,
+                                                        prob=x, stepsize=step_size)
+        temp = pd.DataFrame({'prob': cum_prob, 'pg': cum_pgr})
+        temp.to_csv(os.path.join(outdir, f'{site}-{mode}_{nyr}yr_cumulative_exceed_prob.csv'))
+
 
 def _plot_pgra(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen, add_color,
                other_scen_lbl, pt_labels, base_color, base_lw, base_ls, outdir, close, additional_alpha):
@@ -296,7 +310,7 @@ def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add,
                 tb = ax2.annotate(l, (xi / 1000, ylab_pos))
                 tb.set_bbox(dict(facecolor='w', alpha=0.3, edgecolor='none'))
 
-    ax2.axvline(get_pgr_prob_baseline_stiched(nyr, site, mode)/1000, c=base_color, lw=base_lw, ls=base_ls,
+    ax2.axvline(get_pgr_prob_baseline_stiched(nyr, site, mode) / 1000, c=base_color, lw=base_lw, ls=base_ls,
                 label='baseline impact')
     ax2.legend()
 
@@ -337,7 +351,7 @@ def _plot_impact_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, ot
                 tb = ax1.annotate(l, (xi / 1000, ylab_pos))
                 tb.set_bbox(dict(facecolor='w', alpha=0.3, edgecolor='none'))
 
-    ax1.axvline(get_pgr_prob_baseline_stiched(nyr, site, mode)/1000, c=base_color, lw=base_lw, ls=base_ls,
+    ax1.axvline(get_pgr_prob_baseline_stiched(nyr, site, mode) / 1000, c=base_color, lw=base_lw, ls=base_ls,
                 label='baseline pasture growth')
     ax1.set_ylabel('Probability of an event (sum to 1)')
     ax1.legend()
@@ -379,7 +393,7 @@ def _plt_cum_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_
                 tb = ax1.annotate(l, (xi / 1000, ylab_pos))
                 tb.set_bbox(dict(facecolor='w', alpha=0.3, edgecolor='none'))
 
-    ax1.axvline(get_pgr_prob_baseline_stiched(nyr, site, mode)/1000, c=base_color, lw=base_lw, ls=base_ls,
+    ax1.axvline(get_pgr_prob_baseline_stiched(nyr, site, mode) / 1000, c=base_color, lw=base_lw, ls=base_ls,
                 label='baseline pasture growth')
     ax1.set_ylabel('Probability of an event with \nequal or greater Pasture growth')
     ax1.legend()
@@ -402,7 +416,7 @@ def _plt_cum_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_
                 tb = ax2.annotate(l, (xi / 1000, ylab_pos))
                 tb.set_bbox(dict(facecolor='w', alpha=0.3, edgecolor='none'))
 
-    ax2.axvline(get_pgr_prob_baseline_stiched(nyr, site, mode)/1000,
+    ax2.axvline(get_pgr_prob_baseline_stiched(nyr, site, mode) / 1000,
                 c=base_color, lw=base_lw, ls=base_ls, label='baseline pasture growth')
     ax2.set_ylabel('Probability of an event with \nequal or less Pasture growth')
     ax2.legend()

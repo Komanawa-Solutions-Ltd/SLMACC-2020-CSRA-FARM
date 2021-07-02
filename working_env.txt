@@ -8,3 +8,5 @@ The choice for python 3.7 is based on the changes made in 3.8 which makes it har
 If you have any concerns with regards to this environement, please contact Matt@komanawa.com
 
 see: SLMMAC_environment.yml for direct export of the used environment.
+
+conda install -c conda-forge scikit-learn for the pca and clustering
