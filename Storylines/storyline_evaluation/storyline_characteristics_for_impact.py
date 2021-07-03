@@ -9,7 +9,7 @@ import pandas as pd
 from numbers import Number
 import os
 from sklearn.cluster import KMeans, AgglomerativeClustering, MeanShift
-
+from plot_storylines import plot_1_yr_storylines
 import ksl_env
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, default_mode_sites
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
@@ -32,13 +32,18 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None)
                          '*' can be passed for all possible for each.  only months with constraints need to be passed
     :return:
     """
+    # todo get the cumulateive probability of all of this...
     assert isinstance(state_limits, dict) or state_limits is None
     assert isinstance(lower_bound, dict) and isinstance(upper_bound, dict)
     assert set(lower_bound.keys()) == set(upper_bound.keys()) == {f'{s}-{m}' for m, s in default_mode_sites}
+
     impact_data = get_1yr_data(bad_irr=True, good_irr=True)
     impact_data = impact_data.dropna()
     impact_data.loc[:, 'sl_path'] = (base_story_dir + impact_data.loc[:, 'irr_type'] + '_irr/' +
                                      impact_data.loc[:, 'ID'] + '.csv')
+
+    full_prob = (10 ** impact_data.loc[:, ['log10_prob_irrigated', 'log10_prob_dryland']]).sum()
+
     idx = np.full((len(impact_data),), True)
     for mode, site in default_mode_sites:
         sm = f'{site}-{mode}'
@@ -68,10 +73,10 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None)
         if return_for_pca:
             pca_data = get_storyline_data(True)
             data = [pd.DataFrame(e, columns=cols) for e in data[idx]]
-            return pca_data[idx], data, impact_data.loc[idx]
+            return pca_data[idx], data, impact_data.loc[idx], full_prob
         else:
             data = [pd.DataFrame(e, columns=cols) for e in data[idx]]
-            return data, impact_data.loc[idx]
+            return data, impact_data.loc[idx], full_prob
     data = data[idx]
     impact_data = impact_data[idx]
     idx2 = np.full((len(data),), True)
@@ -94,10 +99,10 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None)
     if return_for_pca:
         pca_data = get_storyline_data(True)
         data = [pd.DataFrame(e, columns=cols) for e in data[idx2]]
-        return pca_data[idx][idx2], data, impact_data.loc[idx2]
+        return pca_data[idx][idx2], data, impact_data.loc[idx2], full_prob
     else:
         data = [pd.DataFrame(e, columns=cols) for e in data[idx2]]
-        return data, impact_data.loc[idx2]
+        return data, impact_data.loc[idx2], full_prob
 
 
 def get_storyline_data(pca=False):
@@ -153,26 +158,38 @@ def make_all_storyline_data(calc_raw=False):
     np.save(out_path_pca, out, False, False)
 
 
-def run_plot_pca(data, impact_data, n_clusters=10, n_pcs=15, plot=True, show=False):
+def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=False, log_dir=None):
+    log_text = []
     print('running_pca')
     pca = PCA().fit(data)
     trans_data = pca.transform(data)
-    print('explained variance')
-    print(pca.explained_variance_ratio_)
-    print('cumulative explained variance')
-    print(np.cumsum(pca.explained_variance_ratio_))
+
+    log_text.append('explained variance')
+    log_text.append(pca.explained_variance_ratio_)
+    log_text.append('cumulative explained variance')
+    log_text.append(np.cumsum(pca.explained_variance_ratio_))
+    log_text.append(f'calculating {n_clusters} clusters for {n_pcs} principle components total '
+                    f'explained variance{np.cumsum(pca.explained_variance_ratio_)[n_pcs - 1]}')
+
     clusters = AgglomerativeClustering(n_clusters=n_clusters).fit_predict(trans_data[:, 0:n_pcs])
     clusters = np.array(clusters)
 
+    if log_dir is not None:
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+        with open(os.path.join(log_dir, 'cluster_log.txt'), 'w') as f:
+            f.write('\n'.join(log_text))
+
     if plot:
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(14, 7))
         ax.scatter(trans_data[:, 0], trans_data[:, 1], c=clusters, cmap='magma')
         ax.set_xlabel('pc1')
         ax.set_ylabel('pc2')
 
         for mode, site in default_mode_sites:
-            fig, ax = plt.subplots()
-            ax.boxplot([impact_data.loc[clusters == k, f'{site}-{mode}_pg_yr1'] / 1000 for k in np.unique(clusters)])
+            fig, ax = plt.subplots(figsize=(14, 7))
+            ax.boxplot([impact_data.loc[clusters == k, f'{site}-{mode}_pg_yr1'] / 1000 for k in np.unique(clusters)],
+                       labels=range(n_clusters))
             ax.set_title(f'{site}-{mode} - Agglomerative')
             ax.set_xlabel('cluster')
             ax.set_ylabel('pg growth tons DM/ha/yr')
@@ -182,31 +199,66 @@ def run_plot_pca(data, impact_data, n_clusters=10, n_pcs=15, plot=True, show=Fal
     return clusters
 
 
-if __name__ == '__main__':  # todo start working through this...
-    # todo wrap the following into a single function and then talk to WS
-    pca_data, data, impact_data = get_suite(lower_bound={
-        'oxford-dryland': None,
-        'eyrewell-irrigated': 10 * 1000,
-        'oxford-irrigated': None,
-    },
+def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n_clusters=20, n_pcs=15,
+                          save_stories=True):
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    pca_data, data, impact_data, full_prob = get_suite(lower_bound=lower_bound,
+                                                       upper_bound=upper_bound,
+                                                       return_for_pca=True,
+                                                       state_limits=state_limits
+
+                                                       )
+    print(len(data))
+    total_prob = (10 ** impact_data.loc[:, ['log10_prob_irrigated', 'log10_prob_dryland']]).sum() / full_prob
+    total_prob.to_csv(os.path.join(outdir, 'explained_probability.csv'))
+    clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs)
+    impact_data.loc[:, 'cluster'] = clusters
+    impact_data.to_csv(os.path.join(outdir, 'prop_pg_cluster_data.csv'))
+
+    probs = 10 ** impact_data['log10_prob_irrigated']
+    probs = probs / probs.sum()
+    cluster_data = pd.DataFrame(index=np.unique(clusters), columns=['rel_cum_prob', 'size', 'norm_prob'])
+    cluster_data.index.name = 'cluster'
+
+    for c in np.unique(clusters):
+        idx = clusters == c
+        cluster_data.loc[c, 'rel_cum_prob'] = probs[idx].sum()
+        cluster_data.loc[c, 'size'] = idx.sum()
+        cluster_data.loc[c, 'norm_prob'] = probs[idx].sum() / idx.sum()
+        use_data = [e for e, i in zip(data, idx) if i]
+        temp_data, precip_data, rest_data = plot_1_yr_storylines(use_data, f'cluster {c}',
+                                                                 outdir=outdir)
+        if save_stories:
+            sl_dir = os.path.join(outdir, f'storylines_cluster_{c:03d}')
+            if not os.path.exists(sl_dir):
+                os.makedirs(sl_dir)
+            for nm, sl in zip(impact_data.loc[idx, 'ID'], use_data):
+                sl.to_csv(os.path.join(sl_dir, f'{nm}.csv'))
+    cluster_data.loc[:, 'full_prob_irr'] = cluster_data.loc[:, 'rel_cum_prob'] * total_prob.loc['log10_prob_irrigated']
+    cluster_data.loc[:, 'full_prob_dry'] = cluster_data.loc[:, 'rel_cum_prob'] * total_prob.loc['log10_prob_dryland']
+    cluster_data.to_csv(os.path.join(outdir, 'cluster_data.csv'))
+    plt.close('all')
+
+
+if __name__ == '__main__':
+    storyline_subclusters(
+        outdir=r"C:\Users\dumon\Downloads\test_storyline_subcluster",
+        lower_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': 10 * 1000,
+            'oxford-irrigated': None,
+        },
         upper_bound={
             'oxford-dryland': None,
             'eyrewell-irrigated': 14 * 1000,
             'oxford-irrigated': None,
 
-        }, return_for_pca=True,
-        state_limits={2: (['D'], '*', '*')}
+        },
 
+        state_limits={2: (['D'], '*', '*')},
+        n_clusters=20,
+        n_pcs=15,
+        save_stories=True
     )
-    print(len(data))
-    clusters = run_plot_pca(pca_data, impact_data)
-
-    from plot_storylines import plot_1_yr_storylines
-
-    probs = 10 ** impact_data['log10_prob_irrigated']
-    probs = probs / probs.sum()
-    for c in np.unique(clusters):
-        idx = clusters == c
-        print(f'cluster: {c} prob: {probs[idx].sum()} size: {idx.sum()} norm_prob: {probs[idx].sum()/idx.sum():.3e}')
-        plot_1_yr_storylines([e for e, i in zip(data, idx) if i], f'cluster {c}')
-    plt.show()

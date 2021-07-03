@@ -79,6 +79,12 @@ def plot_1_yr_storylines(storylines, title, outdir=None, show=False, ax=None):
     if show:
         plt.show()
 
+    for m in plt_months:
+        rest_data[m] = np.array(rest_data[m]) / 3
+        temp_data[m] = np.array(temp_data[m])
+        precip_data[m] = np.array(precip_data[m])
+    return temp_data, precip_data, rest_data
+
 
 if __name__ == '__main__':
     base_dir_trend = r"D:\mh_unbacked\SLMACC_2020_norm\temp_storyline_files\historical_quantified_1yr_trend"
@@ -90,4 +96,3 @@ if __name__ == '__main__':
         plot_1_yr_storylines(storylines, title, show=False)
 
     plt.show()
-

@@ -29,7 +29,10 @@ def plot_all_comps():
         for nyr in [1, 2, 3, 5, 10]:
             trend = pd.read_csv(os.path.join(base_trend, f'{nyr}yr', f'{sm}_{nyr}yr_cumulative_exceed_prob.csv'))
             detrend = pd.read_csv(os.path.join(base_detrend, f'{nyr}yr', f'{sm}_{nyr}yr_cumulative_exceed_prob.csv'))
-            model = pd.read_csv(os.path.join(base_model, f'{nyr}yr', f'{sm}_cumulative_exceed_prob.csv'))
+            if nyr < 5:
+                model = pd.read_csv(os.path.join(base_model, f'{nyr}yr', f'{sm}_cumulative_exceed_prob.csv'))
+            else:
+                model = pd.read_csv(os.path.join(base_model, f'{nyr}yr', f'{sm}_{nyr}yr_cumulative_exceed_prob.csv'))
 
             fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=figsize)
             ax1.plot(trend.loc[:, 'pg'], 1 - trend.loc[:, 'prob'], c='r', label='historical (non-stationary) cdf')
@@ -44,7 +47,7 @@ def plot_all_comps():
 
             ax2.plot(trend.loc[:, 'pg'], trend.loc[:, 'prob'], c='r', label='historical (non-stationary) cdf')
             ax2.plot(detrend.loc[:, 'pg'], detrend.loc[:, 'prob'], c='b', label='detrended historical cdf')
-            ax2.plot(model.loc[:, 'pg'], 1-model.loc[:, 'prob'], c='k', label='modelled cdf')
+            ax2.plot(model.loc[:, 'pg'], 1 - model.loc[:, 'prob'], c='k', label='modelled cdf')
 
             ax2.set_title('Non-exceedance probability')
             ax2.set_xlabel('Pasture growth anomaly tons DM/Ha/year')
@@ -58,5 +61,6 @@ def plot_all_comps():
             fig.tight_layout()
             fig.savefig(os.path.join(outdir, f'{site}-{mode}_{nyr}yr_cum_comp.png'))
 
-if __name__ == '__main__': # todo run and check!!!
+
+if __name__ == '__main__':  # todo run and check!!!
     plot_all_comps()
