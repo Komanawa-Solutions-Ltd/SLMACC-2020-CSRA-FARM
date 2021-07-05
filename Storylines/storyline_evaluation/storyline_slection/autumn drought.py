@@ -62,8 +62,62 @@ def autumn_drought_2():
 
 
 def dry_summer():
-    raise NotImplementedError # todo
+    storyline_subclusters(
 
+        outdir=r"C:\Users\dumon\Downloads\dry_summer1",
+        lower_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': None,
+            'oxford-irrigated': None,
+        },
+        upper_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': None,
+            'oxford-irrigated': None,
+
+        },
+
+        state_limits={
+            9: (['D', 'A'], '*', (0.5, 1)),
+            10: (['D', 'A'], '*', (0.5, 1)),
+            11: (['D', 'A'], '*', (0.5, 1)),
+            12: (['D', 'A'], '*', (0.5, 1)),
+
+        },
+        n_clusters=10,
+        n_pcs=15,
+        save_stories=True
+    )
+def dry_summer2():
+    storyline_subclusters(
+
+        outdir=r"C:\Users\dumon\Downloads\dry_summer2",
+        lower_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': None,
+            'oxford-irrigated': None,
+        },
+        upper_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': None,
+            'oxford-irrigated': None,
+
+        },
+
+        state_limits={
+            9: (['D'], '*', (0.5, 1)),
+            10: (['D'], '*', (0.5, 1)),
+            11: (['D'], '*', (0.5, 1)),
+            12: (['D'], '*', (0.5, 1)),
+
+        },
+        n_clusters=10,
+        n_pcs=15,
+        save_stories=True
+    )
 
 if __name__ == '__main__':
-    autumn_drought_1()
+    #autumn_drought_1()
+    #autumn_drought_2()
+    #dry_summer()
+    dry_summer2()

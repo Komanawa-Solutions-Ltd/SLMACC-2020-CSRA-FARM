@@ -256,7 +256,6 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
             pg_fig.tight_layout()
             pg_fig.savefig(os.path.join(log_dir, f'pg_curve_clust_{clust:02d}.png'))
 
-        # todo plot the pg growth curve for each cluster!
         if show:
             plt.show()
     return clusters
@@ -275,7 +274,19 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
                                                        )
     print(len(data))
     total_prob = (10 ** impact_data.loc[:, ['log10_prob_irrigated', 'log10_prob_dryland']]).sum() / full_prob
-    # todo add the probility of an event greater than or less than event.
+    exceedence = {}
+    for mode, site in default_mode_sites:
+        exceedence[f'{site}-{mode}'] = pd.read_csv(
+            os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
+                         r"random_scen_plots\1yr", f"{site}-{mode}_cumulative_exceed_prob.csv"))
+
+        impact = impact_data.loc[:, f'{site}-{mode}_pg_yr1'].median() / 1000
+        probs = exceedence[f'{site}-{mode}'].prob.values
+        impacts = exceedence[f'{site}-{mode}'].pg.values
+        idx = np.argmin(np.abs(impacts - impact))
+        total_prob.loc[f'higher_pg_prob_{site}-{mode}_median'] = probs[idx]
+        total_prob.loc[f'lower_pg_prob_{site}-{mode}_median'] = 1 - probs[idx]
+
     total_prob.to_csv(os.path.join(outdir, 'explained_probability.csv'))
     clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs, log_dir=outdir)
     impact_data.loc[:, 'cluster'] = clusters
@@ -291,6 +302,16 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
         cluster_data.loc[c, 'rel_cum_prob'] = probs[idx].sum()
         cluster_data.loc[c, 'size'] = idx.sum()
         cluster_data.loc[c, 'norm_prob'] = probs[idx].sum() / idx.sum()
+
+        # todo below
+        for mode, site in default_mode_sites:
+            impact_v = impact_data.loc[impact_data.loc[:, 'cluster'] == c, f'{site}-{mode}_pg_yr1'].median() / 1000
+            probs_value = exceedence[f'{site}-{mode}'].prob.values
+            impacts_value = exceedence[f'{site}-{mode}'].pg.values
+            idx_value = np.argmin(np.abs(impacts_value - impact_v))
+            cluster_data.loc[c, f'higher_pg_prob_{site}-{mode}_median'] = probs_value[idx_value]
+            cluster_data.loc[c, f'lower_pg_prob_{site}-{mode}_median'] = 1 - probs_value[idx_value]
+
         use_data = [e for e, i in zip(data, idx) if i]
         temp_data, precip_data, rest_data = plot_1_yr_storylines(use_data, f'cluster {c}',
                                                                  outdir=outdir)
