@@ -9,17 +9,22 @@ import pandas as pd
 from numbers import Number
 import os
 from sklearn.cluster import KMeans, AgglomerativeClustering, MeanShift
-from plot_storylines import plot_1_yr_storylines
+from Storylines.storyline_evaluation.plot_storylines import plot_1_yr_storylines
 import ksl_env
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, default_mode_sites
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
+from Storylines.storyline_params import month_len
 
 name = 'random_'
 base_story_dir = os.path.join(temp_storyline_dir, name)
 cols = ['date', 'precip_class', 'temp_class', 'rest', 'rest_per', 'year',
         'month', 'precip_class_prev']
+
+
+def get_exceedence_prob():
+    pass  # todo
 
 
 def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None):
@@ -165,9 +170,9 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
     trans_data = pca.transform(data)
 
     log_text.append('explained variance')
-    log_text.append(pca.explained_variance_ratio_)
+    log_text.append(' '.join([f'{e:.2e}' for e in pca.explained_variance_ratio_]))
     log_text.append('cumulative explained variance')
-    log_text.append(np.cumsum(pca.explained_variance_ratio_))
+    log_text.append(' '.join([f'{e:.2e}' for e in np.cumsum(pca.explained_variance_ratio_)]))
     log_text.append(f'calculating {n_clusters} clusters for {n_pcs} principle components total '
                     f'explained variance{np.cumsum(pca.explained_variance_ratio_)[n_pcs - 1]}')
 
@@ -188,12 +193,70 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
 
         for mode, site in default_mode_sites:
             fig, ax = plt.subplots(figsize=(14, 7))
-            ax.boxplot([impact_data.loc[clusters == k, f'{site}-{mode}_pg_yr1'] / 1000 for k in np.unique(clusters)],
-                       labels=range(n_clusters))
+            data = [impact_data.loc[:, f'{site}-{mode}_pg_yr1'] / 1000]
+            data = data + [impact_data.loc[clusters == k, f'{site}-{mode}_pg_yr1'] / 1000 for k in np.unique(clusters)]
+            ax.boxplot(data,
+                       labels=['all'] + [f'c:{i}' for i in range(n_clusters)])
             ax.set_title(f'{site}-{mode} - Agglomerative')
             ax.set_xlabel('cluster')
             ax.set_ylabel('pg growth tons DM/ha/yr')
+            fig.savefig(os.path.join(log_dir, f'{site}-{mode}-pg.png'))
 
+        plot_months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
+        pg_fig, pg_axs = plt.subplots(nrows=3, figsize=(14, 10), sharex=True)
+        for i, ((mode, site), ax) in enumerate(zip(default_mode_sites, pg_axs)):
+            data = [impact_data.loc[:, f'{site}-{mode}_pg_m{m:02d}'] / month_len[m] for m in plot_months]
+            parts = ax.violinplot(data, positions=np.arange(1, len(plot_months) + 1),
+                                  showmeans=False, showmedians=True, quantiles=[[0.25, 0.75] for e in plot_months])
+            c = 'k'
+            for pc in parts['bodies']:
+                pc.set_facecolor(c)
+            parts['cmedians'].set_color(c)
+            parts['cquantiles'].set_color(c)
+            parts['cmins'].set_color(c)
+            parts['cmaxes'].set_color(c)
+            parts['cbars'].set_color(c)
+
+            ax.set_title(f'{site}-{mode}')
+            if i == 2:
+                ax.set_xlabel('Month')
+                ax.set_xticks(np.arange(1, len(plot_months) + 1))
+                ax.set_xticklabels([str(e) for e in plot_months])
+                ax.set_xlim(0.5, len(plot_months) + 0.5)
+            if i == 1:
+                ax.set_ylabel('kg DM/ha/day')
+        pg_fig.suptitle(f'Full Suite')
+        pg_fig.tight_layout()
+        pg_fig.savefig(os.path.join(log_dir, 'pg_curve_all.png'))
+        for clust in np.unique(clusters):
+            pg_fig, pg_axs = plt.subplots(nrows=3, figsize=(14, 10), sharex=True)
+            for i, ((mode, site), ax) in enumerate(zip(default_mode_sites, pg_axs)):
+                data = [impact_data.loc[clusters == clust,
+                                        f'{site}-{mode}_pg_m{m:02d}'] / month_len[m] for m in plot_months]
+                parts = ax.violinplot(data, positions=np.arange(1, len(plot_months) + 1),
+                                      showmeans=False, showmedians=True, quantiles=[[0.25, 0.75] for e in plot_months])
+                c = 'k'
+                for pc in parts['bodies']:
+                    pc.set_facecolor(c)
+                parts['cmedians'].set_color(c)
+                parts['cquantiles'].set_color(c)
+                parts['cmins'].set_color(c)
+                parts['cmaxes'].set_color(c)
+                parts['cbars'].set_color(c)
+
+                ax.set_title(f'{site}-{mode}')
+                if i == 2:
+                    ax.set_xlabel('Month')
+                    ax.set_xticks(np.arange(1, len(plot_months) + 1))
+                    ax.set_xticklabels([str(e) for e in plot_months])
+                    ax.set_xlim(0.5, len(plot_months) + 0.5)
+                if i == 1:
+                    ax.set_ylabel('kg DM/ha/day')
+            pg_fig.suptitle(f'Cluster {clust:02d}')
+            pg_fig.tight_layout()
+            pg_fig.savefig(os.path.join(log_dir, f'pg_curve_clust_{clust:02d}.png'))
+
+        # todo plot the pg growth curve for each cluster!
         if show:
             plt.show()
     return clusters
@@ -212,8 +275,9 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
                                                        )
     print(len(data))
     total_prob = (10 ** impact_data.loc[:, ['log10_prob_irrigated', 'log10_prob_dryland']]).sum() / full_prob
+    # todo add the probility of an event greater than or less than event.
     total_prob.to_csv(os.path.join(outdir, 'explained_probability.csv'))
-    clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs)
+    clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs, log_dir=outdir)
     impact_data.loc[:, 'cluster'] = clusters
     impact_data.to_csv(os.path.join(outdir, 'prop_pg_cluster_data.csv'))
 
