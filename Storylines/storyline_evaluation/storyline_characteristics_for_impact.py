@@ -3,13 +3,14 @@
  Created: 2/07/2021 9:51 AM
  """
 import pickle
-
+from copy import deepcopy
 import numpy as np
 import pandas as pd
 from numbers import Number
 import os
 from sklearn.cluster import KMeans, AgglomerativeClustering, MeanShift
 from Storylines.storyline_evaluation.plot_storylines import plot_1_yr_storylines
+from Storylines.storyline_evaluation.plot_nyr_suite import plot_impact_for_sites
 import ksl_env
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, default_mode_sites
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
@@ -37,7 +38,6 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None)
                          '*' can be passed for all possible for each.  only months with constraints need to be passed
     :return:
     """
-    # todo get the cumulateive probability of all of this...
     assert isinstance(state_limits, dict) or state_limits is None
     assert isinstance(lower_bound, dict) and isinstance(upper_bound, dict)
     assert set(lower_bound.keys()) == set(upper_bound.keys()) == {f'{s}-{m}' for m, s in default_mode_sites}
@@ -191,9 +191,11 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
         ax.set_xlabel('pc1')
         ax.set_ylabel('pc2')
 
+        all_data = {}
         for mode, site in default_mode_sites:
             fig, ax = plt.subplots(figsize=(14, 7))
             data = [impact_data.loc[:, f'{site}-{mode}_pg_yr1'] / 1000]
+            all_data[f'{site}-{mode}'] = deepcopy(data[0])
             data = data + [impact_data.loc[clusters == k, f'{site}-{mode}_pg_yr1'] / 1000 for k in np.unique(clusters)]
             ax.boxplot(data,
                        labels=['all'] + [f'c:{i}' for i in range(n_clusters)])
@@ -201,6 +203,12 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
             ax.set_xlabel('cluster')
             ax.set_ylabel('pg growth tons DM/ha/yr')
             fig.savefig(os.path.join(log_dir, f'{site}-{mode}-pg.png'))
+
+        figs, figids = plot_impact_for_sites(all_data, 300, (14, 7))
+        for fig, figid in zip(figs, figids):
+            fig.suptitle('Full Suite')
+            fig.tight_layout()
+            fig.savefig(os.path.join(log_dir, f'site_comparison_all_{figid}.png'))
 
         plot_months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
         pg_fig, pg_axs = plt.subplots(nrows=3, figsize=(14, 10), sharex=True)
@@ -228,9 +236,13 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
         pg_fig.suptitle(f'Full Suite')
         pg_fig.tight_layout()
         pg_fig.savefig(os.path.join(log_dir, 'pg_curve_all.png'))
+
+
         for clust in np.unique(clusters):
+            all_data = {}
             pg_fig, pg_axs = plt.subplots(nrows=3, figsize=(14, 10), sharex=True)
             for i, ((mode, site), ax) in enumerate(zip(default_mode_sites, pg_axs)):
+                all_data[f'{site}-{mode}'] = impact_data.loc[clusters == clust, f'{site}-{mode}_pg_yr1'] / 1000
                 data = [impact_data.loc[clusters == clust,
                                         f'{site}-{mode}_pg_m{m:02d}'] / month_len[m] for m in plot_months]
                 parts = ax.violinplot(data, positions=np.arange(1, len(plot_months) + 1),
@@ -255,6 +267,12 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
             pg_fig.suptitle(f'Cluster {clust:02d}')
             pg_fig.tight_layout()
             pg_fig.savefig(os.path.join(log_dir, f'pg_curve_clust_{clust:02d}.png'))
+
+            figs, figids = plot_impact_for_sites(all_data, 300, (14, 7))
+            for fig, figid in zip(figs, figids):
+                fig.suptitle(f'Cluster {clust:02d}')
+                fig.tight_layout()
+                fig.savefig(os.path.join(log_dir, f'site_comparison_clust_{clust:02d}_{figid}.png'))
 
         if show:
             plt.show()
@@ -303,7 +321,6 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
         cluster_data.loc[c, 'size'] = idx.sum()
         cluster_data.loc[c, 'norm_prob'] = probs[idx].sum() / idx.sum()
 
-        # todo below
         for mode, site in default_mode_sites:
             impact_v = impact_data.loc[impact_data.loc[:, 'cluster'] == c, f'{site}-{mode}_pg_yr1'].median() / 1000
             probs_value = exceedence[f'{site}-{mode}'].prob.values

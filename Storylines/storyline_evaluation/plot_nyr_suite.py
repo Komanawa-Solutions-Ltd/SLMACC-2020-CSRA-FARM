@@ -61,6 +61,42 @@ def plot_prob_impact(x, y, num, figsize):
     return fig, ax
 
 
+def plot_impact_for_sites(data, num, figsize):  # todo and make it happen
+    """
+
+    :param x: probability data
+    :param y: impact data
+    :param num: number of levels for density estimate
+    :param figsize: figure size
+    :param plt_data_density: boolean if True plot the data density contours, else do not (to save time)
+    :return:
+    """
+    assert isinstance(data, dict)
+
+    keys = set(['*'.join(sorted([k1, k2])) for k1, k2 in itertools.product(data.keys(), data.keys())])
+    keys = [e.split('*') for e in keys]
+    out_figs, out_figids = [], []
+    for k1, k2 in keys:
+        if k1 == k2:
+            continue
+        fig, ax = plt.subplots(figsize=figsize)
+        print('making data density')
+        x = data[k1]
+        y = data[k2]
+        xi, yi, zi = make_density_xy(x, y, nbins=num)
+        print('finished making density')
+        edgecolors = 'face'
+        linewidth = 0
+        cm = ax.pcolormesh(xi, yi, zi * 100,
+                           cmap='magma', alpha=1)
+        fig.colorbar(cm, extend='both', label='Data density (%)')
+        ax.set_xlabel(f'pg: {k1} tons/yr')
+        ax.set_ylabel(f'pg: {k2} tons/yr')
+        out_figs.append(fig)
+        out_figids.append(f'{k1}-{k2}')
+    return out_figs, out_figids
+
+
 def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
                  other_scen_lbl='other storylines', step_size=0.1,
                  pt_labels=False, close=False, additional_alpha=1):

@@ -116,8 +116,28 @@ def dry_summer2():
         save_stories=True
     )
 
+
+def baseline():
+    storyline_subclusters(
+
+        outdir=r"C:\Users\dumon\Downloads\baseline",
+        lower_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': 15.5 * 1000,
+            'oxford-irrigated': None,
+        },
+        upper_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': 16.5 * 1000,
+            'oxford-irrigated': None,
+
+        },
+
+        state_limits=None,
+        n_clusters=20,
+        n_pcs=15,
+        save_stories=True
+    )
+
 if __name__ == '__main__':
-    #autumn_drought_1()
-    #autumn_drought_2()
-    #dry_summer()
-    dry_summer2()
+    baseline()

@@ -169,7 +169,7 @@ def get_1yr_data(bad_irr=True, good_irr=True):
 def create_nyr_suite(nyr, use_default_seed=True,
                      save_to_gdrive=True):
     """
-
+    this does keep the number consitant across sims as the same seed it used
     :param nyr: number of years long, options are: [2, 3, 4, 5, 6, 7, 8, 9, 10, 15]
     :param use_default_seed: bool if true then use the default seed to keep reproducability
     :param save_to_gdrive: bool if True then save to the google drive
