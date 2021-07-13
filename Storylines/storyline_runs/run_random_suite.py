@@ -18,6 +18,7 @@ from Pasture_Growth_Modelling.full_pgr_model_mp import run_full_model_mp, defaul
     default_mode_sites
 from Pasture_Growth_Modelling.full_model_implementation import add_pasture_growth_anaomoly_to_nc
 from Storylines.storyline_evaluation.storyline_eval_support import get_pgr_prob_baseline_stiched
+from Storylines.storyline_evaluation.correction_to_dnz import correct_for_DNZ
 
 name = 'random'
 random_pg_dir = os.path.join(default_pasture_growth_dir, name)
@@ -148,11 +149,12 @@ def create_1y_pg_data(bad_irr=True):
                 mode='w')
 
 
-def get_1yr_data(bad_irr=True, good_irr=True):
+def get_1yr_data(bad_irr=True, good_irr=True, correct=False):
     """
     get the 1 year data
     :param bad_irr: bool if True return the data from the worse than median irrigation restriction suite
     :param good_irr: bool if True return the data from the better than median irrigation restriction suite
+    :param correct: bool if True add a correction, if False then use model output.
     :return:
     """
     assert any([bad_irr, good_irr])
@@ -163,16 +165,22 @@ def get_1yr_data(bad_irr=True, good_irr=True):
     if good_irr:
         good = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_good_irr.hdf'), 'prob')
 
-    return pd.concat([good, bad])
+    if correct:
+        data = pd.concat([good, bad])
+        return correct_for_DNZ(data)
+    else:
+        return pd.concat([good, bad])
 
 
 def create_nyr_suite(nyr, use_default_seed=True,
-                     save_to_gdrive=True):
+                     save_to_gdrive=True, correct=False):
     """
     this does keep the number consitant across sims as the same seed it used
     :param nyr: number of years long, options are: [2, 3, 4, 5, 6, 7, 8, 9, 10, 15]
     :param use_default_seed: bool if true then use the default seed to keep reproducability
     :param save_to_gdrive: bool if True then save to the google drive
+    :param correct: bool if True add a correction, if False then use model output.
+
     :return:
     """
     print(f'nyear: {nyr}')
@@ -181,7 +189,7 @@ def create_nyr_suite(nyr, use_default_seed=True,
     if nyr > 5:
         n = int(2.5e8)
 
-    data_1y = get_1yr_data(bad_irr=True, good_irr=True)
+    data_1y = get_1yr_data(bad_irr=True, good_irr=True, correct=correct)  # todo add correction as an option
     assert isinstance(data_1y, pd.DataFrame)
     data_1y = data_1y.dropna()
     default_seeds = {
@@ -254,7 +262,12 @@ def create_nyr_suite(nyr, use_default_seed=True,
         print(outdata.values.nbytes * 1e-9, f'gb for {mode} - {site}')
         print(outdata.dtypes)
         print(f'saving {mode} - {site} to local drive')
-        outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr', f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+        if correct:
+            outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr_correct',
+                                   f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+
+        else:
+            outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr', f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
         if not os.path.exists(os.path.dirname(outpath)):
             os.makedirs(os.path.dirname(outpath))
         np.save(outpath, outdata.values)
@@ -262,7 +275,11 @@ def create_nyr_suite(nyr, use_default_seed=True,
             f.write(','.join(outdata.columns))
         if save_to_gdrive:
             print(f'saving {mode} - {site} to google drive')
-            outpath = os.path.join(gdrive_outdir, f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+            if correct:
+                outpath = os.path.join(gdrive_outdir, 'nyr_correct', f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+            else:
+                outpath = os.path.join(gdrive_outdir, 'nyr', f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+
             np.save(outpath, outdata.values)
             with open(outpath.replace('.npy', '.csv'), 'w') as f:
                 f.write(','.join(outdata.columns))
@@ -271,8 +288,21 @@ def create_nyr_suite(nyr, use_default_seed=True,
         gc.collect()
 
 
-def get_nyr_suite(nyr, site, mode):
-    outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr', f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+def get_nyr_suite(nyr, site, mode, correct=False):
+    """
+
+    :param nyr:
+    :param site:
+    :param mode:
+    :param correct: dnz correction applied
+    :return:
+    """
+    if correct:
+        outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr_correct',
+                               f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+    else:
+        outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr',
+                               f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
     out = np.load(outpath)
     out = pd.DataFrame(out, columns=pd.read_csv(outpath.replace('.npy', '.csv')).columns)
     return out
@@ -321,9 +351,9 @@ if __name__ == '__main__':
     run_chunks = []
     make_stories = False
     run_basgra_bad = False
-    run_basgra_good = True
+    run_basgra_good = False
     extract_data_bad = False
-    extract_data_good = True
+    extract_data_good = False
     if make_stories:
         make_1_year_storylines(bad_irr=True)
         make_1_year_storylines(bad_irr=False)
@@ -335,6 +365,7 @@ if __name__ == '__main__':
             raise ValueError('stopped re-running')
 
         import time
+
         run_1year_basgra(bad_irr=True)
 
         t = time.time()
@@ -347,6 +378,7 @@ if __name__ == '__main__':
             raise ValueError('stopped re-running')
 
         import time
+
         run_1year_basgra(bad_irr=False)
 
         t = time.time()
@@ -358,3 +390,4 @@ if __name__ == '__main__':
     if extract_data_good:
         create_1y_pg_data(bad_irr=False)
 
+    get_1yr_data(True, True, True)

@@ -14,10 +14,15 @@ base_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'random
 def plot_1yr(save=False, close=True):
     for mode, site in default_mode_sites:
         outdir = None
+        outdir_cor = None
         if save:
             outdir = os.path.join(base_outdir, f'1yr')
+            outdir_cor = os.path.join(base_outdir, f'1yr_correct')
         plot_all_nyr(site, mode, nyr=1, outdir=outdir, other_scen=None, other_scen_lbl='other storylines',
                      pt_labels=False, close=close, num=100, step_size=0.1)
+
+        plot_all_nyr(site, mode, nyr=1, outdir=outdir_cor, other_scen=None, other_scen_lbl='other storylines',
+                     pt_labels=False, close=close, num=100, step_size=0.1, correct=True)
 
     if not save:
         plt.show()
@@ -73,11 +78,17 @@ def plot_2yr_no_additional(save=False):
     for mode, site in default_mode_sites:
         print(f'{site} - {mode}')
         outdir = None
+        outdir_cor = None
+        nyr = 2
         if save:
-            outdir = os.path.join(base_outdir, f'2yr')
-        plot_all_nyr(site, mode, nyr=2, num=100, outdir=outdir, other_scen=None,
+            outdir = os.path.join(base_outdir, f'{nyr}yr')
+            outdir_cor = os.path.join(base_outdir, f'{nyr}yr_correct')
+        plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir, other_scen=None,
                      other_scen_lbl='other storylines',
                      pt_labels=False)
+        plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir_cor, other_scen=None,
+                     other_scen_lbl='other storylines',
+                     pt_labels=False, correct=True)
 
         if not save:
             plt.show()
@@ -89,12 +100,17 @@ def plot_3yr_no_additional(save=False):
     for mode, site in default_mode_sites:
         print(f'{site} - {mode}')
         outdir = None
+        outdir_cor = None
+        nyr = 3
         if save:
-            outdir = os.path.join(base_outdir, f'3yr')
-        plot_all_nyr(site, mode, nyr=3, num=100, outdir=outdir, other_scen=None,
+            outdir = os.path.join(base_outdir, f'{nyr}yr')
+            outdir_cor = os.path.join(base_outdir, f'{nyr}yr_correct')
+        plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir, other_scen=None,
                      other_scen_lbl='other storylines',
                      pt_labels=False)
-
+        plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir_cor, other_scen=None,
+                     other_scen_lbl='other storylines',
+                     pt_labels=False, correct=True)
         if not save:
             plt.show()
         else:
@@ -105,12 +121,17 @@ def plot_5yr_no_additional(save=False):
     for mode, site in default_mode_sites:
         print(f'{site} - {mode}')
         outdir = None
+        outdir_cor = None
+        nyr = 5
         if save:
-            outdir = os.path.join(base_outdir, f'5yr')
-        plot_all_nyr(site, mode, nyr=5, num=100, outdir=outdir, other_scen=None,
+            outdir = os.path.join(base_outdir, f'{nyr}yr')
+            outdir_cor = os.path.join(base_outdir, f'{nyr}yr_correct')
+        plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir, other_scen=None,
                      other_scen_lbl='other storylines',
                      pt_labels=False)
-
+        plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir_cor, other_scen=None,
+                     other_scen_lbl='other storylines',
+                     pt_labels=False, correct=True)
         if not save:
             plt.show()
         else:
@@ -121,12 +142,17 @@ def plot_10yr_no_additional(save=False):
     for mode, site in default_mode_sites:
         print(f'{site} - {mode}')
         outdir = None
+        outdir_cor = None
+        nyr = 10
         if save:
-            outdir = os.path.join(base_outdir, f'10yr')
-        plot_all_nyr(site, mode, nyr=10, num=100, outdir=outdir, other_scen=None,
+            outdir = os.path.join(base_outdir, f'{nyr}yr')
+            outdir_cor = os.path.join(base_outdir, f'{nyr}yr_correct')
+        plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir, other_scen=None,
                      other_scen_lbl='other storylines',
                      pt_labels=False)
-
+        plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir_cor, other_scen=None,
+                     other_scen_lbl='other storylines',
+                     pt_labels=False, correct=True)
         if not save:
             plt.show()
         else:
@@ -153,13 +179,11 @@ def plot_3yr_additional(get_add_fun, other_scen_lbl, pt_labels=True, save=False)
         else:
             plt.close('all')
 
-# todo plot scatter plots of oxford dryland vs eyrewell irrigated, color = prob
-
 if __name__ == '__main__':
-    # todo re-run all with new event data, check
-    #plot_1yr(True, True)
-    #plot_2yr_no_additional(True)
-    #plot_3yr_no_additional(True)
+    # todo re-run all with correction, check
+    plot_1yr(True, True)
+    plot_2yr_no_additional(True)
+    plot_3yr_no_additional(True)
     plot_5yr_no_additional(True)
     plot_10yr_no_additional(True)
     #

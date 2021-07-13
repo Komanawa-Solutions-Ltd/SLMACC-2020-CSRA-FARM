@@ -139,5 +139,5 @@ def baseline():
         save_stories=True
     )
 
-if __name__ == '__main__':
+if __name__ == '__main__': #todo consider corrections
     baseline()

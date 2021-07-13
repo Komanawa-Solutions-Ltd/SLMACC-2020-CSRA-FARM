@@ -99,7 +99,7 @@ def plot_impact_for_sites(data, num, figsize):  # todo and make it happen
 
 def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
                  other_scen_lbl='other storylines', step_size=0.1,
-                 pt_labels=False, close=False, additional_alpha=1):
+                 pt_labels=False, close=False, additional_alpha=1, correct=False):
     """
     plot all of the 1 year randoms +- other scenarios
     :param site: eyrewell or oxford
@@ -112,6 +112,7 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
     :param pt_labels: bool if True label the other scens with the plotlabel scheme
     :param step_size: float the step size for binning the pasture growth data
     :param close: bool if True close plot.
+    :param correct: bool if True apply the DNZ correction
     :return:
     """
     assert isinstance(nyr, int)
@@ -129,10 +130,10 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
 
     figsize = (16.5, 9.25)
     if nyr == 1:
-        data = get_1yr_data(bad_irr=True, good_irr=True)
+        data = get_1yr_data(bad_irr=True, good_irr=True, correct=correct)
     else:
         print('reading data')
-        data = get_nyr_suite(nyr, site=site, mode=mode)
+        data = get_nyr_suite(nyr, site=site, mode=mode, correct=correct)
 
     data = data.dropna()
     prg = get_pgr_prob_baseline_stiched(nyr, site, mode)

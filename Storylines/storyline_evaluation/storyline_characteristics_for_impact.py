@@ -28,7 +28,7 @@ def get_exceedence_prob():
     pass  # todo
 
 
-def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None):
+def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None, correct=False):
     """
     get the storylines for the paths where data is between the two bounds
     :param lower_bound: dictionary {site-mode: None, float (for annual) or dictionary with at least 1 month limits}
@@ -36,13 +36,14 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None)
     :param return_for_pca: bool if True return as a 2d array for running through PCA, else return as a list for plotting
     :param state_limits: None or dictionary {month: ([precip_states], [temp_states], (rest_min, rest_max)), note
                          '*' can be passed for all possible for each.  only months with constraints need to be passed
+    :param: correct: bool if True apply the DNZ correction
     :return:
     """
     assert isinstance(state_limits, dict) or state_limits is None
     assert isinstance(lower_bound, dict) and isinstance(upper_bound, dict)
     assert set(lower_bound.keys()) == set(upper_bound.keys()) == {f'{s}-{m}' for m, s in default_mode_sites}
 
-    impact_data = get_1yr_data(bad_irr=True, good_irr=True)
+    impact_data = get_1yr_data(bad_irr=True, good_irr=True, correct=correct)
     impact_data = impact_data.dropna()
     impact_data.loc[:, 'sl_path'] = (base_story_dir + impact_data.loc[:, 'irr_type'] + '_irr/' +
                                      impact_data.loc[:, 'ID'] + '.csv')
@@ -280,15 +281,27 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
 
 
 def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n_clusters=20, n_pcs=15,
-                          save_stories=True):
+                          save_stories=True, correct=False): # todo add correct option to this
+    """
+
+    :param outdir:
+    :param lower_bound:
+    :param upper_bound:
+    :param state_limits:
+    :param n_clusters:
+    :param n_pcs:
+    :param save_stories:
+    :param correct: bool, if True then apply DNZ correction
+    :return:
+    """
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
     pca_data, data, impact_data, full_prob = get_suite(lower_bound=lower_bound,
                                                        upper_bound=upper_bound,
                                                        return_for_pca=True,
-                                                       state_limits=state_limits
-
+                                                       state_limits=state_limits,
+                                                       correct=correct
                                                        )
     print(len(data))
     total_prob = (10 ** impact_data.loc[:, ['log10_prob_irrigated', 'log10_prob_dryland']]).sum() / full_prob
