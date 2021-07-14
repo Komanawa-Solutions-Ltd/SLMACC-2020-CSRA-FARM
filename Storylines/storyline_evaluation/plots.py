@@ -76,19 +76,20 @@ def plot_2yr_additional(get_add_fun, other_scen_lbl, pt_labels=True, save=False)
         plt.close('all')
 
 
-def plot_2yr_no_additional(save=False):
+def plot_nyr_no_additional(nyr, save=False, plot_correct=True, plot_not_correct=True):
     for mode, site in default_mode_sites:
         print(f'{site} - {mode}')
         outdir = None
         outdir_cor = None
-        nyr = 2
         if save:
             outdir = os.path.join(base_outdir, f'{nyr}yr')
             outdir_cor = os.path.join(base_outdir, f'{nyr}yr_correct')
-        plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir, other_scen=None,
+        if plot_not_correct:
+            plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir, other_scen=None,
                      other_scen_lbl='other storylines',
                      pt_labels=False)
-        plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir_cor, other_scen=None,
+        if plot_correct:
+            plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir_cor, other_scen=None,
                      other_scen_lbl='other storylines', step_size=correct_stepsize,
                      pt_labels=False, correct=True)
 
@@ -183,11 +184,11 @@ def plot_3yr_additional(get_add_fun, other_scen_lbl, pt_labels=True, save=False)
 
 if __name__ == '__main__':
     # todo re-run all with correction, check
-    plot_1yr(True, True)
-    # plot_2yr_no_additional(True)
-    # plot_3yr_no_additional(True)
-    # plot_5yr_no_additional(True)
-    # plot_10yr_no_additional(True)
+    # plot_1yr(True, True)
+    years = [2,3,5,10]
+    for y in years:
+        print(f'######## {y}yr #######')
+        plot_nyr_no_additional(nyr=2, save=True, plot_correct=True, plot_not_correct=False)
     #
     # plot_1yr_additional(get_laura_v2_1yr_pg_prob, 'lauras_v2_1yr', save=True, pt_labels=True)
     # plot_1yr_additional(get_laura_autumn_1yr_pg_prob, 'lauras_autumn_drought_1yr', save=True, pt_labels=True)

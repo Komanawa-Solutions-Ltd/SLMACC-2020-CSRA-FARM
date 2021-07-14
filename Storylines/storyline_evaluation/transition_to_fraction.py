@@ -68,8 +68,8 @@ def get_most_probabile(site, mode):
     for m in range(1, 13):
         out[m] = data.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean()
 
-    out[6] = 300
-    out[7] = 300
+    out[6] = 30
+    out[7] = 30
 
     return out
 
@@ -83,12 +83,12 @@ def to_fract(data):
     data = deepcopy(data)
 
     for mode, site in default_mode_sites:
-        data.loc[:, f'{site}-{mode}_pg_yr1'] += (2 * 300
+        data.loc[:, f'{site}-{mode}_pg_yr1'] += (2 * 30
                                                  - data.loc[:, f'{site}-{mode}_pg_m06']
                                                  - data.loc[:, f'{site}-{mode}_pg_m07'])
 
-        data.loc[:, f'{site}-{mode}_pg_m06'] = 300
-        data.loc[:, f'{site}-{mode}_pg_m07'] = 300
+        data.loc[:, f'{site}-{mode}_pg_m06'] = 30
+        data.loc[:, f'{site}-{mode}_pg_m07'] = 30
 
         divisor = get_most_probabile(site, mode)
 
@@ -99,3 +99,18 @@ def to_fract(data):
         data.loc[:, f'{site}-{mode}_pg_yr1'] *= 1 / divisor['1yr']
 
     return data
+
+
+def export_most_probable():
+    outdata = pd.DataFrame(index=[7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, '1yr'])
+    outdata.index.name = 'month'
+    for mode, site in default_mode_sites:
+        temp = get_most_probabile(site, mode)
+        for m in range(1, 13):
+            outdata.loc[m, f'{site}-{mode}'] = temp[m]
+        outdata.loc['1yr', f'{site}-{mode}'] = temp['1yr']
+    outdata.to_csv(
+        os.path.join(r"M:\Shared drives\Z2003_SLMACC\outputs_for_ws\norm\random_scen_plots", 'normal_year_vals.csv'))
+
+if __name__ == '__main__':
+    export_most_probable()
