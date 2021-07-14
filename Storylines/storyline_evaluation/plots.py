@@ -10,6 +10,7 @@ from Storylines.storyline_building_support import default_mode_sites
 
 base_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'random_scen_plots')
 
+correct_stepsize = 0.5
 
 def plot_1yr(save=False, close=True):
     for mode, site in default_mode_sites:
@@ -18,11 +19,12 @@ def plot_1yr(save=False, close=True):
         if save:
             outdir = os.path.join(base_outdir, f'1yr')
             outdir_cor = os.path.join(base_outdir, f'1yr_correct')
+        plot_all_nyr(site, mode, nyr=1, outdir=outdir_cor, other_scen=None, other_scen_lbl='other storylines',
+                     pt_labels=False, close=close, num=100, step_size=correct_stepsize, correct=True)
+
         plot_all_nyr(site, mode, nyr=1, outdir=outdir, other_scen=None, other_scen_lbl='other storylines',
                      pt_labels=False, close=close, num=100, step_size=0.1)
 
-        plot_all_nyr(site, mode, nyr=1, outdir=outdir_cor, other_scen=None, other_scen_lbl='other storylines',
-                     pt_labels=False, close=close, num=100, step_size=0.1, correct=True)
 
     if not save:
         plt.show()
@@ -87,7 +89,7 @@ def plot_2yr_no_additional(save=False):
                      other_scen_lbl='other storylines',
                      pt_labels=False)
         plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir_cor, other_scen=None,
-                     other_scen_lbl='other storylines',
+                     other_scen_lbl='other storylines', step_size=correct_stepsize,
                      pt_labels=False, correct=True)
 
         if not save:
@@ -109,7 +111,7 @@ def plot_3yr_no_additional(save=False):
                      other_scen_lbl='other storylines',
                      pt_labels=False)
         plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir_cor, other_scen=None,
-                     other_scen_lbl='other storylines',
+                     other_scen_lbl='other storylines', step_size=correct_stepsize,
                      pt_labels=False, correct=True)
         if not save:
             plt.show()
@@ -130,7 +132,7 @@ def plot_5yr_no_additional(save=False):
                      other_scen_lbl='other storylines',
                      pt_labels=False)
         plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir_cor, other_scen=None,
-                     other_scen_lbl='other storylines',
+                     other_scen_lbl='other storylines', step_size=correct_stepsize,
                      pt_labels=False, correct=True)
         if not save:
             plt.show()
@@ -151,7 +153,7 @@ def plot_10yr_no_additional(save=False):
                      other_scen_lbl='other storylines',
                      pt_labels=False)
         plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir_cor, other_scen=None,
-                     other_scen_lbl='other storylines',
+                     other_scen_lbl='other storylines', step_size=correct_stepsize,
                      pt_labels=False, correct=True)
         if not save:
             plt.show()
@@ -182,10 +184,10 @@ def plot_3yr_additional(get_add_fun, other_scen_lbl, pt_labels=True, save=False)
 if __name__ == '__main__':
     # todo re-run all with correction, check
     plot_1yr(True, True)
-    plot_2yr_no_additional(True)
-    plot_3yr_no_additional(True)
-    plot_5yr_no_additional(True)
-    plot_10yr_no_additional(True)
+    # plot_2yr_no_additional(True)
+    # plot_3yr_no_additional(True)
+    # plot_5yr_no_additional(True)
+    # plot_10yr_no_additional(True)
     #
     # plot_1yr_additional(get_laura_v2_1yr_pg_prob, 'lauras_v2_1yr', save=True, pt_labels=True)
     # plot_1yr_additional(get_laura_autumn_1yr_pg_prob, 'lauras_autumn_drought_1yr', save=True, pt_labels=True)

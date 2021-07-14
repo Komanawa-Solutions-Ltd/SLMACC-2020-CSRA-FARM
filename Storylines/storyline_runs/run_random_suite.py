@@ -18,7 +18,7 @@ from Pasture_Growth_Modelling.full_pgr_model_mp import run_full_model_mp, defaul
     default_mode_sites
 from Pasture_Growth_Modelling.full_model_implementation import add_pasture_growth_anaomoly_to_nc
 from Storylines.storyline_evaluation.storyline_eval_support import get_pgr_prob_baseline_stiched
-from Storylines.storyline_evaluation.correction_to_dnz import correct_for_DNZ
+from Storylines.storyline_evaluation.transition_to_fraction import to_fract
 
 name = 'random'
 random_pg_dir = os.path.join(default_pasture_growth_dir, name)
@@ -167,7 +167,8 @@ def get_1yr_data(bad_irr=True, good_irr=True, correct=False):
 
     if correct:
         data = pd.concat([good, bad])
-        return correct_for_DNZ(data)
+        data = to_fract(data)
+        return data
     else:
         return pd.concat([good, bad])
 
