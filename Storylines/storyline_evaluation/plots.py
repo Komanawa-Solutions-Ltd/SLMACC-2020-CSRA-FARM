@@ -186,7 +186,7 @@ def plot_3yr_additional(get_add_fun, other_scen_lbl, pt_labels=True, save=False)
 if __name__ == '__main__':
     # todo re-run all with correction, check
     # plot_1yr(True, True)
-    years = [  # 2,
+    years = [ 2,
         3, 5, 10]
     for y in years:
         print(f'######## {y}yr #######')
