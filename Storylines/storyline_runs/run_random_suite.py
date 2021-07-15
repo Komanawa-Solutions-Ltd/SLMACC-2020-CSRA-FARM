@@ -190,7 +190,7 @@ def create_nyr_suite(nyr, use_default_seed=True,
     if nyr > 5:
         n = int(2.5e8)
 
-    data_1y = get_1yr_data(bad_irr=True, good_irr=True, correct=correct)  # todo add correction as an option
+    data_1y = get_1yr_data(bad_irr=True, good_irr=True, correct=correct)
     assert isinstance(data_1y, pd.DataFrame)
     data_1y = data_1y.dropna()
     default_seeds = {
@@ -347,8 +347,6 @@ def fix_old_1yr_runs(base_dir, change_storyline_time=False):
 
 
 if __name__ == '__main__':
-    # todo re-run once new event data is confirmed
-    # todo look at transition probabilities from years on an impact scale....
     run_chunks = []
     make_stories = False
     run_basgra_bad = False

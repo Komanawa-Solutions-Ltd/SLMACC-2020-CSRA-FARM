@@ -100,6 +100,26 @@ def to_fract(data):
 
     return data
 
+def to_fract_1yr(data):
+    """
+    # note that fractions are of cumulative montly  data and that sum of probilities does not match the annual data
+    :param data:
+    :return:
+    """
+    data = deepcopy(data)
+
+    for mode, site in default_mode_sites:
+        data.loc[:, f'{site}-{mode}_pg'] += (2 * 30)
+
+
+
+        divisor = get_most_probabile(site, mode)
+
+        # 1 year
+        data.loc[:, f'{site}-{mode}_pg'] *= 1 / divisor['1yr']
+
+    return data
+
 
 def export_most_probable():
     outdata = pd.DataFrame(index=[7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, '1yr'])

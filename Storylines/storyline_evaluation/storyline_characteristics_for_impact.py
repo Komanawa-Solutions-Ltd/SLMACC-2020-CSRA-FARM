@@ -25,7 +25,7 @@ cols = ['date', 'precip_class', 'temp_class', 'rest', 'rest_per', 'year',
 
 
 def get_exceedence_prob():
-    pass  # todo
+    pass  # ?
 
 
 def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None, correct=False):
@@ -399,7 +399,7 @@ def run_plot_pca_correct(data, impact_data, n_clusters=20, n_pcs=15, plot=True, 
 
                 ax.set_title(f'{site}-{mode}')
                 if i == 0:
-                    ax.set_ylim(0, 400)  # todo check!
+                    ax.set_ylim(0, 400)
                 if i == 2:
                     ax.set_ylim(0, 200)
                     ax.set_xlabel('Month')

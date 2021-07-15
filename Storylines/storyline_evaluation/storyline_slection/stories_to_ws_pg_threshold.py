@@ -155,4 +155,4 @@ def good_stories():
 
 
 if __name__ == '__main__':
-    good_stories()
+    good_stories() # todo figure out the stories to take forward!!

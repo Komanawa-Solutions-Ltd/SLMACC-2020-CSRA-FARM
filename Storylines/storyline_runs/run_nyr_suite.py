@@ -6,7 +6,6 @@ from Storylines.storyline_runs.run_random_suite import create_nyr_suite
 import time
 
 if __name__ == '__main__':
-    # todo re-run with new event data after random suite re-run
     t = time.time()
     #create_nyr_suite(2, True, False, correct=False) # already run
     #create_nyr_suite(3, True, False, correct=False)

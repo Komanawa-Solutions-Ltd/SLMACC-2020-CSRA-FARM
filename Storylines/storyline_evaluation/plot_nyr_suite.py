@@ -61,7 +61,7 @@ def plot_prob_impact(x, y, num, figsize):
     return fig, ax
 
 
-def plot_impact_for_sites(data, num, figsize, correct=False):  # todo and make it happen
+def plot_impact_for_sites(data, num, figsize, correct=False):
     """
 
     :param x: probability data
@@ -182,7 +182,7 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
                   other_scen_lbl, pt_labels, base_color, base_lw, base_ls, step_size, outdir, close,
                   additional_alpha=additional_alpha, correct=correct)
 
-    # todo export key data
+    # export key data
     if outdir is not None:
         if correct:
             y = data[f'{site}-{mode}_pg_yr{nyr}'] * 100
