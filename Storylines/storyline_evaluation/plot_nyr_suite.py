@@ -61,7 +61,7 @@ def plot_prob_impact(x, y, num, figsize):
     return fig, ax
 
 
-def plot_impact_for_sites(data, num, figsize):  # todo and make it happen
+def plot_impact_for_sites(data, num, figsize, correct=False):  # todo and make it happen
     """
 
     :param x: probability data
@@ -90,8 +90,12 @@ def plot_impact_for_sites(data, num, figsize):  # todo and make it happen
         cm = ax.pcolormesh(xi, yi, zi * 100,
                            cmap='magma', alpha=1)
         fig.colorbar(cm, extend='both', label='Data density (%)')
-        ax.set_xlabel(f'pg: {k1} tons/yr')
-        ax.set_ylabel(f'pg: {k2} tons/yr')
+        if correct:
+            ax.set_xlabel(f'pg: {k1} percent of normal year')
+            ax.set_ylabel(f'pg: {k2} percent of normal year')
+        else:
+            ax.set_xlabel(f'pg: {k1} tons/yr')
+            ax.set_ylabel(f'pg: {k2} tons/yr')
         out_figs.append(fig)
         out_figids.append(f'{k1}-{k2}')
     return out_figs, out_figids

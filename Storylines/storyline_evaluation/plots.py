@@ -12,6 +12,7 @@ base_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'random
 
 correct_stepsize = 0.5
 
+
 def plot_1yr(save=False, close=True):
     for mode, site in default_mode_sites:
         outdir = None
@@ -24,7 +25,6 @@ def plot_1yr(save=False, close=True):
 
         plot_all_nyr(site, mode, nyr=1, outdir=outdir, other_scen=None, other_scen_lbl='other storylines',
                      pt_labels=False, close=close, num=100, step_size=0.1)
-
 
     if not save:
         plt.show()
@@ -86,12 +86,12 @@ def plot_nyr_no_additional(nyr, save=False, plot_correct=True, plot_not_correct=
             outdir_cor = os.path.join(base_outdir, f'{nyr}yr_correct')
         if plot_not_correct:
             plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir, other_scen=None,
-                     other_scen_lbl='other storylines',
-                     pt_labels=False)
+                         other_scen_lbl='other storylines',
+                         pt_labels=False)
         if plot_correct:
             plot_all_nyr(site, mode, nyr=nyr, num=100, outdir=outdir_cor, other_scen=None,
-                     other_scen_lbl='other storylines', step_size=correct_stepsize,
-                     pt_labels=False, correct=True)
+                         other_scen_lbl='other storylines', step_size=correct_stepsize,
+                         pt_labels=False, correct=True)
 
         if not save:
             plt.show()
@@ -182,13 +182,15 @@ def plot_3yr_additional(get_add_fun, other_scen_lbl, pt_labels=True, save=False)
         else:
             plt.close('all')
 
+
 if __name__ == '__main__':
     # todo re-run all with correction, check
     # plot_1yr(True, True)
-    years = [2,3,5,10]
+    years = [  # 2,
+        3, 5, 10]
     for y in years:
         print(f'######## {y}yr #######')
-        plot_nyr_no_additional(nyr=2, save=True, plot_correct=True, plot_not_correct=False)
+        plot_nyr_no_additional(nyr=y, save=True, plot_correct=True, plot_not_correct=False)
     #
     # plot_1yr_additional(get_laura_v2_1yr_pg_prob, 'lauras_v2_1yr', save=True, pt_labels=True)
     # plot_1yr_additional(get_laura_autumn_1yr_pg_prob, 'lauras_autumn_drought_1yr', save=True, pt_labels=True)
