@@ -18,7 +18,7 @@ from Pasture_Growth_Modelling.full_pgr_model_mp import run_full_model_mp, defaul
     default_mode_sites
 from Pasture_Growth_Modelling.full_model_implementation import add_pasture_growth_anaomoly_to_nc
 from Storylines.storyline_evaluation.storyline_eval_support import get_pgr_prob_baseline_stiched
-from Storylines.storyline_evaluation.transition_to_fraction import to_fract
+from Storylines.storyline_evaluation.transition_to_fraction import corr_pg
 
 name = 'random'
 random_pg_dir = os.path.join(default_pasture_growth_dir, name)
@@ -167,7 +167,7 @@ def get_1yr_data(bad_irr=True, good_irr=True, correct=False):
 
     if correct:
         data = pd.concat([good, bad])
-        data = to_fract(data)
+        data = corr_pg(data)
         return data
     else:
         return pd.concat([good, bad])
@@ -347,12 +347,12 @@ def fix_old_1yr_runs(base_dir, change_storyline_time=False):
 
 
 if __name__ == '__main__':
-    run_chunks = []
-    make_stories = False
+    run_chunks = []  # todo re-run with new IID
+    make_stories = True
     run_basgra_bad = False
     run_basgra_good = False
-    extract_data_bad = False
-    extract_data_good = False
+    extract_data_bad = True
+    extract_data_good = True
     if make_stories:
         make_1_year_storylines(bad_irr=True)
         make_1_year_storylines(bad_irr=False)

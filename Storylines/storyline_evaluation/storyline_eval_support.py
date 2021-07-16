@@ -159,9 +159,12 @@ def extract_additional_sims(story_dir, sim_dir, nyr):
                 nc_data = nc.Dataset(p)
                 data.loc[i, f'{key}_pgra'] = np.array(nc_data.variables['m_PGRA_cum'][-1, :]).mean()
                 temp = np.array(nc_data.variables['m_PGR'])
-                temp *= np.repeat([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30], nyr)[:, np.newaxis]
-                temp = temp.sum(axis=0).mean()
-                data.loc[i, f'{key}_pg'] = temp
+                temp *= np.array([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30])[:, np.newaxis]
+                temp = np.nanmean(temp, axis=1)
+                for j, m in enumerate([7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]):
+                    data.loc[i, f'{key}_pg_m{m:02d}'] = temp[j]
+                temp = temp.sum()
+                data.loc[i, f'{key}_pg_yr1'] = temp  #
                 nc_data.close()
             except FileNotFoundError:
                 pass

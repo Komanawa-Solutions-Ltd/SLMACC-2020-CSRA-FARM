@@ -18,7 +18,7 @@ from Storylines.storyline_evaluation.storyline_eval_support import get_pgr_prob_
     calc_cumulative_impact_prob
 import time
 from copy import deepcopy
-from Storylines.storyline_evaluation.transition_to_fraction import to_fract_1yr
+from Storylines.storyline_evaluation.transition_to_fraction import corr_pg
 
 figsize = (16.5, 9.25)
 base_color = 'limegreen'
@@ -39,14 +39,11 @@ def yr1_cumulative_probability(correct=False):
     data = pd.read_csv(os.path.join(
         ksl_env.mh_unbacked("SLMACC_2020_norm\pasture_growth_sims\historical_quantified_1yr_trend\IID_probs_pg.csv")))
     if correct:
-        data = to_fract_1yr(data)
+        data = corr_pg(data)
 
     for mode, site in default_mode_sites:
         print(site, mode)
-        if correct:
-            pgr = data.loc[:, f'{site}-{mode}_pg'].dropna().values * 100
-        else:
-            pgr = data.loc[:, f'{site}-{mode}_pg'].dropna().values / 1000
+        pgr = data.loc[:, f'{site}-{mode}_pg_yr1'].dropna().values / 1000
         prob = np.zeros(pgr.shape) + 1
         _plot_cum(pgr=pgr, prob=prob, step_size=0.1, site=site, mode=mode, nyr=1, outdir=outdir, correct=correct)
 
@@ -64,25 +61,19 @@ def nyr_cumulative_prob(nyr, correct=False, sequential=True):
     data = pd.read_csv(os.path.join(
         ksl_env.mh_unbacked("SLMACC_2020_norm\pasture_growth_sims\historical_quantified_1yr_trend\IID_probs_pg.csv")))
     if correct:
-        data = to_fract_1yr(data)
+        data = corr_pg(data)
 
     if sequential:
         data = data.rolling(nyr).sum()
         for mode, site in default_mode_sites:
-            if correct:
-                pgr = data.loc[:, f'{site}-{mode}_pg'].dropna().values * 100
-            else:
-                pgr = data.loc[:, f'{site}-{mode}_pg'].dropna().values / 1000
+            pgr = data.loc[:, f'{site}-{mode}_pg_yr1'].dropna().values / 1000
             prob = np.zeros(pgr.shape) + 1
             fig = _plot_cum(pgr=pgr, prob=prob, step_size=0.1, site=site, mode=mode, nyr=nyr, outdir=outdir,correct=correct)
     else:
         idxs = np.random.randint(0, len(data), 10000)
         data = data.iloc[idxs].rolling(nyr).sum()
         for mode, site in default_mode_sites:
-            if correct:
-                pgr = data.loc[:, f'{site}-{mode}_pg'].dropna().values * 100
-            else:
-                pgr = data.loc[:, f'{site}-{mode}_pg'].dropna().values / 1000
+            pgr = data.loc[:, f'{site}-{mode}_pg_yr1'].dropna().values / 1000
             prob = np.zeros(pgr.shape) + 1
             fig = _plot_cum(pgr=pgr, prob=prob, step_size=0.1, site=site, mode=mode, nyr=nyr, outdir=outdir, correct=correct)
 

@@ -90,12 +90,8 @@ def plot_impact_for_sites(data, num, figsize, correct=False):
         cm = ax.pcolormesh(xi, yi, zi * 100,
                            cmap='magma', alpha=1)
         fig.colorbar(cm, extend='both', label='Data density (%)')
-        if correct:
-            ax.set_xlabel(f'pg: {k1} percent of normal year')
-            ax.set_ylabel(f'pg: {k2} percent of normal year')
-        else:
-            ax.set_xlabel(f'pg: {k1} tons/yr')
-            ax.set_ylabel(f'pg: {k2} tons/yr')
+        ax.set_xlabel(f'pg: {k1} tons/yr')
+        ax.set_ylabel(f'pg: {k2} tons/yr')
         out_figs.append(fig)
         out_figids.append(f'{k1}-{k2}')
     return out_figs, out_figids
@@ -184,19 +180,13 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
 
     # export key data
     if outdir is not None:
-        if correct:
-            y = data[f'{site}-{mode}_pg_yr{nyr}'] * 100
-        else:
-            y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
+        y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
         cum_pgr, cum_prob = calc_impact_prob(pgr=y,
                                              prob=x, stepsize=step_size)
         temp = pd.DataFrame({'prob': cum_prob, 'pg': cum_pgr})
         temp.to_csv(os.path.join(outdir, f'{site}-{mode}_{nyr}yr_impact_prob.csv'))
 
-        if correct:
-            y = data[f'{site}-{mode}_pg_yr{nyr}'] * 100
-        else:
-            y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
+        y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
         cum_pgr, cum_prob = calc_cumulative_impact_prob(pgr=y,
                                                         prob=x, stepsize=step_size)
         temp = pd.DataFrame({'prob': cum_prob, 'pg': cum_pgr})
@@ -245,18 +235,11 @@ def _plt_pgr(data, site, mode, nyr, x, num, figsize, ticks, plt_add, other_scen,
              other_scen_lbl, pt_labels, base_color, base_lw, base_ls, prg, outdir, close, additional_alpha, correct):
     print('plotting PGR')
     start_time = time.time()
-    if correct:
-        y = data[f'{site}-{mode}_pg_yr{nyr}'] * 100
-    else:
-        y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
+    y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
     fig, ax = plot_prob_impact(x, y, num=num, figsize=figsize)
     ax.set_title('Probability vs impact for random stories\n')
-    if correct:
-        y = data[f'{site}-{mode}_pg_yr{nyr}'] * 100
-        ax.set_ylabel('Pasture growth tons percent of most common year')
-    else:
-        y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
-        ax.set_ylabel('Pasture growth tons DM/Ha/year\nimpact increases <--')
+    y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
+    ax.set_ylabel('Pasture growth tons DM/Ha/year\nimpact increases <--')
     ax.set_xlabel('Probability\nevents become more common -->')
     ax.set_xticks(ticks)
     ax.set_xticklabels(["$10^{" + str(int(e)) + "}$" for e in ticks])
@@ -329,10 +312,7 @@ def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add,
     print('plotting raw histogram')
     start_time = time.time()
     bins = 500
-    if correct:
-        y = data[f'{site}-{mode}_pg_yr{nyr}'] * 100
-    else:
-        y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
+    y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
     fig, (ax1, ax2) = plt.subplots(2, figsize=figsize)
     ty, tx, t0 = ax1.hist(x, bins=bins, color='grey')
     ax1.set_title('Probability Histogram')
@@ -356,10 +336,7 @@ def _plt_raw_hist(data, site, mode, nyr, x, figsize, num_others, ticks, plt_add,
     ax1.legend()
 
     ty, tx, t0 = ax2.hist(y, bins=bins, color='grey')
-    if correct:
-        ax2.set_xlabel('Pasture growth tons DM/Ha/year\nimpact increases <--')
-    else:
-        ax2.set_xlabel('Pasture growth tons DM/Ha/year\nimpact increases <--')
+    ax2.set_xlabel('Pasture growth tons DM/Ha/year\nimpact increases <--')
     ax2.set_title('PG anomaly Histogram')
     ax2.set_ylabel('Count')
     if plt_add:
@@ -397,21 +374,14 @@ def _plot_impact_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, ot
                       additional_alpha, correct):
     print('plotting impact probability')
     start_time = time.time()
-    if correct:
-        y = data[f'{site}-{mode}_pg_yr{nyr}'] * 100
-
-    else:
-        y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
+    y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
 
     cum_pgr, cum_prob = calc_impact_prob(pgr=y,
                                          prob=x, stepsize=step_size)
     fig, ax1 = plt.subplots(figsize=figsize)
     ax1.bar(cum_pgr, cum_prob, width=step_size / 2, color='grey')
     ax1.set_title('Impact Probability Histogram')
-    if correct:
-        ax1.set_xlabel('Pasture growth percent of most common year')
-    else:
-        ax1.set_xlabel('Pasture growth tons DM/Ha/year\nimpact increases <--')
+    ax1.set_xlabel('Pasture growth tons DM/Ha/year\nimpact increases <--')
     if plt_add:
         for i, (l, xi) in enumerate(other_scen[['plotlabel', 'pg']].itertuples(False, None)):
             if i == 0:
@@ -449,20 +419,14 @@ def _plt_cum_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_
                   correct):
     print('plot cumulative probability')
     start_time = time.time()
-    if correct:
-        y = data[f'{site}-{mode}_pg_yr{nyr}'] * 100
-    else:
-        y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
+    y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
     cum_pgr, cum_prob = calc_cumulative_impact_prob(pgr=y,
                                                     prob=x, stepsize=step_size)
     fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=figsize)
     ax1.bar(cum_pgr, cum_prob, width=step_size / 2, color='grey')
     ax1.set_title('Exceedance probability')
 
-    if correct:
-        ax1.set_xlabel('Pasture growth percent of most common year')
-    else:
-        ax1.set_xlabel('Pasture growth tons DM/Ha/year')
+    ax1.set_xlabel('Pasture growth tons DM/Ha/year')
     if plt_add:
         for i, (l, xi) in enumerate(other_scen[['plotlabel', 'pg']].itertuples(False, None)):
             if i == 0:
@@ -486,10 +450,7 @@ def _plt_cum_prob(data, site, mode, nyr, x, figsize, num_others, plt_add, other_
                                                     more_production_than=False)
     ax2.bar(cum_pgr, cum_prob, width=step_size / 2, color='grey')
     ax2.set_title('Non-exceedance probability')
-    if correct:
-        ax2.set_xlabel('Pasture growth percent of most common year')
-    else:
-        ax2.set_xlabel('Pasture growth tons DM/Ha/year')
+    ax2.set_xlabel('Pasture growth tons DM/Ha/year')
     if plt_add:
         for i, (l, xi) in enumerate(other_scen[['plotlabel', 'pg']].itertuples(False, None)):
             if i == 0:

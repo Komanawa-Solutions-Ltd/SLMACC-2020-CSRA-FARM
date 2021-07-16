@@ -139,7 +139,6 @@ if __name__ == '__main__':
     print(get_pgr_prob_baseline_stiched(1, 'oxford', 'irrigated'))
     print(get_pgr_prob_baseline_stiched(1, 'oxford', 'dryland'))
 
-    # todo check full results
 
     # other scripts worth re-running/ rethinking
     # Storylines/storyline_runs/run_unique_events.py # re-run unique events to see any changes

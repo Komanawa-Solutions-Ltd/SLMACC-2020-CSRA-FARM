@@ -107,6 +107,10 @@ def run_IID(story_dict, outpath=None, verbose=False, comments='',
         for i in range(len(df) - 1):
 
             month1 = df.iloc[i]
+            if month1.loc['month'] in [5, 6, 7]:  # todo document change
+                continue
+                # the trasitions to months 6, 7, 8 should not impact probability
+                # as pasture growth is fixed for these months.
             month2 = df.iloc[i + 1]
 
             # if month in story has a perscribed restriction value looking up that month / values CDF and interpolating

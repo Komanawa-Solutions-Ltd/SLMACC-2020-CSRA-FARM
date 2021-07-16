@@ -43,38 +43,38 @@ historical_average = {
 
 }
 
+fixed_data = {
+    ('dryland', 'oxford'): {
+        6: 5 * 30,
+        7: 5 * 31,
+        8: 10 * 31
+    },
+    ('irrigated', 'eyrewell'): {
+        6: 5 * 30,
+        7: 10 * 31,
+        8: 15 * 31
+    },
+    ('irrigated', 'oxford'): {
+        6: 5 * 30,
+        7: 5 * 31,
+        8: 10 * 31
+    },
+}
 
-def get_most_probabile(site, mode):
-    target_ranges = {
-        ('dryland', 'oxford'): (4, 6 * 100000),
-        ('irrigated', 'eyrewell'): (15 * 1000, 17 * 1000),
-        ('irrigated', 'oxford'): (11.5 * 1000, 14 * 1000),
-    }
-
-    out = {}  # keys integer months and '1yr'
-    gdrive_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'random')
-    bad = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_bad_irr.hdf'), 'prob')
-
-    good = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_good_irr.hdf'), 'prob')
-
-    data = pd.concat([good, bad])
-    data = data.dropna()
-    minv, maxv = target_ranges[(mode, site)]
-    data = data.loc[(minv <= data.loc[:, f'{site}-{mode}_pg_yr1']) & (data.loc[:, f'{site}-{mode}_pg_yr1'] <= maxv)]
-    data.loc[:, f'{site}-{mode}_pg_yr1'] += (2 * 300
-                                             - data.loc[:, f'{site}-{mode}_pg_m06']
-                                             - data.loc[:, f'{site}-{mode}_pg_m07'])
-    out['1yr'] = data.loc[:, f'{site}-{mode}_pg_yr1'].mean()
-    for m in range(1, 13):
-        out[m] = data.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean()
-
-    out[6] = 30
-    out[7] = 30
-
-    return out
+deltas = {
+    9: 1.4,
+    10: 1.4,
+    11: 1.,
+    12: 0.8,
+    1: 0.8,
+    2: 0.8,
+    3: 0.8,
+    4: 1.,
+    5: 1.,
+}
 
 
-def to_fract(data):
+def corr_pg(data):
     """
     # note that fractions are of cumulative montly  data and that sum of probilities does not match the annual data
     :param data:
@@ -83,54 +83,18 @@ def to_fract(data):
     data = deepcopy(data)
 
     for mode, site in default_mode_sites:
-        data.loc[:, f'{site}-{mode}_pg_yr1'] += (2 * 30
-                                                 - data.loc[:, f'{site}-{mode}_pg_m06']
-                                                 - data.loc[:, f'{site}-{mode}_pg_m07'])
-
-        data.loc[:, f'{site}-{mode}_pg_m06'] = 30
-        data.loc[:, f'{site}-{mode}_pg_m07'] = 30
-
-        divisor = get_most_probabile(site, mode)
-
         for m in range(1, 13):
-            data.loc[:, f'{site}-{mode}_pg_m{m:02d}'] *= 1 / divisor[m]
+            if m in [6, 7, 8]:
+                data.loc[:, f'{site}-{mode}_pg_m{m:02d}'] = fixed_data[(mode, site)][m]
+            else:
+                data.loc[:, f'{site}-{mode}_pg_m{m:02d}'] *= deltas[m]
 
         # 1 year
-        data.loc[:, f'{site}-{mode}_pg_yr1'] *= 1 / divisor['1yr']
+        data.loc[:, f'{site}-{mode}_pg_yr1'] = data.loc[:,
+                                               [f'{site}-{mode}_pg_m{m:02d}' for m in range(1, 13)]].sum(axis=1)
 
     return data
 
-def to_fract_1yr(data):
-    """
-    # note that fractions are of cumulative montly  data and that sum of probilities does not match the annual data
-    :param data:
-    :return:
-    """
-    data = deepcopy(data)
-
-    for mode, site in default_mode_sites:
-        data.loc[:, f'{site}-{mode}_pg'] += (2 * 30)
-
-
-
-        divisor = get_most_probabile(site, mode)
-
-        # 1 year
-        data.loc[:, f'{site}-{mode}_pg'] *= 1 / divisor['1yr']
-
-    return data
-
-
-def export_most_probable():
-    outdata = pd.DataFrame(index=[7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, '1yr'])
-    outdata.index.name = 'month'
-    for mode, site in default_mode_sites:
-        temp = get_most_probabile(site, mode)
-        for m in range(1, 13):
-            outdata.loc[m, f'{site}-{mode}'] = temp[m]
-        outdata.loc['1yr', f'{site}-{mode}'] = temp['1yr']
-    outdata.to_csv(
-        os.path.join(r"M:\Shared drives\Z2003_SLMACC\outputs_for_ws\norm\random_scen_plots", 'normal_year_vals.csv'))
 
 if __name__ == '__main__':
-    export_most_probable()
+    pass

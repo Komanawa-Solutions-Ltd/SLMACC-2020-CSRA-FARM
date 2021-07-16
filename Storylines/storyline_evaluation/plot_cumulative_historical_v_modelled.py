@@ -85,6 +85,6 @@ def plot_all_comps(correct=False):
             fig.savefig(os.path.join(outdir, f'{site}-{mode}_{nyr}yr_cum_comp.png'))
 
 
-if __name__ == '__main__':  # todo run and check!!!
+if __name__ == '__main__':  # todo re-run
     plot_all_comps(correct=False)
     plot_all_comps(correct=True)

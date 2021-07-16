@@ -184,15 +184,12 @@ def plot_3yr_additional(get_add_fun, other_scen_lbl, pt_labels=True, save=False)
 
 
 if __name__ == '__main__':
-    # todo re-run all with correction, check
-    # plot_1yr(True, True)
+    # todo re-run all with correction and new IID
+    plot_1yr(True, True)
+    raise NotImplementedError # todo plotting nyr is after it runs
     years = [ 2,
         3, 5, 10]
     for y in years:
         print(f'######## {y}yr #######')
-        plot_nyr_no_additional(nyr=y, save=True, plot_correct=True, plot_not_correct=False)
-    #
-    # plot_1yr_additional(get_laura_v2_1yr_pg_prob, 'lauras_v2_1yr', save=True, pt_labels=True)
-    # plot_1yr_additional(get_laura_autumn_1yr_pg_prob, 'lauras_autumn_drought_1yr', save=True, pt_labels=True)
-    # plot_2yr_additional(get_laura_v2_1yr_2yr_pg_prob, 'lauras_v2_2yr', save=True, pt_labels=False)
+        plot_nyr_no_additional(nyr=y, save=True, plot_correct=True, plot_not_correct=True)
     pass

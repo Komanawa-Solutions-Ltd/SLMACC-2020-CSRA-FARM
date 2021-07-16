@@ -289,140 +289,6 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
     return clusters
 
 
-def run_plot_pca_correct(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=False, log_dir=None):
-    log_text = []
-    print('running_pca')
-    pca = PCA().fit(data)
-    trans_data = pca.transform(data)
-
-    log_text.append('explained variance')
-    log_text.append(' '.join([f'{e:.2e}' for e in pca.explained_variance_ratio_]))
-    log_text.append('cumulative explained variance')
-    log_text.append(' '.join([f'{e:.2e}' for e in np.cumsum(pca.explained_variance_ratio_)]))
-    log_text.append(f'calculating {n_clusters} clusters for {n_pcs} principle components total '
-                    f'explained variance{np.cumsum(pca.explained_variance_ratio_)[n_pcs - 1]}')
-
-    clusters = AgglomerativeClustering(n_clusters=n_clusters).fit_predict(trans_data[:, 0:n_pcs])
-    clusters = np.array(clusters)
-
-    if log_dir is not None:
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-        with open(os.path.join(log_dir, 'cluster_log.txt'), 'w') as f:
-            f.write('\n'.join(log_text))
-
-    if plot:
-        fig, ax = plt.subplots(figsize=(14, 7))
-        ax.scatter(trans_data[:, 0], trans_data[:, 1], c=clusters, cmap='magma')
-        ax.set_xlabel('pc1')
-        ax.set_ylabel('pc2')
-
-        all_data = {}
-        fig_all, axs = plt.subplots(3, sharex=True, figsize=(14, 7))
-
-        for i, ((mode, site), ax_all) in enumerate(zip(default_mode_sites, axs)):
-            fig, ax = plt.subplots(figsize=(14, 7))
-            data = [impact_data.loc[:, f'{site}-{mode}_pg_yr1'] * 100]
-            all_data[f'{site}-{mode}'] = deepcopy(data[0])
-            data = data + [impact_data.loc[clusters == k, f'{site}-{mode}_pg_yr1'] * 100 for k in np.unique(clusters)]
-            ax.boxplot(data,
-                       labels=['all'] + [f'c:{i}' for i in range(n_clusters)])
-            ax.set_title(f'{site}-{mode} - Agglomerative')
-            ax.set_xlabel('cluster')
-            ax.set_ylabel('pg growth percent of normal year')
-            fig.savefig(os.path.join(log_dir, f'{site}-{mode}-pg.png'))
-            ax_all.boxplot(data,
-                           labels=['all'] + [f'c:{i}' for i in range(n_clusters)])
-            ax_all.set_title(f'{site}-{mode} - Agglomerative')
-            if i == 2:
-                ax_all.set_xlabel('cluster')
-            if i == 1:
-                ax_all.set_ylabel('pg growth percent of normal year')
-
-        fig_all.tight_layout()
-        fig_all.savefig(os.path.join(log_dir, f'all_sites-pg.png'))
-
-        figs, figids = plot_impact_for_sites(all_data, 300, (14, 7), True)
-        for fig, figid in zip(figs, figids):
-            fig.suptitle('Full Suite')
-            fig.tight_layout()
-            fig.savefig(os.path.join(log_dir, f'site_comparison_all_{figid}.png'))
-
-        plot_months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
-        pg_fig, pg_axs = plt.subplots(nrows=3, figsize=(14, 10), sharex=True)
-        for i, ((mode, site), ax) in enumerate(zip(default_mode_sites, pg_axs)):
-            data = [impact_data.loc[:, f'{site}-{mode}_pg_m{m:02d}'] * 100 for m in plot_months]
-            parts = ax.violinplot(data, positions=np.arange(1, len(plot_months) + 1),
-                                  showmeans=False, showmedians=True, quantiles=[[0.25, 0.75] for e in plot_months])
-            c = 'k'
-            for pc in parts['bodies']:
-                pc.set_facecolor(c)
-            parts['cmedians'].set_color(c)
-            parts['cquantiles'].set_color(c)
-            parts['cmins'].set_color(c)
-            parts['cmaxes'].set_color(c)
-            parts['cbars'].set_color(c)
-
-            ax.set_title(f'{site}-{mode}')
-            if i == 0:
-                ax.set_ylim(0, 400)
-            if i == 2:
-                ax.set_ylim(0, 200)
-                ax.set_xlabel('Month')
-                ax.set_xticks(np.arange(1, len(plot_months) + 1))
-                ax.set_xticklabels([str(e) for e in plot_months])
-                ax.set_xlim(0.5, len(plot_months) + 0.5)
-            if i == 1:
-                ax.set_ylim(0, 200)
-                ax.set_ylabel('percent of normal year monthly growth')
-        pg_fig.suptitle(f'Full Suite')
-        pg_fig.tight_layout()
-        pg_fig.savefig(os.path.join(log_dir, 'pg_curve_all.png'))
-
-        for clust in np.unique(clusters):
-            all_data = {}
-            pg_fig, pg_axs = plt.subplots(nrows=3, figsize=(14, 10), sharex=True)
-            for i, ((mode, site), ax) in enumerate(zip(default_mode_sites, pg_axs)):
-                all_data[f'{site}-{mode}'] = impact_data.loc[clusters == clust, f'{site}-{mode}_pg_yr1'] * 100
-                data = [impact_data.loc[clusters == clust,
-                                        f'{site}-{mode}_pg_m{m:02d}'] * 100 for m in plot_months]
-                parts = ax.violinplot(data, positions=np.arange(1, len(plot_months) + 1),
-                                      showmeans=False, showmedians=True, quantiles=[[0.25, 0.75] for e in plot_months])
-                c = 'k'
-                for pc in parts['bodies']:
-                    pc.set_facecolor(c)
-                parts['cmedians'].set_color(c)
-                parts['cquantiles'].set_color(c)
-                parts['cmins'].set_color(c)
-                parts['cmaxes'].set_color(c)
-                parts['cbars'].set_color(c)
-
-                ax.set_title(f'{site}-{mode}')
-                if i == 0:
-                    ax.set_ylim(0, 400)
-                if i == 2:
-                    ax.set_ylim(0, 200)
-                    ax.set_xlabel('Month')
-                    ax.set_xticks(np.arange(1, len(plot_months) + 1))
-                    ax.set_xticklabels([str(e) for e in plot_months])
-                    ax.set_xlim(0.5, len(plot_months) + 0.5)
-                if i == 1:
-                    ax.set_ylim(0, 200)
-                    ax.set_ylabel('percent of normal years monthly growth')
-            pg_fig.suptitle(f'Cluster {clust:02d}')
-            pg_fig.tight_layout()
-            pg_fig.savefig(os.path.join(log_dir, f'pg_curve_clust_{clust:02d}.png'))
-
-            figs, figids = plot_impact_for_sites(all_data, 300, (14, 7), True)
-            for fig, figid in zip(figs, figids):
-                fig.suptitle(f'Cluster {clust:02d}')
-                fig.tight_layout()
-                fig.savefig(os.path.join(log_dir, f'site_comparison_clust_{clust:02d}_{figid}.png'))
-
-        if show:
-            plt.show()
-    return clusters
-
 
 def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n_clusters=20, n_pcs=15,
                           save_stories=True, correct=False):
@@ -472,10 +338,7 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
         total_prob.loc[f'lower_pg_prob_{site}-{mode}_median'] = 1 - probs[idx]
 
     total_prob.to_csv(os.path.join(outdir, 'explained_probability.csv'))
-    if correct:
-        clusters = run_plot_pca_correct(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs, log_dir=outdir)
-    else:
-        clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs, log_dir=outdir)
+    clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs, log_dir=outdir)
     impact_data.loc[:, 'cluster'] = clusters
     impact_data.to_csv(os.path.join(outdir, 'prop_pg_cluster_data.csv'))
 
@@ -493,10 +356,7 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
         cluster_data.loc[c, 'norm_prob'] = probs[idx].sum() / idx.sum()
 
         for mode, site in default_mode_sites:
-            if correct:
-                impact_v = impact_data.loc[impact_data.loc[:, 'cluster'] == c, f'{site}-{mode}_pg_yr1'].median() * 100
-            else:
-                impact_v = impact_data.loc[impact_data.loc[:, 'cluster'] == c, f'{site}-{mode}_pg_yr1'].median() / 1000
+            impact_v = impact_data.loc[impact_data.loc[:, 'cluster'] == c, f'{site}-{mode}_pg_yr1'].median() / 1000
             probs_value = exceedence[f'{site}-{mode}'].prob.values
             impacts_value = exceedence[f'{site}-{mode}'].pg.values
             idx_value = np.argmin(np.abs(impacts_value - impact_v))
