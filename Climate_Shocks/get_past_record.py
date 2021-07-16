@@ -151,5 +151,6 @@ def get_restriction_record(version='trended', recalc=False):
 
 
 if __name__ == '__main__':
-    test = get_vcsn_record()
+    trend = get_restriction_record()
+    detrend = get_restriction_record('detrended')
     pass
