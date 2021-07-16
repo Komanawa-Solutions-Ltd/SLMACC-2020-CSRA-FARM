@@ -10,7 +10,7 @@ from Storylines.storyline_building_support import default_mode_sites
 
 base_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'random_scen_plots')
 
-correct_stepsize = 0.5
+correct_stepsize = 0.1
 
 
 def plot_1yr(save=False, close=True):
@@ -186,9 +186,7 @@ def plot_3yr_additional(get_add_fun, other_scen_lbl, pt_labels=True, save=False)
 if __name__ == '__main__':
     # todo re-run all with correction and new IID
     plot_1yr(True, True)
-    raise NotImplementedError # todo plotting nyr is after it runs
-    years = [ 2,
-        3, 5, 10]
+    years = [2, 3, 5, 10]
     for y in years:
         print(f'######## {y}yr #######')
         plot_nyr_no_additional(nyr=y, save=True, plot_correct=True, plot_not_correct=True)

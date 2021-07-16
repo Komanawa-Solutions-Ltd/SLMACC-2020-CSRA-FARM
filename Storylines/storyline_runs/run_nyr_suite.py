@@ -6,8 +6,8 @@ from Storylines.storyline_runs.run_random_suite import create_nyr_suite
 import time
 
 if __name__ == '__main__':
-    t = time.time() # todo run with new IID
-    create_nyr_suite(2, True, False, correct=False) # already run
+    t = time.time()
+    create_nyr_suite(2, True, False, correct=False)
     create_nyr_suite(3, True, False, correct=False)
     create_nyr_suite(5, True, False, correct=False)
     create_nyr_suite(10, True, False, correct=False)

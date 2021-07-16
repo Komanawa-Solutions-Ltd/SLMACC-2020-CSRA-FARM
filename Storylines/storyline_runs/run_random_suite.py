@@ -347,7 +347,7 @@ def fix_old_1yr_runs(base_dir, change_storyline_time=False):
 
 
 if __name__ == '__main__':
-    run_chunks = []  # todo re-run with new IID
+    run_chunks = []
     make_stories = True
     run_basgra_bad = False
     run_basgra_good = False
