@@ -167,6 +167,8 @@ def make_all_storyline_data(calc_raw=False):
 def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=False, log_dir=None):
     log_text = []
     print('running_pca')
+    if len(data) < n_pcs:
+        n_pcs = len(data)
     pca = PCA().fit(data)
     trans_data = pca.transform(data)
 

@@ -4,32 +4,34 @@
  """
 from Storylines.storyline_evaluation.storyline_characteristics_for_impact import storyline_subclusters
 import os
+import ksl_env
 
-base_dir = r"C:\Users\dumon\Downloads\test_correct"
+base_dir = os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm\possible_final_stories")
 
 # bounds are in fraction of new year.
-eyrewell_irr_l=0 # todo and propogate into
-eyrewell_irr_u=0 # todo
+eyrewell_irr_l = 12.050 * 1000
+eyrewell_irr_u = 13.750 * 1000
 
-oxford_irr_l=0 # todo
-oxford_irr_u=0 # todo
+oxford_irr_l = 9.67 * 1000
+oxford_irr_u = 10.9 * 1000
 
-oxford_dry_l=0 # todo
-oxford_dry_u=0 # todo
+oxford_dry_l = 2.675 * 1000
+oxford_dry_u = 3.8 * 1000
+
 
 def autumn_drought_1():
     storyline_subclusters(
 
         outdir=os.path.join(base_dir, 'autumn_drought1'),
         lower_bound={
-            'oxford-dryland': None,
-            'eyrewell-irrigated': None,
-            'oxford-irrigated': None,
+            'oxford-dryland': oxford_dry_l,
+            'eyrewell-irrigated': eyrewell_irr_l,
+            'oxford-irrigated': oxford_irr_l,
         },
         upper_bound={
-            'oxford-dryland': None,
-            'eyrewell-irrigated': None,
-            'oxford-irrigated': None,
+            'oxford-dryland': oxford_dry_u,
+            'eyrewell-irrigated': eyrewell_irr_u,
+            'oxford-irrigated': oxford_irr_u,
 
         },
 
@@ -50,14 +52,14 @@ def autumn_drought_2():
 
         outdir=os.path.join(base_dir, 'autumn_drought2'),
         lower_bound={
-            'oxford-dryland': None,
-            'eyrewell-irrigated': None,
-            'oxford-irrigated': None,
+            'oxford-dryland': oxford_dry_l,
+            'eyrewell-irrigated': eyrewell_irr_l,
+            'oxford-irrigated': oxford_irr_l,
         },
         upper_bound={
-            'oxford-dryland': None,
-            'eyrewell-irrigated': None,
-            'oxford-irrigated': None,
+            'oxford-dryland': oxford_dry_u,
+            'eyrewell-irrigated': eyrewell_irr_u,
+            'oxford-irrigated': oxford_irr_u,
 
         },
 
@@ -78,14 +80,14 @@ def dry_summer():
 
         outdir=os.path.join(base_dir, 'dry_summer1'),
         lower_bound={
-            'oxford-dryland': None,
-            'eyrewell-irrigated': None,
-            'oxford-irrigated': None,
+            'oxford-dryland': oxford_dry_l,
+            'eyrewell-irrigated': eyrewell_irr_l,
+            'oxford-irrigated': oxford_irr_l,
         },
         upper_bound={
-            'oxford-dryland': None,
-            'eyrewell-irrigated': None,
-            'oxford-irrigated': None,
+            'oxford-dryland': oxford_dry_u,
+            'eyrewell-irrigated': eyrewell_irr_u,
+            'oxford-irrigated': oxford_irr_u,
 
         },
 
@@ -107,14 +109,14 @@ def dry_summer2():
 
         outdir=os.path.join(base_dir, 'dry_summer2'),
         lower_bound={
-            'oxford-dryland': None,
-            'eyrewell-irrigated': None,
-            'oxford-irrigated': None,
+            'oxford-dryland': oxford_dry_l,
+            'eyrewell-irrigated': eyrewell_irr_l,
+            'oxford-irrigated': oxford_irr_l,
         },
         upper_bound={
-            'oxford-dryland': None,
-            'eyrewell-irrigated': None,
-            'oxford-irrigated': None,
+            'oxford-dryland': oxford_dry_u,
+            'eyrewell-irrigated': eyrewell_irr_u,
+            'oxford-irrigated': oxford_irr_u,
 
         },
 
@@ -130,29 +132,34 @@ def dry_summer2():
         save_stories=True, correct=True
     )
 
+
 def good_stories():
     # just to test bounds
-        storyline_subclusters(
+    storyline_subclusters(
 
-        outdir=os.path.join(base_dir, 'good_stories'),
+        outdir=os.path.join(base_dir, 'all_stories_10-20'),
         lower_bound={
-            'oxford-dryland': None,
-            'eyrewell-irrigated': 1,
-            'oxford-irrigated': None,
+            'oxford-dryland': oxford_dry_l,
+            'eyrewell-irrigated': eyrewell_irr_l,
+            'oxford-irrigated': oxford_irr_l,
         },
         upper_bound={
-            'oxford-dryland': None,
-            'eyrewell-irrigated': 30,
-            'oxford-irrigated': None,
+            'oxford-dryland': oxford_dry_u,
+            'eyrewell-irrigated': eyrewell_irr_u,
+            'oxford-irrigated': oxford_irr_u,
 
         },
 
         state_limits=None,
-        n_clusters=10,
+        n_clusters=15,
         n_pcs=15,
         save_stories=True, correct=True
     )
 
 
 if __name__ == '__main__':
-    good_stories() # todo figure out the stories to take forward!!
+    autumn_drought_1()
+    autumn_drought_2()
+    dry_summer()
+    # dry_summer2() this one only has 12 stories... causes all sorts of problems
+    good_stories()  # todo figure out the stories to take forward!!
