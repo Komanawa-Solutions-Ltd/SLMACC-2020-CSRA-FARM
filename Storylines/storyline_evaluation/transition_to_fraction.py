@@ -96,5 +96,32 @@ def corr_pg(data):
     return data
 
 
+def get_most_probabile(site, mode, correct=False):
+    target_ranges = {
+        ('dryland', 'oxford'): (4, 6 * 100000),
+        ('irrigated', 'eyrewell'): (15 * 1000, 17 * 1000),
+        ('irrigated', 'oxford'): (11.5 * 1000, 14 * 1000),
+    }
+
+    out = {}  # keys integer months and '1yr'
+    gdrive_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'random')
+    bad = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_bad_irr.hdf'), 'prob')
+
+    good = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_good_irr.hdf'), 'prob')
+
+
+
+    data = pd.concat([good, bad])
+    data = data.dropna()
+    minv, maxv = target_ranges[(mode, site)]
+    data = data.loc[(minv <= data.loc[:, f'{site}-{mode}_pg_yr1']) & (data.loc[:, f'{site}-{mode}_pg_yr1'] <= maxv)]
+    if correct:
+        data = corr_pg(data)
+    for m in range(1, 13):
+        out[m] = data.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean()
+
+    return out
+
+
 if __name__ == '__main__':
-    pass
+    get_most_probabile('eyrewell','irrigated',True)

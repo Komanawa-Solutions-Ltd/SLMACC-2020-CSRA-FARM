@@ -17,6 +17,7 @@ from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from Storylines.storyline_params import month_len
+from Storylines.storyline_evaluation.transition_to_fraction import get_most_probabile
 
 name = 'random_'
 base_story_dir = os.path.join(temp_storyline_dir, name)
@@ -246,6 +247,10 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
                 ax.set_xlim(0.5, len(plot_months) + 0.5)
             if i == 1:
                 ax.set_ylabel('kg DM/ha/day')
+            most_prob = get_most_probabile(site, mode, correct=True)
+            ax.plot(range(1,13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
+                    label='most probable year')
+            ax.legend()
         pg_fig.suptitle(f'Full Suite')
         pg_fig.tight_layout()
         pg_fig.savefig(os.path.join(log_dir, 'pg_curve_all.png'))
@@ -276,6 +281,11 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
                     ax.set_xlim(0.5, len(plot_months) + 0.5)
                 if i == 1:
                     ax.set_ylabel('kg DM/ha/day')
+                most_prob = get_most_probabile(site, mode, correct=True)
+                ax.plot(range(1,13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
+                        label='most probable year')
+                ax.legend()
+
             pg_fig.suptitle(f'Cluster {clust:02d}')
             pg_fig.tight_layout()
             pg_fig.savefig(os.path.join(log_dir, f'pg_curve_clust_{clust:02d}.png'))
@@ -289,7 +299,6 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
         if show:
             plt.show()
     return clusters
-
 
 
 def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n_clusters=20, n_pcs=15,
@@ -308,6 +317,8 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
     """
     if not os.path.exists(outdir):
         os.makedirs(outdir)
+
+    # todo save parameters
 
     pca_data, data, impact_data, full_prob = get_suite(lower_bound=lower_bound,
                                                        upper_bound=upper_bound,
@@ -339,9 +350,40 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
         total_prob.loc[f'higher_pg_prob_{site}-{mode}_median'] = probs[idx]
         total_prob.loc[f'lower_pg_prob_{site}-{mode}_median'] = 1 - probs[idx]
 
+    with open(os.path.join(outdir, 'parameters.txt'), 'w') as f:
+        f.write(f'{len(data)} stories selected of c. 140,000\n')
+
+        f.write('Pasture Growth limits in Tons DM/ha/year\n')
+        for k, v in lower_bound.items():
+            if v is None:
+                f.write(f'{k}:  No Lower Limit\n')
+                f.write(f'{k}:  No Upper Limit\n')
+            else:
+                u = upper_bound[k]
+                impacts = exceedence[k].pg.values * 1000
+                probs = exceedence[k].prob.values
+                idx = np.argmin(np.abs(impacts - v))
+                f.write(
+                    f'{k}: Lower Limit: {v / 1000}: {round((1 - probs[idx]) * 100, 2)}% probability in any given year\n')
+                idx = np.argmin(np.abs(impacts - u))
+                f.write(
+                    f'{k}: Upper Limit: {u / 1000}: {round((1 - probs[idx]) * 100, 2)}% probability in any given year\n')
+
+        if state_limits is None:
+            f.write('\n\nNo climate (precip/temp/rest) limits\n')
+        else:
+            f.write('\n\nClimate state limits: precip (D=Dry, A=Average, W=Wet), temp:(H=Hot, A=Average, C=Cold), '
+                    'rest: 0-1, quantile of restriction.\n'
+                    'Where multiple state limits are present it can be any one of '
+                    'them e.g. ([H,A], [A,D]) can be H-A or H-D or A-D or A-A; rest is '
+                    'presented between (min, max); *=any\n\n')
+            for k, v in state_limits.items():
+                f.write(f'month: {k}, Precip: {v[0]}, Temp: {v[1]}, Rest {v[2]}\n')
+
     total_prob.to_csv(os.path.join(outdir, 'explained_probability.csv'))
     clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs, log_dir=outdir)
     impact_data.loc[:, 'cluster'] = clusters
+
     impact_data.to_csv(os.path.join(outdir, 'prop_pg_cluster_data.csv'))
 
     probs = 10 ** impact_data['log10_prob_irrigated']

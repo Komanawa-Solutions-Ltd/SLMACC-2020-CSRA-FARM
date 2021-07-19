@@ -133,7 +133,7 @@ def dry_summer2():
     )
 
 
-def good_stories():
+def all_stories():
     # just to test bounds
     storyline_subclusters(
 
@@ -157,9 +157,33 @@ def good_stories():
     )
 
 
+def good_stories():
+    # just to test bounds
+    storyline_subclusters(
+
+        outdir=os.path.join(base_dir, 'all_stories_10-20'),
+        lower_bound={
+            'oxford-dryland': 5 * 1000,
+            'eyrewell-irrigated': 15.5 * 1000,
+            'oxford-irrigated': 11.5 * 1000,
+        },
+        upper_bound={
+            'oxford-dryland': 7 * 1000,
+            'eyrewell-irrigated': 16.2 * 1000,
+            'oxford-irrigated': 12.5 * 1000,
+
+        },
+
+        state_limits=None,
+        n_clusters=15,
+        n_pcs=15,
+        save_stories=True, correct=True
+    )
+
+
 if __name__ == '__main__':
     autumn_drought_1()
     autumn_drought_2()
     dry_summer()
-    # dry_summer2() this one only has 12 stories... causes all sorts of problems
+    all_stories()
     good_stories()  # todo figure out the stories to take forward!!
