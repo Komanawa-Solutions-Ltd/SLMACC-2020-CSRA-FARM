@@ -16,6 +16,7 @@ from Storylines.storyline_runs.run_random_suite import get_1yr_data, default_mod
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 from Storylines.storyline_params import month_len
 from Storylines.storyline_evaluation.transition_to_fraction import get_most_probabile
 
@@ -25,8 +26,28 @@ cols = ['date', 'precip_class', 'temp_class', 'rest', 'rest_per', 'year',
         'month', 'precip_class_prev']
 
 
-def get_exceedence_prob():
-    pass  # ?
+def add_exceedence_prob(impact_data, correct):
+    for mode, site in default_mode_sites:
+        if correct:
+            exceedence = pd.read_csv(
+                os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
+                             r"random_scen_plots\1yr_correct",
+                             f"{site}-{mode}_1yr_cumulative_exceed_prob.csv"))
+
+            probs = exceedence.prob.values * 100
+            impacts = exceedence.pg.values * 1000
+        else:
+            exceedence = pd.read_csv(
+                os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
+                             r"random_scen_plots\1yr",
+                             f"{site}-{mode}_1yr_cumulative_exceed_prob.csv"))
+
+            probs = exceedence.prob.values * 100
+            impacts = exceedence.pg.values * 1000
+        predictor = interp1d(impacts, probs, fill_value='extrapolate')
+        impact_data.loc[:, f'non-exceed_prob_per_{site}-{mode}'] = 100 - predictor(impact_data.loc[:, f'{site}-{mode}_pg_yr1'].astype(float))
+
+    return impact_data
 
 
 def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None, correct=False):
@@ -248,7 +269,7 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
             if i == 1:
                 ax.set_ylabel('kg DM/ha/day')
             most_prob = get_most_probabile(site, mode, correct=True)
-            ax.plot(range(1,13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
+            ax.plot(range(1, 13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
                     label='most probable year')
             ax.legend()
         pg_fig.suptitle(f'Full Suite')
@@ -282,7 +303,7 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
                 if i == 1:
                     ax.set_ylabel('kg DM/ha/day')
                 most_prob = get_most_probabile(site, mode, correct=True)
-                ax.plot(range(1,13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
+                ax.plot(range(1, 13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
                         label='most probable year')
                 ax.legend()
 
@@ -318,8 +339,6 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    # todo save parameters
-
     pca_data, data, impact_data, full_prob = get_suite(lower_bound=lower_bound,
                                                        upper_bound=upper_bound,
                                                        return_for_pca=True,
@@ -335,7 +354,7 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
                 os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
                              r"random_scen_plots\1yr_correct", f"{site}-{mode}_1yr_cumulative_exceed_prob.csv"))
 
-            impact = impact_data.loc[:, f'{site}-{mode}_pg_yr1'].median() * 100
+            impact = impact_data.loc[:, f'{site}-{mode}_pg_yr1'].median() / 1000
             probs = exceedence[f'{site}-{mode}'].prob.values
             impacts = exceedence[f'{site}-{mode}'].pg.values
         else:
@@ -383,8 +402,21 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
     total_prob.to_csv(os.path.join(outdir, 'explained_probability.csv'))
     clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs, log_dir=outdir)
     impact_data.loc[:, 'cluster'] = clusters
+    impact_data.loc[:, 'ID'] = impact_data.loc[:, 'ID'] + '_' + impact_data.loc[:, 'irr_type']
 
-    impact_data.to_csv(os.path.join(outdir, 'prop_pg_cluster_data.csv'))
+    # add mean of all and mean of each catagory
+    temp = impact_data.groupby('cluster').mean().reset_index()
+    temp.loc[:, 'ID'] = 'mean_cluster_' + temp.loc[:, 'cluster'].astype(str)
+
+    temp_mean = impact_data.mean()
+    temp_mean.loc['ID'] = 'full_mean'
+
+    impact_data_out = pd.concat([impact_data, temp, pd.DataFrame(temp_mean).transpose()])
+
+    # add recurance probability
+    impact_data_out = add_exceedence_prob(impact_data_out, correct)
+
+    impact_data_out.to_csv(os.path.join(outdir, 'prop_pg_cluster_data.csv'))
 
     probs = 10 ** impact_data['log10_prob_irrigated']
     probs = probs / probs.sum()

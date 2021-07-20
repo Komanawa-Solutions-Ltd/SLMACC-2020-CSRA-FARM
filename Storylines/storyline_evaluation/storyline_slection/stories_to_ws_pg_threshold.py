@@ -161,7 +161,7 @@ def good_stories():
     # just to test bounds
     storyline_subclusters(
 
-        outdir=os.path.join(base_dir, 'all_stories_10-20'),
+        outdir=os.path.join(base_dir, 'good_stories'),
         lower_bound={
             'oxford-dryland': 5 * 1000,
             'eyrewell-irrigated': 15.5 * 1000,
@@ -182,8 +182,8 @@ def good_stories():
 
 
 if __name__ == '__main__':
-    autumn_drought_1()
-    autumn_drought_2()
-    dry_summer()
+    #autumn_drought_1()
+    #autumn_drought_2()
+    #dry_summer()
     all_stories()
-    good_stories()  # todo figure out the stories to take forward!!
+    good_stories()
