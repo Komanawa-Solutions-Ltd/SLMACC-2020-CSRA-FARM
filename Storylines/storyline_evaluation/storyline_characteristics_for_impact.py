@@ -272,6 +272,10 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
             most_prob = get_most_probabile(site, mode, correct=True)
             ax.plot(range(1, 13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
                     label='most probable year')
+            ax.plot(range(1, 13),
+                    [impact_data.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
+                    ls=':', c='b', alpha=0.5,
+                    label='Mean pasture growth for suite')  # todo check
             ax.legend()
         pg_fig.suptitle(f'Full Suite')
         pg_fig.tight_layout()
@@ -306,6 +310,16 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
                 most_prob = get_most_probabile(site, mode, correct=True)
                 ax.plot(range(1, 13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
                         label='most probable year')
+                ax.plot(range(1, 13),
+                        [impact_data.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
+                        ls=':', c='b', alpha=0.5,
+                        label=f'Mean pasture growth for full suite')
+                ax.plot(range(1, 13),
+                        [impact_data.loc[clusters == clust,
+                                         f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
+                        ls='dashdot', c='r', alpha=0.5,
+                        label=f'Mean pasture growth for cluster: {clust:02d}')
+                # todo add data for mean of cluster
                 ax.legend()
 
             pg_fig.suptitle(f'Cluster {clust:02d}')
@@ -400,9 +414,10 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
             for k, v in state_limits.items():
                 f.write(f'month: {k}, Precip: {v[0]}, Temp: {v[1]}, Rest {v[2]}\n')
 
-    total_prob.rename({'log10_prob_irrigated': 'prob_irrigated_fract', 'log10_prob_dryland': 'prob_dryland_fract'
-                       }, inplace=True)
-    total_prob.to_csv(os.path.join(outdir, 'explained_probability.csv'))
+    total_prob_out = total_prob.rename({'log10_prob_irrigated': 'prob_irrigated_fract',
+                                        'log10_prob_dryland': 'prob_dryland_fract'
+                                        }, inplace=False)
+    total_prob_out.to_csv(os.path.join(outdir, 'explained_probability.csv'))
     clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs, log_dir=outdir)
     impact_data.loc[:, 'cluster'] = clusters
     impact_data.loc[:, 'ID'] = impact_data.loc[:, 'ID'] + '_' + impact_data.loc[:, 'irr_type']

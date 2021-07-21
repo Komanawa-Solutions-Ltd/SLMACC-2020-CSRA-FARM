@@ -181,9 +181,136 @@ def good_stories():
     )
 
 
+dry_sp_au_eyrewell_irr_l = 13 * 1000
+dry_sp_au_eyrewell_irr_u = 15 * 1000
+
+dry_sp_au_oxford_irr_l = 9 * 1000
+dry_sp_au_oxford_irr_u = 11 * 1000
+
+dry_sp_au_oxford_dry_l = 4 * 1000
+dry_sp_au_oxford_dry_u = 6 * 1000
+
+# todo testing the limitations
+dry_sp_au_eyrewell_irr_l = None
+dry_sp_au_eyrewell_irr_u = None
+
+dry_sp_au_oxford_irr_l = None
+dry_sp_au_oxford_irr_u = None
+
+dry_sp_au_oxford_dry_l = None
+dry_sp_au_oxford_dry_u = None
+
+
+def dry_spring_autumn1():
+    # just to test bounds
+    storyline_subclusters(
+
+        outdir=os.path.join(base_dir, 'dry_spring_autumn1'),
+        lower_bound={
+            'oxford-dryland': dry_sp_au_oxford_dry_l,
+            'eyrewell-irrigated': dry_sp_au_eyrewell_irr_l,
+            'oxford-irrigated': dry_sp_au_oxford_irr_l,
+        },
+        upper_bound={
+            'oxford-dryland': dry_sp_au_oxford_dry_u,
+            'eyrewell-irrigated': dry_sp_au_eyrewell_irr_u,
+            'oxford-irrigated': dry_sp_au_oxford_irr_u,
+
+        },
+
+        state_limits={
+            9: (['D'], '*', '*'),
+            10: (['D'], '*', '*'),
+            11: ('*', '*', (0.5, 1)),
+            12: ('*', '*', (0.5, 1)),
+            1: (['D', 'A'], ['H', 'A'], (0.5, 1)),
+            2: (['D', 'A'], ['H', 'A'], (0.5, 1)),
+            3: (['D', 'A'], ['H', 'A'], (0.5, 1)),
+            4: (['D', 'A'], ['H', 'A'], (0.5, 1)),
+
+        },
+
+        n_clusters=10,
+        n_pcs=15,
+        save_stories=True, correct=True
+    )
+
+
+def dry_spring_autumn2():
+    # just to test bounds
+    storyline_subclusters(
+
+        outdir=os.path.join(base_dir, 'dry_spring_autumn2'),
+        lower_bound={
+            'oxford-dryland': dry_sp_au_oxford_dry_l,
+            'eyrewell-irrigated': dry_sp_au_eyrewell_irr_l,
+            'oxford-irrigated': dry_sp_au_oxford_irr_l,
+        },
+        upper_bound={
+            'oxford-dryland': dry_sp_au_oxford_dry_u,
+            'eyrewell-irrigated': dry_sp_au_eyrewell_irr_u,
+            'oxford-irrigated': dry_sp_au_oxford_irr_u,
+
+        },
+
+        state_limits={
+            9: (['D'], '*', '*'),
+            10: (['D'], '*', '*'),
+            11: ('*', '*', (0.5, 1)),
+            12: ('*', '*', (0.5, 1)),
+            1: (['D'], ['H', 'A'], (0.5, 1)),
+            2: (['D'], ['H', 'A'], (0.5, 1)),
+            3: (['D'], ['H', 'A'], (0.5, 1)),
+            4: (['D'], ['H', 'A'], (0.5, 1)),
+
+        },
+
+        n_clusters=5,
+        n_pcs=15,
+        save_stories=True, correct=True
+    )
+
+
+def dry_spring_autumn3():
+    # just to test bounds
+    storyline_subclusters(
+
+        outdir=os.path.join(base_dir, 'dry_spring_autumn3'),
+        lower_bound={
+            'oxford-dryland': dry_sp_au_oxford_dry_l,
+            'eyrewell-irrigated': dry_sp_au_eyrewell_irr_l,
+            'oxford-irrigated': dry_sp_au_oxford_irr_l,
+        },
+        upper_bound={
+            'oxford-dryland': dry_sp_au_oxford_dry_u,
+            'eyrewell-irrigated': dry_sp_au_eyrewell_irr_u,
+            'oxford-irrigated': dry_sp_au_oxford_irr_u,
+
+        },
+
+        state_limits={
+            9: (['D'], '*', '*'),
+            10: (['D'], '*', '*'),
+            11: ('*', '*', (0.5, 1)),
+            12: ('*', '*', (0.5, 1)),
+            1: (['D', 'A'], ['H'], (0.5, 1)),
+            2: (['D', 'A'], ['H'], (0.5, 1)),
+            3: (['D', 'A'], ['H'], (0.5, 1)),
+            4: (['D', 'A'], ['H'], (0.5, 1)),
+
+        },
+
+        n_clusters=2,
+        n_pcs=15,
+        save_stories=True, correct=True
+    )
+
+
 if __name__ == '__main__':
-    #autumn_drought_1()
-    #autumn_drought_2()
-    #dry_summer()
-    all_stories()
-    good_stories()
+    # autumn_drought_1()
+    # autumn_drought_2()
+    # dry_summer()
+    # all_stories()
+    dry_spring_autumn1() # not enough stories
+    dry_spring_autumn2() # no stories selected
+    dry_spring_autumn3() # no stories selected
