@@ -45,7 +45,8 @@ def add_exceedence_prob(impact_data, correct):
             probs = exceedence.prob.values * 100
             impacts = exceedence.pg.values * 1000
         predictor = interp1d(impacts, probs, fill_value='extrapolate')
-        impact_data.loc[:, f'non-exceed_prob_per_{site}-{mode}'] = 100 - predictor(impact_data.loc[:, f'{site}-{mode}_pg_yr1'].astype(float))
+        impact_data.loc[:, f'non-exceed_prob_per_{site}-{mode}'] = 100 - predictor(
+            impact_data.loc[:, f'{site}-{mode}_pg_yr1'].astype(float))
 
     return impact_data
 
@@ -399,6 +400,8 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
             for k, v in state_limits.items():
                 f.write(f'month: {k}, Precip: {v[0]}, Temp: {v[1]}, Rest {v[2]}\n')
 
+    total_prob.rename({'log10_prob_irrigated': 'prob_irrigated_fract', 'log10_prob_dryland': 'prob_dryland_fract'
+                       }, inplace=True)
     total_prob.to_csv(os.path.join(outdir, 'explained_probability.csv'))
     clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs, log_dir=outdir)
     impact_data.loc[:, 'cluster'] = clusters
