@@ -306,11 +306,45 @@ def dry_spring_autumn3():
     )
 
 
+def dry_spring_autumn4():
+    # just to test bounds
+    storyline_subclusters(
+
+        outdir=os.path.join(base_dir, 'dry_spring_autumn4'),
+        lower_bound={
+            'oxford-dryland': dry_sp_au_oxford_dry_l,
+            'eyrewell-irrigated': dry_sp_au_eyrewell_irr_l,
+            'oxford-irrigated': dry_sp_au_oxford_irr_l,
+        },
+        upper_bound={
+            'oxford-dryland': dry_sp_au_oxford_dry_u,
+            'eyrewell-irrigated': dry_sp_au_eyrewell_irr_u,
+            'oxford-irrigated': dry_sp_au_oxford_irr_u,
+
+        },
+
+        state_limits={
+            9: (['D'], '*', '*'),
+            10: (['D'], '*', '*'),
+            11: ('*', '*', (0.5, 1)),
+            12: ('*', '*', (0.5, 1)),
+            1:  ('*', '*', (0.5, 1)),
+            2: (['D', 'A'], ['H', 'A'], (0.5, 1)),
+            3: (['D', 'A'], ['H', 'A'], (0.5, 1)),
+            4: (['D', 'A'], ['H', 'A'], (0.5, 1)),
+
+        },
+
+        n_clusters=10,
+        n_pcs=15,
+        save_stories=True, correct=True
+    )
 if __name__ == '__main__':
     # autumn_drought_1()
     # autumn_drought_2()
     # dry_summer()
     # all_stories()
-    dry_spring_autumn1() # not enough stories
-    dry_spring_autumn2() # no stories selected
-    dry_spring_autumn3() # no stories selected
+    # dry_spring_autumn1()
+    # dry_spring_autumn2()
+    # dry_spring_autumn3()
+    dry_spring_autumn4()
