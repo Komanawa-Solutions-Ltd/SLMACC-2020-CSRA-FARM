@@ -109,8 +109,6 @@ def get_most_probabile(site, mode, correct=False):
 
     good = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_good_irr.hdf'), 'prob')
 
-
-
     data = pd.concat([good, bad])
     data = data.dropna()
     minv, maxv = target_ranges[(mode, site)]
@@ -124,4 +122,28 @@ def get_most_probabile(site, mode, correct=False):
 
 
 if __name__ == '__main__':
-    get_most_probabile('eyrewell','irrigated',True)
+    plot_months = [
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+    ]
+    outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'most_probable')
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+    outdata = pd.DataFrame(index=plot_months)
+    outdata.index.name = 'month'
+    for mode, site in default_mode_sites:
+        temp = get_most_probabile(site, mode, True)
+        for m in plot_months:
+            outdata.loc[m, f'{site}-{mode}'] = temp[m]/month_len[m]
+
+    outdata.to_csv(os.path.join(outdir, 'most_probable_data.csv'))
