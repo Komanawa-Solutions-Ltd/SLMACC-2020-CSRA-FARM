@@ -150,4 +150,4 @@ proj_root = os.path.dirname(__file__)
 if not os.path.exists(slmmac_dir_unbacked):
     os.makedirs(slmmac_dir_unbacked)
 
-basgra_version = '4.0.2' #todo update? and make this version once I get cracking!
+basgra_version = '5.0.0'
