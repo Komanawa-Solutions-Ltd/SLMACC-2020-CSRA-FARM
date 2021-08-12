@@ -143,7 +143,7 @@ def examine_auto_correlation():
 
     for k in boot.keys:
         fig, ax = boot.plot_auto_correlation(10000, 15, k, show=False, hlines=[0, 0.25, 0.5, 0.75])
-        fig.savefig(os.path.join(outdir, 'correlation_{}.png'.format(k)))
+        fig.savefig(os.path.join(outdir, 'correlation_{}.svg'.format(k)))
         plt.close()
 
 
@@ -155,11 +155,11 @@ def examine_means():
 
     for k in boot.keys:
         fig, ax = boot.plot_means(k, include_input=True, bins=50, show=False)
-        fig.savefig(os.path.join(outdir, 'mean_{}.png'.format(k)))
+        fig.savefig(os.path.join(outdir, 'mean_{}.svg'.format(k)))
         plt.close()
     for k in boot.keys:
         fig, ax = boot.plot_means(k, include_input=False, bins=50, show=False, density=False)
-        fig.savefig(os.path.join(outdir, 'not_density_mean_{}.png'.format(k)))
+        fig.savefig(os.path.join(outdir, 'not_density_mean_{}.svg'.format(k)))
         plt.close()
 
 
@@ -187,4 +187,5 @@ if __name__ == '__main__':
     # gen_v5: 1 month precip with multiple blocks see nc file
     # gen_v6: 1 month precip with multiple blocks see nc file
 
-    get_irrigation_generator()
+    examine_means()
+    examine_auto_correlation()

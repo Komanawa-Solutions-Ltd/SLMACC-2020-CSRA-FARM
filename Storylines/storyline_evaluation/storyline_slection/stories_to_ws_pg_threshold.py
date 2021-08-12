@@ -74,6 +74,61 @@ def autumn_drought_2():
         save_stories=True, correct=True
     )
 
+def autumn_drought_1_no_tresh():
+    storyline_subclusters(
+
+        outdir=os.path.join(base_dir, 'autumn_drought1_no_thresh'),
+        lower_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': None,
+            'oxford-irrigated': None,
+        },
+        upper_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': None,
+            'oxford-irrigated': None,
+
+        },
+
+        state_limits={
+            2: (['D'], '*', (0.5, 1)),
+            3: (['D'], '*', (0.5, 1)),
+            4: (['D'], '*', (0.5, 1)),
+
+        },
+        n_clusters=5,
+        n_pcs=15,
+        save_stories=True, correct=True
+    )
+
+
+def autumn_drought_2_no_thresh():
+    storyline_subclusters(
+
+        outdir=os.path.join(base_dir, 'autumn_drought2_no_thresh'),
+        lower_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': None,
+            'oxford-irrigated': None,
+        },
+        upper_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': None,
+            'oxford-irrigated': None,
+
+        },
+
+        state_limits={
+            2: (['D', 'A'], ['H', 'A'], (0.6, 1)),
+            3: (['D', 'A'], ['H', 'A'], (0.6, 1)),
+            4: (['D', 'A'], ['H', 'A'], (0.6, 1)),
+
+        },
+        n_clusters=10,
+        n_pcs=15,
+        save_stories=True, correct=True
+    )
+
 
 def dry_summer():
     storyline_subclusters(
@@ -347,4 +402,6 @@ if __name__ == '__main__':
     # dry_spring_autumn1()
     # dry_spring_autumn2()
     # dry_spring_autumn3()
-    dry_spring_autumn4()
+    # dry_spring_autumn4()
+    autumn_drought_1_no_tresh()
+    autumn_drought_2_no_thresh()
