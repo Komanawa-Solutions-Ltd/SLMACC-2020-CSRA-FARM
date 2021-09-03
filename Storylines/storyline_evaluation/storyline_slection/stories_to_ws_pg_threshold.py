@@ -2,8 +2,10 @@
  Author: Matt Hanson
  Created: 5/07/2021 5:01 PM
  """
+import pandas as pd
+
 from Storylines.storyline_evaluation.storyline_characteristics_for_impact import storyline_subclusters, \
-    get_month_limits_from_most_probable
+    get_month_limits_from_most_probable, default_mode_sites
 import os
 import ksl_env
 
@@ -527,8 +529,9 @@ def dry_spring_autumn4():
         save_stories=True, correct=True
     )
 
+
 def bad_stories_eyrewell():
-        storyline_subclusters(
+    storyline_subclusters(
 
         outdir=os.path.join(base_dir, 'bad_stories_eyrewell'),
         lower_bound={
@@ -549,6 +552,121 @@ def bad_stories_eyrewell():
         save_stories=False, correct=True
     )
 
+
+def get_autumn_drought2_mon_thresh_add_plot():
+    data = pd.read_csv(os.path.join(base_dir, r"autumn_drought2_mon_thresh\prop_pg_cluster_data.csv"))
+    out = {}
+    for mode, site in default_mode_sites:
+        temp = {}
+        for m in range(1, 13):
+            temp[m] = data.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean()
+        out[(site, mode)] = temp
+
+    return out
+
+
+def hurt_v1():
+    storyline_subclusters(
+
+        outdir=os.path.join(base_dir, 'hurt_v1'),
+        lower_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': 11 * 1000,
+            'oxford-irrigated': None,
+        },
+        upper_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': 12.5 * 1000,
+            'oxford-irrigated': None,
+
+        },
+
+        state_limits={
+            2: (['D', 'A'], ['H', 'A'], (0.6, 1)),
+            3: (['D', 'A'], ['H', 'A'], (0.6, 1)),
+            4: (['D', 'A'], ['H', 'A'], (0.6, 1)),
+
+        },
+        n_clusters=10,
+        n_pcs=15,
+        save_stories=True, correct=True,
+        monthly_limits=None,
+        plt_additional_line=get_autumn_drought2_mon_thresh_add_plot(),
+        plt_additional_label='autumn_drought2_mon_thresh'
+
+    )
+
+
+def hurt_v2():
+    storyline_subclusters(
+
+        outdir=os.path.join(base_dir, 'hurt_v2'),
+        lower_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': 11 * 1000,
+            'oxford-irrigated': None,
+        },
+        upper_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': 12.5 * 1000,
+            'oxford-irrigated': None,
+
+        },
+
+        state_limits={
+            9: ('*', ['C', 'A'], '*'),
+            10: ('*', ['C', 'A'], '*'),
+            2: (['D', 'A'], ['H', 'A'], (0.6, 1)),
+            3: (['D', 'A'], ['H', 'A'], (0.6, 1)),
+            4: (['D', 'A'], ['H', 'A'], (0.6, 1)),
+
+        },
+        n_clusters=10,
+        n_pcs=15,
+        save_stories=True, correct=True,
+        monthly_limits=None,
+        plt_additional_line=get_autumn_drought2_mon_thresh_add_plot(),
+        plt_additional_label='autumn_drought2_mon_thresh'
+
+    )
+
+def hurt_v3():
+    storyline_subclusters(
+
+        outdir=os.path.join(base_dir, 'hurt_v3'),
+        lower_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': 11 * 1000,
+            'oxford-irrigated': None,
+        },
+        upper_bound={
+            'oxford-dryland': None,
+            'eyrewell-irrigated': 12.5 * 1000,
+            'oxford-irrigated': None,
+
+        },
+
+        state_limits={
+            9: (['D', 'A'], ['C', 'A'], '*'),
+            10: (['D', 'A'], ['C', 'A'], '*'),
+            2: (['D', 'A'], ['H', 'A'], (0.6, 1)),
+            3: (['D', 'A'], ['H', 'A'], (0.6, 1)),
+            4: (['D', 'A'], ['H', 'A'], (0.6, 1)),
+
+        },
+        n_clusters=10,
+        n_pcs=15,
+        save_stories=True, correct=True,
+        monthly_limits=None,
+        plt_additional_line=get_autumn_drought2_mon_thresh_add_plot(),
+        plt_additional_label='autumn_drought2_mon_thresh'
+
+    )
+
+
+
+
+
 if __name__ == '__main__':
     # autumn_drought_1()
     # autumn_drought_2()
@@ -560,10 +678,13 @@ if __name__ == '__main__':
     # dry_spring_autumn4()
     # autumn_drought_1_no_tresh()
     # autumn_drought_2_no_thresh()
-    #autumn_drought_3_no_thresh()
+    # autumn_drought_3_no_thresh()
 
-
-    #autumn_drought_1_mon_thresh()
-    #autumn_drought_2_mon_thresh()
-    #autumn_drought_3_mon_thresh()
-    bad_stories_eyrewell()
+    # autumn_drought_1_mon_thresh()
+    # autumn_drought_2_mon_thresh()
+    # autumn_drought_3_mon_thresh()
+    # bad_stories_eyrewell()
+    hurt_v1()
+    hurt_v2()
+    hurt_v3()
+    pass

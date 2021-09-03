@@ -251,7 +251,8 @@ def make_all_storyline_data(calc_raw=False):
     np.save(out_path_pca, out, False, False)
 
 
-def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=False, log_dir=None):
+def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=False, log_dir=None,
+                 additional_plot_line=None, additional_plot_nm=None):
     log_text = []
     print('running_pca')
     if len(data) < n_pcs:
@@ -336,15 +337,17 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
             most_prob = get_most_probabile(site, mode, correct=True)
             ax.plot(range(1, 13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
                     label='most probable year')
+            if additional_plot_line is not None:
+                plot_add_line(ax, site, mode, plot_months, additional_plot_line, additional_plot_nm)
+
             ax.plot(range(1, 13),
                     [impact_data.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
                     ls=':', c='b', alpha=0.5,
-                    label='Mean pasture growth for suite')  # todo check
+                    label='Mean pasture growth for suite')
             ax.legend()
         pg_fig.suptitle(f'Full Suite')
         pg_fig.tight_layout()
         pg_fig.savefig(os.path.join(log_dir, 'pg_curve_all.png'))
-
 
         for i, (mode, site) in enumerate(default_mode_sites):
             pg_fig, ax = plt.subplots(nrows=1, figsize=(14, 10))
@@ -369,6 +372,9 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
             most_prob = get_most_probabile(site, mode, correct=True)
             ax.plot(range(1, 13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
                     label='most probable year')
+            if additional_plot_line is not None:
+                plot_add_line(ax, site, mode, plot_months, additional_plot_line, additional_plot_nm)
+
             ax.plot(range(1, 13),
                     [impact_data.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
                     ls=':', c='b', alpha=0.75,
@@ -381,9 +387,9 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
             for c, clust in zip(colors, np.unique(clusters)):
                 temp = impact_data.loc[clusters == clust]
                 ax.plot(range(1, 13),
-                    [temp.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
-                    ls=':', c=c, alpha=1,
-                    label=f'Mean pasture growth cluster {clust}')  # todo check
+                        [temp.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
+                        ls=':', c=c, alpha=1,
+                        label=f'Mean pasture growth cluster {clust}')  # todo check
 
             ax.legend()
             pg_fig.tight_layout()
@@ -418,6 +424,8 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
                 most_prob = get_most_probabile(site, mode, correct=True)
                 ax.plot(range(1, 13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
                         label='most probable year')
+                if additional_plot_line is not None:
+                    plot_add_line(ax, site, mode, plot_months, additional_plot_line, additional_plot_nm)
                 ax.plot(range(1, 13),
                         [impact_data.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
                         ls=':', c='b', alpha=0.5,
@@ -427,7 +435,6 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
                                          f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
                         ls='dashdot', c='r', alpha=0.5,
                         label=f'Mean pasture growth for cluster: {clust:02d}')
-                # todo add data for mean of cluster
                 ax.legend()
 
             pg_fig.suptitle(f'Cluster {clust:02d}')
@@ -446,7 +453,8 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
 
 
 def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n_clusters=20, n_pcs=15,
-                          save_stories=True, correct=False, monthly_limits=None):
+                          save_stories=True, correct=False, monthly_limits=None, plt_additional_line=None,
+                          plt_additional_label=None):
     """
 
     :param outdir:
@@ -486,12 +494,12 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
                 os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
                              r"random_scen_plots\1yr", f"{site}-{mode}_1yr_cumulative_exceed_prob.csv"))
 
-            impact = impact_data.loc[:, f'{site}-{mode}_pg_yr1'].median() / 1000
+            impact = impact_data.loc[:, f'{site}-{mode}_pg_yr1'].mean() / 1000
             probs = exceedence[f'{site}-{mode}'].prob.values
             impacts = exceedence[f'{site}-{mode}'].pg.values
         idx = np.argmin(np.abs(impacts - impact))
-        total_prob.loc[f'higher_pg_prob_{site}-{mode}_median'] = probs[idx]
-        total_prob.loc[f'lower_pg_prob_{site}-{mode}_median'] = 1 - probs[idx]
+        total_prob.loc[f'higher_pg_prob_{site}-{mode}_mean'] = probs[idx]
+        total_prob.loc[f'lower_pg_prob_{site}-{mode}_mean'] = 1 - probs[idx]
 
     with open(os.path.join(outdir, 'parameters.txt'), 'w') as f:
         f.write(f'{len(data)} stories selected of c. 140,000\n')
@@ -533,7 +541,8 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
                                         'log10_prob_dryland': 'prob_dryland_fract'
                                         }, inplace=False)
     total_prob_out.to_csv(os.path.join(outdir, 'explained_probability.csv'))
-    clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs, log_dir=outdir)
+    clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs, log_dir=outdir,
+                            additional_plot_nm=plt_additional_label, additional_plot_line=plt_additional_line)
     impact_data.loc[:, 'cluster'] = clusters
     impact_data.loc[:, 'ID'] = impact_data.loc[:, 'ID'] + '_' + impact_data.loc[:, 'irr_type']
 
@@ -565,12 +574,12 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
         cluster_data.loc[c, 'norm_prob'] = probs[idx].sum() / idx.sum()
 
         for mode, site in default_mode_sites:
-            impact_v = impact_data.loc[impact_data.loc[:, 'cluster'] == c, f'{site}-{mode}_pg_yr1'].median() / 1000
+            impact_v = impact_data.loc[impact_data.loc[:, 'cluster'] == c, f'{site}-{mode}_pg_yr1'].mean() / 1000
             probs_value = exceedence[f'{site}-{mode}'].prob.values
             impacts_value = exceedence[f'{site}-{mode}'].pg.values
             idx_value = np.argmin(np.abs(impacts_value - impact_v))
-            cluster_data.loc[c, f'higher_pg_prob_{site}-{mode}_median'] = probs_value[idx_value]
-            cluster_data.loc[c, f'lower_pg_prob_{site}-{mode}_median'] = 1 - probs_value[idx_value]
+            cluster_data.loc[c, f'higher_pg_prob_{site}-{mode}_mean'] = probs_value[idx_value]
+            cluster_data.loc[c, f'lower_pg_prob_{site}-{mode}_mean'] = 1 - probs_value[idx_value]
 
         use_data = [e for e, i in zip(data, idx) if i]
         temp_data, precip_data, rest_data = plot_1_yr_storylines(use_data, f'cluster {c}',
@@ -583,8 +592,19 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
                 sl.to_csv(os.path.join(sl_dir, f'{nm}.csv'))
     cluster_data.loc[:, 'full_prob_irr'] = cluster_data.loc[:, 'rel_cum_prob'] * total_prob.loc['log10_prob_irrigated']
     cluster_data.loc[:, 'full_prob_dry'] = cluster_data.loc[:, 'rel_cum_prob'] * total_prob.loc['log10_prob_dryland']
-    cluster_data.to_csv(os.path.join(outdir, 'cluster_data.csv'))
+    for mode, site, in default_mode_sites:
+        cluster_data.loc['all', f'higher_pg_prob_{site}-{mode}_mean'] = total_prob.loc[f'higher_pg_prob_{site}-{mode}_mean']
+        cluster_data.loc['all', f'lower_pg_prob_{site}-{mode}_mean'] = total_prob.loc[f'lower_pg_prob_{site}-{mode}_mean']
+    cluster_data.to_csv(os.path.join(outdir, 'cluster_probability_data.csv'))
     plt.close('all')
+
+
+def plot_add_line(ax, site, mode, plot_months, additional_plot_line, additional_plot_nm):
+    ax.plot(range(1, 13), [additional_plot_line[(site, mode)][e] / month_len[e] for e in plot_months], ls='-',
+            c='r', alpha=0.5,
+            label=additional_plot_nm)
+
+    pass
 
 
 if __name__ == '__main__':
