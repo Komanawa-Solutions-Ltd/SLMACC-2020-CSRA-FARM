@@ -16,6 +16,7 @@ from Storylines.storyline_runs.run_random_suite import get_1yr_data, default_mod
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
+from matplotlib.cm import get_cmap
 from scipy.interpolate import interp1d
 from Storylines.storyline_params import month_len
 from Storylines.storyline_evaluation.transition_to_fraction import get_most_probabile
@@ -24,6 +25,39 @@ name = 'random_'
 base_story_dir = os.path.join(temp_storyline_dir, name)
 cols = ['date', 'precip_class', 'temp_class', 'rest', 'rest_per', 'year',
         'month', 'precip_class_prev']
+
+
+def get_month_limits_from_most_probable(eyrewell_irr, oxford_irr, oxford_dry, correct):
+    mapper = {
+        'eyrewell_irr': 'eyrewell-irrigated',
+        'oxford_irr': 'oxford-irrigated',
+        'oxford_dry': 'oxford-dryland'
+    }
+    for i in ['eyrewell_irr', 'oxford_irr', 'oxford_dry']:
+        t = eval(i)
+        if t is None:
+            pass
+        else:
+            assert isinstance(t, dict), f'{i} must be dict'
+            assert set(range(1, 13)).issuperset(t.keys())
+            assert all([0 < v <= 1 for v in t.values()])
+
+    monthly_limits = {}
+    for sm in ['eyrewell_irr', 'oxford_irr', 'oxford_dry']:
+        mp = get_most_probabile(site=mapper[sm].split('-')[0],
+                                mode=mapper[sm].split('-')[1],
+                                correct=correct)
+        t = eval(sm)
+        if t is not None:
+            temp = {}
+            for k, v in t.items():
+                min_v = mp[k] - mp[k] * v
+                max_v = mp[k] + mp[k] * v
+                temp[k] = (min_v, max_v)
+
+            monthly_limits[mapper[sm]] = temp
+
+    return monthly_limits
 
 
 def add_exceedence_prob(impact_data, correct):
@@ -51,7 +85,7 @@ def add_exceedence_prob(impact_data, correct):
     return impact_data
 
 
-def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None, correct=False):
+def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None, correct=False, monthly_limits=None):
     """
     get the storylines for the paths where data is between the two bounds
     :param lower_bound: dictionary {site-mode: None, float (for annual) or dictionary with at least 1 month limits}
@@ -60,11 +94,29 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None,
     :param state_limits: None or dictionary {month: ([precip_states], [temp_states], (rest_min, rest_max)), note
                          '*' can be passed for all possible for each.  only months with constraints need to be passed
     :param: correct: bool if True apply the DNZ correction
+    :param: monthly_limits: None or monthly limits (kg dm/ha/month) format is {'site'-'mode':
+                                                                                {month(int): (min, max)}
+                                                                                }
     :return:
     """
     assert isinstance(state_limits, dict) or state_limits is None
     assert isinstance(lower_bound, dict) and isinstance(upper_bound, dict)
     assert set(lower_bound.keys()) == set(upper_bound.keys()) == {f'{s}-{m}' for m, s in default_mode_sites}
+
+    # todo add montly limits top and bottom and propogate through
+
+    if isinstance(monthly_limits, dict):
+
+        assert {'oxford-dryland', 'eyrewell-irrigated', 'oxford-irrigated'}.issuperset(monthly_limits.keys())
+        for k, v in monthly_limits.items():
+            assert isinstance(v, dict)
+            assert set(range(1, 13)).issuperset(v.keys()), f'{k} should have keys of integer months, instead: {v}'
+            for k1, v1 in v.items():
+                assert len(v1) == 2, f'{k}: {k1} should have 2 values instead: {v1}'
+                min_v, max_v = v1
+                assert max_v >= min_v, f'max should be greater than min for {k} and {k1}'
+    else:
+        assert monthly_limits is None
 
     impact_data = get_1yr_data(bad_irr=True, good_irr=True, correct=correct)
     impact_data = impact_data.dropna()
@@ -95,6 +147,18 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None,
 
         else:
             raise ValueError(f'unexpected type for lower_bound[{sm}]: {type(lower_bound[sm])}')
+
+    # adjust index with monthly limits
+    if monthly_limits is not None:
+        for k, v in monthly_limits.items():
+            for k1, v1 in v.items():
+                key = f'{k}_pg_m{k1:02d}'
+                min_v, max_v = v1
+                tidx = (impact_data.loc[:, key] >= min_v) & (impact_data.loc[:, key] <= max_v)
+                idx = idx & tidx
+
+    if not idx.any():
+        raise ValueError('montly and annual bounds produced no storylines')
 
     # pull out data from the indexes and pre-prepared
     data = get_storyline_data(False)
@@ -187,7 +251,8 @@ def make_all_storyline_data(calc_raw=False):
     np.save(out_path_pca, out, False, False)
 
 
-def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=False, log_dir=None):
+def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=False, log_dir=None,
+                 additional_plot_line=None, additional_plot_nm=None):
     log_text = []
     print('running_pca')
     if len(data) < n_pcs:
@@ -272,14 +337,63 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
             most_prob = get_most_probabile(site, mode, correct=True)
             ax.plot(range(1, 13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
                     label='most probable year')
+            if additional_plot_line is not None:
+                plot_add_line(ax, site, mode, plot_months, additional_plot_line, additional_plot_nm)
+
             ax.plot(range(1, 13),
                     [impact_data.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
                     ls=':', c='b', alpha=0.5,
-                    label='Mean pasture growth for suite')  # todo check
+                    label='Mean pasture growth for suite')
             ax.legend()
         pg_fig.suptitle(f'Full Suite')
         pg_fig.tight_layout()
         pg_fig.savefig(os.path.join(log_dir, 'pg_curve_all.png'))
+
+        for i, (mode, site) in enumerate(default_mode_sites):
+            pg_fig, ax = plt.subplots(nrows=1, figsize=(14, 10))
+            data = [impact_data.loc[:, f'{site}-{mode}_pg_m{m:02d}'] / month_len[m] for m in plot_months]
+            parts = ax.violinplot(data, positions=np.arange(1, len(plot_months) + 1),
+                                  showmeans=False, showmedians=True, quantiles=[[0.25, 0.75] for e in plot_months])
+            c = 'k'
+            for pc in parts['bodies']:
+                pc.set_facecolor(c)
+            parts['cmedians'].set_color(c)
+            parts['cquantiles'].set_color(c)
+            parts['cmins'].set_color(c)
+            parts['cmaxes'].set_color(c)
+            parts['cbars'].set_color(c)
+
+            ax.set_title(f'{site}-{mode} with cluster means')
+            ax.set_xlabel('Month')
+            ax.set_xticks(np.arange(1, len(plot_months) + 1))
+            ax.set_xticklabels([str(e) for e in plot_months])
+            ax.set_xlim(0.5, len(plot_months) + 0.5)
+            ax.set_ylabel('kg DM/ha/day')
+            most_prob = get_most_probabile(site, mode, correct=True)
+            ax.plot(range(1, 13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
+                    label='most probable year')
+            if additional_plot_line is not None:
+                plot_add_line(ax, site, mode, plot_months, additional_plot_line, additional_plot_nm)
+
+            ax.plot(range(1, 13),
+                    [impact_data.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
+                    ls=':', c='b', alpha=0.75,
+                    label='Mean pasture growth for suite')  # todo check
+
+            # add mean of each cluster
+            cmap = get_cmap('tab20')
+            n_scens = len(np.unique(clusters))
+            colors = [cmap(e / n_scens) for e in range(n_scens)]  # pick from color map
+            for c, clust in zip(colors, np.unique(clusters)):
+                temp = impact_data.loc[clusters == clust]
+                ax.plot(range(1, 13),
+                        [temp.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
+                        ls=':', c=c, alpha=1,
+                        label=f'Mean pasture growth cluster {clust}')  # todo check
+
+            ax.legend()
+            pg_fig.tight_layout()
+            pg_fig.savefig(os.path.join(log_dir, f'pg_curve_{site}-{mode}_all_clust.png'))
 
         for clust in np.unique(clusters):
             all_data = {}
@@ -310,6 +424,8 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
                 most_prob = get_most_probabile(site, mode, correct=True)
                 ax.plot(range(1, 13), [most_prob[e] / month_len[e] for e in plot_months], ls='--', c='k', alpha=0.5,
                         label='most probable year')
+                if additional_plot_line is not None:
+                    plot_add_line(ax, site, mode, plot_months, additional_plot_line, additional_plot_nm)
                 ax.plot(range(1, 13),
                         [impact_data.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
                         ls=':', c='b', alpha=0.5,
@@ -319,7 +435,6 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
                                          f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
                         ls='dashdot', c='r', alpha=0.5,
                         label=f'Mean pasture growth for cluster: {clust:02d}')
-                # todo add data for mean of cluster
                 ax.legend()
 
             pg_fig.suptitle(f'Cluster {clust:02d}')
@@ -338,7 +453,8 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
 
 
 def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n_clusters=20, n_pcs=15,
-                          save_stories=True, correct=False):
+                          save_stories=True, correct=False, monthly_limits=None, plt_additional_line=None,
+                          plt_additional_label=None):
     """
 
     :param outdir:
@@ -358,7 +474,8 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
                                                        upper_bound=upper_bound,
                                                        return_for_pca=True,
                                                        state_limits=state_limits,
-                                                       correct=correct
+                                                       correct=correct,
+                                                       monthly_limits=monthly_limits
                                                        )
     print(len(data))
     total_prob = (10 ** impact_data.loc[:, ['log10_prob_irrigated', 'log10_prob_dryland']]).sum() / full_prob
@@ -377,12 +494,12 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
                 os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
                              r"random_scen_plots\1yr", f"{site}-{mode}_1yr_cumulative_exceed_prob.csv"))
 
-            impact = impact_data.loc[:, f'{site}-{mode}_pg_yr1'].median() / 1000
+            impact = impact_data.loc[:, f'{site}-{mode}_pg_yr1'].mean() / 1000
             probs = exceedence[f'{site}-{mode}'].prob.values
             impacts = exceedence[f'{site}-{mode}'].pg.values
         idx = np.argmin(np.abs(impacts - impact))
-        total_prob.loc[f'higher_pg_prob_{site}-{mode}_median'] = probs[idx]
-        total_prob.loc[f'lower_pg_prob_{site}-{mode}_median'] = 1 - probs[idx]
+        total_prob.loc[f'higher_pg_prob_{site}-{mode}_mean'] = probs[idx]
+        total_prob.loc[f'lower_pg_prob_{site}-{mode}_mean'] = 1 - probs[idx]
 
     with open(os.path.join(outdir, 'parameters.txt'), 'w') as f:
         f.write(f'{len(data)} stories selected of c. 140,000\n')
@@ -402,6 +519,12 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
                 idx = np.argmin(np.abs(impacts - u))
                 f.write(
                     f'{k}: Upper Limit: {u / 1000}: {round((1 - probs[idx]) * 100, 2)}% probability in any given year\n')
+        if monthly_limits is not None:
+            f.write('### Monthly Limits  ###\n')
+            for k, v in monthly_limits.items():
+                f.write(f'   {k}\n')
+                for k1, v1 in v.items():
+                    f.write(f'        month: {k1}, min: {v1[0]}, max: {v1[1]}\n')
 
         if state_limits is None:
             f.write('\n\nNo climate (precip/temp/rest) limits\n')
@@ -418,7 +541,8 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
                                         'log10_prob_dryland': 'prob_dryland_fract'
                                         }, inplace=False)
     total_prob_out.to_csv(os.path.join(outdir, 'explained_probability.csv'))
-    clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs, log_dir=outdir)
+    clusters = run_plot_pca(pca_data, impact_data, n_clusters=n_clusters, n_pcs=n_pcs, log_dir=outdir,
+                            additional_plot_nm=plt_additional_label, additional_plot_line=plt_additional_line)
     impact_data.loc[:, 'cluster'] = clusters
     impact_data.loc[:, 'ID'] = impact_data.loc[:, 'ID'] + '_' + impact_data.loc[:, 'irr_type']
 
@@ -450,12 +574,12 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
         cluster_data.loc[c, 'norm_prob'] = probs[idx].sum() / idx.sum()
 
         for mode, site in default_mode_sites:
-            impact_v = impact_data.loc[impact_data.loc[:, 'cluster'] == c, f'{site}-{mode}_pg_yr1'].median() / 1000
+            impact_v = impact_data.loc[impact_data.loc[:, 'cluster'] == c, f'{site}-{mode}_pg_yr1'].mean() / 1000
             probs_value = exceedence[f'{site}-{mode}'].prob.values
             impacts_value = exceedence[f'{site}-{mode}'].pg.values
             idx_value = np.argmin(np.abs(impacts_value - impact_v))
-            cluster_data.loc[c, f'higher_pg_prob_{site}-{mode}_median'] = probs_value[idx_value]
-            cluster_data.loc[c, f'lower_pg_prob_{site}-{mode}_median'] = 1 - probs_value[idx_value]
+            cluster_data.loc[c, f'higher_pg_prob_{site}-{mode}_mean'] = probs_value[idx_value]
+            cluster_data.loc[c, f'lower_pg_prob_{site}-{mode}_mean'] = 1 - probs_value[idx_value]
 
         use_data = [e for e, i in zip(data, idx) if i]
         temp_data, precip_data, rest_data = plot_1_yr_storylines(use_data, f'cluster {c}',
@@ -468,8 +592,19 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
                 sl.to_csv(os.path.join(sl_dir, f'{nm}.csv'))
     cluster_data.loc[:, 'full_prob_irr'] = cluster_data.loc[:, 'rel_cum_prob'] * total_prob.loc['log10_prob_irrigated']
     cluster_data.loc[:, 'full_prob_dry'] = cluster_data.loc[:, 'rel_cum_prob'] * total_prob.loc['log10_prob_dryland']
-    cluster_data.to_csv(os.path.join(outdir, 'cluster_data.csv'))
+    for mode, site, in default_mode_sites:
+        cluster_data.loc['all', f'higher_pg_prob_{site}-{mode}_mean'] = total_prob.loc[f'higher_pg_prob_{site}-{mode}_mean']
+        cluster_data.loc['all', f'lower_pg_prob_{site}-{mode}_mean'] = total_prob.loc[f'lower_pg_prob_{site}-{mode}_mean']
+    cluster_data.to_csv(os.path.join(outdir, 'cluster_probability_data.csv'))
     plt.close('all')
+
+
+def plot_add_line(ax, site, mode, plot_months, additional_plot_line, additional_plot_nm):
+    ax.plot(range(1, 13), [additional_plot_line[(site, mode)][e] / month_len[e] for e in plot_months], ls='-',
+            c='r', alpha=0.5,
+            label=additional_plot_nm)
+
+    pass
 
 
 if __name__ == '__main__':
