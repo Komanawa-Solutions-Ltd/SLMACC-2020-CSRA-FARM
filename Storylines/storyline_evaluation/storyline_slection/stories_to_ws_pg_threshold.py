@@ -379,7 +379,7 @@ dry_sp_au_oxford_irr_u = 11 * 1000
 dry_sp_au_oxford_dry_l = 4 * 1000
 dry_sp_au_oxford_dry_u = 6 * 1000
 
-# todo testing the limitations
+# testing the limitations
 dry_sp_au_eyrewell_irr_l = None
 dry_sp_au_eyrewell_irr_u = None
 

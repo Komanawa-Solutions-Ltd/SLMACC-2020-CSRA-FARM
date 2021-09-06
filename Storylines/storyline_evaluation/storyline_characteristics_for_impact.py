@@ -60,7 +60,14 @@ def get_month_limits_from_most_probable(eyrewell_irr, oxford_irr, oxford_dry, co
     return monthly_limits
 
 
-def add_exceedence_prob(impact_data, correct):
+def add_exceedence_prob(impact_data, correct, impact_in_tons=True):
+    """
+
+    :param impact_data: the data to add impact to
+    :param correct: bool correction applied
+    :param impact_in_tons: bool if True then expects impact in tons if false then expects impact in kg
+    :return:
+    """
     for mode, site in default_mode_sites:
         if correct:
             exceedence = pd.read_csv(
@@ -79,8 +86,12 @@ def add_exceedence_prob(impact_data, correct):
             probs = exceedence.prob.values * 100
             impacts = exceedence.pg.values * 1000
         predictor = interp1d(impacts, probs, fill_value='extrapolate')
-        impact_data.loc[:, f'non-exceed_prob_per_{site}-{mode}'] = 100 - predictor(
-            impact_data.loc[:, f'{site}-{mode}_pg_yr1'].astype(float))
+        if impact_in_tons:
+            impact_data.loc[:, f'non-exceed_prob_per_{site}-{mode}'] = 100 - predictor(
+                impact_data.loc[:, f'{site}-{mode}_pg_yr1'].astype(float))
+        else:
+            impact_data.loc[:, f'non-exceed_prob_per_{site}-{mode}'] = 100 - predictor(
+                impact_data.loc[:, f'{site}-{mode}_pg_yr1'].astype(float) / 1000)
 
     return impact_data
 
@@ -103,7 +114,6 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None,
     assert isinstance(lower_bound, dict) and isinstance(upper_bound, dict)
     assert set(lower_bound.keys()) == set(upper_bound.keys()) == {f'{s}-{m}' for m, s in default_mode_sites}
 
-    # todo add montly limits top and bottom and propogate through
 
     if isinstance(monthly_limits, dict):
 
@@ -378,7 +388,7 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
             ax.plot(range(1, 13),
                     [impact_data.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
                     ls=':', c='b', alpha=0.75,
-                    label='Mean pasture growth for suite')  # todo check
+                    label='Mean pasture growth for suite')
 
             # add mean of each cluster
             cmap = get_cmap('tab20')
@@ -389,7 +399,7 @@ def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=Fal
                 ax.plot(range(1, 13),
                         [temp.loc[:, f'{site}-{mode}_pg_m{m:02d}'].mean() / month_len[m] for m in plot_months],
                         ls=':', c=c, alpha=1,
-                        label=f'Mean pasture growth cluster {clust}')  # todo check
+                        label=f'Mean pasture growth cluster {clust}')
 
             ax.legend()
             pg_fig.tight_layout()
@@ -593,8 +603,10 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
     cluster_data.loc[:, 'full_prob_irr'] = cluster_data.loc[:, 'rel_cum_prob'] * total_prob.loc['log10_prob_irrigated']
     cluster_data.loc[:, 'full_prob_dry'] = cluster_data.loc[:, 'rel_cum_prob'] * total_prob.loc['log10_prob_dryland']
     for mode, site, in default_mode_sites:
-        cluster_data.loc['all', f'higher_pg_prob_{site}-{mode}_mean'] = total_prob.loc[f'higher_pg_prob_{site}-{mode}_mean']
-        cluster_data.loc['all', f'lower_pg_prob_{site}-{mode}_mean'] = total_prob.loc[f'lower_pg_prob_{site}-{mode}_mean']
+        cluster_data.loc['all', f'higher_pg_prob_{site}-{mode}_mean'] = total_prob.loc[
+            f'higher_pg_prob_{site}-{mode}_mean']
+        cluster_data.loc['all', f'lower_pg_prob_{site}-{mode}_mean'] = total_prob.loc[
+            f'lower_pg_prob_{site}-{mode}_mean']
     cluster_data.to_csv(os.path.join(outdir, 'cluster_probability_data.csv'))
     plt.close('all')
 

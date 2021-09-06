@@ -18,7 +18,6 @@ from Climate_Shocks.climate_shocks_env import event_def_path
 
 baseoutdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'gen_flow_test')
 
-# todo manage thsi for adrian
 month_len = {
     1: 31,
     2: 28,
@@ -137,7 +136,7 @@ def get_irrigation_generator(recalc=False):
     return boot
 
 
-def export_example_generator_data():  # todo?
+def export_example_generator_data():
 
     gen = get_irrigation_generator()
     means = [50, 100, 150]

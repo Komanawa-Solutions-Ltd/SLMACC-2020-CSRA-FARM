@@ -21,7 +21,7 @@ default_mode_sites = (
 abs_max_irr = 5  # the absolute maximum irrigation values
 
 
-def get_params_doy_irr(mode, site='eyrewell'):  # todo implement storage schemes here as keywords...
+def get_params_doy_irr(mode, site='eyrewell'):  # todo implement storage schemes here as keywords...????
     """
     get the parameter sets for all of the basgra modelling
     :param mode: 'dryland','irrigated'

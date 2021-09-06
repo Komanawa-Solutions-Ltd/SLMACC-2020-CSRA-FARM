@@ -199,7 +199,6 @@ def _get_possible_months():
 
 
 def _check_data_v1(swg_path, storyline, m, cold_months, wet_months, hot_months, dry_months,
-                   # todo check
                    return_full_results=False):
     """
     check that a single realisation is correct
