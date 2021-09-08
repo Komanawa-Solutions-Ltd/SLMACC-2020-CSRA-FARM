@@ -5,6 +5,10 @@
 import itertools
 import netCDF4 as nc
 import os
+import matplotlib.pyplot as plt
+from matplotlib.cm import get_cmap
+from Storylines.storyline_params import month_len
+from matplotlib.patches import Patch
 import pandas as pd
 import numpy as np
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, default_mode_sites
@@ -133,12 +137,12 @@ def create_1y_pg_data_multi_year(storyline_dir, data_dir, outpath):
     m_lens = np.array(m_lens)
     for site, mode in default_mode_sites:
         key = f'{mode}-{site}'
-        data.loc[:, f'{key}_pg_linked_all'] = np.nan
+        data.loc[:, f'{key}_linked_pg_all'] = np.nan
         for y in range(n_years):
-            data.loc[:, f'{key}_pg_linked_yr{y:02d}'] = np.nan
+            data.loc[:, f'{key}_linked_pg_yr{y:02d}'] = np.nan
 
         for mk in mkeys:
-            data.loc[:, f'{key}_pg_linked_{mk}'] = np.nan
+            data.loc[:, f'{key}_linked_pg_{mk}'] = np.nan
 
         for i, idv in enumerate(data.index):
             if i % 1000 == 0:
@@ -154,17 +158,96 @@ def create_1y_pg_data_multi_year(storyline_dir, data_dir, outpath):
             temp = np.nanmean(temp, axis=1)
 
             for j, mk in enumerate(mkeys):
-                data.loc[idv, f'{key}_pg_linked_{mk}'] = temp[j]
+                data.loc[idv, f'{key}_linked_pg_{mk}'] = temp[j]
             nc_data.close()
 
         for y in range(n_years):
-            temp = data.loc[:, [f'{key}_pg_linked_y{y:02d}-m{m:02d}' for m in [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]]]
-            data.loc[:, f'{key}_pg_linked_yr{y:02d}'] = temp.sum(axis=1)
-        temp = data.loc[:, [f'{key}_pg_linked_yr{y:02d}' for y in range(n_years)]]
-        data.loc[:, f'{key}_pg_linked_all'] = temp.sum(axis=1)
+            temp = data.loc[:, [f'{key}_linked_pg_y{y:02d}-m{m:02d}' for m in [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]]]
+            data.loc[:, f'{key}_linked_pg_yr{y:02d}'] = temp.sum(axis=1)
+        temp = data.loc[:, [f'{key}_linked_pg_yr{y:02d}' for y in range(n_years)]]
+        data.loc[:, f'{key}_linked_pg_all'] = temp.sum(axis=1)
     data.to_hdf(os.path.join(storyline_dir, f'id_probs.hdf'), 'prob', mode='w')
     data.to_csv(os.path.join(storyline_dir, f'id_probs.csv'))
     data.to_hdf(f'{outpath}.hdf', 'prob', mode='w')
     data.to_hdf(f'{outpath}.csv', 'prob')
 
-# todo make ploting functions
+
+def plot_muli_year_total(site_modes, impact_data):
+
+    raise NotImplementedError
+
+
+def plot_multi_year_monthly(outpath, mode_sites, impact_data, nyears, sup_title, show=False):
+    plot_months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
+    mks = []
+    c_non_linked = 'indianred'
+    c_linked = 'royalblue'
+
+    for y in range(nyears):
+        mks.extend([f'yr{y:02d}-m{m:02d}' for m in plot_months])
+
+    pg_fig, pg_axs = plt.subplots(nrows=len(mode_sites), figsize=(14, 10), sharex=True)
+    for i, ((mode, site), ax) in enumerate(zip(mode_sites, pg_axs)):
+        # plot non-linked data
+        data = [impact_data.loc[
+                :,
+                f'{site}-{mode}-not_linked_pg_{mk}'] / month_len[int(mk[-2:])] for mk in mks
+                ]
+        parts = ax.violinplot(data, positions=np.arange(1, len(plot_months) * nyears + 1),
+                              showmeans=False, showmedians=True,
+                              quantiles=[[0.25, 0.75] for e in np.repeat(plot_months, nyears)])
+        for pc in parts['bodies']:
+            pc.set_facecolor(c_non_linked)
+        parts['cmedians'].set_color(c_non_linked)
+        parts['cquantiles'].set_color(c_non_linked)
+        parts['cmins'].set_color(c_non_linked)
+        parts['cmaxes'].set_color(c_non_linked)
+        parts['cbars'].set_color(c_non_linked)
+
+        # plot linked data
+        data = [impact_data.loc[
+                :,
+                f'{site}-{mode}-linked_pg_{mk}'] / month_len[int(mk[-2:])] for mk in mks
+                ]
+        parts = ax.violinplot(data, positions=np.arange(1, len(plot_months) * nyears + 1) + 0.5, # todo offsets?
+                              showmeans=False, showmedians=True,
+                              quantiles=[[0.25, 0.75] for e in np.repeat(plot_months, nyears)])
+        for pc in parts['bodies']:
+            pc.set_facecolor(c_linked)
+        parts['cmedians'].set_color(c_linked)
+        parts['cquantiles'].set_color(c_linked)
+        parts['cmins'].set_color(c_linked)
+        parts['cmaxes'].set_color(c_linked)
+        parts['cbars'].set_color(c_linked)
+
+        # set up labels ect
+        ax.set_title(f'{site}-{mode}')
+        if i == len(mode_sites - 1):
+            ax.set_xlabel('Month')
+            ax.set_xticks(np.arange(1, len(plot_months) * nyears + 1))
+            ax.set_xticklabels([str(e) for e in np.repeat(plot_months, nyears)])
+            ax.set_xlim(0.5, len(plot_months) + 0.5)
+        if i == len(mode_sites) // 2:
+            ax.set_ylabel('kg DM/ha/day')
+
+        ax.legend(handles=[
+            Patch(facecolor=c_non_linked, label='Unlinked Storyline'),
+            Patch(facecolor=c_linked, label='Linked Storyline'),
+                           ])
+
+    pg_fig.suptitle(sup_title)
+    pg_fig.tight_layout()
+    if show:
+        plt.show()
+    pg_fig.savefig(outpath)
+
+
+if __name__ == '__main__':
+    plot_multi_year_monthly(
+        outpath=r"C:\Users\Matt Hanson\Downloads\test_plot.png",
+        mode_sites=default_mode_sites,
+        impact_data=pd.read_csv(r"C:\Users\Matt Hanson\Downloads\id_probs.csv"),
+        nyears=3,
+        sup_title='test_plot',
+        show=True
+    )
