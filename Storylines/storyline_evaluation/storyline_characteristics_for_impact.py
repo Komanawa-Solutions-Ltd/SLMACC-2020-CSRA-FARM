@@ -60,7 +60,7 @@ def get_month_limits_from_most_probable(eyrewell_irr, oxford_irr, oxford_dry, co
     return monthly_limits
 
 
-def add_exceedence_prob(impact_data, correct, impact_in_tons=True):
+def add_exceedence_prob(impact_data, correct, impact_in_tons=False):
     """
 
     :param impact_data: the data to add impact to
@@ -88,10 +88,10 @@ def add_exceedence_prob(impact_data, correct, impact_in_tons=True):
         predictor = interp1d(impacts, probs, fill_value='extrapolate')
         if impact_in_tons:
             impact_data.loc[:, f'non-exceed_prob_per_{site}-{mode}'] = 100 - predictor(
-                impact_data.loc[:, f'{site}-{mode}_pg_yr1'].astype(float))
+                impact_data.loc[:, f'{site}-{mode}_pg_yr1'].astype(float)*1000)
         else:
             impact_data.loc[:, f'non-exceed_prob_per_{site}-{mode}'] = 100 - predictor(
-                impact_data.loc[:, f'{site}-{mode}_pg_yr1'].astype(float) / 1000)
+                impact_data.loc[:, f'{site}-{mode}_pg_yr1'].astype(float))
 
     return impact_data
 

@@ -11,7 +11,7 @@ from Storylines.storyline_runs.run_random_suite import get_1yr_data, default_mod
 from Storylines.storyline_evaluation.storyline_characteristics_for_impact import add_exceedence_prob
 
 
-def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_seed=1156854): # todo debug/check
+def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_seed=1156854):
     """
 
     :param outdir: directory to save the storylines and prob files
@@ -28,14 +28,14 @@ def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_see
     assert set(year_stories.keys()) == set(range(max(year_stories.keys()) + 1))
 
     np.random.seed(start_seed)
-    all_seeds = np.random.randint(1151, 16875324865, 5 * len(year_stories.keys()))
+    all_seeds = np.random.randint(1151, 1687532, 5 * len(year_stories.keys()))
 
     # set up all storyline data
     storyline_data = get_1yr_data(bad_irr=True, good_irr=True, correct=True)
     storyline_data.loc[:, 'full_ID'] = storyline_data.loc[:, 'ID'] + '_' + storyline_data.loc[:, 'irr_type']
     storyline_data.set_index('full_ID', inplace=True)
     storyline_data = add_exceedence_prob(storyline_data, correct=True, impact_in_tons=False)
-    for mode, site in default_mode_sites:
+    for mode, site in default_mode_sites:  # todo this is breaking for some reason
         storyline_data.loc[:, f'log10_non_exceed_prob_{site}-{mode}'] = np.log10(
             storyline_data.loc[:, f'non-exceed_prob_per_{site}-{mode}'] / 100)
 
@@ -49,17 +49,7 @@ def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_see
     idx = np.in1d(storyline_ids, storyline_data.index)
     assert idx.all(), 'missing storyline ids:\n' + '\n'.join(storyline_ids[~idx])
 
-    # initalise outdata
-    columns = (
-            [f'rid_yr_{k:01d}' for k in year_stories.keys()] +
-            [f'log10_true_prob_irr-{k:01d}' for k in year_stories.keys()] +
-            [f'log10_true_prob_dry-{k:01d}' for k in year_stories.keys()] +
-            [f'log10_non_exceed_prob_{site}-{mode}-{k:01d}' for k, (mode, site) in
-             itertools.product(year_stories.keys(),
-                               default_mode_sites)] +
-            [f'{site}-{mode}-1yr_pg_yr{k:01d}' for k, (mode, site) in itertools.product(year_stories.keys(),
-                                                                                        default_mode_sites)])
-    outdata = pd.DataFrame(index=range(n), columns=columns)
+    outdata = pd.DataFrame(index=range(n))
     outdata.loc[:, 'ID'] = [f'mrsl-{i:06d}' for i in outdata.index]
     output_storylines = [[] for i in range(n)]
     # set up random suite
@@ -70,14 +60,21 @@ def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_see
         temp_storyline_ids = np.array([os.path.splitext(os.path.basename(p))[0] for p in temp_storylines])
 
         # capture key data
-        outdata.loc[:, f'rid_yr_{y:01d}'] = temp_storyline_ids
-        outdata.loc[:, f'log10_true_prob_irr-{y:01d}'] = storyline_data.loc[temp_storyline_ids, 'log10_prob_irrigated']
-        outdata.loc[:, f'log10_true_prob_dry-{y:01d}'] = storyline_data.loc[temp_storyline_ids, 'log10_prob_dryland']
+        outdata.loc[:, f'rid_yr_{y:02d}'] = temp_storyline_ids
+        outdata.loc[:, f'log10_true_prob_irr-{y:02d}'] = storyline_data.loc[temp_storyline_ids,
+                                                                            'log10_prob_irrigated'].values
+        outdata.loc[:, f'log10_true_prob_dry-{y:02d}'] = storyline_data.loc[temp_storyline_ids,
+                                                                            'log10_prob_dryland'].values
         for mode, site in default_mode_sites:
-            outdata.loc[:, f'log10_non_exceed_prob_{site}-{mode}-{y:01d}'] = storyline_data.loc[
-                temp_storyline_ids, f'log10_non_exceed_prob_{site}-{mode}']
-            outdata.loc[:, f'{site}-{mode}-1yr_pg_yr{y:01d}'] = storyline_data.loc[
-                temp_storyline_ids, f'{site}-{mode}_pg_yr1']
+            outdata.loc[:, f'log10_non_exceed_prob_{site}-{mode}-{y:02d}'] = storyline_data.loc[
+                temp_storyline_ids, f'log10_non_exceed_prob_{site}-{mode}'].values
+            outdata.loc[:, f'{site}-{mode}-not_linked_pg_yr{y:02d}'] = storyline_data.loc[
+                temp_storyline_ids, f'{site}-{mode}_pg_yr1'].values
+
+            # pull in non-linked data (for drect comparison)
+            for m in [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]:
+                outdata.loc[:, f'{site}-{mode}-not_linked_pg_yr{y:02d}-m{m:02d}'] = storyline_data.loc[
+                    temp_storyline_ids, f'{site}-{mode}_pg_m{m:02d}'].values
 
         for j, slp in enumerate(temp_storylines):
             t = pd.read_csv(slp)
@@ -86,39 +83,43 @@ def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_see
             output_storylines[j].append(t)
 
     # save storylines
+    print('saving storylines')
     for i, sl in enumerate(output_storylines):
         pd.concat(sl).to_csv(os.path.join(outdir, f'mrsl-{i:06d}.csv'))
 
     # calc total probs
-    temp = outdata.loc[:, [f'log10_true_prob_irr-{y:01d}' for y in year_stories.keys()]].sum(axis=1)
+    temp = outdata.loc[:, [f'log10_true_prob_irr-{y:02d}' for y in year_stories.keys()]].sum(axis=1)
     outdata.loc[:, f'log10_true_prob_irr-all'] = temp
-    temp = outdata.loc[:, [f'log10_true_prob_dry-{y:01d}' for y in year_stories.keys()]].sum(axis=1)
+    temp = outdata.loc[:, [f'log10_true_prob_dry-{y:02d}' for y in year_stories.keys()]].sum(axis=1)
     outdata.loc[:, f'log10_true_prob_dry-all'] = temp
 
     for mode, site in default_mode_sites:
-        temp = outdata.loc[:, [f'log10_non_exceed_prob_{site}-{mode}-{y:01d}' for y in year_stories.keys()]]
+        temp = outdata.loc[:, [f'log10_non_exceed_prob_{site}-{mode}-{y:02d}' for y in year_stories.keys()]]
         outdata.loc[:, f'log10_non_exceed_prob_{site}-{mode}-all'] = temp.sum(axis=1)
-        temp = outdata.loc[:, [f'{site}-{mode}-1yr_pg_yr{y:01d}' for y in year_stories.keys()]]
-        outdata.loc[:, f'{site}-{mode}-1yr_pg-all'] = temp.sum(axis=1)
+        temp = outdata.loc[:, [f'{site}-{mode}-not_linked_pg_yr{y:02d}' for y in year_stories.keys()]]
+        outdata.loc[:, f'{site}-{mode}-not_linked_pg-all'] = temp.sum(axis=1)
 
-        outdata.to_hdf(os.path.join(outdir, 'id_probs.hdf'), 'prob', mode='w')
-        outdata.to_csv(os.path.join(outdir, 'id_probs.csv'))
+    outdata.set_index('ID', inplace=True)
+    outdata.to_hdf(os.path.join(outdir, 'id_probs.hdf'), 'prob', mode='w')
+    outdata.to_csv(os.path.join(outdir, 'id_probs.csv'))
 
     # save a params textfile...make sure it does not conflict with reading the storylines
     with open(os.path.join(outdir, 'params.txt'), 'w') as f:
-        f.write(f'nyears = {len(year_stories.keys())}')
+        f.write(f'nyears = {len(year_stories.keys())}\n')
         f.write(f'years = {year_stories.keys()}\n')
         f.write(f'start_seed = {start_seed}\n')
         f.write(f'number of sims (n) = {n}\n')
 
 
-def create_1y_pg_data(storyline_dir, outpath): # todo debug and check
+def create_1y_pg_data_multi_year(storyline_dir, data_dir, outpath):
     """
 
     :param storyline_dir: directory with the storylines
+    :param data_dir: directory with run basgra models
     :param outpath: outpath to save the data (without extension) both csv and hdf will be saved.
     :return:
     """
+    print('creating 1yr pg data')
     data = pd.read_hdf(os.path.join(storyline_dir, 'id_probs.hdf'), 'prob')
     with open(os.path.join(storyline_dir, 'params.txt')) as f:
         n_years = int(f.readline().split('=')[-1])
@@ -127,22 +128,23 @@ def create_1y_pg_data(storyline_dir, outpath): # todo debug and check
     mkeys = []
     m_lens = []
     for y in range(n_years):
-        mkeys.extend([f'y{y}-m{m}' for m in [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]])
+        mkeys.extend([f'y{y:02d}-m{m:02d}' for m in [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]])
         m_lens.extend([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30])
     m_lens = np.array(m_lens)
     for site, mode in default_mode_sites:
         key = f'{mode}-{site}'
+        data.loc[:, f'{key}_pg_linked_all'] = np.nan
         for y in range(n_years):
-            data.loc[:, f'{key}_pg_linked_yr{y}'] = np.nan
+            data.loc[:, f'{key}_pg_linked_yr{y:02d}'] = np.nan
 
         for mk in mkeys:
             data.loc[:, f'{key}_pg_linked_{mk}'] = np.nan
 
-        for i, idv in data.loc[:, ['ID']].itertuples(True, None):
+        for i, idv in enumerate(data.index):
             if i % 1000 == 0:
                 print(f'starting to read sim {i} for site: {site} and mode: {mode}')
 
-            p = os.path.join(storyline_dir, f'{idv}-{key}.nc')
+            p = os.path.join(data_dir, f'{idv}-{key}.nc')
             if not os.path.exists(p):
                 continue
 
@@ -152,14 +154,17 @@ def create_1y_pg_data(storyline_dir, outpath): # todo debug and check
             temp = np.nanmean(temp, axis=1)
 
             for j, mk in enumerate(mkeys):
-                data.loc[i, f'{key}_pg_linked_{mk}'] = temp[j]
+                data.loc[idv, f'{key}_pg_linked_{mk}'] = temp[j]
             nc_data.close()
 
         for y in range(n_years):
-            temp = data.loc[: [f'{key}_pg_linked_y{y}-m{m}' for m in [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]]]
-            data.loc[:, f'{key}_pg_linked_yr{y}'] = temp.sum(axis=1)
-
+            temp = data.loc[:, [f'{key}_pg_linked_y{y:02d}-m{m:02d}' for m in [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]]]
+            data.loc[:, f'{key}_pg_linked_yr{y:02d}'] = temp.sum(axis=1)
+        temp = data.loc[:, [f'{key}_pg_linked_yr{y:02d}' for y in range(n_years)]]
+        data.loc[:, f'{key}_pg_linked_all'] = temp.sum(axis=1)
     data.to_hdf(os.path.join(storyline_dir, f'id_probs.hdf'), 'prob', mode='w')
     data.to_csv(os.path.join(storyline_dir, f'id_probs.csv'))
     data.to_hdf(f'{outpath}.hdf', 'prob', mode='w')
-    data.to_hdf(f'{outpath}.csv', 'prob', mode='w')
+    data.to_hdf(f'{outpath}.csv', 'prob')
+
+# todo make ploting functions
