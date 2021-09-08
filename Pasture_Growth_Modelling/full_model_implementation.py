@@ -83,7 +83,7 @@ default_swg_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SW
 
 def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_sites, padock_rest=False,
                        save_daily=False, description='', swg_dir=default_swg_dir, verbose=True,
-                       n_parallel=1, fix_leap=True, re_run=True):
+                       n_parallel=1, fix_leap=True, re_run=True, seed=None, use_1_seed=False):
     """
     creates weather data, runs basgra and saves values to a netcdf
     :param storyline_path: path to the storyline
@@ -99,6 +99,10 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
     :param verbose: boolean, if True then print data as it runs
     :param n_parallel: int, the number of parallel runs happening (used to prevent memory errors from large sims while
                        multiprocessing.  if calling this funtion, then simply leave as 1
+    :param seed: allows sudo random to be reproducable
+    :param use_1_seed: bool if True use the same seed for each month of the storyline, if false calculate a new seed
+                       for each month of each storyline.  The new seeds are based on the passed seed so they are
+                       reproducable (via seed kwarg); however each month will have different data.
     :return: None
     """
     t = time.time()
@@ -133,12 +137,13 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
                          storyline_key=storyline_key,
                          outdir=outdir,
                          save_daily=save_daily, description=description, storyline_text=storyline_text, swg_dir=swg_dir,
-                         verbose=verbose, n_parallel=n_parallel, fix_leap=fix_leap)
+                         verbose=verbose, n_parallel=n_parallel, fix_leap=fix_leap, seed=seed, use_1_seed=use_1_seed)
         if padock_rest:
             _run_paddock_rest(storyline_key=storyline_key, outdir=outdir, storyline=storyline, nsims=nsims, mode=mode,
                               site=site, simlen=simlen,
                               save_daily=save_daily, description=description, storyline_text=storyline_text,
-                              swg_dir=swg_dir, verbose=verbose, n_parallel=n_parallel, fix_leap=fix_leap)
+                              swg_dir=swg_dir, verbose=verbose, n_parallel=n_parallel, fix_leap=fix_leap, seed=seed,
+                              use_1_seed=use_1_seed)
     t = time.time() - t
     if verbose:
         print(f'took {t / 60} min to run {nsims} sims paddock_rest{padock_rest}')
@@ -148,7 +153,12 @@ def get_rest_tolerance(r):
     return max([0.02, 0.1 * r])
 
 
-def get_irr_data(num_to_pull, storyline, simlen):
+def get_irr_data(num_to_pull, storyline, simlen, seed=None, use_1_seed=False):
+    if use_1_seed:
+        seeds = np.repeat(seed, len(storyline) * 10)  # to allow linked comparison
+    else:
+        np.random.seed(seed)
+        seeds = np.random.randint(0, 3548324, len(storyline) * 10)  # make too many
     out = np.zeros((num_to_pull, simlen))
     idx = 0
     for i, (m, pstate, r) in enumerate(storyline.loc[:, ['month', 'precip_class', 'rest']].itertuples(False, None)):
@@ -163,13 +173,15 @@ def get_irr_data(num_to_pull, storyline, simlen):
         out[:, idx: idx + month_len[m]] = irr_gen.get_data(num_to_pull, key=key, mean=r,
                                                            tolerance=get_rest_tolerance(r),
                                                            max_replacement_level=0.1,
-                                                           under_level='warn')
+                                                           under_level='warn',
+                                                           seed=seeds[i])
         idx += month_len[m]
 
     return out
 
 
-def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, swg_dir, fix_leap):
+def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, swg_dir, fix_leap,
+               seed=None, use_1_seed=False):
     """
 
     :param storyline: loaded storyline
@@ -180,8 +192,15 @@ def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, s
     :param chunks: the number of chunks
     :param current_c: the current chunk (from range(chunks)
     :param nperc: number of simulations that can be run per chunk
+    :param use_1_seed: all of the seeds for different months will be identical. ,
+                       useful for comparison of linked - non linked
     :return:
     """
+    # manage seeds
+    np.random.seed(seed)
+    seeds = np.random.randint(0, 1568254, 25)
+    iseed = 0
+
     # manage chunks
     if chunks == 1:
         num_to_pull = nsims
@@ -201,12 +220,14 @@ def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, s
     if mode == 'dryland':
         rest_data = np.repeat([None], num_to_pull)
     elif mode == 'irrigated':
-        rest_data = get_irr_data(num_to_pull, storyline, simlen)
+        rest_data = get_irr_data(num_to_pull, storyline, simlen, seed=seeds[iseed], use_1_seed=use_1_seed)
+        iseed += 1
     else:
         raise ValueError('weird arg for mode: {}'.format(mode))
     # get weather data
     weather_data = _get_weather_data(storyline=storyline, nsims=num_to_pull, simlen=simlen, swg_dir=swg_dir, site=site,
-                                     fix_leap=fix_leap)
+                                     fix_leap=fix_leap, seed=seeds[iseed], use_1_seed=use_1_seed)
+    iseed += 1
 
     # make all the other data
     for rest, weather in zip(rest_data, weather_data):
@@ -223,7 +244,8 @@ def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, s
 
 
 def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir,
-                     save_daily, description, storyline_text, swg_dir, verbose, n_parallel, fix_leap):
+                     save_daily, description, storyline_text, swg_dir, verbose, n_parallel, fix_leap, seed,
+                     use_1_seed):
     number_run = int(
         psutil.virtual_memory().available // memory_per_run * (simlen / 365) / n_parallel
     )
@@ -238,7 +260,8 @@ def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir
                                                                              nsims=nsims, mode=mode, site=site,
                                                                              chunks=chunks, current_c=c,
                                                                              nperc=number_run, simlen=simlen,
-                                                                             swg_dir=swg_dir, fix_leap=fix_leap)
+                                                                             swg_dir=swg_dir, fix_leap=fix_leap,
+                                                                             seed=seed, use_1_seed=use_1_seed)
 
         all_out = np.zeros((len(out_variables), simlen, number_run)) * np.nan
         for i, (matrix_weather, days_harvest) in enumerate(zip(all_matrix_weathers, all_days_harvests)):
@@ -268,7 +291,8 @@ def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir
 
 
 def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simlen,
-                      save_daily, description, storyline_text, swg_dir, verbose, n_parallel, fix_leap):
+                      save_daily, description, storyline_text, swg_dir, verbose, n_parallel, fix_leap, seed,
+                      use_1_seed):
     """
     run storyline through paddock restrictions...
     :param storyline:
@@ -295,7 +319,8 @@ def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simle
                                                                              nsims=nsims, mode=mode, site=site,
                                                                              chunks=chunks, current_c=c,
                                                                              nperc=number_run, simlen=simlen,
-                                                                             swg_dir=swg_dir, fix_leap=fix_leap)
+                                                                             swg_dir=swg_dir, fix_leap=fix_leap,
+                                                                             seed=seed, use_1_seed=use_1_seed)
 
         all_out = np.zeros((len(out_variables), simlen, len(levels) - 1, number_run)) * np.nan
         out_names = []
@@ -592,7 +617,14 @@ def _create_nc_file(outpath, number_run, month, doy, year, storyline_text, save_
     return nc_file
 
 
-def _get_weather_data(storyline, nsims, simlen, swg_dir, site, fix_leap):
+def _get_weather_data(storyline, nsims, simlen, swg_dir, site, fix_leap, seed=None, use_1_seed=False):
+    if use_1_seed:
+        seeds = np.repeat(seed, len(storyline) * 10)  # to alow direct comparison between linked and non-linked data
+    else:
+        np.random.seed(seed)
+        seeds = np.random.randint(0, 3548324, len(storyline) * 10)  # make too many
+    iseed = 0
+
     out_array = np.zeros((simlen, len(measures_cor), nsims))
     i = 0
     if site == 'eyrewell':
@@ -616,6 +648,8 @@ def _get_weather_data(storyline, nsims, simlen, swg_dir, site, fix_leap):
 
     for p, t, m in storyline.loc[:, ['precip_class', 'temp_class', 'month']].itertuples(False, None):
         temp = nc.Dataset(os.path.join(swg_dir, 'm{m:02d}-{t}-{p}-0_all.nc'.format(m=int(m), t=t, p=p)))
+        np.random.seed(seeds[iseed])
+        iseed += 1
         idxs = np.random.randint(temp.dimensions['real'].size, size=(nsims,))
 
         out_array[i: i + month_len[m], :, :] = np.array(temp.variables[var][:, :, idxs])

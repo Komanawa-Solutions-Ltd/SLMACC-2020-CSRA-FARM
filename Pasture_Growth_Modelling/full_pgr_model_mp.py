@@ -31,7 +31,9 @@ def run_full_model_mp(storyline_path_mult,
                       pool_size=None,
                       fix_leap=True,
                       verbose=False,
-                      re_run=True):
+                      re_run=True,
+                      seed=None,
+                      use_1_seed=False):
     """
     run a bunch of basgra models for storylines
     :param storyline_path_mult: list of storyline_paths
@@ -44,6 +46,10 @@ def run_full_model_mp(storyline_path_mult,
     :param swg_dir_mult: can be either a single value or a list
     :param log_path: path to save the log, has the time and .csv appended to it
     :param pool_size: if none use full processor pool otherwise specify
+    :param seeds: random seeds for each storyline
+    :param use_1_seed: bool if True use the same seed for each month of the storyline, if false calculate a new seed
+                       for each month of each storyline.  The new seeds are based on the passed seed so they are
+                       reproducable (via seed kwarg); however each month will have different data.
     :return:
     """
     if verbose:
@@ -68,6 +74,8 @@ def run_full_model_mp(storyline_path_mult,
         'save_daily_mult': save_daily_mult,
         'description_mult': description_mult,
         'swg_dir_mult': swg_dir_mult,
+        'use_1_seed': use_1_seed,
+        'seed': seed,
 
     }
     for k in args_n1d.keys():
@@ -113,6 +121,9 @@ def run_full_model_mp(storyline_path_mult,
             'n_parallel': pool_size,
             'fix_leap': fix_leap,
             're_run': re_run,
+            'seed': args_n1d['seed'][i],
+            'use_1_seed': args_n1d['use_1_seed'][i],
+
         }))
     t = time.time()
     multiprocessing.log_to_stderr(logging.DEBUG)
@@ -139,6 +150,7 @@ def start_process():
     p = psutil.Process(os.getpid())
     # set to lowest priority, this is windows only, on Unix use ps.nice(19)
     p.nice(psutil.BELOW_NORMAL_PRIORITY_CLASS)
+
 
 def silent_start_process():
     """
@@ -169,7 +181,7 @@ def _rpg_mp(kwargs):
         success = False
     kwargs['success'] = success
     kwargs['error_v'] = v
-    kwargs['mode_sites'] = '; '.join(['-'.join(e)  for e in kwargs['mode_sites']])
+    kwargs['mode_sites'] = '; '.join(['-'.join(e) for e in kwargs['mode_sites']])
     print('finished storyline: {},  success: {}, error: {}'.format(storyline_id, success, v))
     return [kwargs[e] for e in kwarg_keys]
 

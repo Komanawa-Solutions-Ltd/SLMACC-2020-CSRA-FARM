@@ -20,7 +20,7 @@ class MovingBlockBootstrapGenerator(object):
     datapath = None
 
     def __init__(self, input_data, blocktype, block, nsims, data_path=None, sim_len=None, nblocksize=None,
-                 save_to_nc=True, comments='', recalc=False):
+                 save_to_nc=True, comments='', seed=None, recalc=False):
         """
 
         :param input_data: 1d array or dict of 1d arrays, the data to resample
@@ -44,6 +44,7 @@ class MovingBlockBootstrapGenerator(object):
         :param save_to_nc: boolean if True save to nc and then open the dataset (don't keep all data in memory),
                            if False keep in memory as dataset.
         :param comments: str other comments to save to the netcdf file
+        :param seed:  a seed value which will make the random function reproducable
         :param recalc: boolean if True will do the bootstrapping even if the saved nc exists
         """
         self.comments = comments
@@ -153,6 +154,12 @@ class MovingBlockBootstrapGenerator(object):
 
         self.blocktype = blocktype
 
+        # manage creation seeds
+        if seed is not None:
+            np.random.seed(seed)
+        self._seeds = np.random.randint(115, 564833, len(self.keys) * 10)  # make excess
+        self._iseed = 0
+
         if save_to_nc:
             if not os.path.exists(self.datapath) or recalc:
                 self._make_data()
@@ -172,6 +179,8 @@ class MovingBlockBootstrapGenerator(object):
             if self.blocktype == 'single':
                 blocks = [self.block_size[k]]
             elif self.blocktype == 'list':
+                np.random.seed(self._seeds[self._iseed])
+                self._iseed += 1
                 blocks = np.random.choice(self.block_array[k], self.nblocksize[k])
             elif self.blocktype == 'truncnormal':
                 a, b = (self.clip_min[k] - self.mean[k]) / self.std[k], (self.clip_max[k] - self.mean[k]) / self.std[k]
@@ -214,6 +223,8 @@ class MovingBlockBootstrapGenerator(object):
         possible_idxs = range(usable_len)
 
         num_per_sample = -(-self.sim_len[key] // blocksize)
+        np.random.seed(self._seeds[self._iseed])
+        self._iseed += 1
         start_idxs = np.random.choice(possible_idxs, nsamples * num_per_sample)
         num_select = num_per_sample * blocksize
         idxs = np.array([np.arange(e, e + blocksize) for e in start_idxs]).flatten()
@@ -221,7 +232,8 @@ class MovingBlockBootstrapGenerator(object):
         out = out[:, 0:self.sim_len[key]]
         return out
 
-    def plot_auto_correlation(self, nsims, lags, key=None, quantiles=(5, 25), alpha=0.5, show=True, hlines=[0, 0.5]):
+    def plot_auto_correlation(self, nsims, lags, key=None, quantiles=(5, 25), alpha=0.5, show=True, hlines=[0, 0.5],
+                              seed=None):
         """
 
         :param nsims: number of new simulations to select
@@ -231,13 +243,14 @@ class MovingBlockBootstrapGenerator(object):
         :param alpha: the alpha to plot the quantiles
         :param show: bool if True call plt.show() otherwise return fig, ax
         :param hlines: list, plot hlines at each value
+        :param seed: seed to make random processes reproducible
         :return:
         """
         if key is None:
             if self.key is None:
                 raise ValueError('more than one key in the dataset, please provide key')
             key = deepcopy(self.key)
-        sim_data = self.get_data(nsims=nsims, key=key, max_replacement_level=1)
+        sim_data = self.get_data(nsims=nsims, key=key, max_replacement_level=1, seed=seed)
         org_data = self.get_org_data(key=key)
         org_plot = np.zeros((org_data.shape[0], lags)) * np.nan
         sim_plot = np.zeros((nsims, lags)) * np.nan
@@ -329,7 +342,7 @@ class MovingBlockBootstrapGenerator(object):
 
     def get_data(self, nsims, key=None, mean='any', tolerance=None, lowerbound=None, upper_bound=None,
                  max_replacement_level=0.1,
-                 under_level='warn'):
+                 under_level='warn', seed=None):
         """
         pull simulations from the dataset, samples bootstrap simulations with replacement.
         :param key: data key to pull from, (if None set to self.key),
@@ -348,6 +361,12 @@ class MovingBlockBootstrapGenerator(object):
         :param under_level: describes the action to be taken 'warn', 'raise', 'pass'
         :return: data shape (samples, simlen)
         """
+        if seed is not None:
+            np.random.seed(seed)
+
+        seeds = np.random.randint(168, 268576, 100)  # make many more than needed
+        iseed = 0
+
         # manage key
         if key is None:
             if self.key is None:
@@ -357,6 +376,8 @@ class MovingBlockBootstrapGenerator(object):
 
         # define the indexes to pull
         if mean == 'any':
+            np.random.seed(seeds[iseed])
+            iseed += 1
             idxs = np.random.choice(range(self.nsims[key]), (nsims,))
             if len(idxs) == 0:
                 raise ValueError('no simulations for key: {}'.format(key))
@@ -388,6 +409,8 @@ class MovingBlockBootstrapGenerator(object):
                     pass
                 else:
                     raise ValueError("incorrect arg for under_level expected on of ['warn', 'raise', 'pass']")
+            np.random.seed(seeds[iseed])
+            iseed += 1
             idxs = np.random.choice(idxs, nsims)
 
         # pull data
