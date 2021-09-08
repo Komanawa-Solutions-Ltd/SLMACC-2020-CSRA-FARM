@@ -16,9 +16,9 @@ def test_multi_year(make_stories=True, run_pg=True, extract_data=True):
     year_stories = {
         0: glob.glob(r"M:\Shared drives\Z2003_SLMACC\outputs_for_ws\norm\possible_final_stories\autumn_drought2_mon_"
                      r"thresh\storylines_cluster_000\rsl-*.csv"),
-        1: glob.glob(r"M:\Shared drives\Z2003_SLMACC\outputs_for_ws\norm\possible_final_stories\good_stor"
+        2: glob.glob(r"M:\Shared drives\Z2003_SLMACC\outputs_for_ws\norm\possible_final_stories\good_stor"
                      r"ies\storylines_cluster_001\rsl-*.csv"),
-        2: glob.glob(r"M:\Shared drives\Z2003_SLMACC\outputs_for_ws\norm\possible_final_stories\autumn_drought2_mon_"
+        1: glob.glob(r"M:\Shared drives\Z2003_SLMACC\outputs_for_ws\norm\possible_final_stories\autumn_drought2_mon_"
                      r"thresh\storylines_cluster_001\rsl-*.csv"),
 
     }
