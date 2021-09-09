@@ -121,7 +121,6 @@ def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_see
 
 def run_multi_year_pg_model(storyline_dir, data_dir, name, desc, nsims_mulit, seed=1582354,
                             mode_sites=default_mode_sites):
-
     unlinked_storyline_dir = os.path.join(storyline_dir, 'unlinked')
     linked_storyline_dir = os.path.join(storyline_dir, 'linked')
     unlinked_data_dir, linked_data_dir = os.path.join(data_dir, 'unlinked'), os.path.join(data_dir, 'linked')
@@ -540,44 +539,3 @@ def plot_multi_year_dif_total(outpath, mode_sites, impact_data, nyears, sup_titl
     if show:
         plt.show()
     pg_fig.savefig(outpath)
-
-
-if __name__ == '__main__':
-    impact_path = None # todo
-    out_path = None # todo
-    plot_multi_year_monthly(  # todo start here!!!
-        outpath=out_path,
-        mode_sites=default_mode_sites,
-        impact_data=pd.read_csv(
-            impact_path),
-        nyears=3,
-        sup_title='test_plot',
-        show=False
-    )
-    plot_mulit_year_dif_monthly(  # todo start here!!!
-        outpath=out_path,
-        mode_sites=default_mode_sites,
-        impact_data=pd.read_csv(
-            impact_path),
-        nyears=3,
-        sup_title='test_plot',
-        show=False
-    )
-    plot_multi_year_dif_total(  # todo start here!!!
-        outpath=out_path,
-        mode_sites=default_mode_sites,
-        impact_data=pd.read_csv(
-            impact_path),
-        nyears=3,
-        sup_title='test_plot',
-        show=False
-    )
-    plot_muli_year_total(  # todo start here!!!
-        outpath=out_path,
-        mode_sites=default_mode_sites,
-        impact_data=pd.read_csv(
-            impact_path),
-        nyears=3,
-        sup_title='test_plot',
-        show=True
-    )
