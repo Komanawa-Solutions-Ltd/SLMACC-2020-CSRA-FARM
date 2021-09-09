@@ -549,7 +549,7 @@ def bad_stories_eyrewell():
         state_limits=None,
         n_clusters=15,
         n_pcs=15,
-        save_stories=False, correct=True
+        save_stories=True, correct=True
     )
 
 
@@ -683,8 +683,8 @@ if __name__ == '__main__':
     # autumn_drought_1_mon_thresh()
     # autumn_drought_2_mon_thresh()
     # autumn_drought_3_mon_thresh()
-    # bad_stories_eyrewell()
-    hurt_v1()
-    hurt_v2()
-    hurt_v3()
+    bad_stories_eyrewell()
+    # hurt_v1()
+    # hurt_v2()
+    # hurt_v3()
     pass

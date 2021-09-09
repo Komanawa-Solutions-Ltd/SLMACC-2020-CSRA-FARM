@@ -103,9 +103,9 @@ def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_see
 
     # calc total probs
     temp = outdata.loc[:, [f'log10_true_prob_irr-{y:02d}' for y in year_stories.keys()]].sum(axis=1)
-    outdata.loc[:, f'log10_true_prob_irr-all'] = temp
+    outdata.loc[:, f'log10_true_prob_irr_all'] = temp
     temp = outdata.loc[:, [f'log10_true_prob_dry-{y:02d}' for y in year_stories.keys()]].sum(axis=1)
-    outdata.loc[:, f'log10_true_prob_dry-all'] = temp
+    outdata.loc[:, f'log10_true_prob_dry_all'] = temp
 
     outdata.set_index('ID', inplace=True)
     outdata.to_hdf(os.path.join(outdir, 'id_probs.hdf'), 'prob', mode='w')
@@ -253,9 +253,9 @@ def extract_non_linked_data(data, years, unlinked_pg_dir):  # todo test this
 
     for mode, site in default_mode_sites:
         temp = data.loc[:, [f'log10_non_exceed_prob_{site}-{mode}-{y:02d}' for y in range(years)]]
-        data.loc[:, f'log10_non_exceed_prob_{site}-{mode}-all'] = temp.sum(axis=1)
+        data.loc[:, f'log10_non_exceed_prob_{site}-{mode}_all'] = temp.sum(axis=1)
         temp = data.loc[:, [f'{site}-{mode}-not_linked_pg_yr{y:02d}' for y in range(years)]]
-        data.loc[:, f'{site}-{mode}-not_linked_pg-all'] = temp.sum(axis=1)
+        data.loc[:, f'{site}-{mode}-not_linked_pg_all'] = temp.sum(axis=1)
 
     return data
 
@@ -292,8 +292,66 @@ def _read_non_linked(data, pg_dir):
     return data
 
 
-def plot_muli_year_total(site_modes, impact_data):  # todo!
-    raise NotImplementedError
+def plot_muli_year_total(outpath, mode_sites, impact_data, nyears, sup_title, show=False):  # todo!
+    impact_data = impact_data.select_dtypes(include='number') / 1000
+    c_non_linked = 'indianred'
+    c_linked = 'royalblue'
+
+    positions = np.arange(1, (nyears + 1) * 2 + 1, 2)
+    pg_fig, pg_axs = plt.subplots(nrows=len(mode_sites), figsize=(14, 10), sharex=True)
+    for i, ((mode, site), ax) in enumerate(zip(mode_sites, pg_axs)):
+        # plot non-linked data
+        data = [impact_data.loc[
+                :,
+                f'{site}-{mode}-not_linked_pg_yr{y:02d}'] for y in range(nyears)
+                ] + [impact_data.loc[:, f'{site}-{mode}-not_linked_pg_all']]
+        parts = ax.violinplot(data, positions=positions,
+                              showmeans=False, showmedians=True,
+                              quantiles=[[0.25, 0.75] for e in positions])
+        for pc in parts['bodies']:
+            pc.set_facecolor(c_non_linked)
+        parts['cmedians'].set_color(c_non_linked)
+        parts['cquantiles'].set_color(c_non_linked)
+        parts['cmins'].set_color(c_non_linked)
+        parts['cmaxes'].set_color(c_non_linked)
+        parts['cbars'].set_color(c_non_linked)
+
+        # plot linked data
+        data = [impact_data.loc[
+                :,
+                f'{site}-{mode}-linked_pg_yr{y:02d}'] for y in range(nyears)
+                ] + [impact_data.loc[:, f'{site}-{mode}-linked_pg_all']]
+        parts = ax.violinplot(data, positions=positions + 0.5,
+                              showmeans=False, showmedians=True,
+                              quantiles=[[0.25, 0.75] for e in positions])
+        for pc in parts['bodies']:
+            pc.set_facecolor(c_linked)
+        parts['cmedians'].set_color(c_linked)
+        parts['cquantiles'].set_color(c_linked)
+        parts['cmins'].set_color(c_linked)
+        parts['cmaxes'].set_color(c_linked)
+        parts['cbars'].set_color(c_linked)
+
+        # set up labels ect
+        ax.set_title(f'{site}-{mode}')
+        if i == len(mode_sites) - 1:
+            ax.set_xlabel('Year')
+            ax.set_xticks(positions + 0.25)
+            ax.set_xticklabels([f'yr: {y:02d}' for y in range(nyears)] + ['all'], rotation='vertical')
+            ax.set_xlim(0, (len(positions) + 1) * 2)
+        if i == len(mode_sites) // 2:
+            ax.set_ylabel('tons DM/ha/yr')
+
+        ax.legend(handles=[
+            Patch(facecolor=c_non_linked, label='Unlinked Storyline'),
+            Patch(facecolor=c_linked, label='Linked Storyline'),
+        ])
+
+    pg_fig.suptitle(sup_title)
+    pg_fig.tight_layout()
+    if show:
+        plt.show()
+    pg_fig.savefig(outpath)
 
 
 def plot_multi_year_monthly(outpath, mode_sites, impact_data, nyears, sup_title, show=False):  # todo check
@@ -345,7 +403,7 @@ def plot_multi_year_monthly(outpath, mode_sites, impact_data, nyears, sup_title,
             ax.set_xlabel('Month')
             ax.set_xticks(positions + 0.25)
             ax.set_xticklabels(mks, rotation='vertical')
-            ax.set_xlim(0, len(mks)*2)
+            ax.set_xlim(0, len(mks) * 2)
         if i == len(mode_sites) // 2:
             ax.set_ylabel('kg DM/ha/day')
 
@@ -361,12 +419,162 @@ def plot_multi_year_monthly(outpath, mode_sites, impact_data, nyears, sup_title,
     pg_fig.savefig(outpath)
 
 
+def make_difference_dataset(mode_sites, impact_data, nyears):
+    """
+    make the differnece data linked-unlinked
+    :param mode_sites:
+    :param impact_data:
+    :param nyears:
+    :return:
+    """
+    outdata = pd.DataFrame()
+    for mode, site in mode_sites:
+        pass
+        # make all_data
+        linked_key = f'{site}-{mode}-linked_pg_all'
+        unlinked_key = f'{site}-{mode}-not_linked_pg_all'
+        outkey = f'{site}-{mode}-dif_all'
+        outdata.loc[:, outkey] = impact_data.loc[:, linked_key] - impact_data.loc[:, unlinked_key]
+
+        for y in range(nyears):
+            # make annual data
+            linked_key = f'{site}-{mode}-linked_pg_yr{y:02d}'
+            unlinked_key = f'{site}-{mode}-not_linked_pg_yr{y:02d}'
+            outkey = f'{site}-{mode}-dif_yr{y:02d}'
+            outdata.loc[:, outkey] = impact_data.loc[:, linked_key] - impact_data.loc[:, unlinked_key]
+
+            for m in range(1, 13):
+                # make monthly data
+                linked_key = f'{site}-{mode}-linked_pg_yr{y:02d}-m{m:02d}'
+                unlinked_key = f'{site}-{mode}-not_linked_pg_yr{y:02d}-m{m:02d}'
+                outkey = f'{site}-{mode}-dif_yr{y:02d}-m{m:02d}'
+                outdata.loc[:, outkey] = impact_data.loc[:, linked_key] - impact_data.loc[:, unlinked_key]
+
+    return outdata
+
+
+def plot_mulit_year_dif_monthly(outpath, mode_sites, impact_data, nyears, sup_title, show=False):
+    impact_data = make_difference_dataset(mode_sites, impact_data, nyears)
+
+    plot_months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
+    mks = []
+    c_non_linked = 'grey'
+
+    for y in range(nyears):
+        mks.extend([f'yr{y:02d}-m{m:02d}' for m in plot_months])
+    positions = np.arange(1, (len(plot_months) * nyears) + 1)
+    pg_fig, pg_axs = plt.subplots(nrows=len(mode_sites), figsize=(14, 10), sharex=True)
+    for i, ((mode, site), ax) in enumerate(zip(mode_sites, pg_axs)):
+        # plot dif data
+        data = [impact_data.loc[
+                :,
+                f'{site}-{mode}-dif_{mk}'] / month_len[int(mk[-2:])] for mk in mks
+                ]
+        parts = ax.violinplot(data, positions=positions,
+                              showmeans=False, showmedians=True,
+                              quantiles=[[0.25, 0.75] for e in positions])
+        for pc in parts['bodies']:
+            pc.set_facecolor(c_non_linked)
+        parts['cmedians'].set_color(c_non_linked)
+        parts['cquantiles'].set_color(c_non_linked)
+        parts['cmins'].set_color(c_non_linked)
+        parts['cmaxes'].set_color(c_non_linked)
+        parts['cbars'].set_color(c_non_linked)
+
+        # set up labels ect
+        ax.set_title(f'{site}-{mode}')
+        if i == len(mode_sites) - 1:
+            ax.set_xlabel('Month')
+            ax.set_xticks(positions)
+            ax.set_xticklabels(mks, rotation='vertical')
+            ax.set_xlim(0, len(mks) + 1)
+        if i == len(mode_sites) // 2:
+            ax.set_ylabel('difference (linked - unlinked) kg DM/ha/day')
+
+    pg_fig.suptitle(sup_title)
+    pg_fig.tight_layout()
+    if show:
+        plt.show()
+    pg_fig.savefig(outpath)
+
+
+def plot_multi_year_dif_total(outpath, mode_sites, impact_data, nyears, sup_title, show=False):
+    impact_data = make_difference_dataset(mode_sites, impact_data, nyears)
+
+    impact_data = impact_data.select_dtypes(include='number') / 1000
+    c_non_linked = 'grey'
+
+    positions = np.arange(1, nyears + 2)
+    pg_fig, pg_axs = plt.subplots(nrows=len(mode_sites), figsize=(14, 10), sharex=True)
+    for i, ((mode, site), ax) in enumerate(zip(mode_sites, pg_axs)):
+        # plot dif data
+        data = [impact_data.loc[
+                :,
+                f'{site}-{mode}-dif_yr{y:02d}'] for y in range(nyears)
+                ] + [impact_data.loc[:, f'{site}-{mode}-dif_all']]
+        parts = ax.violinplot(data, positions=positions,
+                              showmeans=False, showmedians=True,
+                              quantiles=[[0.25, 0.75] for e in positions])
+        for pc in parts['bodies']:
+            pc.set_facecolor(c_non_linked)
+        parts['cmedians'].set_color(c_non_linked)
+        parts['cquantiles'].set_color(c_non_linked)
+        parts['cmins'].set_color(c_non_linked)
+        parts['cmaxes'].set_color(c_non_linked)
+        parts['cbars'].set_color(c_non_linked)
+
+        # set up labels ect
+        ax.set_title(f'{site}-{mode}')
+        if i == len(mode_sites) - 1:
+            ax.set_xlabel('Year')
+            ax.set_xticks(positions)
+            ax.set_xticklabels([f'yr: {y:02d}' for y in range(nyears)] + ['all'], rotation='vertical')
+            ax.set_xlim(0, (len(positions) + 1))
+        if i == len(mode_sites) // 2:
+            ax.set_ylabel('difference (linked - unlinked) tons DM/ha/yr')
+
+    pg_fig.suptitle(sup_title)
+    pg_fig.tight_layout()
+    if show:
+        plt.show()
+    pg_fig.savefig(outpath)
+
+
 if __name__ == '__main__':
-    plot_multi_year_monthly( # todo start here!!!
-        outpath=r"D:\mh_unbacked\SLMACC_2020_norm\pasture_growth_sims\test_multi_2\test_multi_2.png",
+    impact_path = None # todo
+    out_path = None # todo
+    plot_multi_year_monthly(  # todo start here!!!
+        outpath=out_path,
         mode_sites=default_mode_sites,
         impact_data=pd.read_csv(
-            r"D:\mh_unbacked\SLMACC_2020_norm\pasture_growth_sims\test_multi_2\test_multi_2-multi_data.csv"),
+            impact_path),
+        nyears=3,
+        sup_title='test_plot',
+        show=False
+    )
+    plot_mulit_year_dif_monthly(  # todo start here!!!
+        outpath=out_path,
+        mode_sites=default_mode_sites,
+        impact_data=pd.read_csv(
+            impact_path),
+        nyears=3,
+        sup_title='test_plot',
+        show=False
+    )
+    plot_multi_year_dif_total(  # todo start here!!!
+        outpath=out_path,
+        mode_sites=default_mode_sites,
+        impact_data=pd.read_csv(
+            impact_path),
+        nyears=3,
+        sup_title='test_plot',
+        show=False
+    )
+    plot_muli_year_total(  # todo start here!!!
+        outpath=out_path,
+        mode_sites=default_mode_sites,
+        impact_data=pd.read_csv(
+            impact_path),
         nyears=3,
         sup_title='test_plot',
         show=True

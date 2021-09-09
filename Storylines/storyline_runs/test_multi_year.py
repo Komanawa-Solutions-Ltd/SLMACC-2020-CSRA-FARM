@@ -64,7 +64,36 @@ def test_multi_year2(make_stories=True, run_pg=True, extract_data=True):
 
     # pasture growth modelling
     if run_pg:
-        run_multi_year_pg_model(storyline_dir=new_story_dir, data_dir=new_pg_dir, name=name, nsims_mulit=96*3,
+        run_multi_year_pg_model(storyline_dir=new_story_dir, data_dir=new_pg_dir, name=name, nsims_mulit=96 * 3,
+                                desc='test mixing and matching random storylines for 3 years, just for debugging')
+    if extract_data:
+        create_pg_data_multi_year(storyline_dir=new_story_dir, data_dir=new_pg_dir,
+                                  outpath=os.path.join(new_pg_dir, f'{name}-multi_data'))
+
+
+def test_bad_eyrwell(make_stories=True, run_pg=True, extract_data=True):
+    temp = glob.glob(r"M:\Shared drives\Z2003_SLMACC\outputs_for_ws\norm\possible_final_"
+                     r"stories\bad_stories_eyrewell\storylines_cluster_*\rsl-*.csv")
+    year_stories = {
+        0: temp,
+        1: temp,
+        2: temp,
+
+    }
+
+    for k, v in year_stories.items():
+        print(f'{k}: {len(v)} stories')
+
+    name = 'bad_eyrewell'
+    new_pg_dir = os.path.join(default_pasture_growth_dir, name)
+    new_story_dir = os.path.join(temp_storyline_dir, name)
+
+    if make_stories:
+        make_multi_year_stories_from_random_suite(outdir=new_story_dir, year_stories=year_stories, n=96, )
+
+    # pasture growth modelling
+    if run_pg:
+        run_multi_year_pg_model(storyline_dir=new_story_dir, data_dir=new_pg_dir, name=name, nsims_mulit=96,
                                 desc='test mixing and matching random storylines for 3 years, just for debugging')
     if extract_data:
         create_pg_data_multi_year(storyline_dir=new_story_dir, data_dir=new_pg_dir,
@@ -73,4 +102,4 @@ def test_multi_year2(make_stories=True, run_pg=True, extract_data=True):
 
 # todo test plotting functions
 if __name__ == '__main__':
-    test_multi_year2()
+    test_bad_eyrwell()
