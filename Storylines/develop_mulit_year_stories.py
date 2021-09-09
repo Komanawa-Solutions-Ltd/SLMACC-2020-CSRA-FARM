@@ -119,7 +119,7 @@ def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_see
         f.write(f'number of sims (n) = {n}\n')
 
 
-def run_multi_year_pg_model(storyline_dir, data_dir, name, desc, seed=1582354):  # todo check!
+def run_multi_year_pg_model(storyline_dir, data_dir, name, desc, nsims_mulit, seed=1582354):  # todo check!
     unlinked_storyline_dir = os.path.join(storyline_dir, 'unlinked')
     linked_storyline_dir = os.path.join(storyline_dir, 'linked')
     unlinked_data_dir, linked_data_dir = os.path.join(data_dir, 'unlinked'), os.path.join(data_dir, 'linked')
@@ -131,7 +131,7 @@ def run_multi_year_pg_model(storyline_dir, data_dir, name, desc, seed=1582354): 
     run_full_model_mp(
         storyline_path_mult=run_stories,
         outdir_mult=outdirs,
-        nsims_mult=96,
+        nsims_mult=nsims_mulit,
         log_path=os.path.join(pgm_log_dir, f'{name}-linked'),
         description_mult=desc,
         padock_rest_mult=False,
@@ -150,7 +150,7 @@ def run_multi_year_pg_model(storyline_dir, data_dir, name, desc, seed=1582354): 
     run_full_model_mp(
         storyline_path_mult=run_stories,
         outdir_mult=outdirs,
-        nsims_mult=96,
+        nsims_mult=nsims_mulit,
         log_path=os.path.join(pgm_log_dir, f'{name}-unlinked'),
         description_mult=desc,
         padock_rest_mult=False,
@@ -362,7 +362,7 @@ def plot_multi_year_monthly(outpath, mode_sites, impact_data, nyears, sup_title,
 
 
 if __name__ == '__main__':
-    plot_multi_year_monthly( # todo start here
+    plot_multi_year_monthly( # todo start here!!!
         outpath=r"D:\mh_unbacked\SLMACC_2020_norm\pasture_growth_sims\test_multi_2\test_multi_2.png",
         mode_sites=default_mode_sites,
         impact_data=pd.read_csv(
