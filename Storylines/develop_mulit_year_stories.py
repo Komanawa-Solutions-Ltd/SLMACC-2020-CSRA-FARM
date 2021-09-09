@@ -51,21 +51,6 @@ def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_see
     all_stories = np.array(all_stories)
     stories_exist = np.array([os.path.exists(s) for s in all_stories])
 
-    # save orginal storylines
-
-    temp = np.unique(all_stories)
-    for i, p in enumerate(temp):
-        if i % 100 == 0:
-            print(f'saving original storyline {i} of {len(temp)}')
-        dist = os.path.join(unlinked_outdir, os.path.basename(p))
-
-        if re_save_org_stories:
-            if os.path.exists(dist):
-                os.remove(dist)
-
-        if not os.path.exists(p):
-            shutil.copy(p, dist)
-
     assert all(stories_exist), 'stories do not exist:\n' + '\n'.join(all_stories[~stories_exist])
     storyline_ids = [os.path.splitext(os.path.basename(p))[0] for p in all_stories]
     idx = np.in1d(storyline_ids, storyline_data.index)
@@ -75,10 +60,12 @@ def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_see
     outdata.loc[:, 'ID'] = [f'mrsl-{i:06d}' for i in outdata.index]
     output_storylines = [[] for i in range(n)]
     # set up random suite
+    save_storylines = []
     for i, (y, stories) in enumerate(year_stories.items()):
         # random selection
         np.random.seed(all_seeds[i])
         temp_storylines = np.random.choice(stories, n)
+        save_storylines.extend(temp_storylines)
         temp_storyline_ids = np.array([os.path.splitext(os.path.basename(p))[0] for p in temp_storylines])
 
         # capture key data
@@ -93,9 +80,26 @@ def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_see
             t.loc[:, 'date'] = pd.to_datetime(t.loc[:, 'date']) + pd.offsets.DateOffset(years=i)
             output_storylines[j].append(t)
 
+    # save orginal storylines
+
+    temp = np.unique(save_storylines)
+    for i, p in enumerate(temp):
+        if i % 100 == 0:
+            print(f'saving original storyline {i} of {len(temp)}')
+        dist = os.path.join(unlinked_outdir, os.path.basename(p))
+
+        if re_save_org_stories:
+            if os.path.exists(dist):
+                os.remove(dist)
+
+        if not os.path.exists(dist):
+            shutil.copy(p, dist)
+
+
     # save storylines
-    print('saving storylines')
     for i, sl in enumerate(output_storylines):
+        if i % 100 == 0:
+             print(f'saving linked storyline {i} of {len(output_storylines)}')
         pd.concat(sl).to_csv(os.path.join(linked_outdir, f'mrsl-{i:06d}.csv'))
 
     # calc total probs
