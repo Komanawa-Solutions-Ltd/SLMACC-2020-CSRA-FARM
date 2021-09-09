@@ -163,10 +163,12 @@ def test_hurt_v2(make_stories=True, run_pg=True, extract_data=True, plot=True):
             impact_data=pd.read_csv(impact_path),
             nyears=3,
             sup_title=name,
-            show=True
+            show=False
         )
 
 
-# todo test plotting functions
 if __name__ == '__main__':
-    test_hurt_v2()
+    test_hurt_v2(make_stories=False,  # todo re-run plotting function
+                 run_pg=False,
+                 extract_data=False,
+                 plot=True)
