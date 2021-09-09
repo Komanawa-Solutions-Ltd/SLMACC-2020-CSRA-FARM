@@ -95,11 +95,10 @@ def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_see
         if not os.path.exists(dist):
             shutil.copy(p, dist)
 
-
     # save storylines
     for i, sl in enumerate(output_storylines):
         if i % 100 == 0:
-             print(f'saving linked storyline {i} of {len(output_storylines)}')
+            print(f'saving linked storyline {i} of {len(output_storylines)}')
         pd.concat(sl).to_csv(os.path.join(linked_outdir, f'mrsl-{i:06d}.csv'))
 
     # calc total probs
@@ -217,12 +216,12 @@ def create_pg_data_multi_year(storyline_dir, data_dir, outpath):
         temp = data.loc[:, [f'{key}-linked_pg_yr{y:02d}' for y in range(n_years)]]
         data.loc[:, f'{key}-linked_pg_all'] = temp.sum(axis=1)
 
-    data = extract_non_linked_data(data)
+    data = extract_non_linked_data(data, years=n_years, unlinked_pg_dir=unlinked_data_dir)
 
     data.to_hdf(os.path.join(storyline_dir, f'id_probs.hdf'), 'prob', mode='w')
     data.to_csv(os.path.join(storyline_dir, f'id_probs.csv'))
     data.to_hdf(f'{outpath}.hdf', 'prob', mode='w')
-    data.to_hdf(f'{outpath}.csv', 'prob')
+    data.to_csv(f'{outpath}.csv')
 
 
 def extract_non_linked_data(data, years, unlinked_pg_dir):  # todo test this
@@ -305,7 +304,7 @@ def plot_multi_year_monthly(outpath, mode_sites, impact_data, nyears, sup_title,
 
     for y in range(nyears):
         mks.extend([f'yr{y:02d}-m{m:02d}' for m in plot_months])
-
+    positions = np.arange(1, (len(plot_months) * nyears) * 2 + 1, 2)
     pg_fig, pg_axs = plt.subplots(nrows=len(mode_sites), figsize=(14, 10), sharex=True)
     for i, ((mode, site), ax) in enumerate(zip(mode_sites, pg_axs)):
         # plot non-linked data
@@ -313,9 +312,9 @@ def plot_multi_year_monthly(outpath, mode_sites, impact_data, nyears, sup_title,
                 :,
                 f'{site}-{mode}-not_linked_pg_{mk}'] / month_len[int(mk[-2:])] for mk in mks
                 ]
-        parts = ax.violinplot(data, positions=np.arange(1, len(plot_months) * nyears + 1),
+        parts = ax.violinplot(data, positions=positions,
                               showmeans=False, showmedians=True,
-                              quantiles=[[0.25, 0.75] for e in plot_months * nyears])
+                              quantiles=[[0.25, 0.75] for e in positions])
         for pc in parts['bodies']:
             pc.set_facecolor(c_non_linked)
         parts['cmedians'].set_color(c_non_linked)
@@ -329,9 +328,9 @@ def plot_multi_year_monthly(outpath, mode_sites, impact_data, nyears, sup_title,
                 :,
                 f'{site}-{mode}-linked_pg_{mk}'] / month_len[int(mk[-2:])] for mk in mks
                 ]
-        parts = ax.violinplot(data, positions=np.arange(1, len(plot_months) * nyears + 1) + 0.5,  # todo offsets?
+        parts = ax.violinplot(data, positions=positions + 0.5,  # todo offsets?
                               showmeans=False, showmedians=True,
-                              quantiles=[[0.25, 0.75] for e in plot_months * nyears])
+                              quantiles=[[0.25, 0.75] for e in positions])
         for pc in parts['bodies']:
             pc.set_facecolor(c_linked)
         parts['cmedians'].set_color(c_linked)
@@ -344,9 +343,9 @@ def plot_multi_year_monthly(outpath, mode_sites, impact_data, nyears, sup_title,
         ax.set_title(f'{site}-{mode}')
         if i == len(mode_sites) - 1:
             ax.set_xlabel('Month')
-            ax.set_xticks(np.arange(1, len(plot_months) * nyears + 1) + 0.25)
-            ax.set_xticklabels(mks)
-            ax.set_xlim(0.5, len(mks) + 0.5)
+            ax.set_xticks(positions + 0.25)
+            ax.set_xticklabels(mks, rotation='vertical')
+            ax.set_xlim(0, len(mks)*2)
         if i == len(mode_sites) // 2:
             ax.set_ylabel('kg DM/ha/day')
 
@@ -363,10 +362,11 @@ def plot_multi_year_monthly(outpath, mode_sites, impact_data, nyears, sup_title,
 
 
 if __name__ == '__main__':
-    plot_multi_year_monthly(
-        outpath=r"D:\mh_unbacked\SLMACC_2020_norm\temp_storyline_files\test_multi\test_plot.png",
+    plot_multi_year_monthly( # todo start here
+        outpath=r"D:\mh_unbacked\SLMACC_2020_norm\pasture_growth_sims\test_multi_2\test_multi_2.png",
         mode_sites=default_mode_sites,
-        impact_data=pd.read_csv(r"D:\mh_unbacked\SLMACC_2020_norm\temp_storyline_files\test_multi\id_probs.csv"),
+        impact_data=pd.read_csv(
+            r"D:\mh_unbacked\SLMACC_2020_norm\pasture_growth_sims\test_multi_2\test_multi_2-multi_data.csv"),
         nyears=3,
         sup_title='test_plot',
         show=True
