@@ -60,7 +60,7 @@ def get_month_limits_from_most_probable(eyrewell_irr, oxford_irr, oxford_dry, co
     return monthly_limits
 
 
-def add_exceedence_prob(impact_data, correct, impact_in_tons=False):
+def add_exceedence_prob(impact_data, correct, impact_in_tons=False): # todo how to handle for new mode-sites, this is the hard one....
     """
 
     :param impact_data: the data to add impact to
@@ -98,7 +98,7 @@ def add_exceedence_prob(impact_data, correct, impact_in_tons=False):
 
 def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None, correct=False, monthly_limits=None):
     """
-    get the storylines for the paths where data is between the two bounds
+    get the storylines for the paths where data is between the two bounds, note cannot select from non-default mode sites
     :param lower_bound: dictionary {site-mode: None, float (for annual) or dictionary with at least 1 month limits}
     :param upper_bound: dictionary {site-mode: None, float (for annual) or dictionary with at least 1 month limits}
     :param return_for_pca: bool if True return as a 2d array for running through PCA, else return as a list for plotting
@@ -262,7 +262,7 @@ def make_all_storyline_data(calc_raw=False):
 
 
 def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=False, log_dir=None,
-                 additional_plot_line=None, additional_plot_nm=None):
+                 additional_plot_line=None, additional_plot_nm=None): # todo I may need to pull this out for new mode sites...
     log_text = []
     print('running_pca')
     if len(data) < n_pcs:

@@ -43,7 +43,7 @@ historical_average = {
 
 }
 
-fixed_data = {
+fixed_data = { # todo additional site/modes will be needed or pass a dictionary
     ('dryland', 'oxford'): {
         6: 5 * 30,
         7: 5 * 31,
@@ -74,7 +74,7 @@ deltas = {
 }
 
 
-def corr_pg(data):
+def corr_pg(data, mode_site=default_mode_sites):
     """
     # note that fractions are of cumulative montly  data and that sum of probilities does not match the annual data
     :param data:
@@ -82,7 +82,7 @@ def corr_pg(data):
     """
     data = deepcopy(data)
 
-    for mode, site in default_mode_sites:
+    for mode, site in mode_site:
         for m in range(1, 13):
             if m in [6, 7, 8]:
                 data.loc[:, f'{site}-{mode}_pg_m{m:02d}'] = fixed_data[(mode, site)][m]
@@ -96,7 +96,7 @@ def corr_pg(data):
     return data
 
 
-def get_most_probabile(site, mode, correct=False):
+def get_most_probabile(site, mode, correct=False): # todo how to manage this for new mode-sites
     target_ranges = {
         ('dryland', 'oxford'): (4, 6 * 100000),
         ('irrigated', 'eyrewell'): (15 * 1000, 17 * 1000),

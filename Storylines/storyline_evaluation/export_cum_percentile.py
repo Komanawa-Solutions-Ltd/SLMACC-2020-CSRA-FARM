@@ -12,7 +12,7 @@ from Storylines.storyline_evaluation.storyline_eval_support import calc_cumulati
 from scipy.interpolate import interp1d
 
 
-def export_cum_percentile(nyr, outdir, step_size=0.1):
+def export_cum_percentile(nyr, outdir, step_size=0.1): # todo how to manage mode sites
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     for mode, site in default_mode_sites:

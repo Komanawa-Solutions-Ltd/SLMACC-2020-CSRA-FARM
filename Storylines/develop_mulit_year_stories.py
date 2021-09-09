@@ -119,7 +119,9 @@ def make_multi_year_stories_from_random_suite(outdir, year_stories, n, start_see
         f.write(f'number of sims (n) = {n}\n')
 
 
-def run_multi_year_pg_model(storyline_dir, data_dir, name, desc, nsims_mulit, seed=1582354):  # todo check!
+def run_multi_year_pg_model(storyline_dir, data_dir, name, desc, nsims_mulit, seed=1582354,
+                            mode_sites=default_mode_sites):
+
     unlinked_storyline_dir = os.path.join(storyline_dir, 'unlinked')
     linked_storyline_dir = os.path.join(storyline_dir, 'linked')
     unlinked_data_dir, linked_data_dir = os.path.join(data_dir, 'unlinked'), os.path.join(data_dir, 'linked')
@@ -137,7 +139,7 @@ def run_multi_year_pg_model(storyline_dir, data_dir, name, desc, nsims_mulit, se
         padock_rest_mult=False,
         save_daily_mult=False,
         verbose=False,
-        mode_sites_mult=default_mode_sites,
+        mode_sites_mult=mode_sites,
         re_run=False,  # and additional safety
         seed=seed,
         use_1_seed=True,
@@ -156,14 +158,14 @@ def run_multi_year_pg_model(storyline_dir, data_dir, name, desc, nsims_mulit, se
         padock_rest_mult=False,
         save_daily_mult=False,
         verbose=False,
-        mode_sites_mult=default_mode_sites,
+        mode_sites_mult=mode_sites,
         re_run=False,  # and additional safety
         seed=seed,
         use_1_seed=True,
     )
 
 
-def create_pg_data_multi_year(storyline_dir, data_dir, outpath):
+def create_pg_data_multi_year(storyline_dir, data_dir, outpath, mode_sites=default_mode_sites):
     """
 
     :param storyline_dir: directory with the storylines
@@ -184,7 +186,7 @@ def create_pg_data_multi_year(storyline_dir, data_dir, outpath):
         mkeys.extend([f'yr{y:02d}-m{m:02d}' for m in [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]])
         m_lens.extend([31, 31, 30, 31, 30, 31, 31, 28, 31, 30, 31, 30])
     m_lens = np.array(m_lens)
-    for site, mode in default_mode_sites:
+    for site, mode in mode_sites:
         key = f'{mode}-{site}'
         data.loc[:, f'{key}-linked_pg_all'] = np.nan
         for y in range(n_years):
@@ -216,7 +218,7 @@ def create_pg_data_multi_year(storyline_dir, data_dir, outpath):
         temp = data.loc[:, [f'{key}-linked_pg_yr{y:02d}' for y in range(n_years)]]
         data.loc[:, f'{key}-linked_pg_all'] = temp.sum(axis=1)
 
-    data = extract_non_linked_data(data, years=n_years, unlinked_pg_dir=unlinked_data_dir)
+    data = extract_non_linked_data(data, years=n_years, unlinked_pg_dir=unlinked_data_dir, mode_sites=mode_sites)
 
     data.to_hdf(os.path.join(storyline_dir, f'id_probs.hdf'), 'prob', mode='w')
     data.to_csv(os.path.join(storyline_dir, f'id_probs.csv'))
@@ -224,15 +226,15 @@ def create_pg_data_multi_year(storyline_dir, data_dir, outpath):
     data.to_csv(f'{outpath}.csv')
 
 
-def extract_non_linked_data(data, years, unlinked_pg_dir):  # todo test this
+def extract_non_linked_data(data, years, unlinked_pg_dir, mode_sites):  # todo test this
     # extract raw data
     uninked_story_data = pd.DataFrame({
         'ID': np.unique(data.loc[:, [f'rid_yr_{y:02d}' for y in range(years)]].values.flatten())
     })
 
-    storyline_data = _read_non_linked(uninked_story_data, unlinked_pg_dir)
+    storyline_data = _read_non_linked(uninked_story_data, unlinked_pg_dir, mode_sites)
     storyline_data = add_exceedence_prob(storyline_data, correct=True, impact_in_tons=False)
-    for mode, site in default_mode_sites:
+    for mode, site in mode_sites:
         storyline_data.loc[:, f'log10_non_exceed_prob_{site}-{mode}'] = np.log10(
             storyline_data.loc[:, f'non-exceed_prob_per_{site}-{mode}'] / 100)
     storyline_data.set_index('ID', inplace=True)
@@ -240,7 +242,7 @@ def extract_non_linked_data(data, years, unlinked_pg_dir):  # todo test this
     # pull out the data needed
     for y in range(years):
         temp_storyline_ids = data.loc[:, f'rid_yr_{y:02d}']
-        for mode, site in default_mode_sites:
+        for mode, site in mode_sites:
             data.loc[:, f'log10_non_exceed_prob_{site}-{mode}-{y:02d}'] = storyline_data.loc[
                 temp_storyline_ids, f'log10_non_exceed_prob_{site}-{mode}'].values
             data.loc[:, f'{site}-{mode}-not_linked_pg_yr{y:02d}'] = storyline_data.loc[
@@ -251,7 +253,7 @@ def extract_non_linked_data(data, years, unlinked_pg_dir):  # todo test this
                 data.loc[:, f'{site}-{mode}-not_linked_pg_yr{y:02d}-m{m:02d}'] = storyline_data.loc[
                     temp_storyline_ids, f'{site}-{mode}_pg_m{m:02d}'].values
 
-    for mode, site in default_mode_sites:
+    for mode, site in mode_sites:
         temp = data.loc[:, [f'log10_non_exceed_prob_{site}-{mode}-{y:02d}' for y in range(years)]]
         data.loc[:, f'log10_non_exceed_prob_{site}-{mode}_all'] = temp.sum(axis=1)
         temp = data.loc[:, [f'{site}-{mode}-not_linked_pg_yr{y:02d}' for y in range(years)]]
@@ -260,14 +262,14 @@ def extract_non_linked_data(data, years, unlinked_pg_dir):  # todo test this
     return data
 
 
-def _read_non_linked(data, pg_dir):
+def _read_non_linked(data, pg_dir, mode_sites):
     """
 
     :param bad_irr: bool if True then create irrigation from 50-99th percentile if False 1-50th percentile
     :return:
     """
     assert isinstance(data, pd.DataFrame)
-    for site, mode in default_mode_sites:
+    for site, mode in mode_sites:
         key = f'{mode}-{site}'
         data.loc[:, f'{key}_pg_yr1'] = np.nan
         for m in [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]:
