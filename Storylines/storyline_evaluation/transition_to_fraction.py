@@ -96,11 +96,11 @@ def corr_pg(data, mode_site=default_mode_sites):
     return data
 
 
-def get_most_probabile(site, mode, correct=False): # todo how to manage this for new mode-sites
+def get_most_probabile(site, mode, correct=False):
     target_ranges = {
         ('dryland', 'oxford'): (4, 6 * 100000),
         ('irrigated', 'eyrewell'): (15 * 1000, 17 * 1000),
-        ('irrigated', 'oxford'): (11.5 * 1000, 14 * 1000),
+        ('irrigated', 'oxford'): (11.5 * 1000, 14 * 1000),  # todo need to update these for each new site, mode
     }
 
     out = {}  # keys integer months and '1yr'

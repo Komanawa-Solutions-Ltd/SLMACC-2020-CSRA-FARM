@@ -100,7 +100,7 @@ def run_1year_basgra(bad_irr=True, start=0, end=None):
         padock_rest_mult=False,
         save_daily_mult=False,
         verbose=False,
-        mode_sites_mult=default_mode_sites,
+        mode_sites_mult=mode_sites,
         re_run=False  # and additional safety
 
     )
@@ -345,6 +345,11 @@ def fix_old_1yr_runs(base_dir, change_storyline_time=False):
             # re-run add pgra
             add_pasture_growth_anaomoly_to_nc(p)
 
+mode_sites = ( # todo update to re-run only some
+        ('dryland', 'oxford'),
+        ('irrigated', 'eyrewell'),
+        ('irrigated', 'oxford'),
+    )
 
 if __name__ == '__main__':
     run_chunks = []

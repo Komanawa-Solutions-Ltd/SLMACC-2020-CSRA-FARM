@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import os
 import ksl_env
+from Pasture_Growth_Modelling.storage_parameter_sets import set_store_parameters, get_store_reseed_trig_basal
 
 # add basgra nz functions
 ksl_env.add_basgra_nz_path()
@@ -16,12 +17,12 @@ default_mode_sites = (
     ('dryland', 'oxford'),
     ('irrigated', 'eyrewell'),
     ('irrigated', 'oxford'),
-)
+)  # todo add storage here!, must have 'store' in mode names
 
 abs_max_irr = 5  # the absolute maximum irrigation values
 
 
-def get_params_doy_irr(mode, site='eyrewell'):  # todo implement storage schemes here as keywords...????
+def get_params_doy_irr(mode, site='eyrewell'):
     """
     get the parameter sets for all of the basgra modelling
     :param mode: 'dryland','irrigated'
@@ -40,37 +41,41 @@ def get_params_doy_irr(mode, site='eyrewell'):  # todo implement storage schemes
     params['fixed_removal'] = 0
     params['opt_harvfrin'] = 1
 
-    if mode == 'irrigated':
+    if mode == 'irrigated' or 'store' in mode:
         # add irrigation parameters
+        params['abs_max_irr'] = abs_max_irr
         params['irr_frm_paw'] = 1
         params['IRRIGF'] = 1
         doy_irr = list(range(244, 367)) + list(range(1, 121))  # this will change slightly in leap years
 
-        # reseed parameteres, set as mean of long term runs in june
-        params['reseed_harv_delay'] = 20
-        params['reseed_LAI'] = 1.840256e+00
-        params['reseed_TILG2'] = 2.194855e+00
-        params['reseed_TILG1'] = 4.574009e+00
-        params['reseed_TILV'] = 6.949611e+03
-        params['reseed_CLV'] = 5.226492e+01
-        params['reseed_CRES'] = 9.727732e+00
-        params['reseed_CST'] = 1.677470e-01
-        params['reseed_CSTUB'] = 0
+        if 'store' in mode:  # new storage parameterization
+            params = set_store_parameters(site, mode, params)
+        else:  # historical irrigated parametrisation
+            # reseed parameters, set as mean of long term runs in june
+            params['reseed_harv_delay'] = 20
+            params['reseed_LAI'] = 1.840256e+00
+            params['reseed_TILG2'] = 2.194855e+00
+            params['reseed_TILG1'] = 4.574009e+00
+            params['reseed_TILV'] = 6.949611e+03
+            params['reseed_CLV'] = 5.226492e+01
+            params['reseed_CRES'] = 9.727732e+00
+            params['reseed_CST'] = 1.677470e-01
+            params['reseed_CSTUB'] = 0
 
-        # modify inital  # set from start of simulation month (7) mean for the historical period.
-        # todo worth re-thinking after major change to events
-        if site == 'eyrewell':
-            params['BASALI'] = 0.747
-        elif site == 'oxford':
-            params['BASALI'] = 0.723
-        else:
-            raise ValueError(f'unexpected value for site {site}')
+            # modify inital  # set from start of simulation month (7) mean for the historical period.
+            # todo worth re-thinking after major change to events
+            if site == 'eyrewell':
+                params['BASALI'] = 0.747
+            elif site == 'oxford':
+                params['BASALI'] = 0.723
+            else:
+                raise ValueError(f'unexpected value for site {site}')
 
-        # set from a mid point value not important for percistance, but important to stop inital high yeild!
-        # set to start of simulation start month(7) average
-        params['LOG10CLVI'] = np.log10(51.998000)
-        params['LOG10CRESI'] = np.log10(9.627059)
-        params['LOG10CRTI'] = np.log10(125.966156)
+            # set from a mid point value not important for percistance, but important to stop inital high yeild!
+            # set to start of simulation start month(7) average
+            params['LOG10CLVI'] = np.log10(51.998000)
+            params['LOG10CRESI'] = np.log10(9.627059)
+            params['LOG10CRTI'] = np.log10(125.966156)
     elif mode == 'dryland':
         # add irrigation parameters
         params['irr_frm_paw'] = 1
@@ -111,7 +116,7 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=True):
     :param mode: 'dryland' or 'irrigated'
     :return:
     """
-    if mode == 'irrigated':
+    if mode == 'irrigated' or 'store' in mode:
         freq = '15D'  # days
         trig = {m: 1501 for m in range(1, 13)}  # kg harvestable dry matter by month
         targ = {m: 1500 for m in range(1, 13)}  # kg harvestable dry matter by month
@@ -129,6 +134,8 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=True):
 
         else:
             raise NotImplementedError()
+        if 'store' in mode:
+            reseed_trig, reseed_basal = get_store_reseed_trig_basal(site, mode)
     elif mode == 'dryland':
         freq = 'M'  # end of each month
         trig = {m: 601 for m in range(4, 12)}  # kg harvestable dry matter
@@ -141,7 +148,7 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=True):
         reseed_trig = 0.059
         reseed_basal = 0.090
 
-        weed_dm_frac = { # todo pull this into documentation
+        weed_dm_frac = {  # todo pull this into documentation
             1: 0.42,
             2: 0.30,
             3: 0.27,

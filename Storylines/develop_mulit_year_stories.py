@@ -225,7 +225,7 @@ def create_pg_data_multi_year(storyline_dir, data_dir, outpath, mode_sites=defau
     data.to_csv(f'{outpath}.csv')
 
 
-def extract_non_linked_data(data, years, unlinked_pg_dir, mode_sites):  # todo test this
+def extract_non_linked_data(data, years, unlinked_pg_dir, mode_sites):
     # extract raw data
     uninked_story_data = pd.DataFrame({
         'ID': np.unique(data.loc[:, [f'rid_yr_{y:02d}' for y in range(years)]].values.flatten())
@@ -293,7 +293,7 @@ def _read_non_linked(data, pg_dir, mode_sites):
     return data
 
 
-def plot_muli_year_total(outpath, mode_sites, impact_data, nyears, sup_title, show=False):  # todo!
+def plot_muli_year_total(outpath, mode_sites, impact_data, nyears, sup_title, show=False):
     impact_data = impact_data.select_dtypes(include='number') / 1000
     c_non_linked = 'indianred'
     c_linked = 'royalblue'
@@ -355,7 +355,7 @@ def plot_muli_year_total(outpath, mode_sites, impact_data, nyears, sup_title, sh
     pg_fig.savefig(outpath)
 
 
-def plot_multi_year_monthly(outpath, mode_sites, impact_data, nyears, sup_title, show=False):  # todo check
+def plot_multi_year_monthly(outpath, mode_sites, impact_data, nyears, sup_title, show=False):
     plot_months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
     mks = []
     c_non_linked = 'indianred'
@@ -387,7 +387,7 @@ def plot_multi_year_monthly(outpath, mode_sites, impact_data, nyears, sup_title,
                 :,
                 f'{site}-{mode}-linked_pg_{mk}'] / month_len[int(mk[-2:])] for mk in mks
                 ]
-        parts = ax.violinplot(data, positions=positions + 0.5,  # todo offsets?
+        parts = ax.violinplot(data, positions=positions + 0.5,
                               showmeans=False, showmedians=True,
                               quantiles=[[0.25, 0.75] for e in positions])
         for pc in parts['bodies']:
