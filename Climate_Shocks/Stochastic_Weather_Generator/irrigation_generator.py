@@ -154,11 +154,11 @@ def examine_means():
     boot = get_irrigation_generator()
 
     for k in boot.keys:
-        fig, ax = boot.plot_means(k, include_input=True, bins=50, show=False)
+        fig, ax = boot.plot_1d(k, include_input=True, bins=50, show=False)
         fig.savefig(os.path.join(outdir, 'mean_{}.svg'.format(k)))
         plt.close()
     for k in boot.keys:
-        fig, ax = boot.plot_means(k, include_input=False, bins=50, show=False, density=False)
+        fig, ax = boot.plot_1d(k, include_input=False, bins=50, show=False, density=False)
         fig.savefig(os.path.join(outdir, 'not_density_mean_{}.svg'.format(k)))
         plt.close()
 

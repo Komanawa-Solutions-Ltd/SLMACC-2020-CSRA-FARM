@@ -157,13 +157,13 @@ class MovingBlockBootstrapGenerator(object):
         # manage creation seeds
         if seed is not None:
             np.random.seed(seed)
-        self._seeds = np.random.randint(115, 564833, len(self.keys) * 10)  # make excess
+        self._seeds = np.random.randint(115, 564833, len(self.keys) * max(self.nblocksize.values()) * 10)  # make excess
         self._iseed = 0
 
         if save_to_nc:
             if not os.path.exists(self.datapath) or recalc:
                 self._make_data()
-            self.dataset = nc.Dataset(self.datapath)
+            self.dataset = nc.Dataset(self.datapath, mode='a')
         else:
             self.dataset = {}
             self._make_data()
@@ -232,6 +232,10 @@ class MovingBlockBootstrapGenerator(object):
         out = out[:, 0:self.sim_len[key]]
         return out
 
+    def close(self):
+        if self.save_to_nc:
+            self.dataset.close()
+
     def plot_auto_correlation(self, nsims, lags, key=None, quantiles=(5, 25), alpha=0.5, show=True, hlines=[0, 0.5],
                               seed=None):
         """
@@ -246,10 +250,7 @@ class MovingBlockBootstrapGenerator(object):
         :param seed: seed to make random processes reproducible
         :return:
         """
-        if key is None:
-            if self.key is None:
-                raise ValueError('more than one key in the dataset, please provide key')
-            key = deepcopy(self.key)
+        key = self._set_check_key(key)
         sim_data = self.get_data(nsims=nsims, key=key, max_replacement_level=1, seed=seed)
         org_data = self.get_org_data(key=key)
         org_plot = np.zeros((org_data.shape[0], lags)) * np.nan
@@ -283,7 +284,7 @@ class MovingBlockBootstrapGenerator(object):
         else:
             return fig, ax
 
-    def plot_means(self, key=None, bins=100, show=True, include_input=True, density=True):
+    def plot_1d(self, key=None, suffix='mean', bins=100, show=True, include_input=True, density=True):
         """
         plot up a histogram of the means,
         :param key: key to plot means of (if None set to self.key)
@@ -293,12 +294,9 @@ class MovingBlockBootstrapGenerator(object):
         :param density: boolean see density kwarg for matplotlib.pyplot.hist()
         :return:
         """
-        if key is None:
-            if self.key is None:
-                raise ValueError('more than one key in the dataset, please provide key')
-            key = deepcopy(self.key)
-        assert key in self.keys
-        data = self.get_means(key=key)
+        key = self._set_check_key(key)
+        self._check_suffix_exists(suffix)
+        data = self.get_1d(suffix=suffix, key=key)
         fig, ax = plt.subplots()
         ax.hist(data, bins=bins, label='resampled data', alpha=1 - 0.5 * include_input, density=density, color='b')
         if include_input:
@@ -317,21 +315,14 @@ class MovingBlockBootstrapGenerator(object):
             return fig, ax
 
     def get_org_data(self, key=None):
-        if key is None:
-            if self.key is None:
-                raise ValueError('more than one key in the dataset, please provide key')
-            key = deepcopy(self.key)
+        key = self._set_check_key(key)
         output = deepcopy(self.input_data[key])
         shape = (len(output) // self.sim_len[key], self.sim_len[key])
         output = output.reshape(shape)
         return output
 
     def get_means(self, key=None):
-        if key is None:
-            if self.key is None:
-                raise ValueError('more than one key in the dataset, please provide key')
-            key = deepcopy(self.key)
-        assert key.replace('_mean', '') in self.keys, 'key: {} not found'.format(key)
+        key = self._set_check_key(key)
 
         if self.save_to_nc:
             out = np.array(self.dataset.variables['{}_mean'.format(key)][:]).transpose()
@@ -340,7 +331,97 @@ class MovingBlockBootstrapGenerator(object):
             out = self.dataset['{}_mean'.format(key)]
             return out
 
-    def get_data(self, nsims, key=None, mean='any', tolerance=None, lowerbound=None, upper_bound=None,
+    def get_1d(self, suffix, key=None):
+        key = self._set_check_key(key)
+        if self.save_to_nc:
+            out = np.array(self.dataset.variables[f'{key}_{suffix}'][:]).transpose()
+            return out
+        else:
+            out = self.dataset[f'{key}_{suffix}']
+            return out
+
+    def create_1d(self, fun, suffix, atts={'created': datetime.datetime.now().isoformat()},
+                  fun_axis_spec=False, pass_if_exists=False):
+        """
+        create a 1d set of data (e.g. a mean/meadian) for each simulations.
+        :param fun: a user specified function which produces a np.ndarray shape(nsims,)
+                    arguments are data with possible keyword argument axis (see fun_axis_spec)
+                    indata is a np.ndarray shape(nsims, sim_len).  the produced data is expected to be a float.
+        :param suffix: str the suffix key e.g. ('median')
+        :param atts: dictionary of attributes to pass to the netcdf file (if not savingn to netcdf file then atts is
+                     not used.
+        :param fun_axis_spec: bool if True then the function needs to have the axis specified (e.g. np.mean)
+        :param pass_if_exists: bool if true then do not raise an exception if the suffix already exists and return None
+                               this allows the function to be called multiple times without raising exceptions
+        :return:
+        """
+        suffix_avalible = False
+        try:
+            self._check_suffix_exists(suffix)
+        except ValueError:
+            suffix_avalible = True
+
+        if pass_if_exists:
+            if not suffix_avalible:
+                print(f'suffix: {suffix} already exists, not re-calculating')
+                return None
+        else:
+            assert suffix_avalible, 'suffix is not avalible'
+
+        for key in self.keys:
+            if self.save_to_nc:
+                sim_data = np.array(self.dataset.variables[key]).transpose()
+            else:
+                sim_data = self.dataset[key]
+            if fun_axis_spec:
+                save_data = fun(sim_data, axis=1)
+            else:
+                save_data = fun(sim_data)
+            assert isinstance(save_data, np.ndarray), 'output of the function must be a nd array'
+            assert save_data.shape == (self.nsims[key],), 'output shape must be equvilent to self.nsims[key]'
+            assert np.issubdtype(save_data.dtype, float), f'outputs must be floats got {save_data.dtype} instead'
+            if self.save_to_nc:
+                t = self.dataset.createVariable(f'{key}_{suffix}', float, ('sim_num_{}'.format(key),))
+                t[:] = save_data
+                if atts is not None:
+                    t.setncatts(atts)
+
+            else:
+                self.dataset[f'{key}_{suffix}'] = save_data
+
+        print(f'suffix: {suffix} calculated')
+
+    def _check_suffix_exists(self, suffix):
+        missing_keys = []
+        for key in self.keys:
+            if self.save_to_nc:
+                if f'{key}_{suffix}' not in self.dataset.variables.keys():
+                    missing_keys.append(key)
+            else:
+                if f'{key}_{suffix}' not in self.dataset.keys():
+                    missing_keys.append(key)
+        if len(missing_keys) > 0:
+            message = f'suffix: {suffix} missing for keys: {missing_keys}, use self.create_1d to avoid this'
+            if set(missing_keys) == set(self.keys):
+                message = f'suffix: {suffix} missing for all keys'
+            raise ValueError(message)
+
+    def _set_check_key(self, key):
+        """
+        if there is only one dataset then use the defualt key, otherwise check the key existis
+        usage: key=self._set_check_key(key)
+        :param key:
+        :return:
+        """
+        if key is None:
+            if self.key is None:
+                raise ValueError('more than one key in the dataset, please provide key')
+            key = deepcopy(self.key)
+        assert key in self.keys, 'key: {} not found'.format(key)
+        return key
+
+    def get_data(self, nsims, key=None, suffix='mean', suffix_selection='any', tolerance=None, lowerbound=None,
+                 upper_bound=None,
                  max_replacement_level=0.1,
                  under_level='warn', seed=None):
         """
@@ -348,7 +429,8 @@ class MovingBlockBootstrapGenerator(object):
         :param key: data key to pull from, (if None set to self.key),
                     self.key will be None if there is more than one key
         :param nsims: the number of simulations to pull, pulls using np.choice, so may resample
-        :param mean: one of:
+        :param suffix: the suffix to use when selecting default is mean, others must be established by self.create_1d
+        :param suffix_selection: one of:
                             'any': select nsims from full bootstrap
                             None: select nsims using upper and lower bounds
                             float: select nsims only from data which satisfies
@@ -363,44 +445,41 @@ class MovingBlockBootstrapGenerator(object):
         """
         if seed is not None:
             np.random.seed(seed)
-
         seeds = np.random.randint(168, 268576, 100)  # make many more than needed
         iseed = 0
 
-        # manage key
-        if key is None:
-            if self.key is None:
-                raise ValueError('more than one key in the dataset, please provide key')
-            key = deepcopy(self.key)
-        assert key in self.keys, 'key: {} not found'.format(key)
+        # manage key / suffix
+        key = self._set_check_key(key)
+        self._check_suffix_exists(suffix)
 
         # define the indexes to pull
-        if mean == 'any':
+        if suffix_selection == 'any':
             np.random.seed(seeds[iseed])
             iseed += 1
             idxs = np.random.choice(range(self.nsims[key]), (nsims,))
             if len(idxs) == 0:
                 raise ValueError('no simulations for key: {}'.format(key))
         else:
-            means = self.get_means(key)
-            if mean is None:
+            means = self.get_1d(suffix=suffix, key=key)
+            if suffix_selection is None:
                 if upper_bound is None or lowerbound is None:
-                    raise ValueError('if mean is None then upper and lower bound must not be None')
+                    raise ValueError(f'if {suffix} is None then upper and lower bound must not be None')
                 idxs = np.where((means >= lowerbound) & (means <= upper_bound))[0]
                 if len(idxs) == 0:
                     raise ValueError(
                         'no simulations between {}<=x<={} for key: {}'.format(lowerbound, upper_bound, key))
             else:
                 if tolerance is None:
-                    raise ValueError('tolerance must not be None if pulling with means (mean is a float)')
-                idxs = np.where(np.isclose(means, mean, atol=tolerance, rtol=0))[0]
+                    raise ValueError(f'tolerance must not be None if pulling with {suffix} ({suffix} is assumed to be'
+                                     f'a float)')
+                idxs = np.where(np.isclose(means, suffix_selection, atol=tolerance, rtol=0))[0]
                 if len(idxs) == 0:
                     raise ValueError(
-                        'no simulations matching mean: {} and tolerance:{} for key: {}'.format(mean, tolerance, key))
+                        f'no simulations matching {suffix}: {suffix_selection} and tolerance:{tolerance} for key: {key}')
 
             if len(idxs) <= (1 - max_replacement_level) * nsims:
-                mess = ('{}: selecting {} from {} unique simulations, less than '
-                        'warn_level: {} of repetition'.format(key, nsims, len(idxs), max_replacement_level))
+                mess = (f'{key}: selecting {nsims} from {len(idxs)} unique simulations, less than '
+                        f'warn_level: {max_replacement_level} of repetition')
                 if under_level == 'warn':
                     warn(mess)
                 elif under_level == 'raise':
@@ -416,14 +495,8 @@ class MovingBlockBootstrapGenerator(object):
         # pull data
         if self.save_to_nc:
             out = np.array(self.dataset.variables[key][:, idxs]).transpose()
-            temp = out.mean()
         else:
             out = self.dataset[idxs]
-            temp = out.mean()
-
-        # a check if pulled out with means
-        if mean != 'any' and (temp > (mean + tolerance) or temp < (mean - tolerance)):
-            warn('sampled mean {} is outside of the set mean: {} and tolerance {}'.format(temp, mean, tolerance))
 
         return out
 

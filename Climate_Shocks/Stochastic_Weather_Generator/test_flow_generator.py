@@ -113,11 +113,11 @@ def examine_means(extension='.png'):
     boot = get_irrigation_generator()
 
     for k in boot.keys:
-        fig, ax = boot.plot_means(k, include_input=True, bins=50, show=False)
+        fig, ax = boot.plot_1d(k, include_input=True, bins=50, show=False)
         fig.savefig(os.path.join(outdir, 'mean_{}{}'.format(k, extension)))
         plt.close()
     for k in boot.keys:
-        fig, ax = boot.plot_means(k, include_input=False, bins=50, show=False, density=False)
+        fig, ax = boot.plot_1d(k, include_input=False, bins=50, show=False, density=False)
         fig.savefig(os.path.join(outdir, 'not_density_mean_{}{}'.format(k, extension)))
         plt.close()
 

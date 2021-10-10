@@ -170,7 +170,7 @@ def get_irr_data(num_to_pull, storyline, simlen, seed=None, use_1_seed=False):
         else:
             plet = 'ND'
         key = 'm{:02d}-{}'.format(m, plet)
-        out[:, idx: idx + month_len[m]] = irr_gen.get_data(num_to_pull, key=key, mean=r,
+        out[:, idx: idx + month_len[m]] = irr_gen.get_data(num_to_pull, key=key, suffix_selection=r,
                                                            tolerance=get_rest_tolerance(r),
                                                            max_replacement_level=0.1,
                                                            under_level='warn',
