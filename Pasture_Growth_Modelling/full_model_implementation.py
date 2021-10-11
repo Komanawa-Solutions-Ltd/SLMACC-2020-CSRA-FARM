@@ -59,8 +59,21 @@ out_variables = (
     'DMH_WEED',
     'YIELD',
     'DRAIN',
+    'irrig_dem_store',
+    'irrig_store',
+    'irrig_scheme',
+    'h2o_store_vol',
+    'h2o_store_per_area',
+    'IRR_TRIG_store',
+    'IRR_TARG_store',
+    'store_runoff_in',
+    'store_leak_out',
+    'store_irr_loss',
+    'store_evap_out',
+    'store_scheme_in',
+    'store_scheme_in_loss',
 
-)  # todo add values from storage inputs!!!
+)
 
 irr_gen = get_irrigation_generator()
 month_len = {

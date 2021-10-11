@@ -26,8 +26,21 @@ out_variables_flow = (
     'DMH_WEED',
     'YIELD',
     'DRAIN',
-    'FLOW'
-)  # todo add values from storage inputs!!!
+    'FLOW',
+    'irrig_dem_store',
+    'irrig_store',
+    'irrig_scheme',
+    'h2o_store_vol',
+    'h2o_store_per_area',
+    'IRR_TRIG_store',
+    'IRR_TARG_store',
+    'store_runoff_in',
+    'store_leak_out',
+    'store_irr_loss',
+    'store_evap_out',
+    'store_scheme_in',
+    'store_scheme_in_loss',
+)
 
 irr_flow_gen = get_irrigation_generator()
 
@@ -73,6 +86,7 @@ def get_river_flow_from_storyline(num_to_pull, storyline, rest_fun, simlen, seed
         idx += month_len[m]
 
     rest = rest_fun(flow)
+    # todo I need to add the naturalisation into this (and or the increased takes)...
     return rest, flow
 
 
