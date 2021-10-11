@@ -49,7 +49,9 @@ def run_full_model_mp(storyline_path_mult,
     :param seed: random seeds for each storyline
     :param use_1_seed: bool if True use the same seed for each month of the storyline, if false calculate a new seed
                        for each month of each storyline.  The new seeds are based on the passed seed so they are
-                       reproducable (via seed kwarg); however each month will have different data.
+                       reproducable (via seed kwarg); however each month will have different data which can cause.
+                       problems if comparing two datasets of differnt length (e.g. 3 year run or 3 years run separately
+                       if comparing between site/modes for the same storyline then use_1_seed should be false
     :return:
     """
     if verbose:

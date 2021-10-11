@@ -17,6 +17,13 @@ default_mode_sites = (
     ('dryland', 'oxford'),
     ('irrigated', 'eyrewell'),
     ('irrigated', 'oxford'),
+    ('store400', 'eyrewell'), # todo these are not ready yet!!!
+    ('store400', 'oxford'),
+    ('store600', 'eyrewell'),
+    ('store600', 'oxford'),
+    ('store800', 'eyrewell'),
+    ('store800', 'oxford'),
+
 )  # todo add storage here!, must have 'store' in mode names
 
 abs_max_irr = 5  # the absolute maximum irrigation values
