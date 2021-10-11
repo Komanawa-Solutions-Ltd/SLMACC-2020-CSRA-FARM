@@ -13,6 +13,10 @@ import pandas as pd
 import numpy as np
 from Climate_Shocks.climate_shocks_env import event_def_path
 from copy import deepcopy
+from Climate_Shocks.get_past_record import get_restriction_record, get_vcsn_record
+from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_smd_monthly
+from Climate_Shocks import climate_shocks_env
+from BS_work.SWG.SWG_wrapper import get_monthly_smd_mean_detrended
 
 baseoutdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'gen_vfinal_flow')
 
@@ -22,18 +26,65 @@ month_len = {
     3: 31,
     4: 30,
     5: 31,
+    6: 30,
+    7: 31,
+    8: 31,
     9: 30,
     10: 31,
     11: 30,
     12: 31,
 }
 
-# todo how to handle the off by 1 day error for restrictions and the naturalisations ect.... hmmm
-# todo write up document on how to simplify the restrictions...
-# basically the flow is what happened
-# calculate takes based on the flow
-# in future you can reduce the take amount if needed...
-# how to manage this with regards to teh monthly divides....
+
+def get_trended_classified():
+    data = pd.DataFrame(index=pd.MultiIndex.from_product([range(1, 13), range(1972, 2020)], names=['month', 'year']),
+                        columns=['temp_class', 'precip_class', 'rest', 'rest_cum'], dtype=float)
+
+    vcsn = get_vcsn_record('trended')
+    vcsn.loc[:, 'sma'] = calc_smd_monthly(vcsn.rain, vcsn.pet, vcsn.index) - vcsn.loc[:, 'doy'].replace(
+        get_monthly_smd_mean_detrended(leap=False, recalc=True))
+    vcsn.loc[:, 'tmean'] = (vcsn.loc[:, 'tmax'] + vcsn.loc[:, 'tmin']) / 2
+    vcsn.loc[:, 'month_mapper'] = vcsn.loc[:, 'month'].astype(int)
+
+    # make, save the cutoffs for use in checking functions!
+    vcsn = vcsn.groupby(['month', 'year']).mean()
+    upper_limit = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'upper_limit.csv'), index_col=0)
+    lower_limit = pd.read_csv(os.path.join(climate_shocks_env.supporting_data_dir, 'lower_limit.csv'), index_col=0)
+
+    rest_rec = get_restriction_record('trended').groupby(['month', 'year']).sum().loc[:, 'f_rest']
+
+    data.loc[:, ['rest', 'rest_cum']] = 0
+    data.loc[:, ['temp_class', 'precip_class']] = 'A'
+    data.loc[rest_rec.index, 'rest_cum'] = rest_rec
+    data = pd.merge(data, vcsn, right_index=True, left_index=True)
+    data.loc[:, 'rest_cum'] = [rc / month_len[m] for rc, m in
+                               data.loc[:, ['rest_cum', 'month_mapper']].itertuples(False, None)]
+
+    # set hot
+    var = 'tmean'
+    idx = data.loc[:, var] >= data.loc[:, 'month_mapper'].replace(upper_limit.loc[:, var].to_dict())
+    data.loc[idx, 'temp_class'] = 'H'
+
+    # set cold
+    var = 'tmean'
+    idx = data.loc[:, var] <= data.loc[:, 'month_mapper'].replace(lower_limit.loc[:, var].to_dict())
+    data.loc[idx, 'temp_class'] = 'C'
+
+    # set wet
+    var = 'sma'  # negative is dry positive is wet
+    idx = data.loc[:, var] >= data.loc[:, 'month_mapper'].replace(upper_limit.loc[:, var].to_dict())
+    data.loc[idx, 'precip_class'] = 'W'
+
+    # set dry
+    var = 'sma'  # negative is dry positive is wet
+    idx = data.loc[:, var] <= data.loc[:, 'month_mapper'].replace(lower_limit.loc[:, var].to_dict())
+    data.loc[idx, 'precip_class'] = 'D'
+
+    # re-order data
+    data = data.reset_index().sort_values(['year', 'month'])
+
+    return data
+
 
 def make_input_data_1month():
     block = {
@@ -68,18 +119,20 @@ def make_input_data_1month():
     sim_len = {}
     nmonths = {}
     org_data = get_restriction_record('trended', recalc=False).set_index(['year', 'month'])
-    event_data = pd.read_csv(event_def_path, skiprows=1)  # todo this is not set up... hmmm
+    event_data = get_trended_classified()
     event_data.loc[:, 'month2'] = event_data.loc[:, 'month']
     event_data = event_data.set_index(['year', 'month'])
 
     for precip, m in itertools.product(['ND', 'D'], month_len.keys()):
+        if m in [6, 7, 8]:
+            continue
         key = 'm{:02d}-{}'.format(m, precip)
         if precip == 'ND':
-            firstp = [0, -1]
+            firstp = ['W', 'A']
         else:
-            firstp = [1]
+            firstp = ['D']
 
-        yearmonths = event_data.loc[np.in1d(event_data.precip, firstp) &
+        yearmonths = event_data.loc[np.in1d(event_data.precip_class, firstp) &
                                     (event_data.month2 == m)]
         n = len(yearmonths)
         if n == 0:
@@ -143,7 +196,9 @@ def get_irrigation_generator(recalc=False):
     return boot
 
 
-def make_current_restrictions(data):  # todo rough copy just for testing, confirm before using!!!!
+def make_current_restrictions(data):
+    # see simpligying assumptions
+    # https://docs.google.com/document/d/1fCsGuHHEgFTcPl289Eboczmjqf5_4eLGTot6Zgxowr0/edit?usp=sharing
     out_data = deepcopy(data)
     out_data[data >= 63] = 0
     out_data[data <= 41] = 1
@@ -157,10 +212,11 @@ def make_restriction_mean(data):
     out_data = make_current_restrictions(data)
     return out_data.mean(axis=1)
 
+
 def check_rests():
     rests = get_restriction_record()
-    rests.loc[:,'calc_rest'] = make_current_restrictions(rests.loc[:,'flow'].values)
-    rests.loc[:,'dif'] = rests['f_rest'] - rests['calc_rest']
+    rests.loc[:, 'calc_rest'] = make_current_restrictions(rests.loc[:, 'flow'].values)
+    rests.loc[:, 'dif'] = rests['f_rest'] - rests['calc_rest']
     print(rests.dif.describe())
 
 
@@ -171,7 +227,6 @@ if __name__ == '__main__':
     # gen_v4: 1 month precip with multiple blocks see nc file
     # gen_v5: 1 month precip with multiple blocks see nc file
     # gen_v6: 1 month precip with multiple blocks see nc file
-    check_rests()
-    raise ValueError
+    # todo run on DICKIE
     examine_means()
     examine_auto_correlation()
