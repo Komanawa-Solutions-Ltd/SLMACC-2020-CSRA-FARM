@@ -60,7 +60,7 @@ out_variables = (
     'YIELD',
     'DRAIN',
 
-)
+)  # todo add values from storage inputs!!!
 
 irr_gen = get_irrigation_generator()
 month_len = {
@@ -83,7 +83,8 @@ default_swg_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SW
 
 def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_sites, padock_rest=False,
                        save_daily=False, description='', swg_dir=default_swg_dir, verbose=True,
-                       n_parallel=1, fix_leap=True, re_run=True, seed=None, use_1_seed=False):
+                       n_parallel=1, fix_leap=True, re_run=True, seed=None, use_1_seed=False,
+                       use_out_variables=out_variables):
     """
     creates weather data, runs basgra and saves values to a netcdf
     :param storyline_path: path to the storyline
@@ -137,13 +138,14 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
                          storyline_key=storyline_key,
                          outdir=outdir,
                          save_daily=save_daily, description=description, storyline_text=storyline_text, swg_dir=swg_dir,
-                         verbose=verbose, n_parallel=n_parallel, fix_leap=fix_leap, seed=seed, use_1_seed=use_1_seed)
+                         verbose=verbose, n_parallel=n_parallel, fix_leap=fix_leap, seed=seed, use_1_seed=use_1_seed,
+                         use_out_variables=use_out_variables)
         if padock_rest:
             _run_paddock_rest(storyline_key=storyline_key, outdir=outdir, storyline=storyline, nsims=nsims, mode=mode,
                               site=site, simlen=simlen,
                               save_daily=save_daily, description=description, storyline_text=storyline_text,
                               swg_dir=swg_dir, verbose=verbose, n_parallel=n_parallel, fix_leap=fix_leap, seed=seed,
-                              use_1_seed=use_1_seed)
+                              use_1_seed=use_1_seed, use_out_variables=use_out_variables)
     t = time.time() - t
     if verbose:
         print(f'took {t / 60} min to run {nsims} sims paddock_rest{padock_rest}')
@@ -245,7 +247,7 @@ def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, s
 
 def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir,
                      save_daily, description, storyline_text, swg_dir, verbose, n_parallel, fix_leap, seed,
-                     use_1_seed):
+                     use_1_seed, use_out_variables):
     number_run = int(
         psutil.virtual_memory().available // memory_per_run * (simlen / 365) / n_parallel
     )
@@ -263,7 +265,7 @@ def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir
                                                                              swg_dir=swg_dir, fix_leap=fix_leap,
                                                                              seed=seed, use_1_seed=use_1_seed)
 
-        all_out = np.zeros((len(out_variables), simlen, number_run)) * np.nan
+        all_out = np.zeros((len(use_out_variables), simlen, number_run)) * np.nan
         for i, (matrix_weather, days_harvest) in enumerate(zip(all_matrix_weathers, all_days_harvests)):
             restrict = 1 - matrix_weather.loc[:, 'max_irr'] / abs_max_irr
             out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False, run_365_calendar=fix_leap)
@@ -274,7 +276,7 @@ def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir
             out.loc[:, 'PGR'] = pg.loc[:, 'pg']
             out.loc[:, 'F_REST'] = restrict
 
-            all_out[:, :, i] = out.loc[:, out_variables].values.transpose()
+            all_out[:, :, i] = out.loc[:, use_out_variables].values.transpose()
 
         # one netcdf file for each mode/site
         month = out.index.month.values
@@ -285,14 +287,15 @@ def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir
                                 nsims=nsims,
                                 month=month, doy=doy, year=year,
                                 chunks=chunks, current_c=c, nperchunk=number_run, save_daily=save_daily,
-                                description=description, site=site, mode=mode, verbose=verbose)
+                                description=description, site=site, mode=mode, verbose=verbose,
+                                use_out_variables=use_out_variables)
 
     add_pasture_growth_anaomoly_to_nc(outpath)
 
 
 def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simlen,
                       save_daily, description, storyline_text, swg_dir, verbose, n_parallel, fix_leap, seed,
-                      use_1_seed):
+                      use_1_seed, use_out_variables):
     """
     run storyline through paddock restrictions...
     :param storyline:
@@ -322,7 +325,7 @@ def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simle
                                                                              swg_dir=swg_dir, fix_leap=fix_leap,
                                                                              seed=seed, use_1_seed=use_1_seed)
 
-        all_out = np.zeros((len(out_variables), simlen, len(levels) - 1, number_run)) * np.nan
+        all_out = np.zeros((len(use_out_variables), simlen, len(levels) - 1, number_run)) * np.nan
         out_names = []
         out_limits = []
         for j, (matrix_weather, days_harvest) in enumerate(zip(all_matrix_weathers, all_days_harvests)):
@@ -346,7 +349,7 @@ def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simle
                 temp.loc[:, 'PGR'] = calc_pasture_growth(temp, days_harvest, 'from_yield', '1D', resamp_fun='mean')
                 temp.loc[:, 'F_REST'] = restrict
 
-                all_out[:, :, i, j] = temp.loc[:, out_variables].values.transpose()
+                all_out[:, :, i, j] = temp.loc[:, use_out_variables].values.transpose()
         # one netcdf for each mode,site, (paddock, mean)
         month = temp.index.month.values
         doy = temp.loc[:, 'doy'].values
@@ -357,7 +360,7 @@ def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simle
                                          chunks=chunks, current_c=c, nperchunk=number_run,
                                          out_names=out_names, out_limits=out_limits,
                                          save_daily=save_daily, description=description, site=site, mode=mode,
-                                         verbose=verbose)
+                                         verbose=verbose, use_out_variables=use_out_variables)
         all_outpaths.extend(outpaths)
 
     for p in np.unique(all_outpaths):
@@ -365,7 +368,8 @@ def _run_paddock_rest(storyline_key, outdir, storyline, nsims, mode, site, simle
 
 
 def _output_to_nc(storyline_key, storyline_text, outdir, outdata, nsims, month, doy, year,
-                  chunks, current_c, nperchunk, site, mode, save_daily=False, description='', verbose=True):
+                  chunks, current_c, nperchunk, site, mode, use_out_variables, save_daily=False, description='',
+                  verbose=True):
     """
 
     :param storyline_key: key to the storyline
@@ -391,18 +395,20 @@ def _output_to_nc(storyline_key, storyline_text, outdir, outdata, nsims, month, 
     if current_c == 0:
         nc_file = _create_nc_file(outpath, number_run=nsims, month=month, doy=doy, year=year,
                                   storyline_text=storyline_text,
-                                  save_daily=save_daily, description=description, verbose=verbose)
+                                  save_daily=save_daily, description=description, verbose=verbose,
+                                  use_out_variables=use_out_variables)
     else:
         nc_file = nc.Dataset(outpath, 'a')
 
-    _write_data(nc_file, year, month, outdata, current_c, nperchunk, chunks, nsims, save_daily, verbose=verbose)
+    _write_data(nc_file, year, month, outdata, current_c, nperchunk, chunks, nsims, save_daily, verbose=verbose,
+                use_out_variables=use_out_variables)
     nc_file.close()
     return outpath
 
 
 def _output_to_nc_paddock(storyline_key, storyline_text, outdir, outdata, nsims, month, doy, year,
                           chunks, current_c, nperchunk,
-                          out_names, out_limits, site, mode,
+                          out_names, out_limits, site, mode, use_out_variables,
                           save_daily=False, description='', verbose=True):
     """
 
@@ -437,12 +443,13 @@ def _output_to_nc_paddock(storyline_key, storyline_text, outdir, outdata, nsims,
         if current_c == 0:
             nc_file = _create_nc_file(outpath, number_run=nsims, month=month, doy=doy, year=year,
                                       storyline_text=storyline_text,
-                                      save_daily=save_daily, description=description, verbose=verbose)
+                                      save_daily=save_daily, description=description, verbose=verbose,
+                                      use_out_variables=use_out_variables)
         else:
             nc_file = nc.Dataset(outpath, 'a')
 
         _write_data(nc_file, year, month, outdata[:, :, i, :], current_c, nperchunk, chunks, nsims, save_daily,
-                    verbose=verbose)
+                    verbose=verbose, use_out_variables=use_out_variables)
         nc_file.close()
         out_paths.append(outpath)
 
@@ -457,23 +464,25 @@ def _output_to_nc_paddock(storyline_key, storyline_text, outdir, outdata, nsims,
     if current_c == 0:
         nc_file = _create_nc_file(outpath, number_run=nsims, month=month, doy=doy, year=year,
                                   storyline_text=storyline_text,
-                                  save_daily=save_daily, description=description, verbose=verbose)
+                                  save_daily=save_daily, description=description, verbose=verbose,
+                                  use_out_variables=use_out_variables)
     else:
         nc_file = nc.Dataset(outpath, 'a')
 
     outdata = np.nanmean(outdata, axis=2)
-    _write_data(nc_file, year, month, outdata, current_c, nperchunk, chunks, nsims, save_daily, verbose=verbose)
+    _write_data(nc_file, year, month, outdata, current_c, nperchunk, chunks, nsims, save_daily, verbose=verbose,
+                use_out_variables=use_out_variables)
     out_paths.append(outpath)
     nc_file.close()
     return out_paths
 
 
 def _write_data(nc_file, year, month, outdata, current_c, nperchunk, chunks, nsims, save_daily,
-                verbose):
+                verbose, use_out_variables):
     if verbose:
         print(' writing data for {}'.format(nc_file.filepath()))
     # write monthly data chunk
-    for i, v in enumerate(out_variables):
+    for i, v in enumerate(use_out_variables):
         temp = nc_file.variables['m_{}'.format(v)]
         # outdata shape = np.zeros((len(out_variables), simlen_monthly, number_run))
         to_val = (current_c + 1) * nperchunk
@@ -495,7 +504,7 @@ def _write_data(nc_file, year, month, outdata, current_c, nperchunk, chunks, nsi
 
         # write daily data chunk
     if save_daily:
-        for i, v in enumerate(out_variables):
+        for i, v in enumerate(use_out_variables):
             temp = nc_file.variables['d_{}'.format(v)]
             to_val = (current_c + 1) * nperchunk
             # capture last chunk...
@@ -506,7 +515,8 @@ def _write_data(nc_file, year, month, outdata, current_c, nperchunk, chunks, nsi
             temp[:, (current_c * nperchunk): to_val] = outdata[i, :, :][:, :to_val - current_c * nperchunk]
 
 
-def _create_nc_file(outpath, number_run, month, doy, year, storyline_text, save_daily=False, description='',
+def _create_nc_file(outpath, number_run, month, doy, year, storyline_text, use_out_variables,
+                    save_daily=False, description='',
                     verbose=True):
     """
     create the output netcdf files, create variables and populate metadata
@@ -596,7 +606,7 @@ def _create_nc_file(outpath, number_run, month, doy, year, storyline_text, save_
         ddoy[:] = doy
 
     # make output variables
-    for v in out_variables:
+    for v in use_out_variables:
         ex = ''
         if v == 'RESEEDED':
             ex = (' for RESEEDED the monthly data is summed across the month, so if any reseed event happened '
