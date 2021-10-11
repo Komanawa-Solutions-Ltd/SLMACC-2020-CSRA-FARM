@@ -378,7 +378,8 @@ class MovingBlockBootstrapGenerator(object):
             else:
                 save_data = fun(sim_data)
             assert isinstance(save_data, np.ndarray), 'output of the function must be a nd array'
-            assert save_data.shape == (self.nsims[key],), 'output shape must be equvilent to self.nsims[key]'
+            assert save_data.shape == (self.nsims[key],), (f'output shape must be equvilent to self.nsims[{key}]: '
+                                                           f'{self.nsims[key]} got {save_data.shape} instead')
             assert np.issubdtype(save_data.dtype, float), f'outputs must be floats got {save_data.dtype} instead'
             if self.save_to_nc:
                 t = self.dataset.createVariable(f'{key}_{suffix}', float, ('sim_num_{}'.format(key),))
