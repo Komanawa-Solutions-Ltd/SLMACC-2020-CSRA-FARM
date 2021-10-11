@@ -151,31 +151,31 @@ def make_input_data_1month():
     return input_data, block, sim_len, nmonths_comments
 
 
-def examine_auto_correlation():
-    outdir = os.path.join(baseoutdir, 'generator_plots')
+def examine_auto_correlation(ext='png'):
+    outdir = os.path.join(baseoutdir, f'generator_plots_{ext}')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     boot = get_irrigation_generator()
 
     for k in boot.keys:
         fig, ax = boot.plot_auto_correlation(10000, 15, k, show=False, hlines=[0, 0.25, 0.5, 0.75])
-        fig.savefig(os.path.join(outdir, 'correlation_{}.svg'.format(k)))
+        fig.savefig(os.path.join(outdir, 'correlation_{}.{}'.format(k, ext)))
         plt.close()
 
 
-def examine_means():
-    outdir = os.path.join(baseoutdir, 'generator_plots')
+def examine_means(ext='png'):
+    outdir = os.path.join(baseoutdir, f'generator_plots_{ext}')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     boot = get_irrigation_generator()
 
     for k in boot.keys:
         fig, ax = boot.plot_1d(k, include_input=True, bins=50, show=False)
-        fig.savefig(os.path.join(outdir, 'mean_{}.svg'.format(k)))
+        fig.savefig(os.path.join(outdir, 'mean_{}.{}'.format(k, ext)))
         plt.close()
     for k in boot.keys:
         fig, ax = boot.plot_1d(k, include_input=False, bins=50, show=False, density=False)
-        fig.savefig(os.path.join(outdir, 'not_density_mean_{}.svg'.format(k)))
+        fig.savefig(os.path.join(outdir, 'not_density_mean_{}.{}'.format(k, ext)))
         plt.close()
 
 
@@ -227,5 +227,6 @@ if __name__ == '__main__':
     # gen_v4: 1 month precip with multiple blocks see nc file
     # gen_v5: 1 month precip with multiple blocks see nc file
     # gen_v6: 1 month precip with multiple blocks see nc file
-    examine_means()
-    examine_auto_correlation()
+    for e in ['png', 'svg']:
+        examine_means(e)
+        examine_auto_correlation(e)
