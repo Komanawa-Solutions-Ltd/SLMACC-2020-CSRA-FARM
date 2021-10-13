@@ -19,8 +19,7 @@ ksl_env.add_basgra_nz_path()
 from basgra_python import run_basgra_nz
 
 
-def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True, version='trended'):
-    mode = 'irrigated'
+def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True, version='trended', mode='irrigated'):
     print('running: {}, {}, reseed: {}'.format(mode, site, reseed))
     weather = get_vcsn_record(version=version, site=site)
     rest = get_restriction_record(version=version)

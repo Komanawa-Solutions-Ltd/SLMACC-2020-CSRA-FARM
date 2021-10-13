@@ -16,31 +16,31 @@ import numpy as np
 
 
 site_mode_dep_params = {  # todo need to manually mange these
-    ('ex_site', 'ex_mode'): {  # just an example of what is needed, should never be callable
-        # site, mode specific parameters,
-        'h2o_store_max_vol': 10000,
-        # reseed parameteres, set as mean of long term runs in june,
-        'reseed_harv_delay': 20,
-        'reseed_LAI': 1.840256e+00,
-        'reseed_TILG2': 2.194855e+00,
-        'reseed_TILG1': 4.574009e+00,
-        'reseed_TILV': 6.949611e+03,
-        'reseed_CLV': 5.226492e+01,
-        'reseed_CRES': 9.727732e+00,
-        'reseed_CST': 1.677470e-01,
-        'reseed_CSTUB': 0,
-        'BASALI': 0.747,
-
-        # set from a mid point value not important for percistance, but important to stop inital high yeild!,
-        # set to start of simulation start month(7) average,
-        'LOG10CLVI': np.log10(51.998000),
-        'LOG10CRESI': np.log10(9.627059),
-        'LOG10CRTI': np.log10(125.966156),
-
-        # days harvest matrix keys
-        'reseed_trig': 0.696,
-        'reseed_basal': 0.727,
-    },
+    # ('ex_site', 'ex_mode'): {  # just an example of what is needed, should never be callable
+    #    # site, mode specific parameters,
+    #    'h2o_store_max_vol': 10000,
+    #    # reseed parameteres, set as mean of long term runs in june,
+    #    'reseed_harv_delay': 20,
+    #    'reseed_LAI': 1.840256e+00,
+    #    'reseed_TILG2': 2.194855e+00,
+    #    'reseed_TILG1': 4.574009e+00,
+    #    'reseed_TILV': 6.949611e+03,
+    #    'reseed_CLV': 5.226492e+01,
+    #    'reseed_CRES': 9.727732e+00,
+    #    'reseed_CST': 1.677470e-01,
+    #    'reseed_CSTUB': 0,
+    #    'BASALI': 0.747,
+    #
+    #    # set from a mid point value not important for percistance, but important to stop inital high yeild!,
+    #    # set to start of simulation start month(7) average,
+    #    'LOG10CLVI': np.log10(51.998000),
+    #    'LOG10CRESI': np.log10(9.627059),
+    #    'LOG10CRTI': np.log10(125.966156),
+    #
+    #    # days harvest matrix keys
+    #    'reseed_trig': 0.696,
+    #    'reseed_basal': 0.727,
+    # },
 
     ('eyrewell', 'store400'): {  # just an example of what is needed, should never be callable
         # site, mode specific parameters,
@@ -176,7 +176,7 @@ site_mode_dep_params = {  # todo need to manually mange these
         'reseed_basal': 0.727,
     },
 
-        ('oxford', 'store800'): {  # just an example of what is needed, should never be callable
+    ('oxford', 'store800'): {  # just an example of what is needed, should never be callable
         # site, mode specific parameters,
         'h2o_store_max_vol': 800,
         # todo below this not set
@@ -239,6 +239,7 @@ def set_store_parameters(site, mode, params):
 def get_store_reseed_trig_basal(site, mode):
     return site_mode_dep_params[(site, mode)]['reseed_trig'], site_mode_dep_params[(site, mode)]['reseed_basal']
 
+
 # todo scripts that need to be re-run with new storage systems:
 # #### model runs ####
 # Storylines/storyline_runs/historical_quantified_1yr_detrend.py
@@ -257,5 +258,5 @@ def get_store_reseed_trig_basal(site, mode):
 # Storylines/storyline_evaluation/storyline_slection/stories_to_ws_pg_threshold.py
 
 if __name__ == '__main__':
-    for k,v in site_mode_dep_params.items():
+    for k, v in site_mode_dep_params.items():
         print(k, v['h2o_store_max_vol'])

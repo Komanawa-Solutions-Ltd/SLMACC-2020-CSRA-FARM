@@ -230,7 +230,7 @@ def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest
     :return:
     """
     # create from the outputs of greg's work and adds in the irrigation parameters if needed
-    if mode == 'irrigated':
+    if mode == 'irrigated' or 'store' in mode:
 
         assert (weather_data.index.name ==
                 restriction_data.index.name ==
@@ -264,6 +264,9 @@ def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest
         idx = np.in1d(weather_data.loc[:, 'month'], [12, 1, 2])  # set to DOY_IRR
         matrix_weather.loc[idx, 'irr_trig'] = 0.75
         matrix_weather.loc[idx, 'irr_targ'] = 0.90
+        matrix_weather.loc[:, 'irr_trig_store'] = 0
+        matrix_weather.loc[:, 'irr_targ_store'] = 0
+        matrix_weather.loc[:, 'external_inflow'] = 0
 
     elif mode == 'dryland':
         assert restriction_data is None, 'restriction data must be None in a dryland scenario'
@@ -289,6 +292,13 @@ def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest
         matrix_weather.loc[:, 'max_irr'] = 0
         matrix_weather.loc[:, 'irr_trig'] = 0
         matrix_weather.loc[:, 'irr_targ'] = 0
+        matrix_weather.loc[:, 'irr_trig_store'] = 0
+        matrix_weather.loc[:, 'irr_targ_store'] = 0
+        matrix_weather.loc[:, 'external_inflow'] = 0
+
+
+
+
     else:
         raise ValueError('unexpected mode: {}, values are "irrigated" or "dryland"'.format(mode))
     return matrix_weather
