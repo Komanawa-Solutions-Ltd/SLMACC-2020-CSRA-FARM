@@ -15,14 +15,16 @@ import matplotlib.pyplot as plt
 from Storylines.storyline_building_support import month_len
 from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growth, calc_pasture_growth_anomaly
 from Pasture_Growth_Modelling.basgra_parameter_sets import default_mode_sites
+from Pasture_Growth_Modelling.historical_average_baseline import run_past_basgra_irrigated
+from Pasture_Growth_Modelling.storage_parameter_sets import site_mode_dep_params
 
 # add basgra nz functions
 ksl_env.add_basgra_nz_path()
 from basgra_python import run_basgra_nz
 from supporting_functions.plotting import plot_multiple_results, plot_multiple_monthly_results, \
     plot_multiple_monthly_violin_box, plot_multiple_date_range
-from Pasture_Growth_Modelling.historical_average_baseline import run_past_basgra_irrigated
-from Pasture_Growth_Modelling.storage_parameter_sets import site_mode_dep_params
+from supporting_functions.cumulative_annual_data import make_cumuliative_annual
+from supporting_functions.output_metadata import get_output_metadata
 
 out_variables = (
     'BASAL',  # should some of these be amalgamated to sum, no you can multiply against # of days in the month.
@@ -33,22 +35,13 @@ out_variables = (
     'IRRIG_DEM',
     'RESEEDED',
     'DMH_RYE',
-    'DMH_WEED',
     'YIELD',
-    'DRAIN',
-    'irrig_dem_store',
     'irrig_store',
     'irrig_scheme',
     'h2o_store_vol',
     'h2o_store_per_area',
-    'IRR_TRIG_store',
-    'IRR_TARG_store',
-    'store_runoff_in',
-    'store_leak_out',
-    'store_irr_loss',
-    'store_evap_out',
     'store_scheme_in',
-    'store_scheme_in_loss',
+    'store_overflow'
 
 )
 
@@ -71,7 +64,7 @@ jul_params = [
 ]
 
 
-def produce_storage_initialisation_and_checks(outdir):
+def produce_storage_initialisation_and_checks(outdir, plot=False):
     os.makedirs(outdir, exist_ok=True)
     version = 'trended'
     oxford_sites = {}
@@ -95,6 +88,21 @@ def produce_storage_initialisation_and_checks(outdir):
         out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
         out.loc[:, 'PER_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
         out.loc[:, 'F_REST'] = rest.f_rest
+
+        # cumulative storage input and irrigation applied and stored irrigation
+        new_out_vars = []
+        cum_vars = [
+            'F_REST',
+            'IRRIG',
+            'irrig_scheme',
+            'irrig_store',
+            'store_scheme_in',
+            'store_overflow',
+
+        ]
+        for k in cum_vars:
+            out.loc[:, f'cum_{k}'] = make_cumuliative_annual(out.loc[:, k], 1, 7)
+            new_out_vars.append(f'cum_{k}')
 
         pg = pd.DataFrame(calc_pasture_growth(out, days_harvest, mode='from_yield', resamp_fun='mean', freq='1d'))
         out.loc[:, 'PGR'] = pg.loc[:, 'pg']
@@ -123,33 +131,37 @@ def produce_storage_initialisation_and_checks(outdir):
             out.doy == 151, 'BASAL'].values
     reseed_basal_data.to_csv(os.path.join(outdir, 'reseed_basals.csv'))
     outdata.to_csv(os.path.join(outdir, 'initial_params.csv'))
-    for k, d, md in zip(('eyrewell', 'oxford'), (eyrewell_sites, oxford_sites),
-                        (monthly_eyrewell_sites, monthly_oxford_sites)):
-        plot_outdir = os.path.join(outdir, k)
 
-        plot_multiple_monthly_violin_box(data=d, outdir=os.path.join(plot_outdir, 'monthly_box'),
-                                         out_vars=out_variables,
-                                         fig_size=(10, 8), title_str=k,
-                                         main_kwargs={}, label_main=True, show=False)
-        plt.close('all')
-        plot_multiple_monthly_results(data=md, outdir=os.path.join(plot_outdir, 'monthly'), out_vars=out_variables,
-                                      fig_size=(10, 8), title_str=k,
-                                      main_kwargs={}, label_main=True, show=False)
-        plt.close('all')
-        plot_multiple_results(data=d, outdir=os.path.join(plot_outdir, 'full_suite'), out_vars=out_variables,
-                              fig_size=(10, 8), title_str=k,
-                              rolling=10, main_kwargs={'alpha': 0}, rolling_kwargs={}, label_rolling=True,
-                              label_main=False,
-                              show=False)
-        plt.close('all')
-        for y in range(1972, 2021, 2):
-            plot_multiple_date_range(data=d, start_date=f'{y}-07-01', end_date=f'{y + 2}-06-30',
-                                     outdir=os.path.join(plot_outdir, 'full_suite_2yrs'), out_vars=out_variables,
-                                     fig_size=(10, 8), title_str=k,
-                                     rolling=10, main_kwargs={'alpha': 0}, rolling_kwargs={}, label_rolling=True,
-                                     label_main=False,
-                                     show=False)
+    # plotting
+    if plot:
+        out_variables_use = list(out_variables) + new_out_vars
+        for k, d, md in zip(('eyrewell', 'oxford'), (eyrewell_sites, oxford_sites),
+                            (monthly_eyrewell_sites, monthly_oxford_sites)):
+            plot_outdir = os.path.join(outdir, k)
+
+            plot_multiple_monthly_violin_box(data=d, outdir=os.path.join(plot_outdir, 'monthly_box'),
+                                             out_vars=out_variables_use,
+                                             fig_size=(10, 8), title_str=k,
+                                             main_kwargs={}, label_main=True, show=False)
             plt.close('all')
+            plot_multiple_monthly_results(data=md, outdir=os.path.join(plot_outdir, 'monthly'), out_vars=out_variables_use,
+                                          fig_size=(10, 8), title_str=k,
+                                          main_kwargs={}, label_main=True, show=False)
+            plt.close('all')
+            plot_multiple_results(data=d, outdir=os.path.join(plot_outdir, 'full_suite'), out_vars=out_variables_use,
+                                  fig_size=(10, 8), title_str=k,
+                                  rolling=10, main_kwargs={'alpha': 0}, rolling_kwargs={}, label_rolling=True,
+                                  label_main=False,
+                                  show=False)
+            plt.close('all')
+            for y in range(1972, 2021, 2):
+                plot_multiple_date_range(data=d, start_date=f'{y}-07-01', end_date=f'{y + 2}-06-30',
+                                         outdir=os.path.join(plot_outdir, 'full_suite_2yrs'), out_vars=out_variables_use,
+                                         fig_size=(10, 8), title_str=k,
+                                         rolling=10, main_kwargs={'alpha': 0}, rolling_kwargs={}, label_rolling=True,
+                                         label_main=False,
+                                         show=False)
+                plt.close('all')
 
 
 def test_storage_initialisation_and_checks(outdir):
@@ -159,4 +171,6 @@ def test_storage_initialisation_and_checks(outdir):
 
 
 if __name__ == '__main__':
-    produce_storage_initialisation_and_checks(os.path.join(ksl_env.slmmac_dir_unbacked, 'storage_initalisation'))
+    produce_storage_initialisation_and_checks(os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
+                                                           'storage_initalisation_to_WS'),
+                                              plot=True)

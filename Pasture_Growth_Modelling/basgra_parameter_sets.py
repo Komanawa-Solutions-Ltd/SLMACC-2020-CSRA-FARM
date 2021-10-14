@@ -17,7 +17,7 @@ default_mode_sites = (
     ('dryland', 'oxford'),
     ('irrigated', 'eyrewell'),
     ('irrigated', 'oxford'),
-    ('store400', 'eyrewell'), # todo these are not ready yet!!!
+    ('store400', 'eyrewell'),  # todo these are not ready yet!!!
     ('store400', 'oxford'),
     ('store600', 'eyrewell'),
     ('store600', 'oxford'),
@@ -267,6 +267,9 @@ def create_matrix_weather(mode, weather_data, restriction_data, rest_key='f_rest
         matrix_weather.loc[:, 'irr_trig_store'] = 0
         matrix_weather.loc[:, 'irr_targ_store'] = 0
         matrix_weather.loc[:, 'external_inflow'] = 0
+        params, doy_irr = get_params_doy_irr(mode, site='eyrewell')  # just using DOY_irr
+        matrix_weather.loc[~np.in1d(matrix_weather.doy, doy_irr), 'max_irr'] = 0
+
 
     elif mode == 'dryland':
         assert restriction_data is None, 'restriction data must be None in a dryland scenario'
