@@ -2,12 +2,15 @@
  Author: Matt Hanson
  Created: 13/07/2021 11:43 AM
  """
+import shutil
+
 import ksl_env
 import os
 import pandas as pd
 from Storylines.storyline_building_support import month_len, default_mode_sites
 from copy import deepcopy
 import numpy as np
+from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 
 dnz_values = {
     # oxford site : https://www.dairynz.co.nz/media/5793235/average-pasture-growth-data-south-island-2020-v1.pdf
@@ -43,7 +46,7 @@ historical_average = {
 
 }
 
-fixed_data = { # todo additional site/modes will be needed or pass a dictionary
+fixed_data = {
     ('dryland', 'oxford'): {
         6: 5 * 30,
         7: 5 * 31,
@@ -83,9 +86,12 @@ def corr_pg(data, mode_site=default_mode_sites):
     data = deepcopy(data)
 
     for mode, site in mode_site:
+        use_mode = mode
+        if 'store' in use_mode:
+            use_mode = 'irrigated'
         for m in range(1, 13):
             if m in [6, 7, 8]:
-                data.loc[:, f'{site}-{mode}_pg_m{m:02d}'] = fixed_data[(mode, site)][m]
+                data.loc[:, f'{site}-{mode}_pg_m{m:02d}'] = fixed_data[(use_mode, site)][m]
             else:
                 data.loc[:, f'{site}-{mode}_pg_m{m:02d}'] *= deltas[m]
 
@@ -96,13 +102,14 @@ def corr_pg(data, mode_site=default_mode_sites):
     return data
 
 
-def get_most_probabile(site, mode, correct=False):
-    target_ranges = {
-        ('dryland', 'oxford'): (4, 6 * 100000),
-        ('irrigated', 'eyrewell'): (15 * 1000, 17 * 1000),
-        ('irrigated', 'oxford'): (11.5 * 1000, 14 * 1000),  # todo need to update these for each new site, mode
-    }
+target_ranges = {
+    ('dryland', 'oxford'): (4, 6 * 100000),
+    ('irrigated', 'eyrewell'): (15 * 1000, 17 * 1000),
+    ('irrigated', 'oxford'): (11.5 * 1000, 14 * 1000),  # todo need to update these for each new site, mode
+}
 
+
+def get_most_probabile(site, mode, correct=False):
     out = {}  # keys integer months and '1yr'
     gdrive_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'random')
     bad = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_bad_irr.hdf'), 'prob')
@@ -121,7 +128,32 @@ def get_most_probabile(site, mode, correct=False):
     return out
 
 
+def save_most_probable_storylines(outdir):
+    os.makedirs(outdir, exist_ok=True)
+    gdrive_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'random')
+    bad = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_bad_irr.hdf'), 'prob')
+
+    good = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_good_irr.hdf'), 'prob')
+
+    data = pd.concat([good, bad])
+    data = data.dropna()
+    for mode, site in target_ranges.keys():
+        minv, maxv = target_ranges[(mode, site)]
+        data = data.loc[(minv <= data.loc[:, f'{site}-{mode}_pg_yr1']) & (data.loc[:, f'{site}-{mode}_pg_yr1'] <= maxv)]
+
+    name = 'random'
+    random_sl_dir = os.path.join(temp_storyline_dir, name)
+    for i, it in data.loc[:, ['ID', 'irr_type']].itertuples(False, None):
+        src = os.path.join(f'{random_sl_dir}_{it}_irr', f'{i}.csv')
+        dest = os.path.join(outdir, f'{i}_{it}_irr.csv')
+        if not os.path.exists(dest):
+            shutil.copyfile(src, dest)
+
+
 if __name__ == '__main__':
+    save_most_probable_storylines(r"C:\Users\dumon\Downloads\most_probable")
+
+    raise NotImplementedError
     plot_months = [
         7,
         8,
@@ -144,6 +176,6 @@ if __name__ == '__main__':
     for mode, site in default_mode_sites:
         temp = get_most_probabile(site, mode, True)
         for m in plot_months:
-            outdata.loc[m, f'{site}-{mode}'] = temp[m]/month_len[m]
+            outdata.loc[m, f'{site}-{mode}'] = temp[m] / month_len[m]
 
     outdata.to_csv(os.path.join(outdir, 'most_probable_data.csv'))

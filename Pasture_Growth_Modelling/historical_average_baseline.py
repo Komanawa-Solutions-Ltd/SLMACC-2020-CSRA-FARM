@@ -97,9 +97,9 @@ def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False, 
     else:
         if site == 'oxford' and mode == 'dryland':
             out = run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, version=version)
-        elif site == 'oxford' and mode == 'irrigated':
+        elif site == 'oxford' and (mode == 'irrigated' or 'store' in mode):
             out = run_past_basgra_irrigated(site='oxford', version=version)
-        elif site == 'eyrewell' and mode == 'irrigated':
+        elif site == 'eyrewell' and (mode == 'irrigated' or 'store' in mode):
             out = run_past_basgra_irrigated(site='eyrewell', version=version)
         else:
             raise ValueError(f'wierd values for site,mode {site}-{mode}')

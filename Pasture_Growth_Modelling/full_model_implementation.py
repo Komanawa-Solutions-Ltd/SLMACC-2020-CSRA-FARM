@@ -124,7 +124,15 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
     t = time.time()
     assert isinstance(n_parallel, int)
     assert n_parallel > 0
-    storyline_key = os.path.splitext(os.path.basename(storyline_path))[0]
+    zipped=False
+    try:
+        storyline_key = os.path.splitext(os.path.basename(storyline_path))[0]
+    except TypeError:
+        storyline_key = os.path.splitext(os.path.basename(storyline_path.name))[0] # to allow zipped files
+        zipped=True
+
+    if zipped:
+        storyline_path.seek(0)
     storyline = pd.read_csv(storyline_path)
     simlen = np.array([month_len[e] for e in storyline.month]).sum()
 
@@ -139,8 +147,12 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
             [f'{y}-{m:02d}-{d:02d}' for y, m, d in zip(out_index.year, out_index.month, out_index.day)])
     assert simlen == len(out_index), f'simlen should be {simlen}, but is {len(out_index)}, check for leap years'
 
-    with open(storyline_path, 'r') as f:
-        storyline_text = f.readlines()
+    if zipped:
+        storyline_path.seek(0)
+        storyline_text = storyline_path.readlines()
+    else:
+        with open(storyline_path, 'r') as f:
+            storyline_text = f.readlines()
 
     assert isinstance(nsims, int), 'nsims must be an integer instead {}: {}'.format(nsims, type(nsims))
     for mode, site in mode_sites:
@@ -236,7 +248,7 @@ def _gen_input(storyline, nsims, mode, site, chunks, current_c, nperc, simlen, s
     # get restriction data
     if mode == 'dryland':
         rest_data = np.repeat([None], num_to_pull)
-    elif mode == 'irrigated':
+    elif mode == 'irrigated' or 'store' in mode:
         rest_data = get_irr_data(num_to_pull, storyline, simlen, seed=seeds[iseed], use_1_seed=use_1_seed)
         iseed += 1
     else:

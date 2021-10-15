@@ -10,6 +10,7 @@ import glob
 import ksl_env
 from Storylines.storyline_building_support import default_storyline_time
 from Pasture_Growth_Modelling.full_model_implementation import out_variables
+from Pasture_Growth_Modelling.basgra_parameter_sets import default_mode_sites
 
 default_outvars = ['m_'+e for e in out_variables] + ['m_PGRA','m_PGRA_cum']
 
@@ -74,14 +75,16 @@ Pasture growth modelling conducted with BASGRA_NZ_PY {ksl_env.basgra_version}, (
 
 
 
-def export_all_in_pattern(base_outdir, patterns, outvars=default_outvars, inc_storylines=True, agg_fun=np.nanmean):
+def export_all_in_pattern(base_outdir, patterns, outvars=default_outvars, inc_storylines=True, agg_fun=np.nanmean,
+                          mode_sites=default_mode_sites):
     paths = []
     patterns = np.atleast_1d(patterns)
     for pattern in patterns:
         paths.extend(np.array(glob.glob(pattern)))
     paths = np.array(paths)
     base_paths = pd.Series([os.path.basename(p) for p in paths])
-    for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
+    for mode, site in mode_sites:
+        sm = f'{site}-{mode}'
         temp_paths = paths[base_paths.str.contains(sm)]
         export_sim_to_csvs(nc_paths=temp_paths, outdir=os.path.join(base_outdir, sm),
                            outvars=outvars, inc_storylines=inc_storylines, agg_fun=agg_fun)
