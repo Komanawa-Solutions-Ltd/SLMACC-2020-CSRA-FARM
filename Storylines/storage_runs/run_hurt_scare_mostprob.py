@@ -240,6 +240,6 @@ if __name__ == '__main__':
     export = False
     plot = False
 
-    most_probabable(pgr, export, plot)
     scare(pgr, export, plot)
     hurt(pgr, export, plot)
+    most_probabable(pgr, export, plot)
