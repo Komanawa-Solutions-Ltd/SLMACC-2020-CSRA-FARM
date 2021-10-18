@@ -84,7 +84,7 @@ def run_zipped_storylines(name, description_mult, zfile_path, number, choice_see
                 log_path=os.path.join(pgm_log_dir, name),
                 description_mult=description_mult,
                 padock_rest_mult=False,
-                save_daily_mult=True,
+                save_daily_mult=False,
                 verbose=False,
                 re_run=re_run,
                 mode_sites_mult=mode_sites,
@@ -168,7 +168,7 @@ def most_probabable(run_pgr, run_export, plot):
         choice_seed=5548,
         pgr_seed=348357,
         mode_sites=default_mode_sites,
-        re_run=True,
+        re_run=False,
         run_pgr=run_pgr,
         run_export=run_export,
         plot=plot,
@@ -236,10 +236,11 @@ def hurt(run_pgr, run_export, plot):
 
 
 if __name__ == '__main__':
+    # todo check
     pgr = True
     export = False
     plot = False
 
-    scare(pgr, export, plot)
-    hurt(pgr, export, plot)
+    #scare(pgr, export, plot)
+    #hurt(pgr, export, plot)
     most_probabable(pgr, export, plot)
