@@ -32,7 +32,7 @@ def extract_zipfiles(src, dest, re_extract=False):
 
 
 def run_zipped_storylines(name, description_mult, zfile_path, number, choice_seed, pgr_seed, mode_sites, re_run,
-                          run_pgr, run_export, plot, run_mp,
+                          run_pgr, run_export, run_mp,
                           start_run=0, nsims=100):
     """
     run from zipped storylines
@@ -135,12 +135,15 @@ def run_zipped_storylines(name, description_mult, zfile_path, number, choice_see
                                '-' +
                                temp_data.loc[:, 'month'].str.split('-').str[1]).values
             for m in plot_months:
-                outdata.loc[:, f'{site}-{mode}_pg_m{m:02d}'] = temp_data.loc[:, m] * month_len
+                outdata.loc[:, f'{site}-{mode}_pg_m{m:02d}'] = temp_data.loc[:, str(m)] * month_len[m]
         outdata = corr_pg(outdata, mode_site=mode_sites)  # this calcs the 1 year
         outdata.to_csv(os.path.join(outputs_dir, 'corrected_data.csv'))
         outdata.mean().to_csv(os.path.join(outputs_dir, 'mean_corrected_data.csv'))
 
-        # todo normalize to actual data to manage the seed changes
+
+def plot_storyline(): # todo
+
+    # todo normalize to actual data to manage the seed changes
 
     if plot:
         data = pd.read_csv(os.path.join(outputs_dir, 'corrected_data.csv'), index_col=0)
@@ -171,7 +174,6 @@ def most_probabable(run_pgr, run_export, plot):
         re_run=False,
         run_pgr=run_pgr,
         run_export=run_export,
-        plot=plot,
         run_mp=True,
         start_run=0, nsims=nsims)
 
@@ -199,7 +201,6 @@ def scare(run_pgr, run_export, plot):
         re_run=True,
         run_pgr=run_pgr,
         run_export=run_export,
-        plot=plot,
         run_mp=True,
         start_run=0, nsims=nsims)
 
@@ -227,7 +228,6 @@ def hurt(run_pgr, run_export, plot):
         re_run=True,
         run_pgr=run_pgr,
         run_export=run_export,
-        plot=plot,
         run_mp=True,
         start_run=0, nsims=nsims)
 
@@ -237,10 +237,11 @@ def hurt(run_pgr, run_export, plot):
 
 if __name__ == '__main__':
     # todo check
-    pgr = True
-    export = False
+    pgr = False
+    export = True
+
     plot = False
 
-    #scare(pgr, export, plot)
-    #hurt(pgr, export, plot)
+    scare(pgr, export, plot)
+    hurt(pgr, export, plot)
     most_probabable(pgr, export, plot)
