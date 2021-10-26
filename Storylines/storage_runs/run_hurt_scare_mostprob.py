@@ -153,6 +153,7 @@ def plot_normalize_storyline(name, norm, plot):
         corrected_data = pd.read_csv(os.path.join(outputs_dir, 'corrected_data.csv'), index_col=0)
         corrected_data.index.name = 'ID'
         norm_data = pd.DataFrame(index=corrected_data.index, columns=corrected_data.columns)
+        ratio_data = pd.DataFrame(index=corrected_data.index, columns=corrected_data.columns)
         old_data = get_old_data(corrected_data, name)
         for mode, site in default_mode_sites:
             if mode == 'dryland':
@@ -164,19 +165,26 @@ def plot_normalize_storyline(name, norm, plot):
                 norm_data.loc[:, key] = corrected_data.loc[:, key] * (
                         old_data.loc[:, f'{base_key}_pg_m{m:02d}'] / corrected_data.loc[:, f'{base_key}_pg_m{m:02d}'])
 
+                ratio_data.loc[:, key] = corrected_data.loc[:, key] / corrected_data.loc[:, f'{base_key}_pg_m{m:02d}']
+
             key = f'{site}-{mode}_pg_yr1'
             norm_data.loc[:, key] = corrected_data.loc[:, key] * (
                     old_data.loc[:, f'{base_key}_pg_yr1'] / corrected_data.loc[:, f'{base_key}_pg_yr1'])
+            ratio_data.loc[:, key] = corrected_data.loc[:, key] / corrected_data.loc[:, f'{base_key}_pg_yr1']
 
         norm_data.to_csv(os.path.join(outputs_dir, 'normalised_corrected.csv'))
+        ratio_data.to_csv(os.path.join(outputs_dir, 'ratio_corrected.csv'))
 
     if plot:
         datas = [pd.read_csv(os.path.join(outputs_dir, 'corrected_data.csv'), index_col=0),
-                 pd.read_csv(os.path.join(outputs_dir, 'normalised_corrected.csv'), index_col=0)]
-        data_labels = ['corrected', 'normalised_and_corrected']
-        for data, data_lab in zip(datas, data_labels):
+                 pd.read_csv(os.path.join(outputs_dir, 'normalised_corrected.csv'), index_col=0),
+                 pd.read_csv(os.path.join(outputs_dir, 'ratio_corrected.csv'), index_col=0),
+                 ]
+        data_labels = ['corrected', 'normalised_and_corrected', 'ratio to irrigated']
+        for ij, (data, data_lab) in enumerate(zip(datas, data_labels)):
             print(data_lab)
-            data = change_to_daily_pg(data)
+            if ij < 2:
+                data = change_to_daily_pg(data)
             plot_outdir = os.path.join(outputs_dir, f'{data_lab}_plots')
             os.makedirs(plot_outdir, exist_ok=True)
             data_describe = data.describe(percentiles=[.05, .10, .25, .50, .75, .90, .95])
@@ -198,6 +206,8 @@ def plot_normalize_storyline(name, norm, plot):
             all_plots = {}
             all_plot_names = ['Mean Pasture Growth',
                               'Mean Pasture Growth with Percentiles',
+                              'Median Pasture Growth',
+                              'Median Pasture Growth with Percentiles',
                               'Pasture Growth Boxplot',
                               'Pasture Growth Violinplot'
                               ]
@@ -224,6 +234,27 @@ def plot_normalize_storyline(name, norm, plot):
                         continue
                     x = range(len(plot_keys))
                     y = data_describe.loc['mean', [f'{site}-{mode}_{e}' for e in plot_keys]]
+                    ax.plot(x, y, c=colors[mode], label=mode)
+                    ytop = data_describe.loc['25%', [f'{site}-{mode}_{e}' for e in plot_keys]]
+                    ybot = data_describe.loc['75%', [f'{site}-{mode}_{e}' for e in plot_keys]]
+                    ax.fill_between(x, ybot, ytop, color=colors[mode], alpha=0.5, label=f'25th-75th {mode}')
+
+            # overlayed median plot for each site (pg)
+            for site_over, (fig, ax) in all_plots['Median Pasture Growth'].items():
+                for mode, site in default_mode_sites:
+                    if (site != site_over) or (mode == 'dryland'):
+                        continue
+                    x = range(len(plot_keys))
+                    y = data_describe.loc['50%', [f'{site}-{mode}_{e}' for e in plot_keys]]
+                    ax.plot(x, y, c=colors[mode], label=mode)
+
+            # overlayed median with percentiles plot for each site (pg)
+            for site_over, (fig, ax) in all_plots['Median Pasture Growth with Percentiles'].items():
+                for mode, site in default_mode_sites:
+                    if (site != site_over) or (mode == 'dryland'):
+                        continue
+                    x = range(len(plot_keys))
+                    y = data_describe.loc['50%', [f'{site}-{mode}_{e}' for e in plot_keys]]
                     ax.plot(x, y, c=colors[mode], label=mode)
                     ytop = data_describe.loc['25%', [f'{site}-{mode}_{e}' for e in plot_keys]]
                     ybot = data_describe.loc['75%', [f'{site}-{mode}_{e}' for e in plot_keys]]
@@ -272,9 +303,17 @@ def plot_normalize_storyline(name, norm, plot):
             for plt_nm, plot_dict in all_plots.items():
                 for site_over, (fig, ax) in plot_dict.items():
                     ax.set_title(f'{plt_nm} {site_over.capitalize()}')
-                    ax.set_ylabel('Pasture Growth (kg dm/ha/day)')
-                    ax.set_ylim(0, 100)
-                    if plt_nm in ['Mean Pasture Growth', 'Mean Pasture Growth with Percentiles']:
+                    if ij < 2:
+                        ax.set_ylabel('Pasture Growth (kg dm/ha/day)')
+                        ax.set_ylim(0, 100)
+                    else:
+                        ax.set_ylabel('ratio to irrigate')
+                        ax.set_ylim(0, 15)
+                    if plt_nm in ['Mean Pasture Growth',
+                                  'Mean Pasture Growth with Percentiles',
+                                  'Median Pasture Growth',
+                                  'Median Pasture Growth with Percentiles',
+                                  ]:
                         ax.set_xticks(range(0, 13))
                         ax.set_xticklabels(plot_labs)
                         ax.legend()
