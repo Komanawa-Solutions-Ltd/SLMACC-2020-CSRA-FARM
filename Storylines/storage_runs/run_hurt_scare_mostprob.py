@@ -4,6 +4,10 @@
  """
 import shutil
 import zipfile
+
+import matplotlib.pyplot as plt
+from matplotlib.cm import get_cmap
+from matplotlib.patches import Patch
 import pandas as pd
 import numpy as np
 import ksl_env
@@ -20,6 +24,7 @@ from Pasture_Growth_Modelling.plot_full_model import plot_sims
 from Pasture_Growth_Modelling.export_to_csvs import export_all_in_pattern
 from Pasture_Growth_Modelling.full_model_implementation import out_variables
 from Storylines.storyline_evaluation.transition_to_fraction import corr_pg
+from Storylines.storyline_runs.run_random_suite import get_1yr_data
 import time
 
 
@@ -125,7 +130,7 @@ def run_zipped_storylines(name, description_mult, zfile_path, number, choice_see
                                 skiprows=1)  # just to get index
         index = sorted((temp_data.loc[:, 'month'].str.split('-').str[0] +
                         '-' +
-                        temp_data.loc[:, 'month'].str.split('-').str[1]).values)  # todo check
+                        temp_data.loc[:, 'month'].str.split('-').str[1]).values)
 
         outdata = pd.DataFrame(columns=columns)
         for mode, site in mode_sites:
@@ -141,21 +146,193 @@ def run_zipped_storylines(name, description_mult, zfile_path, number, choice_see
         outdata.mean().to_csv(os.path.join(outputs_dir, 'mean_corrected_data.csv'))
 
 
-def plot_storyline(): # todo
+def plot_normalize_storyline(name, norm, plot):
+    print(name)
+    outputs_dir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', name)
+    if norm:
+        corrected_data = pd.read_csv(os.path.join(outputs_dir, 'corrected_data.csv'), index_col=0)
+        corrected_data.index.name = 'ID'
+        norm_data = pd.DataFrame(index=corrected_data.index, columns=corrected_data.columns)
+        old_data = get_old_data(corrected_data, name)
+        for mode, site in default_mode_sites:
+            if mode == 'dryland':
+                continue
 
-    # todo normalize to actual data to manage the seed changes
+            base_key = f'{site}-irrigated'
+            for m in range(1, 13):
+                key = f'{site}-{mode}_pg_m{m:02d}'
+                norm_data.loc[:, key] = corrected_data.loc[:, key] * (
+                        old_data.loc[:, f'{base_key}_pg_m{m:02d}'] / corrected_data.loc[:, f'{base_key}_pg_m{m:02d}'])
+
+            key = f'{site}-{mode}_pg_yr1'
+            norm_data.loc[:, key] = corrected_data.loc[:, key] * (
+                    old_data.loc[:, f'{base_key}_pg_yr1'] / corrected_data.loc[:, f'{base_key}_pg_yr1'])
+
+        norm_data.to_csv(os.path.join(outputs_dir, 'normalised_corrected.csv'))
 
     if plot:
-        data = pd.read_csv(os.path.join(outputs_dir, 'corrected_data.csv'), index_col=0)
-        # todo plot!
-        # todo overlayed mean plot for each site (pg)
-        # todo overlayed mean with percentiles plot for each site (pg)
-        # todo individaul pg violin plots
-        # todo nested box plots per site
-        raise NotImplementedError
+        datas = [pd.read_csv(os.path.join(outputs_dir, 'corrected_data.csv'), index_col=0),
+                 pd.read_csv(os.path.join(outputs_dir, 'normalised_corrected.csv'), index_col=0)]
+        data_labels = ['corrected', 'normalised_and_corrected']
+        for data, data_lab in zip(datas, data_labels):
+            print(data_lab)
+            data = change_to_daily_pg(data)
+            plot_outdir = os.path.join(outputs_dir, f'{data_lab}_plots')
+            os.makedirs(plot_outdir, exist_ok=True)
+            data_describe = data.describe(percentiles=[.05, .10, .25, .50, .75, .90, .95])
+
+            plot_keys = [f'pg_m{m:02d}' for m in [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]] + ['pg_yr1']
+            plot_labs = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                         'year mean']
+            n_scens = (len(default_mode_sites) - 1) / 2
+            initialpositions = np.arange(0, 13 * n_scens, n_scens)
+
+            colors = {
+                'irrigated': 'b',
+                'store400': 'm',
+                'store600': 'y',
+                'store800': 'c',
+            }
+
+            # initialize plots
+            all_plots = {}
+            all_plot_names = ['Mean Pasture Growth',
+                              'Mean Pasture Growth with Percentiles',
+                              'Pasture Growth Boxplot',
+                              'Pasture Growth Violinplot'
+                              ]
+            for p in all_plot_names:
+                axs = {
+                    'eyrewell': plt.subplots(figsize=(10, 8)),
+                    'oxford': plt.subplots(figsize=(10, 8)),
+                }
+                all_plots[p] = axs
+
+            # overlayed mean plot for each site (pg)
+            for site_over, (fig, ax) in all_plots['Mean Pasture Growth'].items():
+                for mode, site in default_mode_sites:
+                    if (site != site_over) or (mode == 'dryland'):
+                        continue
+                    x = range(len(plot_keys))
+                    y = data_describe.loc['mean', [f'{site}-{mode}_{e}' for e in plot_keys]]
+                    ax.plot(x, y, c=colors[mode], label=mode)
+
+            # overlayed mean with percentiles plot for each site (pg)
+            for site_over, (fig, ax) in all_plots['Mean Pasture Growth with Percentiles'].items():
+                for mode, site in default_mode_sites:
+                    if (site != site_over) or (mode == 'dryland'):
+                        continue
+                    x = range(len(plot_keys))
+                    y = data_describe.loc['mean', [f'{site}-{mode}_{e}' for e in plot_keys]]
+                    ax.plot(x, y, c=colors[mode], label=mode)
+                    ytop = data_describe.loc['25%', [f'{site}-{mode}_{e}' for e in plot_keys]]
+                    ybot = data_describe.loc['75%', [f'{site}-{mode}_{e}' for e in plot_keys]]
+                    ax.fill_between(x, ybot, ytop, color=colors[mode], alpha=0.5, label=f'25th-75th {mode}')
+
+            # individaul pg violin plots
+            for site_over, (fig, ax) in all_plots['Pasture Growth Violinplot'].items():
+                i = 0
+                for mode, site in default_mode_sites:
+                    if (site != site_over) or (mode == 'dryland'):
+                        continue
+                    use_positions = initialpositions + i + 0.5
+                    i += 1
+                    c = colors[mode]
+                    plot_data = [data.loc[:, f'{site}-{mode}_{e}'].values for e in plot_keys]
+                    parts = ax.violinplot(plot_data, positions=use_positions,
+                                          showmeans=False, showmedians=True,
+                                          quantiles=[[0.25, 0.75] for e in plot_data],
+                                          )
+                    for pc in parts['bodies']:
+                        pc.set_facecolor(c)
+                    parts['cmedians'].set_color(c)
+                    parts['cquantiles'].set_color(c)
+                    parts['cmins'].set_color(c)
+                    parts['cmaxes'].set_color(c)
+                    parts['cbars'].set_color(c)
+
+            # nested box plots per site
+            for site_over, (fig, ax) in all_plots['Pasture Growth Boxplot'].items():
+                i = 0
+                for mode, site in default_mode_sites:
+                    if (site != site_over) or (mode == 'dryland'):
+                        continue
+                    use_positions = initialpositions + i + 0.5
+                    i += 1
+                    c = colors[mode]
+                    plot_data = [data.loc[:, f'{site}-{mode}_{e}'].values for e in plot_keys]
+                    bp = ax.boxplot(plot_data, positions=use_positions, patch_artist=True)
+                    for element in ['boxes', 'whiskers', 'means', 'medians', 'caps']:
+                        plt.setp(bp[element], color='k')
+                    plt.setp(bp['fliers'], markeredgecolor=c)
+                    for patch in bp['boxes']:
+                        patch.set(facecolor=c)
+
+            # make pretty and save
+            for plt_nm, plot_dict in all_plots.items():
+                for site_over, (fig, ax) in plot_dict.items():
+                    ax.set_title(f'{plt_nm} {site_over.capitalize()}')
+                    ax.set_ylabel('Pasture Growth (kg dm/ha/day)')
+                    ax.set_ylim(0, 100)
+                    if plt_nm in ['Mean Pasture Growth', 'Mean Pasture Growth with Percentiles']:
+                        ax.set_xticks(range(0, 13))
+                        ax.set_xticklabels(plot_labs)
+                        ax.legend()
+                    else:
+                        ax.set_xticks(initialpositions + n_scens // 2)
+                        ax.set_xticklabels(plot_labs)
+                        # set verticle lines
+                        for i in np.concatenate((initialpositions, initialpositions + n_scens)):
+                            ax.axvline(x=i,
+                                       ymin=0,
+                                       ymax=1,
+                                       linestyle=':',
+                                       color='k',
+                                       alpha=0.5
+                                       )
+
+                        labels = []
+                        handles = []
+                        for mode, site in default_mode_sites:
+                            if (site != site_over) or (mode == 'dryland'):
+                                continue
+                            labels.append(mode)
+                            handles.append(Patch(facecolor=colors[mode]))
+                        ax.legend(handles=handles, labels=labels)
+                    fig.tight_layout()
+                    fig.savefig(os.path.join(plot_outdir, f'{plt_nm}-{site_over}.png'))
 
 
-def most_probabable(run_pgr, run_export, plot):
+def change_to_daily_pg(data):
+    assert isinstance(data, pd.DataFrame)
+    outdata = data.copy()
+    for k in data.columns:
+        if 'pg' not in k:
+            continue
+        suffix = k.split('_')[-1]
+        if 'm' in suffix:
+            mod = month_len[int(suffix.replace('m', ''))]
+        elif 'yr' in suffix:
+            mod = 365
+        else:
+            raise ValueError("shouldn't get here")
+        outdata.loc[:, k] *= 1 / mod
+    return outdata
+
+
+def get_old_data(new_data, name):
+    old_data = get_1yr_data(True, True, True)
+    if name == 'storage_most_probable':
+        old_data.loc[:, 'ID'] = old_data.loc[:, 'ID'] + '_' + old_data.loc[:, 'irr_type'] + '_irr'
+
+    else:
+        old_data.loc[:, 'ID'] = old_data.loc[:, 'ID'] + '_' + old_data.loc[:, 'irr_type']
+    old_data.set_index('ID', inplace=True)
+    old_data = old_data.loc[new_data.index]
+    return old_data
+
+
+def most_probabable(run_pgr, run_export):
     t = time.time()
     number = 8121  # 10% of c. 81,000
     nsims = 100
@@ -181,7 +358,7 @@ def most_probabable(run_pgr, run_export, plot):
           f'{len(default_mode_sites)} mode-sites')
 
 
-def scare(run_pgr, run_export, plot):
+def scare(run_pgr, run_export):
     t = time.time()
     number = 'all'  # 103 stories
     nsims = 100
@@ -208,7 +385,7 @@ def scare(run_pgr, run_export, plot):
           f'{len(default_mode_sites)} mode-sites')
 
 
-def hurt(run_pgr, run_export, plot):
+def hurt(run_pgr, run_export):
     t = time.time()
     number = 'all'  # 226 stories
     nsims = 100
@@ -236,12 +413,14 @@ def hurt(run_pgr, run_export, plot):
 
 
 if __name__ == '__main__':
-    # todo check
     pgr = False
-    export = True
+    export = False
+    norm = True
+    plot = True
 
-    plot = False
+    scare(pgr, export)
+    hurt(pgr, export)
+    most_probabable(pgr, export)
 
-    scare(pgr, export, plot)
-    hurt(pgr, export, plot)
-    most_probabable(pgr, export, plot)
+    for n in ['storage_hurt', 'storage_scare', 'storage_most_probable']:
+        plot_normalize_storyline(name=n, norm=norm, plot=plot)

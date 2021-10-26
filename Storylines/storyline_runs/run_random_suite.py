@@ -167,7 +167,7 @@ def get_1yr_data(bad_irr=True, good_irr=True, correct=False):
 
     if correct:
         data = pd.concat([good, bad])
-        data = corr_pg(data)
+        data = corr_pg(data, mode_site=mode_sites) # todo update if run storage
         return data
     else:
         return pd.concat([good, bad])
