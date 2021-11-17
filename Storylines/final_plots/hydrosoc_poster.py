@@ -215,7 +215,7 @@ def pg_boxplots(figsize=(10, 8), suffix='.png'):
     ax.set_ylim(0, 100)
 
     fig.tight_layout()
-    fig.savefig(os.path.join(outdir, f'pg_boxplot{suffix}'))
+    fig.savefig(os.path.join(outdir, f'pg_boxplot.png')) # svg too big
 
 
 if __name__ == '__main__':
