@@ -60,7 +60,27 @@ def get_month_limits_from_most_probable(eyrewell_irr, oxford_irr, oxford_dry, co
     return monthly_limits
 
 
-def add_exceedence_prob(impact_data, correct, impact_in_tons=False): # todo how to handle for new mode-sites, this is the hard one....
+def get_exceedence(site, mode, correct):
+    if correct:
+        exceedence = pd.read_csv(
+            os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
+                         r"random_scen_plots\1yr_correct",
+                         f"{site}-{mode}_1yr_cumulative_exceed_prob.csv"))
+
+        probs = exceedence.prob.values * 100
+        impacts = exceedence.pg.values * 1000
+    else:
+        exceedence = pd.read_csv(
+            os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
+                         r"random_scen_plots\1yr",
+                         f"{site}-{mode}_1yr_cumulative_exceed_prob.csv"))
+
+        probs = exceedence.prob.values * 100
+        impacts = exceedence.pg.values * 1000
+    return exceedence
+
+def add_exceedence_prob(impact_data, correct,
+                        impact_in_tons=False):  # todo how to handle for new mode-sites, this is the hard one....
     """
 
     :param impact_data: the data to add impact to
@@ -88,7 +108,7 @@ def add_exceedence_prob(impact_data, correct, impact_in_tons=False): # todo how 
         predictor = interp1d(impacts, probs, fill_value='extrapolate')
         if impact_in_tons:
             impact_data.loc[:, f'non-exceed_prob_per_{site}-{mode}'] = 100 - predictor(
-                impact_data.loc[:, f'{site}-{mode}_pg_yr1'].astype(float)*1000)
+                impact_data.loc[:, f'{site}-{mode}_pg_yr1'].astype(float) * 1000)
         else:
             impact_data.loc[:, f'non-exceed_prob_per_{site}-{mode}'] = 100 - predictor(
                 impact_data.loc[:, f'{site}-{mode}_pg_yr1'].astype(float))
@@ -113,7 +133,6 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None,
     assert isinstance(state_limits, dict) or state_limits is None
     assert isinstance(lower_bound, dict) and isinstance(upper_bound, dict)
     assert set(lower_bound.keys()) == set(upper_bound.keys()) == {f'{s}-{m}' for m, s in default_mode_sites}
-
 
     if isinstance(monthly_limits, dict):
 
@@ -262,7 +281,8 @@ def make_all_storyline_data(calc_raw=False):
 
 
 def run_plot_pca(data, impact_data, n_clusters=20, n_pcs=15, plot=True, show=False, log_dir=None,
-                 additional_plot_line=None, additional_plot_nm=None): # todo I may need to pull this out for new mode sites...
+                 additional_plot_line=None,
+                 additional_plot_nm=None):  # todo I may need to pull this out for new mode sites...
     log_text = []
     print('running_pca')
     if len(data) < n_pcs:
