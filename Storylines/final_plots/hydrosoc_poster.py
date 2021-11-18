@@ -47,7 +47,7 @@ def plot_normalize_storyline(name, figsize=(10, 8), suffix='.png'):
 
         # initialize plots
         all_plots = {}
-        all_plot_names = ['Pasture Growth Boxplot']
+        all_plot_names = ['Pasture Growth']
         for p in all_plot_names:
             axs = {
                 'eyrewell': plt.subplots(figsize=figsize),
@@ -56,7 +56,7 @@ def plot_normalize_storyline(name, figsize=(10, 8), suffix='.png'):
             all_plots[p] = axs
 
         # nested box plots per site
-        for site_over, (fig, ax) in all_plots['Pasture Growth Boxplot'].items():
+        for site_over, (fig, ax) in all_plots['Pasture Growth'].items():
             i = 0
             for mode, site in default_mode_sites:
                 if (site != site_over) or (mode == 'dryland'):
@@ -108,7 +108,10 @@ def plot_normalize_storyline(name, figsize=(10, 8), suffix='.png'):
                     for mode, site in default_mode_sites:
                         if (site != site_over) or (mode == 'dryland'):
                             continue
-                        labels.append(mode)
+                        if mode =='irrigated':
+                            labels.append('irrigated (no storage)')
+                        else:
+                            labels.append(mode)
                         handles.append(Patch(facecolor=colors[mode]))
                     ax.legend(handles=handles, labels=labels)
                 fig.tight_layout()
@@ -188,7 +191,7 @@ def pg_boxplots(figsize=(10, 8), suffix='.png'):
         prob = 10 ** (data.loc[:, f'log10_prob_{mode}'] + mod)
         prob = prob / prob.sum()
         np.random.seed(5575)
-        idx = np.random.choice(data.index, int(1e7), p=prob)
+        idx = np.random.choice(data.index, int(1e6), p=prob)
         plot_data = [data.loc[idx, f'{site}-{mode}_{e}'].values / month_len[int(e[-2:])] for e in plot_keys]
         bp = ax.boxplot(plot_data, positions=use_positions, patch_artist=True)
         for element in ['boxes', 'whiskers', 'means', 'medians', 'caps']:
@@ -221,8 +224,8 @@ def pg_boxplots(figsize=(10, 8), suffix='.png'):
 if __name__ == '__main__':
     fs = (6.5, 6)
     sf = '.svg'
-    prob_non_exceed(figsize=(10.7, 5.7), suffix=sf)  # todo put in poster
-    pg_boxplots(figsize=(9.3, 7.3), suffix=sf)
-    if False:
+    #prob_non_exceed(figsize=(10.7, 5.7), suffix=sf)
+    #pg_boxplots(figsize=(9.3, 7.3), suffix=sf)
+    if True:
         for n in ['storage_hurt', 'storage_scare', 'storage_most_probable']:
             plot_normalize_storyline(name=n, figsize=fs, suffix=sf)
