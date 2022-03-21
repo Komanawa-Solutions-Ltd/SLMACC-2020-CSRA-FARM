@@ -4,6 +4,8 @@ Repository for the climate components of the 2020 Climate-Shock Resilience and A
 This branch (Normal Dist) marks the transition from a farmer defined event definitions to a 
 normal distribution event definitions, which as of 2021-09-13 was the main branch.
 
+run_storage branch is used for the re-run of all stochastics, no correction applied! (I think)
+
 # overall script for re-running definitions plus
 * Climate_Shocks/make_new_event_definition_data.py
 

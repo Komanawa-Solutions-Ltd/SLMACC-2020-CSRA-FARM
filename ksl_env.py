@@ -40,7 +40,9 @@ def mh_backed(path):
 def shared_drives(path):
     host_nm_dict = {
         'dickie': {
-            'dumon': "M:/"},
+            'dumon': "M:/",
+            'matt_dumont': "M:/",
+        },
         'Healey': {
             'Matt Hanson': "M:/"},
         'DESKTOP-G2QSULJ': {
@@ -59,7 +61,9 @@ def shared_drives(path):
 def mh_unbacked(path):
     host_nm_dict = {
         'dickie': {
-            'dumon': "D:/mh_unbacked"},
+            'dumon': "D:/mh_unbacked",
+            'matt_dumont': "D:/mh_unbacked"
+        },
         'Healey': {
             'Matt Hanson': "C:/matt_modelling_unbackedup"},
         'DESKTOP-G2QSULJ': {
@@ -105,7 +109,8 @@ def tempfiles(path):
 def add_basgra_nz_path():
     host_nm_dict = {
         'dickie': {
-             'dumon': r"C:\Users\dumon\python_projects\BASGRA_NZ_PY"
+            'matt_dumont': r'C:\Users\matt_dumont\PycharmProjects\BASGRA_NZ_PY',
+            'dumon': r"C:\Users\dumon\python_projects\BASGRA_NZ_PY",
         },
         'Healey': {
             'Matt Hanson': 'C:/Users/Matt Hanson/python_projects/BASGRA_NZ_PY'},
@@ -125,7 +130,8 @@ def add_basgra_nz_path():
 def get_vscn_dir():
     host_nm_dict = {
         'dickie': {
-            'dumon': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn"
+            'dumon': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn",
+            'matt_dumont': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn"
         },
         'Healey': {
             'Matt Hanson': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn"},
@@ -141,6 +147,7 @@ def get_vscn_dir():
         raise ValueError('{} not in established users for host {}'.format(user, host))
 
     return host[user]
+
 
 slmmac_dir = shared_drives('Z2003_SLMACC')
 slmmac_dir_unbacked = mh_unbacked('SLMACC_2020_norm')

@@ -80,7 +80,7 @@ def get_exceedence(site, mode, correct):
     return exceedence
 
 def add_exceedence_prob(impact_data, correct,
-                        impact_in_tons=False):  # todo how to handle for new mode-sites, this is the hard one....
+                        impact_in_tons=False):  # todo how to handle for new mode-sites, this is the hard one.... ?? don't understand
     """
 
     :param impact_data: the data to add impact to

@@ -101,8 +101,8 @@ def run_1year_basgra(bad_irr=True, start=0, end=None):
         save_daily_mult=False,
         verbose=False,
         mode_sites_mult=mode_sites,
-        re_run=False  # and additional safety
-
+        re_run=False,  # and additional safety
+        seed=102576037
     )
 
 
@@ -167,7 +167,7 @@ def get_1yr_data(bad_irr=True, good_irr=True, correct=False):
 
     if correct:
         data = pd.concat([good, bad])
-        data = corr_pg(data, mode_site=mode_sites) # todo update if run storage
+        data = corr_pg(data, mode_site=mode_sites)
         return data
     else:
         return pd.concat([good, bad])
@@ -345,11 +345,7 @@ def fix_old_1yr_runs(base_dir, change_storyline_time=False):
             # re-run add pgra
             add_pasture_growth_anaomoly_to_nc(p)
 
-mode_sites = ( # todo update to re-run only some
-        ('dryland', 'oxford'),
-        ('irrigated', 'eyrewell'),
-        ('irrigated', 'oxford'),
-    )
+mode_sites = default_mode_sites
 
 if __name__ == '__main__':
     run_chunks = []

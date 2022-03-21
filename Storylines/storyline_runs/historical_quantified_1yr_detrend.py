@@ -83,7 +83,8 @@ def run_pasture_growth_mp(re_run):
         save_daily_mult=True,
         verbose=False,
         re_run=re_run,
-        mode_sites_mult=mode_sites
+        mode_sites_mult=mode_sites,
+        seed=102576037
 
     )
 
@@ -118,15 +119,11 @@ def get_historical_1yr_pg_prob(site, mode):
     data = data.rename(columns=rename_dict)
     return data
 
-mode_sites = ( # todo modify to only re-run some
-        ('dryland', 'oxford'),
-        ('irrigated', 'eyrewell'),
-        ('irrigated', 'oxford'),
-    )
+mode_sites = default_mode_sites
 if __name__ == '__main__':
     re_run = False
-    make_st = False
-    run = False
+    make_st = True
+    run = True
     plot_export = True
     pg_prob = True
     if make_st:
@@ -136,5 +133,5 @@ if __name__ == '__main__':
     if plot_export:
         export_and_plot_data()
     if pg_prob:
-        for mode, site in default_mode_sites:
+        for mode, site in mode_sites:
             get_historical_1yr_pg_prob(site=site, mode=mode)
