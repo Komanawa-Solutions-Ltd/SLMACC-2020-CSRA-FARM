@@ -13,6 +13,7 @@ from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, c
     create_matrix_weather
 from Storylines.storyline_building_support import month_len
 from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growth, calc_pasture_growth_anomaly
+from Pasture_Growth_Modelling.basgra_parameter_sets import default_mode_sites
 
 # add basgra nz functions
 ksl_env.add_basgra_nz_path()
@@ -98,9 +99,9 @@ def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False, 
         if site == 'oxford' and mode == 'dryland':
             out = run_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, version=version)
         elif site == 'oxford' and (mode == 'irrigated' or 'store' in mode):
-            out = run_past_basgra_irrigated(site='oxford', version=version)
+            out = run_past_basgra_irrigated(site='oxford', version=version, mode=mode)
         elif site == 'eyrewell' and (mode == 'irrigated' or 'store' in mode):
-            out = run_past_basgra_irrigated(site='eyrewell', version=version)
+            out = run_past_basgra_irrigated(site='eyrewell', version=version, mode=mode)
         else:
             raise ValueError(f'wierd values for site,mode {site}-{mode}')
         run_date = datetime.datetime.now().isoformat()
@@ -206,18 +207,23 @@ def export_true_historical():
 
 
 if __name__ == '__main__':
-    for v in ['trended']: #no detrended for oxford...
-       t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version=v, recalc=True)
-       t, rd = get_historical_average_baseline('oxford', 'irrigated', [2024], 'PGR', version=v, recalc=True)
-       t, rd = get_historical_average_baseline('oxford', 'dryland', [2024], 'PGR', version=v, recalc=True)
+    for mode, site in default_mode_sites:
+        t, rd = get_historical_average_baseline(site, mode, years=[2024], recalc=False)
 
-    t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version='trended')
-    t2, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version='detrended2')
-    import matplotlib.pyplot as plt
+    old = False
+    if old:
+        for v in ['trended']: #no detrended for oxford...
+           t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version=v, recalc=True)
+           t, rd = get_historical_average_baseline('oxford', 'irrigated', [2024], 'PGR', version=v, recalc=True)
+           t, rd = get_historical_average_baseline('oxford', 'dryland', [2024], 'PGR', version=v, recalc=True)
 
-    plt.plot(t.month, t.PGR, label='trended')
-    plt.plot(t2.month, t2.PGR, label='detrended')
-    plt.legend()
-    plt.show()
-    export_true_historical()
-    pass
+        t, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version='trended')
+        t2, rd = get_historical_average_baseline('eyrewell', 'irrigated', [2024], 'PGR', version='detrended2')
+        import matplotlib.pyplot as plt
+
+        plt.plot(t.month, t.PGR, label='trended')
+        plt.plot(t2.month, t2.PGR, label='detrended')
+        plt.legend()
+        plt.show()
+        export_true_historical()
+        pass
