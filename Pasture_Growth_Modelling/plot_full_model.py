@@ -46,7 +46,7 @@ def plot_sims(data_paths, plot_ind=False, plt_vars=default_outvars, nindv=100, s
         figs[v], axs[v] = fig, ax = plt.subplots(figsize=figsize)
         ax.set_title(v)
         ax.set_xlabel('date')
-        ax.set_ylabel(f'{v} ({out_metadata[v]["unit"]})')
+        ax.set_ylabel(f'{v} ({out_metadata[v.upper()]["unit"]})')
 
     cmap = get_cmap('tab20')
     n_scens = len(data_paths)
@@ -94,7 +94,7 @@ def plot_sims(data_paths, plot_ind=False, plt_vars=default_outvars, nindv=100, s
         fig, ax = figs[v], axs[v]
         ax.set_title(v)
         ax.set_xlabel('date')
-        ax.set_ylabel(f'{v} ({out_metadata[v]["unit"]})')
+        ax.set_ylabel(f'{v} ({out_metadata[v.upper()]["unit"]})')
         ax.legend()
     if save_dir is not None:
         for v, fig in figs.items():

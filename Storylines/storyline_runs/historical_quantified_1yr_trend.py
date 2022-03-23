@@ -169,7 +169,7 @@ def get_historical_1yr_pg_prob(site, mode):
 
 
 mode_sites = default_mode_sites
-if __name__ == '__main__':
+if __name__ == '__main__': #todo check results
     re_run = False
     make_st = True
     run = True
