@@ -345,41 +345,39 @@ def fix_old_1yr_runs(base_dir, change_storyline_time=False):
             # re-run add pgra
             add_pasture_growth_anaomoly_to_nc(p)
 
+
 mode_sites = default_mode_sites
 
 if __name__ == '__main__':
     run_chunks = []
-    make_stories = True
-    run_basgra_bad = False
-    run_basgra_good = False
+    make_stories = False
+    run_basgra_bad = True
+    run_basgra_good = True
     extract_data_bad = True
     extract_data_good = True
+    start = 0
+    end = None
     if make_stories:
         make_1_year_storylines(bad_irr=True)
         make_1_year_storylines(bad_irr=False)
 
-    if run_basgra_bad:
-
+    if run_basgra_bad or run_basgra_good:
         t = input('are you sure you want to run this, it takes 8 days to run basgra y/n')
         if t != 'y':
             raise ValueError('stopped re-running')
 
+    if run_basgra_bad:
         import time
 
-        run_1year_basgra(bad_irr=True)
+        run_1year_basgra(bad_irr=True,  start=start, end=end)
 
         t = time.time()
 
         print((time.time() - t) / 60, 'minutes to run 140k * 3  sims')
     if run_basgra_good:
-
-        t = input('are you sure you want to run this, it takes 8 days to run basgra y/n')
-        if t != 'y':
-            raise ValueError('stopped re-running')
-
         import time
 
-        run_1year_basgra(bad_irr=False)
+        run_1year_basgra(bad_irr=False, start=start, end=end)
 
         t = time.time()
 

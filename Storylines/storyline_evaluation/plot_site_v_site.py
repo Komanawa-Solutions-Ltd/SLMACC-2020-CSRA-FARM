@@ -33,4 +33,6 @@ def plot_all_site_v_site(nyrs):
 
 
 if __name__ == '__main__':
-    plot_all_site_v_site([1, 2, 3, 5, 10])
+
+    plot_all_site_v_site([1])
+    # todo dadb plot_all_site_v_site([1, 2, 3, 5, 10])

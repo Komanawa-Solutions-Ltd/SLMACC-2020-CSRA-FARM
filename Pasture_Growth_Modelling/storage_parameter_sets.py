@@ -228,20 +228,22 @@ def get_store_reseed_trig_basal(site, mode):
 # todo perhaps run big suite over break
 # todo scripts that need to be re-run with new storage systems:
 # #### model runs ####
-# Storylines/storyline_runs/historical_quantified_1yr_detrend.py
-# Storylines\storyline_runs\historical_quantified_1yr_trend.py
-# Storylines/storyline_runs/run_random_suite.py
+# Storylines/storyline_runs/historical_quantified_1yr_detrend.py # have run
+# Storylines\storyline_runs\historical_quantified_1yr_trend.py # have run
+
+# Storylines/storyline_runs/run_random_suite.py #todo running small test suite
 # Storylines/storyline_runs/run_nyr_suite.py
 
 
 # #### exports and plots ####
-# Storylines/storyline_evaluation/plot_historical_detrended.py
+# Storylines/storyline_evaluation/plot_historical_trended.py # have run
+# Storylines/storyline_evaluation/plot_historical_detrended.py # have run
+
 # Storylines/storyline_evaluation/export_cum_percentile.py
-# Storylines/storyline_evaluation/plot_cumulative_historical_v_modelled.py
-# Storylines/storyline_evaluation/plot_historical_trended.py
 # Storylines\storyline_evaluation\plot_site_v_site.py
 # Storylines/storyline_evaluation/plots.py
 # Storylines/storyline_evaluation/storyline_slection/stories_to_ws_pg_threshold.py
+# Storylines/storyline_evaluation/plot_cumulative_historical_v_modelled.py
 
 if __name__ == '__main__':
     for k, v in site_mode_dep_params.items():

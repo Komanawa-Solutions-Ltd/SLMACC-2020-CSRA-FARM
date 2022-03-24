@@ -119,6 +119,8 @@ def _plot_cum(pgr, prob, step_size, site, mode, nyr, outdir, correct=False):
     return fig
 
 
+
+
 if __name__ == '__main__':
     for cor in [True, False]:
         yr1_cumulative_probability(correct=cor)

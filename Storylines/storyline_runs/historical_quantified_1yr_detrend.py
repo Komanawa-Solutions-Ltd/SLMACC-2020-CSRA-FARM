@@ -94,8 +94,8 @@ def export_and_plot_data():
                           patterns=[
                               os.path.join(base_pg_outdir, '*.nc'),
                           ])
-    for sm in ['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated']:
-        site, mode = sm.split('-')
+    for mode, site in default_mode_sites:
+        sm = f'{site}-{mode}'
         data = get_historical_1yr_pg_prob(sm.split('-')[0], sm.split('-')[1])
         data.to_csv(os.path.join(outputs_dir, f'IID_probs_pg.csv'))
         paths = glob.glob(os.path.join(base_pg_outdir, f'*{sm}.nc'))
