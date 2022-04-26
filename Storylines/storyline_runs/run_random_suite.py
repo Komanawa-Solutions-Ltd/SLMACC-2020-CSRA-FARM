@@ -225,7 +225,11 @@ def create_nyr_suite(nyr, use_default_seed=True,
         print('/n', mode, site)
         key = f'{site}-{mode}'
         np.random.seed(seed)
-        temp_p = 10 ** data_1y.loc[:, f'log10_prob_{mode}']
+
+        if 'store' in mode:
+            temp_p = 10 ** data_1y.loc[:, f'log10_prob_irrigated']
+        else:
+            temp_p = 10 ** data_1y.loc[:, f'log10_prob_{mode}']
         p = temp_p / temp_p.sum()
         idxs = np.random.choice(
             np.arange(len(data_1y), dtype=np.uint32),
@@ -369,7 +373,7 @@ if __name__ == '__main__':
     if run_basgra_bad:
         import time
 
-        run_1year_basgra(bad_irr=True,  start=start, end=end)
+        run_1year_basgra(bad_irr=True, start=start, end=end)
 
         t = time.time()
 
