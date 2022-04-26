@@ -231,15 +231,15 @@ def get_store_reseed_trig_basal(site, mode):
 # Storylines/storyline_runs/historical_quantified_1yr_detrend.py # have run
 # Storylines\storyline_runs\historical_quantified_1yr_trend.py # have run
 
-# Storylines/storyline_runs/run_random_suite.py #todo running small test suite
-# Storylines/storyline_runs/run_nyr_suite.py
+# Storylines/storyline_runs/run_random_suite.py # have run
+# Storylines/storyline_runs/run_nyr_suite.py # todo running!
 
 
 # #### exports and plots ####
 # Storylines/storyline_evaluation/plot_historical_trended.py # have run
 # Storylines/storyline_evaluation/plot_historical_detrended.py # have run
 
-# Storylines/storyline_evaluation/export_cum_percentile.py
+# Storylines/storyline_evaluation/export_cum_percentile.py # todo run next
 # Storylines\storyline_evaluation\plot_site_v_site.py
 # Storylines/storyline_evaluation/plots.py
 # Storylines/storyline_evaluation/storyline_slection/stories_to_ws_pg_threshold.py
