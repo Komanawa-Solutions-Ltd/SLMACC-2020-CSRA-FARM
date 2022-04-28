@@ -138,7 +138,11 @@ def plot_all_nyr(site, mode, nyr=1, num=20, outdir=None, other_scen=None,
     data = data.dropna()
     prg = get_pgr_prob_baseline_stiched(nyr, site, mode)
     prg = prg / 1000
-    x = data.loc[:, f'log10_prob_{mode}']
+    if 'store' in mode:
+        x = data.loc[:, f'log10_prob_irrigated']
+    else:
+        x = data.loc[:, f'log10_prob_{mode}']
+
     if other_scen is None:
         xs = x
     else:

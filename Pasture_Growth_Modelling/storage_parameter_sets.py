@@ -232,19 +232,21 @@ def get_store_reseed_trig_basal(site, mode):
 # Storylines\storyline_runs\historical_quantified_1yr_trend.py # have run
 
 # Storylines/storyline_runs/run_random_suite.py # have run
-# Storylines/storyline_runs/run_nyr_suite.py # todo running!
+# Storylines/storyline_runs/run_nyr_suite.py # have run
 
 
 # #### exports and plots ####
 # Storylines/storyline_evaluation/plot_historical_trended.py # have run
 # Storylines/storyline_evaluation/plot_historical_detrended.py # have run
 
-# Storylines/storyline_evaluation/export_cum_percentile.py # todo run next
-# Storylines\storyline_evaluation\plot_site_v_site.py
-# Storylines/storyline_evaluation/plots.py
+# Storylines/storyline_evaluation/export_cum_percentile.py # todo running
+# Storylines\storyline_evaluation\plot_site_v_site.py # have run
+# Storylines/storyline_evaluation/plots.py # todo running
 # Storylines/storyline_evaluation/storyline_slection/stories_to_ws_pg_threshold.py
 # Storylines/storyline_evaluation/plot_cumulative_historical_v_modelled.py
+# Storylines\final_plots\prob_and_pg_with_storage.py
 
+# todo review everything
 if __name__ == '__main__':
     for k, v in site_mode_dep_params.items():
         print(k, v['h2o_store_max_vol'])
