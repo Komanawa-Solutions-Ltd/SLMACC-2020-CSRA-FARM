@@ -681,10 +681,10 @@ if __name__ == '__main__':
     # autumn_drought_3_no_thresh()
 
     # autumn_drought_1_mon_thresh()
-    # autumn_drought_2_mon_thresh()
+    autumn_drought_2_mon_thresh()
     # autumn_drought_3_mon_thresh()
-    bad_stories_eyrewell()
-    # hurt_v1()
+    # bad_stories_eyrewell()
+    hurt_v1()
     # hurt_v2()
     # hurt_v3()
     pass #todo what do I need to run here!!!

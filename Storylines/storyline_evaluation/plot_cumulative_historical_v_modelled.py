@@ -86,6 +86,5 @@ def plot_all_comps(correct=False):
 
 
 if __name__ == '__main__':
-    # todo run after
     plot_all_comps(correct=False)
     plot_all_comps(correct=True)
