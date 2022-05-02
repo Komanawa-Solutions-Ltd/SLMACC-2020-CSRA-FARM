@@ -83,7 +83,10 @@ def plot_impact_for_sites(data, num, figsize, correct=False):
         print('making data density')
         x = data[k1]
         y = data[k2]
-        xi, yi, zi = make_density_xy(x, y, nbins=num)
+        try: # todo hack to get running
+            xi, yi, zi = make_density_xy(x, y, nbins=num)
+        except Exception:
+            continue
         print('finished making density')
         edgecolors = 'face'
         linewidth = 0

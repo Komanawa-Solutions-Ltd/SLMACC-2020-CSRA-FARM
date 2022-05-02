@@ -118,7 +118,11 @@ def get_most_probabile(site, mode, correct=False):
 
     data = pd.concat([good, bad])
     data = data.dropna()
-    minv, maxv = target_ranges[(mode, site)]
+    if 'store' in mode:
+        use_mode = 'irrigated'  # most probible does not change much when you add the irrigation range...
+    else:
+        use_mode = mode
+    minv, maxv = target_ranges[(use_mode, site)]
     data = data.loc[(minv <= data.loc[:, f'{site}-{mode}_pg_yr1']) & (data.loc[:, f'{site}-{mode}_pg_yr1'] <= maxv)]
     if correct:
         data = corr_pg(data)

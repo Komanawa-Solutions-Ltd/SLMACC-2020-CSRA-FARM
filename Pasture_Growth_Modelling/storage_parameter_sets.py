@@ -242,9 +242,9 @@ def get_store_reseed_trig_basal(site, mode):
 # Storylines/storyline_evaluation/export_cum_percentile.py # have run
 # Storylines\storyline_evaluation\plot_site_v_site.py # have run
 # Storylines/storyline_evaluation/plots.py # have run
-# Storylines/storyline_evaluation/storyline_slection/stories_to_ws_pg_threshold.py # todo run next... hard...
-# Storylines/storyline_evaluation/plot_cumulative_historical_v_modelled.py #todo running
-# Storylines\final_plots\prob_and_pg_with_storage.py # todo run next
+# Storylines/storyline_evaluation/storyline_slection/stories_to_ws_pg_threshold.py # todo running
+# Storylines/storyline_evaluation/plot_cumulative_historical_v_modelled.py # run
+# Storylines\final_plots\prob_and_pg_with_storage.py # have run
 
 # todo review everything
 if __name__ == '__main__':

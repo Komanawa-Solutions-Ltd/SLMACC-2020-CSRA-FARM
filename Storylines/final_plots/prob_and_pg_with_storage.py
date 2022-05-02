@@ -12,7 +12,7 @@ from Storylines.storyline_evaluation.storyline_characteristics_for_impact import
 base_outdir = os.path.join(ksl_env.slmmac_dir, 'final_plots')
 os.makedirs(base_outdir, exist_ok=True)
 
-plt_mode = [
+plt_modes = [
     'dryland',
     'irrigated',
     'store400',
@@ -20,10 +20,10 @@ plt_mode = [
     'store800',
 ]
 
-colors = [
+all_colors = [
     'wheat',
     'lightcoral',
-    'deepskyblue'
+    'deepskyblue',
     'cornflowerblue',
     'darkblue',
 
@@ -31,8 +31,8 @@ colors = [
 
 
 def prob_non_exceed(site, figsize=(10, 8), suffix='.png'):
-    plt_mode = deepcopy(plt_mode)
-    colors = deepcopy(colors)
+    plt_mode = deepcopy(plt_modes)
+    colors = deepcopy(all_colors)
     if site == 'eyrewell':
         plt_mode.remove('dryland')
         colors.remove('wheat')
@@ -73,8 +73,8 @@ def prob_non_exceed(site, figsize=(10, 8), suffix='.png'):
 
 
 def pg_boxplots(site, figsize=(10, 8), suffix='.png'):
-    plt_mode = deepcopy(plt_mode)
-    colors = deepcopy(colors)
+    plt_mode = deepcopy(plt_modes)
+    colors = deepcopy(all_colors)
     if site == 'eyrewell':
         plt_mode.remove('dryland')
         colors.remove('wheat')
@@ -137,5 +137,11 @@ def pg_boxplots(site, figsize=(10, 8), suffix='.png'):
 
 
 if __name__ == '__main__':
-    pass
-    # todo make plots
+    sites = ['eyrewell', 'oxford']
+    for site in sites:
+        print(site)
+        print('running prob_non_exceed')
+        prob_non_exceed(site)
+        print('running pg_boxplot')
+        pg_boxplots(site)
+

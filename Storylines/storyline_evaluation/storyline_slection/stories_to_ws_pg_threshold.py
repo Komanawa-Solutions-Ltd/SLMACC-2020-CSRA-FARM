@@ -206,11 +206,24 @@ def autumn_drought_2_mon_thresh():
             'oxford-dryland': None,
             'eyrewell-irrigated': None,
             'oxford-irrigated': None,
+            'eyrewell-store400': None,
+            'oxford-store400': None,
+            'eyrewell-store600': None,
+            'oxford-store600': None,
+            'eyrewell-store800': None,
+            'oxford-store800': None,
+
         },
         upper_bound={
             'oxford-dryland': None,
             'eyrewell-irrigated': None,
             'oxford-irrigated': None,
+            'eyrewell-store400': None,
+            'oxford-store400': None,
+            'eyrewell-store600': None,
+            'oxford-store600': None,
+            'eyrewell-store800': None,
+            'oxford-store800': None,
 
         },
 
@@ -573,11 +586,24 @@ def hurt_v1():
             'oxford-dryland': None,
             'eyrewell-irrigated': 11 * 1000,
             'oxford-irrigated': None,
+            'eyrewell-store400': None,
+            'oxford-store400': None,
+            'eyrewell-store600': None,
+            'oxford-store600': None,
+            'eyrewell-store800': None,
+            'oxford-store800': None,
+
         },
         upper_bound={
             'oxford-dryland': None,
             'eyrewell-irrigated': 12.5 * 1000,
             'oxford-irrigated': None,
+            'eyrewell-store400': None,
+            'oxford-store400': None,
+            'eyrewell-store600': None,
+            'oxford-store600': None,
+            'eyrewell-store800': None,
+            'oxford-store800': None,
 
         },
 
@@ -630,6 +656,7 @@ def hurt_v2():
 
     )
 
+
 def hurt_v3():
     storyline_subclusters(
 
@@ -664,9 +691,6 @@ def hurt_v3():
     )
 
 
-
-
-
 if __name__ == '__main__':
     # autumn_drought_1()
     # autumn_drought_2()
@@ -687,4 +711,4 @@ if __name__ == '__main__':
     hurt_v1()
     # hurt_v2()
     # hurt_v3()
-    pass #todo what do I need to run here!!!
+    pass  # todo what do I need to run here!!!
