@@ -19,6 +19,7 @@ from pathlib import Path
 import os
 from Climate_Shocks.climate_shocks_env import event_def_path, supporting_data_dir
 
+
 def SH_model_load_in(dat_filename, data_length):
     # Load in the SH wide model data
     # load in the data from file
@@ -88,6 +89,7 @@ def Line_based_correction(in_fit, in_data, in_model):
     out_data = abs(in_data + adjust_vals)
     return out_data, adjust_vals
 
+
 # below commmented out as running from python directly rather than from callable
 # if len(sys.argv) != 4:
 #     print("3 arguments are required, arg1: path to restriction record csv, arg2: path to  SHTemps.dat, "
@@ -95,13 +97,14 @@ def Line_based_correction(in_fit, in_data, in_model):
 #     sys.exit()
 
 # First load in the F Rest data
-#filename = r'C:\Users\sloth\Desktop\work\SLMACC-2020-CSRA\Climate_Shocks\supporting_data\restriction_record.csv'
+# filename = r'C:\Users\sloth\Desktop\work\SLMACC-2020-CSRA\Climate_Shocks\supporting_data\restriction_record.csv'
 filename = os.path.join(supporting_data_dir, 'restriction_record.csv')
 
 Data = pandas.read_csv(filename)
 IR = Data.get('flow')
+ir_org = Data.get('flow').copy()
 root_dir = os.path.dirname(os.path.dirname(__file__))
-#model_temp_filename = r'C:\Users\sloth\Desktop\work\weather-gen\SWG Full Package\SHTemps.dat'
+# model_temp_filename = r'C:\Users\sloth\Desktop\work\weather-gen\SWG Full Package\SHTemps.dat'
 model_temp_filename = os.path.join(root_dir, r'BS_work\SWG\SHTemps.dat')
 
 outdir = supporting_data_dir
@@ -117,22 +120,20 @@ IR_A = IR[IR_days]
 IR_A_dates = Model_dates[IR_days]
 IR_A_model = Model_data[IR_days]
 
-#Fit
+# Fit
 tmp_fit_coeff = special_curve_fit(IR_A, IR_A_dates, IR_A_model)
 Adj_Var_Point, adjustments = Line_based_correction(tmp_fit_coeff, IR_A, IR_A_model)
 
 # Add Wet days back to full vector
 tmp_points = np.array(IR)
 tmp_points[IR_days] = Adj_Var_Point
-tmp_points[tmp_points > 1] = 1
 
-Data['f_rest'] = tmp_points
-print(np.mean(Data['f_rest']))
-
+Data['flow'] = flow = tmp_points
+print(np.mean(Data['flow']))
 
 Data.to_csv(os.path.join(outdir, "flow_record_detrend.csv"), index=False)
 print(f"saved to {outdir}/flow_record_detrend.csv")
-#plot to check quality of fit
+# plot to check quality of fit
 line_vals = tmp_fit_coeff[0] + tmp_fit_coeff[1] * Model_data
 line_fit = curve_func([Model_dates, Model_data], *tmp_fit_coeff)
 
@@ -147,4 +148,11 @@ axs[2].plot(Model_dates, line_vals)
 axs[2].set_title('Linear fit')
 axs[2].set(xlabel='Time')
 plt.savefig(outdir + 'Smart_fit', dpi=1000, bbox_inches='tight')
-plt.show() # todo examine
+
+fig, (ax, ax2) = plt.subplots(2, sharex=True, figsize=(9, 3))
+ax.plot(Model_dates, ir_org, label='original', c='b')
+ax.plot(Model_dates, flow, label='detrend', c='r')
+ax2.plot(Model_dates, ir_org - flow)
+ax2.set_title('diff')
+ax.legend()
+plt.show()  # todo examine

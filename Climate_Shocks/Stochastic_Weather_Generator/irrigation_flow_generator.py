@@ -180,6 +180,7 @@ def examine_means(ext='png'):
 
 
 def get_irrigation_generator(recalc=False):
+    raise ValueError('#todo use the detrened flow data and set the seeed!!!!')
     nsims = 1e7
     nsims = int(nsims)
     input_data, block, sim_len, nmonths_comments = make_input_data_1month()
