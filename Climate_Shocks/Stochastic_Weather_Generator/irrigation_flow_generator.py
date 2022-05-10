@@ -190,7 +190,7 @@ def get_irrigation_generator(recalc=False):
     generator_path = os.path.join(baseoutdir, 'irrigation_gen.nc')
     boot = MovingBlockBootstrapGenerator(input_data=input_data, blocktype='truncnormal', block=block,
                                          nsims=nsims, data_path=generator_path, sim_len=sim_len, nblocksize=50,
-                                         save_to_nc=True, comments=comments, recalc=recalc)
+                                         save_to_nc=True, comments=comments, recalc=recalc) # todo add seed
     boot.create_1d(make_restriction_mean, suffix='rest', pass_if_exists=True)
 
     return boot
