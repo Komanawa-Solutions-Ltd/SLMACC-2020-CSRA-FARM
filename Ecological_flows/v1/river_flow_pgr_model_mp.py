@@ -11,7 +11,7 @@ from copy import deepcopy
 import multiprocessing
 import logging
 import psutil
-from Ecological_flows.river_flow_pgr_model import run_pasture_growth_river_flow, default_swg_dir, default_mode_sites, \
+from Ecological_flows.v1.river_flow_pgr_model import run_pasture_growth_river_flow, default_swg_dir, default_mode_sites, \
     default_riv_pasture_growth_dir, make_current_restrictions
 
 pgm_log_dir = os.path.join(default_riv_pasture_growth_dir, 'logs')

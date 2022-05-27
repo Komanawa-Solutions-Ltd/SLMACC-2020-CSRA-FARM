@@ -5,7 +5,7 @@
 import pandas as pd
 
 import ksl_env
-from Ecological_flows.river_flow_pgr_model import get_rest_river_output_from_storyline_path, make_current_restrictions
+from Ecological_flows.v1.river_flow_pgr_model import get_rest_river_output_from_storyline_path, make_current_restrictions
 import glob
 import numpy as np
 import os
