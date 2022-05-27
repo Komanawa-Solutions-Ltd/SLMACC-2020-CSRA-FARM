@@ -44,6 +44,7 @@ def run_IID(story_dict, outpath=None, verbose=False, comments='',
                                an event as or more extreme(low or high) than the median occurs.  P ranges from 0.5-0
                                storylines with a rest of 0 have a probability of 1 for the irrigation prob as these
                                occur only in non irrigation seasons
+    :param add_irr_prob: bool if False do not add irrigation probability to storyline probability
     :return:
     """
     base_dir = os.path.dirname(__file__)
