@@ -191,8 +191,12 @@ def create_nyr_suite(nyr, use_default_seed=True,
         n = int(2.5e8)
 
     data_1y = get_1yr_data(bad_irr=True, good_irr=True, correct=correct)
+    data_1y.reset_index(inplace=True)
+    data_1y.loc[:, 'ID'] = data_1y.loc[:, 'ID'] + '-' + data_1y.loc[:, 'irr_type']
+    data_1y.set_index('ID', inplace=True)
     assert isinstance(data_1y, pd.DataFrame)
     data_1y = data_1y.dropna()
+
     default_seeds = {
         2: 471121,
         3: 44383,
@@ -212,7 +216,7 @@ def create_nyr_suite(nyr, use_default_seed=True,
 
     mem = psutil.virtual_memory().available - 3e9  # leave 3 gb spare
     total_mem_needed = np.zeros(1).nbytes * n * nyr * 4
-    chunks = int(np.ceil(total_mem_needed / mem)) * 5
+    chunks = int(np.ceil(total_mem_needed / mem))
     print(f'running in {chunks} chunks')
     chunk_size = int(np.ceil(n / chunks))
 
@@ -278,6 +282,7 @@ def create_nyr_suite(nyr, use_default_seed=True,
         np.save(outpath, outdata.values)
         with open(outpath.replace('.npy', '.csv'), 'w') as f:
             f.write(','.join(outdata.columns))
+        np.save(outpath.replace('probs_pg', 'stories'), data_1y.index.values[idxs])
         if save_to_gdrive:
             print(f'saving {mode} - {site} to google drive')
             if correct:
@@ -286,11 +291,22 @@ def create_nyr_suite(nyr, use_default_seed=True,
                 outpath = os.path.join(gdrive_outdir, 'nyr', f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
 
             np.save(outpath, outdata.values)
+            np.save(outpath.replace('probs_pg', 'stories'), data_1y.index.values[idxs])
             with open(outpath.replace('.npy', '.csv'), 'w') as f:
                 f.write(','.join(outdata.columns))
 
         print(f'finished {mode} - {site}')
         gc.collect()
+
+
+def get_nyr_idxs(nyr, site, mode, correct=False):
+    if correct:
+        outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr_correct',
+                               f'IID_stories_{nyr}y_{site}-{mode}.npy')
+    else:
+        outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr',
+                               f'IID_stories_{nyr}y_{site}-{mode}.npy')
+    out = np.load(outpath)
 
 
 def get_nyr_suite(nyr, site, mode, correct=False):

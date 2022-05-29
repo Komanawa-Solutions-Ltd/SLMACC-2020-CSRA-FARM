@@ -18,6 +18,7 @@ from Storylines.storyline_runs.run_random_suite import generate_random_suite
 
 base_outdir = os.path.join(ksl_env.slmmac_dir, 'eco_modelling', 'random')
 
+
 def recalc_story_prob(storyline_dict, new_rests):
     """
     recalcs the storyline probablities for all the new flow regimes
@@ -156,13 +157,14 @@ def get_nyr_lines(prob_data, nyr, site, mode, recalc=False):
     hdf_path = os.path.join(base_outdir, f'{nyr}_yr_{site}_{mode}_random_probs.hdf')
     if os.path.exists(hdf_path) and not recalc:
         data = pd.read_hdf(hdf_path, 'random')
-        # todo need to match 1yr storyline with prob!
+    else:
+
+        # todo need to match 1yr storyline with prob!, requires re-run of nyr and saving of prob files
 
     raise NotImplementedError
 
 
 def main(recalc=False):
-
     hdf_path = os.path.join(base_outdir, 'random_probs.hdf')
     if os.path.exists(hdf_path) and not recalc:
         data = pd.read_hdf(hdf_path, 'random')
@@ -179,11 +181,27 @@ def main(recalc=False):
 
         # spot check the storylines to ensure they are the same (they should be)
         seed = 4668324
-        idxs = np.random.randint(0, len(sl_dict), 5000)
+        idxs = np.random.randint(0, len(sl_dict), 5000)  # start at 5 due to a mixup on my end!
         keys = np.array(sl_dict.keys())[idxs]
         for k in keys:
+            # spot check a handful of random saved storylines on dickie and use them.
+            if 'bad' in k:
+                basedir = r'D:\mh_unbacked\SLMACC_2020_norm\temp_storyline_files\random_bad_irr'  # only on dickie
+            else:
+                basedir = r'D:\mh_unbacked\SLMACC_2020_norm\temp_storyline_files\random_bad_irr'  # only on dickie
+
+            p = os.path.join(base_outdir, '-'.join(k.split('-')[0:2] + '.csv'))
+            temp = pd.read_csv(p, index_col=0)
+            t = {'rest': 'float64',
+                 'rest_per': 'float64',
+                 'year': 'int64',
+                 'month': 'int64'}
+            for e, v in t.items():
+                temp.loc[:, e] = temp.loc[:, e].astype(v)
+            assert (temp.values == sl_dict[k].values).all(), (f'sl: {k} does not match saved record, '
+                                                              f'\n{temp.values}\n\n{sl_dict[k].values}')
+
             raise NotImplementedError
-            # todo spot check a handful of random saved storylines on dickie and use them.
 
         data = recalc_story_prob(sl_dict, list(new_flows.keys()))
         data.to_csv(os.path.join(base_outdir, 'random_probs.csv'))
