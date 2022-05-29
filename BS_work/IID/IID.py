@@ -139,8 +139,7 @@ def run_IID(story_dict, outpath=None, verbose=False, comments='',
                                 if y.sum() == 0:
                                     prob += np.log10(1)
                                 else:
-                                    prob += np.log10(0.5 - np.abs( #todo should have been 2x
-                                        0.5 - f(month1["rest"])))
+                                    prob += np.log10(0.5 - np.abs(0.5 - f(month1["rest"])))
                         else:
                             print(k, "no irrigation restriction CDF for this disaggregation due to lack of data")
                     else:

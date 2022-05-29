@@ -1,5 +1,5 @@
 """
-created matt_dumont 
+created matt_dumont
 on: 27/05/22
 """
 import pandas as pd
@@ -16,6 +16,7 @@ from Ecological_flows.v2.alternate_restrictions import new_flows, make_new_rest_
     alternate_rest_dir
 from Storylines.storyline_runs.run_random_suite import generate_random_suite
 
+base_outdir = os.path.join(ksl_env.slmmac_dir, 'eco_modelling', 'random')
 
 def recalc_story_prob(storyline_dict, new_rests):
     """
@@ -53,6 +54,9 @@ def recalc_story_prob(storyline_dict, new_rests):
             prob = map_storyline_frac_to_prob(sl, rest_mapper=rest_mappers[name])
             prob[prob > 0] = np.log10(0.5 - np.abs(0.5 - prob[prob > 0]))
             outdata.loc[k, f'{name}_rest_prob'] = prob.sum()
+
+    for name in list(new_rests) + ['base']:
+        outdata.loc[:, f'{name}_rest_prob'] += outdata.loc[:, "log10_prob_weather"]
 
     return outdata
 
@@ -95,12 +99,11 @@ def export_cum_percentile(prob_data, nyr, outdir, step_size=0.1):
             continue
 
         if nyr == 1:
-            data = get_1yr_data(bad_irr=True, good_irr=True)
+            data = get_1yr_lines(prob_data)
+
         else:
             print('reading data')
-            data = get_nyr_suite(nyr, site=site, mode=mode)
-        # todo integrate prob_data to data via ID (need to add irrigation status to ID of data)
-        # todo check that dryland prob and irrigated prob match.
+            data = get_nyr_lines(prob_data=prob_data, nyr=nyr, site=site, mode=mode)
 
         data.dropna(inplace=True)
         y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
@@ -110,8 +113,7 @@ def export_cum_percentile(prob_data, nyr, outdir, step_size=0.1):
         outdata.index.name = 'probability'
 
         for name in list(new_flows.keys()) + ['base']:
-            # todo need to get the new probabilities (or all probablities)
-            x = None  # todo place holder
+            x = data.loc[:, f'{name}_rest_prob']
 
             cum_pgr, cum_prob = calc_cumulative_impact_prob(pgr=y,
                                                             prob=x, stepsize=step_size,
@@ -128,12 +130,38 @@ def export_cum_percentile(prob_data, nyr, outdir, step_size=0.1):
         outdata.to_csv(os.path.join(outdir, f'{site}-{mode}_new_rest_cumulative_prob.csv'))
 
 
-def plot_export_prob_change_stats(prob_data):  # todo what do I want to do here?
+def plot_export_prob_change_stats(prob_data):
+    # todo what do I want to do here?, probably need to see the data
+    # before I can sort it
+    raise NotImplementedError
+
+
+def get_1yr_lines(prob_data):
+    data = get_1yr_data(bad_irr=True, good_irr=True)
+    data.reset_index(inplace=True)
+    data.loc[:, 'ID'] = data.loc[:, 'ID'] + '-' + data.loc[:, 'irr_type']
+    data = pd.merge(data, prob_data, left_index=True, right_index=True)
+    # join weather and irrigaiton probs
+
+    assert np.isclose(data.loc[:, 'log10_prob_irrigated'],
+                      data.loc[:, 'base_rest_prob']).all(), 'irrigated probabilities do not match'
+    assert np.isclose(data.loc[:, 'log10_prob_dryland'],
+                      data.loc[:, "log10_prob_weather"]).all(), 'dry land probabilities do not match'
+    return data
+
+
+def get_nyr_lines(prob_data, nyr, site, mode, recalc=False):
+    yr1 = get_1yr_lines(prob_data)
+    nyr = get_nyr_suite(nyr=nyr, site=site, mode=mode)
+    hdf_path = os.path.join(base_outdir, f'{nyr}_yr_{site}_{mode}_random_probs.hdf')
+    if os.path.exists(hdf_path) and not recalc:
+        data = pd.read_hdf(hdf_path, 'random')
+        # todo need to match 1yr storyline with prob!
+
     raise NotImplementedError
 
 
 def main(recalc=False):
-    base_outdir = os.path.join(ksl_env.slmmac_dir, 'eco_modelling', 'random')
 
     hdf_path = os.path.join(base_outdir, 'random_probs.hdf')
     if os.path.exists(hdf_path) and not recalc:
@@ -148,8 +176,14 @@ def main(recalc=False):
         storylines = generate_random_suite(n, use_default_seed=True, save=False, return_story=True,
                                            bad_irr=False)
         sl_dict.update({f'rsl-{k:06d}-good': v for k, v in enumerate(storylines)})
-        # todo spot check the storylines to ensure they are the same (they should be), probably best to read in
-        # a handful of random saved storylines on dickie and use them.
+
+        # spot check the storylines to ensure they are the same (they should be)
+        seed = 4668324
+        idxs = np.random.randint(0, len(sl_dict), 5000)
+        keys = np.array(sl_dict.keys())[idxs]
+        for k in keys:
+            raise NotImplementedError
+            # todo spot check a handful of random saved storylines on dickie and use them.
 
         data = recalc_story_prob(sl_dict, list(new_flows.keys()))
         data.to_csv(os.path.join(base_outdir, 'random_probs.csv'))
