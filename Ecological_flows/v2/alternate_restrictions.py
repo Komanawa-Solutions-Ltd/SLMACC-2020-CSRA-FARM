@@ -19,21 +19,23 @@ new_flows = (
     ()  # todo need to make these
 )
 
-new_flows = {f'a{a}-mf{m}': (a, m) for a, m in new_flows}
+new_flows = {f'a{a}-mf{m}': (a, m) for a, m in new_flows}  # todo maybe new names
 
 
-def naturalise_historical_flow():  # todo
+def naturalise_historical_flow():
     """
     just natualise for WIL scheme
     :return:
     """
     start_year = 1999
     data = get_restriction_record()
-    irrigation_start =
+    irrigation_start = 244  # DOY, ignoreing leap years... cause who cares
+    irrigation_stop = 121  # doy, ignoreing leap years... cause who cares
+    data.loc[:, 'nat'] = data.loc[:, 'flow']
+    idx = (data.year >= start_year) & ((data.doy <= irrigation_stop) | (data.doy >= irrigation_start))
+    data.loc[idx, 'nat'] += data.loc[idx, 'take']
 
-    # todo need to plot this and the other to see it (use the thing I am doing on wanganui.)
-
-    raise NotImplementedError
+    return data
 
 
 def make_new_rest_record(name, nat):  # todo
@@ -104,7 +106,7 @@ def get_new_flow_rest_record(name, version):
             'flow': float,
             'take': float,
         }
-        data = pd.read_csv(data_path, dtype=int_keys)
+        data = pd.read_csv(path, dtype=int_keys)
         data.loc[:, 'date'] = pd.to_datetime(data.loc[:, 'date'], format=dt_format)
         data.set_index('date', inplace=True)
         data.sort_index(inplace=True)
@@ -113,5 +115,6 @@ def get_new_flow_rest_record(name, version):
 
 
 if __name__ == '__main__':
+    naturalise_historical_flow()
     for f in new_flows:  # todo run first
         make_new_rest_data(f)
