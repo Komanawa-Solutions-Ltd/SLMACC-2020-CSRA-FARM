@@ -268,45 +268,62 @@ def create_nyr_suite(nyr, use_default_seed=True,
             for n in range(nyr):
                 outdata.loc[:, f'scen_{n + 1}'] = idxs[:, n]
 
-        print(outdata.values.nbytes * 1e-9, f'gb for {mode} - {site}')
-        print(outdata.dtypes)
-        print(f'saving {mode} - {site} to local drive')
+        print(f'saving {mode} - {site} to local drive for {nyr}y')
         if correct:
             outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr_correct',
                                    f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+            outpath_idx = os.path.join(os.path.dirname(random_pg_dir), 'nyr_correct',
+                                       f'IID_stories_{nyr}y_{mode}.npy')
 
         else:
             outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr', f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+            outpath_idx = os.path.join(os.path.dirname(random_pg_dir), 'nyr', f'IID_stories_{nyr}y_{mode}.npy')
+
         if not os.path.exists(os.path.dirname(outpath)):
             os.makedirs(os.path.dirname(outpath))
         np.save(outpath, outdata.values)
         with open(outpath.replace('.npy', '.csv'), 'w') as f:
             f.write(','.join(outdata.columns))
-        np.save(outpath.replace('probs_pg', 'stories'), data_1y.index.values[idxs])
+        if 'store' not in mode:
+            np.save(outpath_idx, idxs)
         if save_to_gdrive:
             print(f'saving {mode} - {site} to google drive')
             if correct:
                 outpath = os.path.join(gdrive_outdir, 'nyr_correct', f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+                outpath_idx = os.path.join(gdrive_outdir, 'nyr_correct',
+                                           f'IID_stories_{nyr}y_{mode}.npy')
             else:
                 outpath = os.path.join(gdrive_outdir, 'nyr', f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+                outpath_idx = os.path.join(gdrive_outdir, 'nyr', f'IID_stories_{nyr}y_{mode}.npy')
 
             np.save(outpath, outdata.values)
-            np.save(outpath.replace('probs_pg', 'stories'), data_1y.index.values[idxs])
+            if 'store' not in mode:
+                np.save(outpath_idx, idxs)
             with open(outpath.replace('.npy', '.csv'), 'w') as f:
                 f.write(','.join(outdata.columns))
 
         print(f'finished {mode} - {site}')
         gc.collect()
-
-
-def get_nyr_idxs(nyr, site, mode, correct=False):
     if correct:
-        outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr_correct',
-                               f'IID_stories_{nyr}y_{site}-{mode}.npy')
+        outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr_correct', f'index_{nyr}y.csv')
     else:
-        outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr',
-                               f'IID_stories_{nyr}y_{site}-{mode}.npy')
-    out = np.load(outpath)
+        outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr', f'index_{nyr}y.csv')
+    pd.Series(data_1y.index).to_csv(outpath)
+
+
+def get_nyr_idxs(nyr, mode, correct=False):
+    if correct:
+        dir = os.path.join(os.path.dirname(random_pg_dir), 'nyr_correct')
+    else:
+        dir = os.path.join(os.path.dirname(random_pg_dir), 'nyr')
+
+    if 'store' in mode:
+        mode = 'irrigated'
+
+    indexes = pd.read_csv(os.path.join(dir, f'index_{nyr}y.csv')).loc[:, 'ID'].values
+    stories = np.load(os.path.join(dir, f'IID_stories_{nyr}y_{mode}.npy'))
+    stories = indexes[stories]
+    return stories
 
 
 def get_nyr_suite(nyr, site, mode, correct=False):

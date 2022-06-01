@@ -2,13 +2,15 @@
 created matt_dumont
 on: 27/05/22
 """
+import matplotlib.pyplot as plt
+from matplotlib.cm import get_cmap
 import pandas as pd
 import numpy as np
 import os
 from scipy.interpolate import interp1d
 import ksl_env
 from Storylines.storyline_building_support import default_mode_sites
-from Storylines.storyline_runs.run_random_suite import get_1yr_data, get_nyr_suite
+from Storylines.storyline_runs.run_random_suite import get_1yr_data, get_nyr_suite, get_nyr_idxs
 from Storylines.irrigation_mapper import get_irr_by_quantile
 from BS_work.IID.IID import run_IID
 from Storylines.storyline_evaluation.storyline_eval_support import calc_cumulative_impact_prob
@@ -17,6 +19,7 @@ from Ecological_flows.v2.alternate_restrictions import new_flows, make_new_rest_
 from Storylines.storyline_runs.run_random_suite import generate_random_suite
 
 base_outdir = os.path.join(ksl_env.slmmac_dir, 'eco_modelling', 'random')
+fig_size = (10,8)  # todo
 
 
 def recalc_story_prob(storyline_dict, new_rests):
@@ -84,7 +87,7 @@ def map_storyline_frac_to_prob(story, rest_mapper):
     return np.array(out)
 
 
-def export_cum_percentile(prob_data, nyr, outdir, step_size=0.1):
+def export_cum_percentile(prob_data, nyr, outdir, step_size=0.1, recalc=False):
     """
     exports the cumulative probabilty for the new irrigation mappers (and the base value)
     :param nyr:
@@ -95,7 +98,14 @@ def export_cum_percentile(prob_data, nyr, outdir, step_size=0.1):
     prob_data = prob_data.copy(deep=True)
     if not os.path.exists(outdir):
         os.makedirs(outdir)
+    out = {}
     for mode, site in default_mode_sites:
+        hdf_path = os.path.join(outdir, f'{site}-{mode}_new_rest_cumulative_prob.hdf')
+        if os.path.exists(hdf_path) and not recalc:
+            data = pd.read_hdf(hdf_path, 'random')
+            out[(site, mode)] = data
+            continue
+
         if mode == 'dryland':
             continue
 
@@ -104,7 +114,7 @@ def export_cum_percentile(prob_data, nyr, outdir, step_size=0.1):
 
         else:
             print('reading data')
-            data = get_nyr_lines(prob_data=prob_data, nyr=nyr, site=site, mode=mode)
+            data = get_nyr_lines(prob_data=prob_data, nyr=nyr, site=site, mode=mode, recalc=recalc)
 
         data.dropna(inplace=True)
         y = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
@@ -129,11 +139,60 @@ def export_cum_percentile(prob_data, nyr, outdir, step_size=0.1):
             outdata.loc[:, f'{name}_exceedance_pg'] = f(prob)
 
         outdata.to_csv(os.path.join(outdir, f'{site}-{mode}_new_rest_cumulative_prob.csv'))
+        outdata.to_hdf(hdf_path, 'random')
+        out[(site, mode)] = outdata
+
+    return out
+
+
+def get_colors(vals, cmap_name='tab20'):
+    n_scens = len(vals)
+    if n_scens < 20:
+        cmap = get_cmap(cmap_name)
+        colors = [cmap(e / (n_scens + 1)) for e in range(n_scens)]
+    else:
+        colors = []
+        i = 0
+        cmap = get_cmap(cmap_name)
+        for v in vals:
+            colors.append(cmap(i / 20))
+            i += 1
+            if i == 20:
+                i = 0
+    return colors
 
 
 def plot_export_prob_change_stats(prob_data):
+    data = get_1yr_lines(prob_data)
+    # todo do I need density?
+    # plot new vs old prob
+    for name in list(new_flows.keys()):
+        fig, ax = plt.subplots(figsize=fig_size)
+        y = data.loc[:, f'{name}_rest_prob'] - data.loc[:, "log10_prob_weather"]
+        x = data.loc[:, f'base_rest_prob'] - data.loc[:, "log10_prob_weather"]
+        ax.scatter(x, y)
+        ax.set_ylable(f'{name}_rest_prob')
+        ax.set_xlable(f'base_rest_prob')
+
+    # todo plot pg (xaxsis) vs prob(new)/prob(base)
+    for mode, site in default_mode_sites:
+        if mode == 'dryland':
+            continue
+        fig, ax = plt.subplots(figsize=fig_size)
+        x = data[f'{site}-{mode}_pg_yr{nyr}'] / 1000
+        colors = get_colors(new_flows.keys())
+
+        for c, name in zip(list(new_flows.keys()), colors):
+            # recall that probablities are log10(prob)
+            y = 10 ** ((data.loc[:, f'{name}_rest_prob'] - data.loc[:, "log10_prob_weather"])
+                       - (data.loc[:, f'base_rest_prob'] - data.loc[:, "log10_prob_weather"]))
+            ax.scatter(x, y, label=name, c=c)
+        ax.set_title(f'{site} - {mode}')
+        ax.set_ylable(f'scenario rest prob / base rest prob')
+        ax.set_xlable(f'Pasture growth (Tons DM/yr)')
+        ax.legend()
     # todo what do I want to do here?, probably need to see the data
-    # before I can sort it
+    # todo save figs
     raise NotImplementedError
 
 
@@ -152,14 +211,40 @@ def get_1yr_lines(prob_data):
 
 
 def get_nyr_lines(prob_data, nyr, site, mode, recalc=False):
-    yr1 = get_1yr_lines(prob_data)
-    nyr = get_nyr_suite(nyr=nyr, site=site, mode=mode)
+    nyr = get_nyr_suite(nyr=nyr, site=site, mode=mode).loc[:, [f'{site}-{mode}_pg_yr{nyr}']]
+    nyr_idxs = get_nyr_idxs(nyr=nyr, mode=mode)
     hdf_path = os.path.join(base_outdir, f'{nyr}_yr_{site}_{mode}_random_probs.hdf')
     if os.path.exists(hdf_path) and not recalc:
         data = pd.read_hdf(hdf_path, 'random')
+        return data
     else:
+        for name in list(new_flows.keys()) + ['base']:
+            key = f'{name}_rest_prob'
+            probs = prob_data.loc[nyr_idxs.flatten, key].values.reshape(nyr_idxs.shape)
+            nyr.loc[:, key] = probs.sum(axis=1)
+        nyr.to_hdf(hdf_path, 'random')
+    return nyr
 
-        # todo need to match 1yr storyline with prob!, requires re-run of nyr and saving of prob files
+
+def plot_exceedence_prob(nyr, data):
+    for mode, site in default_mode_sites:
+        if mode == 'dryland':
+            continue
+        cum_data = data[(site, mode)]
+        names = ['base'] + list(new_flows.keys())
+        colors = get_colors(names)
+        fig, ax = plt.subplots(figsize=fig_size)
+
+        # cum_data keys are f'{name}_exceedance_pg' or f'{name}_non-exceedance_pg'
+
+        for k, c in zip(names, colors):
+            ax.plot(cum_data.loc[:, f'{k}_exceedance_pg'], cum_data.index, c=c, label=f'{k}')
+        ax.legend()
+        ax.set_title('exceedence probability')
+        ax.set_yable('probability')
+        ax.set_xable(f'pasture growth tons/{nyr} y')
+
+        # todo plot, save
 
     raise NotImplementedError
 
@@ -181,7 +266,8 @@ def main(recalc=False):
 
         # spot check the storylines to ensure they are the same (they should be)
         seed = 4668324
-        idxs = np.random.randint(0, len(sl_dict), 5000)  # start at 5 due to a mixup on my end!
+        np.random.seed(seed)
+        idxs = np.random.randint(0, len(sl_dict), 5000)
         keys = np.array(sl_dict.keys())[idxs]
         for k in keys:
             # spot check a handful of random saved storylines on dickie and use them.
@@ -190,7 +276,7 @@ def main(recalc=False):
             else:
                 basedir = r'D:\mh_unbacked\SLMACC_2020_norm\temp_storyline_files\random_bad_irr'  # only on dickie
 
-            p = os.path.join(base_outdir, '-'.join(k.split('-')[0:2] + '.csv'))
+            p = os.path.join(basedir, '-'.join(k.split('-')[0:2] + '.csv'))
             temp = pd.read_csv(p, index_col=0)
             t = {'rest': 'float64',
                  'rest_per': 'float64',
@@ -200,8 +286,6 @@ def main(recalc=False):
                 temp.loc[:, e] = temp.loc[:, e].astype(v)
             assert (temp.values == sl_dict[k].values).all(), (f'sl: {k} does not match saved record, '
                                                               f'\n{temp.values}\n\n{sl_dict[k].values}')
-
-            raise NotImplementedError
 
         data = recalc_story_prob(sl_dict, list(new_flows.keys()))
         data.to_csv(os.path.join(base_outdir, 'random_probs.csv'))
@@ -213,4 +297,6 @@ def main(recalc=False):
     # export exceedence probs
     poss_yrs = [1, 2, 3, 5, 10]
     for y in poss_yrs:
-        export_cum_percentile(data, y, os.path.join(base_outdir, 'exceedence', f'exceedence_{y}yr'))
+        cum_data = export_cum_percentile(data, y, os.path.join(base_outdir, 'exceedence', f'exceedence_{y}yr'),
+                                         recalc=recalc)
+        plot_exceedence_prob(y, cum_data)

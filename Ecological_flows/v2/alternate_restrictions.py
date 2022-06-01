@@ -10,6 +10,7 @@ import subprocess
 import sys
 from Climate_Shocks.climate_shocks_env import event_def_path, supporting_data_dir
 from Storylines.irrigation_mapper import get_irr_by_quantile
+from Climate_Shocks.get_past_record import get_restriction_record
 
 alternate_rest_dir = os.path.join(ksl_env.proj_root, 'Ecological_flows/v2/alternate_restrictions')
 
@@ -25,7 +26,7 @@ def naturalise_historical_flow():  # todo
     raise NotImplementedError
 
 
-def make_new_rest_record(name):  # todo
+def make_new_rest_record(name, nat):  # todo
     """
     convert naturalised flow record into restriction record
     :param name: name of the scenario see new_flows variable
@@ -47,7 +48,7 @@ def make_new_rest_data(name):
 
     # make the new restriction record and save to file
     rest_data = os.path.join(alternate_rest_dir, f'{name}-restriction_record.csv')
-    temp = make_new_rest_record(name)
+    temp = make_new_rest_record(name, nat)
     temp.to_csv(rest_data)
 
     # detrend the new restriction record
@@ -63,6 +64,21 @@ def make_new_rest_data(name):
     # make restriction mappers:
     irr_quantile_dir = os.path.join(alternate_rest_dir, f'{name}-rest_mapper')
     get_irr_by_quantile(recalc=True, outdir=irr_quantile_dir, rest_path=detrend_rest)
+
+
+def get_new_flow_rest_record(name, version):  # todo
+    """
+
+    :param name: flow name (see new_flows) or 'base'
+    :param version: trended v detrended
+    :return:
+    """
+
+    if name == 'base':
+        rest = get_restriction_record(version=version)
+        return rest
+    else:
+        raise NotImplementedError
 
 
 if __name__ == '__main__':
