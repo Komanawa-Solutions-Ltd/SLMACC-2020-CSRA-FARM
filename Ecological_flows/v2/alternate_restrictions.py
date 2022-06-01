@@ -23,6 +23,16 @@ new_flows = {f'a{a}-mf{m}': (a, m) for a, m in new_flows}
 
 
 def naturalise_historical_flow():  # todo
+    """
+    just natualise for WIL scheme
+    :return:
+    """
+    start_year = 1999
+    data = get_restriction_record()
+    irrigation_start =
+
+    # todo need to plot this and the other to see it (use the thing I am doing on wanganui.)
+
     raise NotImplementedError
 
 
@@ -66,7 +76,7 @@ def make_new_rest_data(name):
     get_irr_by_quantile(recalc=True, outdir=irr_quantile_dir, rest_path=detrend_rest)
 
 
-def get_new_flow_rest_record(name, version):  # todo
+def get_new_flow_rest_record(name, version):
     """
 
     :param name: flow name (see new_flows) or 'base'
@@ -78,7 +88,28 @@ def get_new_flow_rest_record(name, version):  # todo
         rest = get_restriction_record(version=version)
         return rest
     else:
-        raise NotImplementedError
+        if version == 'trended':
+            path = os.path.join(alternate_rest_dir, f'{name}-restriction_record.csv')
+        elif version == 'detrended':
+            path = os.path.join(alternate_rest_dir, f'{name}-detrend_restriction_record.csv')
+        else:
+            raise ValueError(f'unexpected value for version: {version}')
+        dt_format = '%Y-%m-%d'
+        int_keys = {
+            'day': int,
+            'doy': int,
+            'month': int,
+            'year': int,
+            'f_rest': float,
+            'flow': float,
+            'take': float,
+        }
+        data = pd.read_csv(data_path, dtype=int_keys)
+        data.loc[:, 'date'] = pd.to_datetime(data.loc[:, 'date'], format=dt_format)
+        data.set_index('date', inplace=True)
+        data.sort_index(inplace=True)
+
+        return data
 
 
 if __name__ == '__main__':

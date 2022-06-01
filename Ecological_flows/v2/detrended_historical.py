@@ -2,6 +2,8 @@
 created matt_dumont 
 on: 27/05/22
 """
+import itertools
+
 import ksl_env
 from pathlib import Path
 import pickle
@@ -18,13 +20,9 @@ from Storylines.storyline_evaluation.storyline_eval_support import calc_cumulati
 ksl_env.add_basgra_nz_path()
 from basgra_python import run_basgra_nz
 
-# todo set up and run the PG model for the scenarios.
-# todo cumulative probabilities for n year resampling
-# todo after random? no probably need to do it now...
-
 base_outdir = Path(ksl_env.slmmac_dir).joinpath('eco_modelling', 'historical_detrended')
 base_outdir.mkdir(exist_ok=True)
-
+figsize = (16.5, 9.25)
 
 def run_past_basgra_irrigated(site='eyrewell', reseed=True, version='trended', mode='irrigated',
                               flow_version='base'):
@@ -49,6 +47,7 @@ def run_past_basgra_irrigated(site='eyrewell', reseed=True, version='trended', m
 
         pg = pd.DataFrame(calc_pasture_growth(out, days_harvest, mode='from_yield', resamp_fun='mean', freq='1d'))
         out.loc[:, 'pg'] = pg.loc[:, 'pg']
+        out.loc[:, 'season'] = y
         all_out.append(out)
 
     all_out = pd.concat(all_out)
@@ -85,7 +84,8 @@ def get_run_basgra_for_historical_new_flows(version, recalc=False):
     return out
 
 
-def get_make_cumulative_prob_historical(nyr, site, mode, flow_name, version, sequential, recalc=False):
+def get_make_cumulative_prob_historical(nyr, site, mode, flow_name, version, sequential, recalc=False,
+                                        recalc_basgra=False):
     pickle_path = base_outdir.joinpath('pickles', f'new_flow_cumulative_{site}-{mode}-{version}-{nyr}-{sequential}.hdf')
     pickle_path.parent.mkdir(exist_ok=True)
 
@@ -93,10 +93,12 @@ def get_make_cumulative_prob_historical(nyr, site, mode, flow_name, version, seq
         out = pd.read_hdf(pickle_path, 'historical')
         return out
 
-    data = get_run_basgra_for_historical_new_flows(version, recalc=recalc)
-    pgr_key = None  # todo how does this work, what is the annual value..?
-    temp_data = [(mode, site, flow_name)]  # todo do I need to groupby year, probably, unit change to tons?
+    data = get_run_basgra_for_historical_new_flows(version, recalc=recalc_basgra)
+    pgr_key = pg
+    temp_data = [(mode, site, flow_name)]
     assert isinstance(temp_data, pd.DataFrame)
+    temp_data = temp_data.groupby('season').sum()
+    temp_data.loc[:, pgr_key] *= 1 / 1000  # change unit to tons
     if nyr == 1:
         pgr = temp_data.loc[:, pgr_key]
         prob = np.zeros(pgr.shape) + 1
@@ -112,12 +114,47 @@ def get_make_cumulative_prob_historical(nyr, site, mode, flow_name, version, seq
 
     cum_pgr, cum_prob = calc_cumulative_impact_prob(pgr=pgr,
                                                     prob=prob, stepsize=0.1,
-                                                    more_production_than=True)  # todo which more_production?
-    out = pd.DataFrame({'prob': cum_prob, 'pgr': cum_pgr})  # todo name exceed or non-exceed
+                                                    more_production_than=False)
+    out = pd.DataFrame({'prob': cum_prob, 'pgr_non_exceed': cum_pgr})
     out.to_hdf(pickle_path, 'historical')
     return out
 
 
-def plot_resampling_new_flow(nyr):  # todo cumulative prob
+def plot_resampling_new_flow(nyr, site, mode):  # todo cumulative prob
+    # todo cannot do this until I have the alternate restirctions
     # todo reference Storylines/storyline_evaluation/plot_historical_detrended.py
+    fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=figsize)
+
+    # todo all data
+
+    # todo per version per sequetntila
+
+    # sequential vs non-sequential
+
+
     raise NotImplementedError
+
+
+def main(recalc=False):
+
+    for v in ['trended', 'detrended']:
+        data = get_run_basgra_for_historical_new_flows(version=v, recalc=recalc)
+
+        for mode, site in default_mode_sites:
+            if site == 'oxford' and v == 'detrended':
+                continue
+            years = [1, 2, 3, 5, 10]
+            seqentials = [True, False]
+            flow_names = list(new_flows.keys()) + ['base']
+
+            # make the cumulative data
+            for y, sq, fn in itertools.product(years, seqentials, flow_names):
+                get_make_cumulative_prob_historical(nyr=y, site=site, mode=mode, flow_name=fn, version=v, sequential=sq,
+                                                    recalc=recalc)
+
+            # plot the cumulative data
+            for y in years:
+                plot_resampling_new_flow(nyr=y, site=site, mode=mode)
+
+if __name__ == '__main__':
+    main()
