@@ -19,13 +19,15 @@ from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, c
 from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growth, calc_pasture_growth_anomaly
 from Pasture_Growth_Modelling.initialisation_support.validate_dryland_v2 import get_horarata_data_old, \
     make_mean_comparison
-from Pasture_Growth_Modelling.initialisation_support.comparison_support import get_witchmore, make_mean_comparison_suite, make_total_suite
+from Pasture_Growth_Modelling.initialisation_support.comparison_support import get_witchmore_mean, \
+    make_mean_comparison_suite, make_total_suite, get_winchmore_boxplot
 from Pasture_Growth_Modelling.initialisation_support.inital_long_term_runs import run_past_basgra_irrigated
 from Pasture_Growth_Modelling.historical_average_baseline import run_past_basgra_dryland, run_past_basgra_irrigated
 
+
 def run_mod_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_dmh', fun='mean',
-                            reseed_trig=0.06, reseed_basal=0.1, basali=0.2, weed_dm_frac=0.05,
-                            use_defined_params_except_weed_dm_frac=True):
+                                reseed_trig=0.06, reseed_basal=0.1, basali=0.2, weed_dm_frac=0.05,
+                                use_defined_params_except_weed_dm_frac=True):
     if not isinstance(weed_dm_frac, dict) and weed_dm_frac is not None:
         weed_dm_frac = {e: weed_dm_frac for e in range(1, 13)}
     mode = 'dryland'
@@ -54,7 +56,8 @@ def run_mod_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True,
         return out, (params, doy_irr, matrix_weather, days_harvest)
     return out
 
-if __name__ == '__main__':
+
+def validation():
     fun = 'mean'
 
     weed_dict_1 = {
@@ -88,11 +91,11 @@ if __name__ == '__main__':
     data = {
         'dryland_trended': run_past_basgra_dryland(site='oxford'),
 
-        'weed: special2': run_mod_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True, pg_mode='from_yield',
-                                                  fun='mean', reseed_trig=0.06, reseed_basal=0.1, basali=0.15,
-                                                  weed_dm_frac=weed_dict_2,
-                                                  use_defined_params_except_weed_dm_frac=True),
-
+        'weed: special2': run_mod_past_basgra_dryland(return_inputs=False, site='oxford', reseed=True,
+                                                      pg_mode='from_yield',
+                                                      fun='mean', reseed_trig=0.06, reseed_basal=0.1, basali=0.15,
+                                                      weed_dm_frac=weed_dict_2,
+                                                      use_defined_params_except_weed_dm_frac=True),
 
         'irrigated_oxford_trended': run_past_basgra_irrigated(site='oxford'),
         'irrigated_eyrewell_trended': run_past_basgra_irrigated(site='eyrewell'),
@@ -103,7 +106,7 @@ if __name__ == '__main__':
     data3 = {e: make_mean_comparison_suite(v, fun) for e, v in data.items()}
     data4 = {e: make_total_suite(v) for e, v in data.items()}
     data2['horata'] = get_horarata_data_old()
-    data2['witchmore'] = get_witchmore()
+    data2['witchmore'] = get_witchmore_mean()
     out_vars = ['DM', 'YIELD', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'RAIN', 'EVAP', 'TRAN', 'per_PAW', 'pg', 'RESEEDED',
                 'pga_norm', 'BASAL']
     if False:
@@ -116,7 +119,7 @@ if __name__ == '__main__':
     for k, v in data3.items():
         fig, ax = plt.subplots()
         ax.boxplot(v['pgr'], labels=months)
-        ax.set_ylim(-10,110)
+        ax.set_ylim(-10, 110)
         ax.set_title(k)
     fig, ax = plt.subplots()
     temp_ks = data4.keys()
@@ -124,4 +127,80 @@ if __name__ == '__main__':
     ax.boxplot(temp_data, labels=temp_ks)
 
     plot_multiple_monthly_results(data=data2, out_vars=['pgr'], show=True, main_kwargs={'marker': 'o'})
+
+
+def final_plots():
+    fun = 'mean'
+
+    weed_dict_1 = {
+        1: 0.42,
+        2: 0.30,
+        3: 0.33,
+        4: 0.32,
+        5: 0.46,
+        6: 0.59,
+        7: 0.70,
+        8: 0.57,
+        9: 0.33,
+        10: 0.37,
+        11: 0.62,
+        12: 0.62,
+    }
+    weed_dict_2 = {  # this is currently the calibration dataset
+        1: 0.42,
+        2: 0.30,
+        3: 0.27,
+        4: 0.25,
+        5: 0.27,
+        6: 0.20,
+        7: 0.20,
+        8: 0.20,
+        9: 0.23,
+        10: 0.30,
+        11: 0.60,
+        12: 0.62,
+    }
+    data = {
+        'Dryland Oxford trended': run_past_basgra_dryland(site='oxford'),
+
+        'Irrigated Oxford trended': run_past_basgra_irrigated(site='oxford'),
+        'Irrigated Eyrewell trended': run_past_basgra_irrigated(site='eyrewell'),
+
+    }
+
+    data2 = {e: make_mean_comparison(v, fun) for e, v in data.items()}
+    data3 = {e: make_mean_comparison_suite(v, fun) for e, v in data.items()}
+    data4 = {e: make_total_suite(v) for e, v in data.items()}
+    data2['Horata'] = get_horarata_data_old()
+    data2['Winchmore'] = get_witchmore_mean()
+    out_vars = ['DM', 'YIELD', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'RAIN', 'EVAP', 'TRAN', 'per_PAW', 'pg', 'RESEEDED',
+                'pga_norm', 'BASAL']
+
+    # plot uncertainty together for dryland and witchmore
+    bplots = []
+    colors = ['b', 'r']
+    months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
+    fig, ax = plt.subplots()
+    x1 = list(range(0, 24, 2))
+    bplots.append(ax.boxplot(data3['Dryland Oxford trended']['pgr'], positions=x1, patch_artist=True))
+
+    # todo add winchmore to the boxplot
+    wichmore = get_winchmore_boxplot()
+    x2 = list(range(1, 24, 2))
+    bplots.append(ax.bxp(wichmore, positions=x2, patch_artist=True))  # todo)
+
+    for bplot, c in bplots, colors:
+        for patch in bplot['boxes']:
+            patch.set_facecolor(c)
+
+    ax.set_xticks(np.arange(0.5, 24, 2), months)
+    ax.set_title('')
+    ax.set_ylim(-10, 110)
+    # todo add legend
+
+    plot_multiple_monthly_results(data=data2, out_vars=['pgr'], show=True, main_kwargs={'marker': 'o'})
     # TODO update documentation with this new calibration!
+
+
+if __name__ == '__main__':
+    final_plots()

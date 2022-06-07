@@ -4,6 +4,7 @@
  """
 import numpy as np
 import ksl_env
+import os
 
 import pandas as pd
 
@@ -48,12 +49,12 @@ def make_mean_comparison_suite(out, fun):
 
     return out
 
+
 def make_total_suite(out):
     out.loc[:, 'month'] = out.index.month
-    out.loc[:,'pg'] = [e for e,m in out.loc[:,['pg','month']].itertuples(False,None)]
+    out.loc[:, 'pg'] = [e for e, m in out.loc[:, ['pg', 'month']].itertuples(False, None)]
     out_norm = out.groupby(['year']).agg({'pg': 'sum'}).reset_index().astype(float)
     return out_norm
-
 
 
 def get_horarata_data():
@@ -81,7 +82,7 @@ def get_horarata_data():
     return full_out
 
 
-def get_witchmore():
+def get_witchmore_mean():
     # this was read from plots in Comparison of outputs of a biophysical simulation
     # model for pasture growth and composition with
     # measured data under dryland and irrigated
@@ -92,6 +93,35 @@ def get_witchmore():
     out.loc[:, 'pg'] = out.loc[:, 'pgr'] * [ndays[e] for e in out.month]
     out.set_index('month', inplace=True)
     return out
+
+
+def get_winchmore_boxplot():
+    data = pd.read_csv(
+        os.path.join(ksl_env.slmmac_dir, 'pasture_growth_modelling/dryland tuning/Winchmore_boxplot.csv'),
+        names=['x', 'y'])
+    data.loc[:, 'x'] = (data.x / 100 * 12).round().astype(int)
+    mapper = {
+        0: 7,
+        1: 8,
+        2: 9,
+        3: 10,
+        4: 11,
+        5: 12,
+        7: 1,
+        8: 2,
+        9: 3,
+        10: 4,
+        11: 5,
+        12: 6,
+
+    }
+
+    data.loc[:, 'month'] = data.x.replace(mapper)
+    data = data.sort_values(['x', 'y'])
+
+    # todo https://stackoverflow.com/questions/23655798/matplotlib-boxplot-using-precalculated-summary-statistics
+
+    return data
 
 
 def get_horarata_data_old():
@@ -124,3 +154,7 @@ def get_indicative_irrigated():
     out_sum.loc[:, 'pgr'] = out_sum.loc[:, 'pg'] / [ndays[e] for e in out_sum.index]
 
     return out_sum
+
+
+if __name__ == '__main__':
+    get_winchmore_boxplot()

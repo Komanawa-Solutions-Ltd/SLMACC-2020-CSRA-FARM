@@ -16,7 +16,7 @@ alternate_rest_dir = os.path.join(ksl_env.proj_root, 'Ecological_flows/v2/altern
 
 new_flows = (
     # (allocation, minimum flow)
-    ()  # todo need to make these
+    ()  # todo need to make these, 5, 10 20m3/s in either direction
 )
 
 new_flows = {f'a{a}-mf{m}': (a, m) for a, m in new_flows}  # todo maybe new names
