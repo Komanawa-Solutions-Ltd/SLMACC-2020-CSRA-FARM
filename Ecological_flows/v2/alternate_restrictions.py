@@ -14,12 +14,16 @@ from Climate_Shocks.get_past_record import get_restriction_record
 
 alternate_rest_dir = os.path.join(ksl_env.proj_root, 'Ecological_flows/v2/alternate_restrictions')
 
-new_flows = (
-    # (allocation, minimum flow)
-    ()  # todo need to make these, 5, 10 20m3/s in either direction
-)
-
-new_flows = {f'a{a}-mf{m}': (a, m) for a, m in new_flows}  # todo maybe new names
+new_flows = {
+    # 'name': (min flow start, min flow stop)
+    # 'current': (63, 41)
+    'farmer_both': (53, 31),
+    'farmer_tail': (63, 31),
+    'farmer_front': (53, 41),
+    'eco_both': (73, 51),
+    'eco_tail': (63, 51),
+    'eco_front': (73, 41),
+}
 
 
 def naturalise_historical_flow():
@@ -38,13 +42,36 @@ def naturalise_historical_flow():
     return data
 
 
-def make_new_rest_record(name, nat):  # todo
+def make_new_rest_record(name, nat, take_during_winter=False):
     """
     convert naturalised flow record into restriction record
     :param name: name of the scenario see new_flows variable
+    :param data: the naturalised flow to create restrictions on.
     :return:
     """
-    raise NotImplementedError
+    data = nat.copy(deep=True)
+    allocation = 11.041
+    start, stop = new_flows[name]
+    idx = data.nat >= start
+    data.loc[idx, 'f_rest'] = 0  # no restriction when naturalised flow greater than start of min flows
+
+    idx = data.nat <= stop
+    data.loc[idx, 'f_rest'] = 1  # full restriction when naturalised flow less than stop of min flows
+
+    idx = (data.nat > stop) & (data.nat < start)
+    data.loc[idx, 'f_rest'] = 1 - ((data.loc[idx, 'nat'] - stop) / stop)
+
+    # no take during winter???
+    if not take_during_winter:
+        irrigation_start = 244  # DOY, ignoreing leap years... cause who cares
+        irrigation_stop = 121  # doy, ignoreing leap years... cause who cares
+        idx = (data.doy <= irrigation_stop) | (data.doy >= irrigation_start)
+        data.loc[~idx, 'f_rest'] = 1
+
+    data.loc[:, 'take'] = (1 - data.loc[:, 'f_rest']) * allocation
+    data.loc[:, 'flow'] = data.loc[:, 'nat'] - data.loc[:, 'take']
+
+    return data
 
 
 def make_new_rest_data(name):
@@ -66,9 +93,10 @@ def make_new_rest_data(name):
     # detrend the new restriction record
     print('detrending making detrended restriction record')
     detrend_rest = os.path.join(alternate_rest_dir, f'{name}-detrend_restriction_record.csv')
+    fun = os.path.join(ksl_env.proj_root, r'BS_work\f_rest_detrend.py')
     shtemps = os.path.join(ksl_env.proj_root, r'BS_work\SWG\SHTemps.dat')
 
-    result = subprocess.run([sys.executable, detrend_rest, rest_data, shtemps, supporting_data_dir],
+    result = subprocess.run([sys.executable, fun, rest_data, shtemps, detrend_rest],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if result.returncode != 0:
         raise ChildProcessError('{}\n{}'.format(result.stdout, result.stderr))
@@ -115,6 +143,6 @@ def get_new_flow_rest_record(name, version):
 
 
 if __name__ == '__main__':
-    naturalise_historical_flow()
-    for f in new_flows:  # todo run first
+    for f in new_flows:
+        print(f)
         make_new_rest_data(f)

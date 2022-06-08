@@ -102,7 +102,8 @@ IR = Data.get('f_rest')
 #model_temp_filename = r'C:\Users\sloth\Desktop\work\weather-gen\SWG Full Package\SHTemps.dat'
 model_temp_filename = Path(sys.argv[2])
 
-outdir = sys.argv[3]
+outpath = sys.argv[3]
+outdir = os.path.dirname(outpath)
 if not os.path.exists(outdir):
     os.makedirs(outdir)
 
@@ -128,7 +129,7 @@ Data['f_rest'] = tmp_points
 print(np.mean(Data['f_rest']))
 
 
-Data.to_csv(os.path.join(outdir, "restriction_record_detrend.csv"), index=False)
+Data.to_csv(outpath, index=False)
 print(f"saved to {outdir}/restriction_record_detrend.csv")
 #plot to check quality of fit
 line_vals = tmp_fit_coeff[0] + tmp_fit_coeff[1] * Model_data

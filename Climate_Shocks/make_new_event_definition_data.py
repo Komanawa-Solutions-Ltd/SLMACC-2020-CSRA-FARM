@@ -34,8 +34,9 @@ if __name__ == '__main__':
     detrend_rest = os.path.join(root_dir, r'BS_work\f_rest_detrend.py')
     rest_data = os.path.join(supporting_data_dir, 'restriction_record.csv')
     shtemps = os.path.join(root_dir, r'BS_work\SWG\SHTemps.dat')
+    outpath = os.path.join(supporting_data_dir, "restriction_record_detrend.csv")
 
-    result = subprocess.run([sys.executable, detrend_rest, rest_data, shtemps, supporting_data_dir],
+    result = subprocess.run([sys.executable, detrend_rest, rest_data, shtemps, outpath],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if result.returncode != 0:
         raise ChildProcessError('{}\n{}'.format(result.stdout, result.stderr))
