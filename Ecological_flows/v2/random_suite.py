@@ -31,6 +31,7 @@ def recalc_story_prob(storyline_dict, new_rests):
     :param new_rests:
     :return:
     """
+    print('recalculating storyline probs')
     assert isinstance(storyline_dict, dict)
     # run the storyline prob without irrigation restrictions
     outdata = run_IID(storyline_dict, add_irr_prob=False)
@@ -47,7 +48,9 @@ def recalc_story_prob(storyline_dict, new_rests):
             raise ValueError(f'detrending or percentile mapper missing for: {name}')
         rest_mappers[name] = get_irr_by_quantile(recalc=True, outdir=irr_quantile_dir, rest_path=detrend_rest)
 
-    for k, sl in storyline_dict.items():
+    for i, (k, sl) in enumerate(storyline_dict.items()):
+        if i % 1000 == 0:
+            print(f'recalculating new rest prob for {i}: {k}')
         # current_prob
         prob = sl.loc[:, 'rest_per'].values()
         prob[prob > 0] = np.log10(0.5 - np.abs(0.5 - prob[prob > 0]))
@@ -268,7 +271,9 @@ def main(recalc=False, plot=False):
 
         for gn, gd in zip(['good', 'bad'], [good_dir, bad_dir]):
             paths = gd.glob('*.csv')
-            for p in paths:
+            for i, p in enumerate(paths):
+                if i % 1000 == 0:
+                    print(f'reading {i} for {gn}')
                 temp = pd.read_csv(p, index_col=0)
                 t = {'rest': 'float64',
                      'rest_per': 'float64',
