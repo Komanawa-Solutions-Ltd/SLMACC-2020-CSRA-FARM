@@ -118,10 +118,36 @@ def get_winchmore_boxplot():
 
     data.loc[:, 'month'] = data.x.replace(mapper)
     data = data.sort_values(['x', 'y'])
+    for m in data.month.unique():
+        idx = data.month == m
+        data.loc[idx, 'stat_order'] = range(idx.sum())
+    data.loc[:, 'stat_order'] = data.loc[:, 'stat_order'].astype(int)
+    out = []
+    names = [
+        "fliers",
+        "whislo",
+        "q1",
+        "med",
+        "q3",
+        "whishi",
+        "fliers",
+    ]
+    for m in [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]:
+        tout = {'fliers': []}
 
+        for i, n in enumerate(names):
+            temp = data.loc[(data.stat_order == i) & (data.month == m), 'y']
+            assert len(temp) == 1
+            v = temp.iloc[0]
+
+            if n == 'fliers':
+                tout[n].append(v)
+            else:
+                tout[n] = v
+        out.append(tout)
     # todo https://stackoverflow.com/questions/23655798/matplotlib-boxplot-using-precalculated-summary-statistics
 
-    return data
+    return out
 
 
 def get_horarata_data_old():
@@ -157,4 +183,9 @@ def get_indicative_irrigated():
 
 
 if __name__ == '__main__':
-    get_winchmore_boxplot()
+    t = get_winchmore_boxplot()
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    ax.bxp(t, patch_artist=True)
+    plt.show()

@@ -8,6 +8,7 @@ import numpy as np
 import os
 import ksl_env
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 
 # add basgra nz functions
 ksl_env.add_basgra_nz_path()
@@ -184,21 +185,25 @@ def final_plots():
     x1 = list(range(0, 24, 2))
     bplots.append(ax.boxplot(data3['Dryland Oxford trended']['pgr'], positions=x1, patch_artist=True))
 
-    # todo add winchmore to the boxplot
+    # add winchmore to the boxplot
     wichmore = get_winchmore_boxplot()
     x2 = list(range(1, 24, 2))
-    bplots.append(ax.bxp(wichmore, positions=x2, patch_artist=True))  # todo)
-
-    for bplot, c in bplots, colors:
+    bplots.append(ax.bxp(wichmore, positions=x2, patch_artist=True))
+    names = ['Dryland Oxford trended', 'Winchmore']
+    l_elements = []
+    for name, bplot, c in zip(names, bplots, colors):
         for patch in bplot['boxes']:
             patch.set_facecolor(c)
+            l_elements.append(Patch(facecolor=c, label=name))
 
     ax.set_xticks(np.arange(0.5, 24, 2), months)
     ax.set_title('')
     ax.set_ylim(-10, 110)
-    # todo add legend
+    ax.legend(handles=l_elements)
+    # todo and check plot and save
 
     plot_multiple_monthly_results(data=data2, out_vars=['pgr'], show=True, main_kwargs={'marker': 'o'})
+    # todo save
     # TODO update documentation with this new calibration!
 
 
