@@ -131,7 +131,11 @@ def validation():
 
 
 def final_plots():
+    fig_size = (10, 8)
     fun = 'mean'
+    from pathlib import Path
+    outdir = Path(ksl_env.slmmac_dir).joinpath("0_Y2_and_Final_Reporting/final_plots/dryland_validation")
+    outdir.mkdir(exist_ok=True, parents=True)
 
     weed_dict_1 = {
         1: 0.42,
@@ -181,7 +185,7 @@ def final_plots():
     bplots = []
     colors = ['b', 'r']
     months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=fig_size)
     x1 = list(range(0, 24, 2))
     bplots.append(ax.boxplot(data3['Dryland Oxford trended']['pgr'], positions=x1, patch_artist=True))
 
@@ -189,22 +193,34 @@ def final_plots():
     wichmore = get_winchmore_boxplot()
     x2 = list(range(1, 24, 2))
     bplots.append(ax.bxp(wichmore, positions=x2, patch_artist=True))
-    names = ['Dryland Oxford trended', 'Winchmore']
+    names = ['Dryland Oxford trended 1972-2019', 'Winchmore 1966-2003']
     l_elements = []
     for name, bplot, c in zip(names, bplots, colors):
+        l_elements.append(Patch(facecolor=c, label=name))
         for patch in bplot['boxes']:
             patch.set_facecolor(c)
-            l_elements.append(Patch(facecolor=c, label=name))
 
-    ax.set_xticks(np.arange(0.5, 24, 2), months)
-    ax.set_title('')
+    xlocs = np.arange(0.5, 24, 2)
+    ax.set_xticks(ticks=np.arange(0.5, 24, 2))
+    ax.set_xticklabels(['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'])
+    ax.set_xlabel('month')
+    ax.set_title('Long term pasture growth comparison')
+    ax.set_ylabel('Pasture Growth kg DM/day')
     ax.set_ylim(-10, 110)
     ax.legend(handles=l_elements)
-    # todo and check plot and save
+    # add vlines
+    ax.vlines(xlocs[1:] - 1, ymin=-10, ymax=110, ls=':')
+    fig.tight_layout()
+    fig.savefig(outdir.joinpath('dryland_variability.png'))
 
-    plot_multiple_monthly_results(data=data2, out_vars=['pgr'], show=True, main_kwargs={'marker': 'o'})
-    # todo save
-    # TODO update documentation with this new calibration!
+    axs = plot_multiple_monthly_results(data=data2, out_vars=['pgr'], show=False, main_kwargs={'marker': 'o'},
+                                        fig_size=fig_size)
+    for v in axs.values():
+        v.set_ylabel('Pasture growth kg DM/day')
+        v.set_title('Mean pasture growth comparison')
+        fig = v.figure
+        fig.tight_layout()
+        fig.savefig(outdir.joinpath('mean_production_comparison.png'))
 
 
 if __name__ == '__main__':
