@@ -17,9 +17,11 @@ from Storylines.storyline_evaluation.storyline_eval_support import calc_cumulati
 from Ecological_flows.v2.alternate_restrictions import new_flows, make_new_rest_record, naturalise_historical_flow, \
     alternate_rest_dir
 from Storylines.storyline_runs.run_random_suite import generate_random_suite
+from pathlib import Path
 
 base_outdir = os.path.join(ksl_env.slmmac_dir, 'eco_modelling', 'random')
-fig_size = (10,8)  # todo
+fig_size = (10, 8)  # todo
+os.makedirs(base_outdir, exist_ok=True)
 
 
 def recalc_story_prob(storyline_dict, new_rests):
@@ -249,7 +251,7 @@ def plot_exceedence_prob(nyr, data):
     raise NotImplementedError
 
 
-def main(recalc=False):
+def main(recalc=False, plot=False):
     hdf_path = os.path.join(base_outdir, 'random_probs.hdf')
     if os.path.exists(hdf_path) and not recalc:
         data = pd.read_hdf(hdf_path, 'random')
@@ -257,46 +259,41 @@ def main(recalc=False):
         # make the storyline dictionary (pull from randomn
         sl_dict = {}
         n = 70000
-        storylines = generate_random_suite(n, use_default_seed=True, save=False, return_story=True,
-                                           bad_irr=True)
-        sl_dict.update({f'rsl-{k:06d}-bad': v for k, v in enumerate(storylines)})
-        storylines = generate_random_suite(n, use_default_seed=True, save=False, return_story=True,
-                                           bad_irr=False)
-        sl_dict.update({f'rsl-{k:06d}-good': v for k, v in enumerate(storylines)})
 
-        # spot check the storylines to ensure they are the same (they should be)
-        seed = 4668324
-        np.random.seed(seed)
-        idxs = np.random.randint(0, len(sl_dict), 5000)
-        keys = np.array(sl_dict.keys())[idxs]
-        for k in keys:
-            # spot check a handful of random saved storylines on dickie and use them.
-            if 'bad' in k:
-                basedir = r'D:\mh_unbacked\SLMACC_2020_norm\temp_storyline_files\random_bad_irr'  # only on dickie
-            else:
-                basedir = r'D:\mh_unbacked\SLMACC_2020_norm\temp_storyline_files\random_bad_irr'  # only on dickie
+        # need to read these in from the saved set... seed not working...
 
-            p = os.path.join(basedir, '-'.join(k.split('-')[0:2] + '.csv'))
-            temp = pd.read_csv(p, index_col=0)
-            t = {'rest': 'float64',
-                 'rest_per': 'float64',
-                 'year': 'int64',
-                 'month': 'int64'}
-            for e, v in t.items():
-                temp.loc[:, e] = temp.loc[:, e].astype(v)
-            assert (temp.values == sl_dict[k].values).all(), (f'sl: {k} does not match saved record, '
-                                                              f'\n{temp.values}\n\n{sl_dict[k].values}')
+        bad_dir = Path(r'D:\mh_unbacked\SLMACC_2020_norm\temp_storyline_files\random_bad_irr')
+
+        good_dir = Path(r'D:\mh_unbacked\SLMACC_2020_norm\temp_storyline_files\random_good_irr')
+
+        for gn, gd in zip(['good', 'bad'], [good_dir, bad_dir]):
+            paths = gd.glob('*.csv')
+            for p in paths:
+                temp = pd.read_csv(p, index_col=0)
+                t = {'rest': 'float64',
+                     'rest_per': 'float64',
+                     'year': 'int64',
+                     'month': 'int64'}
+                for e, v in t.items():
+                    temp.loc[:, e] = temp.loc[:, e].astype(v)
+                sl_dict[p.name.replace('.csv', f'-{gn}.csv')] = temp
 
         data = recalc_story_prob(sl_dict, list(new_flows.keys()))
         data.to_csv(os.path.join(base_outdir, 'random_probs.csv'))
         data.to_hdf(hdf_path, 'random')
 
-    # plot and export percentile changes in probability for different scenarios.
-    plot_export_prob_change_stats(data)
+    if plot:
+        # plot and export percentile changes in probability for different scenarios.
+        plot_export_prob_change_stats(data)
 
     # export exceedence probs
     poss_yrs = [1, 2, 3, 5, 10]
     for y in poss_yrs:
         cum_data = export_cum_percentile(data, y, os.path.join(base_outdir, 'exceedence', f'exceedence_{y}yr'),
                                          recalc=recalc)
-        plot_exceedence_prob(y, cum_data)
+        if plot:
+            plot_exceedence_prob(y, cum_data)
+
+
+if __name__ == '__main__':
+    main(recalc=False, plot=False)  # todo plot

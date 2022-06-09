@@ -8,6 +8,7 @@ import ksl_env
 from pathlib import Path
 import pickle
 import pandas as pd
+import numpy as np
 from Climate_Shocks.get_past_record import get_vcsn_record
 from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, create_days_harvest, \
     create_matrix_weather
@@ -21,14 +22,19 @@ ksl_env.add_basgra_nz_path()
 from basgra_python import run_basgra_nz
 
 base_outdir = Path(ksl_env.slmmac_dir).joinpath('eco_modelling', 'historical_detrended')
-base_outdir.mkdir(exist_ok=True)
+base_outdir.mkdir(exist_ok=True, parents=True)
 figsize = (16.5, 9.25)
+
 
 def run_past_basgra_irrigated(site='eyrewell', reseed=True, version='trended', mode='irrigated',
                               flow_version='base'):
-    print(f'running: {mode}, {site}, flow: {flow_version} reseed: {reseed}')
+    print(f'running: {mode}, {site}, flow: {flow_version}, reseed: {reseed}')
 
-    weather = get_vcsn_record(version=version, site=site)
+    if version == 'detrended':
+        v = 'detrended2'
+    else:
+        v = version
+    weather = get_vcsn_record(version=v, site=site)
     rest = get_new_flow_rest_record(name=flow_version, version=version)
     params, doy_irr = get_params_doy_irr(mode)
     all_out = []
@@ -75,8 +81,10 @@ def get_run_basgra_for_historical_new_flows(version, recalc=False):
     for mode, site in default_mode_sites:
         if version == 'detrended' and site == 'oxford':
             continue  # cannot run detreneded for oxford
+        if mode == 'dryland':
+            continue
         for name in names:
-            temp = run_past_basgra_irrigated(site=site, reseed=True, version='detrended', mode=mode,
+            temp = run_past_basgra_irrigated(site=site, reseed=True, version=version, mode=mode,
                                              flow_version=name)
             out[(mode, site, name)] = temp
 
@@ -92,10 +100,11 @@ def get_make_cumulative_prob_historical(nyr, site, mode, flow_name, version, seq
     if pickle_path.exists() and not recalc:
         out = pd.read_hdf(pickle_path, 'historical')
         return out
-
+    print(f'making cumulative prob for: nyr={nyr}, site={site}, mode={mode}, '
+          f'flow_name={flow_name}, version={version}, sequential={sequential}')
     data = get_run_basgra_for_historical_new_flows(version, recalc=recalc_basgra)
-    pgr_key = pg
-    temp_data = [(mode, site, flow_name)]
+    pgr_key = 'pg'
+    temp_data = data[(mode, site, flow_name)]
     assert isinstance(temp_data, pd.DataFrame)
     temp_data = temp_data.groupby('season').sum()
     temp_data.loc[:, pgr_key] *= 1 / 1000  # change unit to tons
@@ -105,10 +114,12 @@ def get_make_cumulative_prob_historical(nyr, site, mode, flow_name, version, seq
     else:
         if sequential:
             pgr = temp_data.rolling(nyr).sum().loc[:, pgr_key]
+            pgr = pgr[np.isfinite(pgr)]
             prob = np.zeros(pgr.shape) + 1
         else:
-            idxs = np.random.randint(0, len(data), 10000)
+            idxs = np.random.randint(0, len(temp_data), 10000)
             pgr = temp_data.iloc[idxs].rolling(nyr).sum().loc[:, pgr_key]
+            pgr = pgr[np.isfinite(pgr)]
 
             prob = np.zeros(pgr.shape) + 1
 
@@ -131,17 +142,17 @@ def plot_resampling_new_flow(nyr, site, mode):  # todo cumulative prob
 
     # sequential vs non-sequential
 
-
     raise NotImplementedError
 
 
-def main(recalc=False):
-
+def main(recalc=False, plot=False):
     for v in ['trended', 'detrended']:
         data = get_run_basgra_for_historical_new_flows(version=v, recalc=recalc)
 
         for mode, site in default_mode_sites:
             if site == 'oxford' and v == 'detrended':
+                continue
+            if mode == 'dryland':
                 continue
             years = [1, 2, 3, 5, 10]
             seqentials = [True, False]
@@ -152,9 +163,11 @@ def main(recalc=False):
                 get_make_cumulative_prob_historical(nyr=y, site=site, mode=mode, flow_name=fn, version=v, sequential=sq,
                                                     recalc=recalc)
 
-            # plot the cumulative data
-            for y in years:
-                plot_resampling_new_flow(nyr=y, site=site, mode=mode)
+            if plot:
+                # plot the cumulative data
+                for y in years:
+                    plot_resampling_new_flow(nyr=y, site=site, mode=mode)
+
 
 if __name__ == '__main__':
-    main()
+    main(recalc=False, plot=False) # todo plot
