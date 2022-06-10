@@ -35,8 +35,8 @@ def recalc_story_prob(storyline_dict, new_rests):
     assert isinstance(storyline_dict, dict)
     # run the storyline prob without irrigation restrictions
     outdata = run_IID(storyline_dict, add_irr_prob=False)
-    outdata.rename({"log10_prob": "log10_prob_weather"}, inplace=True)
-    outdata.set_index("ID")
+    outdata.rename({"log10_prob": "log10_prob_weather"}, axis=1, inplace=True)
+    outdata.set_index("ID", inplace=True)
 
     # get rest mappers
     rest_mappers = {'base': get_irr_by_quantile()}
@@ -52,14 +52,14 @@ def recalc_story_prob(storyline_dict, new_rests):
         if i % 1000 == 0:
             print(f'recalculating new rest prob for {i}: {k}')
         # current_prob
-        prob = sl.loc[:, 'rest_per'].values()
+        prob = sl.loc[:, 'rest_per'].values
         prob[prob > 0] = np.log10(0.5 - np.abs(0.5 - prob[prob > 0]))
         outdata.loc[k, 'base_rest_prob'] = prob.sum()
 
         # do not need to map current prob to fraction rest (already done in the storyline building
 
         # map fraction rest to new prob for each new restriction name
-        for name, mapper in new_rests:
+        for name in new_rests:
             prob = map_storyline_frac_to_prob(sl, rest_mapper=rest_mappers[name])
             prob[prob > 0] = np.log10(0.5 - np.abs(0.5 - prob[prob > 0]))
             outdata.loc[k, f'{name}_rest_prob'] = prob.sum()
@@ -203,8 +203,8 @@ def plot_export_prob_change_stats(prob_data):
 
 def get_1yr_lines(prob_data):
     data = get_1yr_data(bad_irr=True, good_irr=True)
-    data.reset_index(inplace=True)
     data.loc[:, 'ID'] = data.loc[:, 'ID'] + '-' + data.loc[:, 'irr_type']
+    data.set_index('ID', inplace=True)
     data = pd.merge(data, prob_data, left_index=True, right_index=True)
     # join weather and irrigaiton probs
 
@@ -216,7 +216,7 @@ def get_1yr_lines(prob_data):
 
 
 def get_nyr_lines(prob_data, nyr, site, mode, recalc=False):
-    nyr = get_nyr_suite(nyr=nyr, site=site, mode=mode).loc[:, [f'{site}-{mode}_pg_yr{nyr}']]
+    nyr_data = get_nyr_suite(nyr=nyr, site=site, mode=mode).loc[:, [f'{site}-{mode}_pg_yr{nyr}']]
     nyr_idxs = get_nyr_idxs(nyr=nyr, mode=mode)
     hdf_path = os.path.join(base_outdir, f'{nyr}_yr_{site}_{mode}_random_probs.hdf')
     if os.path.exists(hdf_path) and not recalc:
@@ -225,10 +225,10 @@ def get_nyr_lines(prob_data, nyr, site, mode, recalc=False):
     else:
         for name in list(new_flows.keys()) + ['base']:
             key = f'{name}_rest_prob'
-            probs = prob_data.loc[nyr_idxs.flatten, key].values.reshape(nyr_idxs.shape)
-            nyr.loc[:, key] = probs.sum(axis=1)
-        nyr.to_hdf(hdf_path, 'random')
-    return nyr
+            probs = prob_data.loc[nyr_idxs.flatten(), key].values.reshape(nyr_idxs.shape)
+            nyr_data.loc[:, key] = probs.sum(axis=1)
+        nyr_data.to_hdf(hdf_path, 'random')
+    return nyr_data
 
 
 def plot_exceedence_prob(nyr, data):
@@ -272,6 +272,7 @@ def main(recalc=False, plot=False):
         for gn, gd in zip(['good', 'bad'], [good_dir, bad_dir]):
             paths = gd.glob('*.csv')
             for i, p in enumerate(paths):
+
                 if i % 1000 == 0:
                     print(f'reading {i} for {gn}')
                 temp = pd.read_csv(p, index_col=0)
@@ -281,7 +282,7 @@ def main(recalc=False, plot=False):
                      'month': 'int64'}
                 for e, v in t.items():
                     temp.loc[:, e] = temp.loc[:, e].astype(v)
-                sl_dict[p.name.replace('.csv', f'-{gn}.csv')] = temp
+                sl_dict[p.name.replace('.csv', f'-{gn}')] = temp
 
         data = recalc_story_prob(sl_dict, list(new_flows.keys()))
         data.to_csv(os.path.join(base_outdir, 'random_probs.csv'))
@@ -301,4 +302,4 @@ def main(recalc=False, plot=False):
 
 
 if __name__ == '__main__':
-    main(recalc=False, plot=False)  # todo plot
+    main(recalc=True, plot=False)  # todo plot
