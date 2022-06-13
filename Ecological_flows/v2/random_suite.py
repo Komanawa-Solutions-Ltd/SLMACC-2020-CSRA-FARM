@@ -20,8 +20,10 @@ from Storylines.storyline_runs.run_random_suite import generate_random_suite
 from pathlib import Path
 
 base_outdir = os.path.join(ksl_env.slmmac_dir, 'eco_modelling', 'random')
+base_outdir_unbacked = os.path.join(ksl_env.slmmac_dir_unbacked, 'eco_modelling', 'random')
 fig_size = (10, 8)  # todo
 os.makedirs(base_outdir, exist_ok=True)
+os.makedirs(base_outdir_unbacked, exist_ok=True)
 
 
 def recalc_story_prob(storyline_dict, new_rests):
@@ -216,9 +218,10 @@ def get_1yr_lines(prob_data):
 
 
 def get_nyr_lines(prob_data, nyr, site, mode, recalc=False):
+    print(f'getting nyr data: nyr={nyr}, site={site}, mode={mode}')
     nyr_data = get_nyr_suite(nyr=nyr, site=site, mode=mode).loc[:, [f'{site}-{mode}_pg_yr{nyr}']]
     nyr_idxs = get_nyr_idxs(nyr=nyr, mode=mode)
-    hdf_path = os.path.join(base_outdir, f'{nyr}_yr_{site}_{mode}_random_probs.hdf')
+    hdf_path = os.path.join(base_outdir_unbacked, f'{nyr}_yr_{site}_{mode}_random_probs.hdf')
     if os.path.exists(hdf_path) and not recalc:
         data = pd.read_hdf(hdf_path, 'random')
         return data
@@ -227,7 +230,7 @@ def get_nyr_lines(prob_data, nyr, site, mode, recalc=False):
             key = f'{name}_rest_prob'
             probs = prob_data.loc[nyr_idxs.flatten(), key].values.reshape(nyr_idxs.shape)
             nyr_data.loc[:, key] = probs.sum(axis=1)
-        nyr_data.to_hdf(hdf_path, 'random')
+        nyr_data.to_hdf(hdf_path, 'random')  # todo these seem really big for what they are, can we make them smaller
     return nyr_data
 
 
@@ -302,4 +305,4 @@ def main(recalc=False, plot=False):
 
 
 if __name__ == '__main__':
-    main(recalc=True, plot=False)  # todo plot
+    main(recalc=False, plot=False)  # todo plot
