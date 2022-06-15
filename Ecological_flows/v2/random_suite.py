@@ -227,10 +227,20 @@ def get_nyr_lines(prob_data, nyr, site, mode, recalc=False):
         return data
     else:
         for name in list(new_flows.keys()) + ['base']:
-            key = f'{name}_rest_prob'
-            probs = prob_data.loc[nyr_idxs.flatten(), key].values.reshape(nyr_idxs.shape)
-            nyr_data.loc[:, key] = probs.sum(axis=1)
-        nyr_data.to_hdf(hdf_path, 'random')  # todo these seem really big for what they are, can we make them smaller
+            ncunks = 100
+            for i in range(ncunks + 1):  # crude chunking to see if I can get it running
+                start = i * len(nyr_data) // ncunks
+                if i == ncunks:
+                    stop = len(nyr_data)
+                else:
+                    stop = (i + 1) * len(nyr_data) // ncunks
+
+                key = f'{name}_rest_prob'
+                temp = nyr_idxs[start:stop]
+                probs = prob_data.loc[temp.flatten(), key].values.reshape(temp.shape)
+                nyr_data.iloc[start:stop].loc[:, key] = probs.sum(axis=1)
+        nyr_data.to_hdf(hdf_path,
+                        'random')  # todo these seem really big for what they are, can we make them smaller?  save on kakapotahi? options?
     return nyr_data
 
 

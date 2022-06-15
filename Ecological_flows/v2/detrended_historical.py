@@ -170,4 +170,4 @@ def main(recalc=False, plot=False):
 
 
 if __name__ == '__main__':
-    main(recalc=False, plot=False) # todo plot
+    main(recalc=True, plot=False) # todo plot
