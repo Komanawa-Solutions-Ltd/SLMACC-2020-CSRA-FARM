@@ -2,6 +2,8 @@
 created matt_dumont 
 on: 15/06/22
 """
+import matplotlib.pyplot as plt
+
 from Ecological_flows.v2.alternate_restrictions import naturalise_historical_flow, make_new_rest_record, new_flows
 from Ecological_flows.v2.detrended_historical import get_run_basgra_for_historical_new_flows, default_mode_sites
 import pandas as pd
@@ -12,6 +14,7 @@ import pickle
 
 base_outdir = Path(ksl_env.slmmac_dir).joinpath('eco_modelling', 'historical_detrended')
 base_outdir.mkdir(exist_ok=True, parents=True)
+figsize = (16.5, 9.25)
 
 
 def get_make_pg_flow_nat_daily_data(winter_takes=False, recalc=False):
@@ -27,7 +30,6 @@ def get_make_pg_flow_nat_daily_data(winter_takes=False, recalc=False):
         out = pickle.load(pickle_path.open('rb'))
         return out
 
-    # todo need to make alternate flows on dickie
     pg_data = get_run_basgra_for_historical_new_flows('trended')
     joint_data = {}
     for name in new_flows:
@@ -71,7 +73,7 @@ def get_make_pg_flow_nat_annual_data(winter_takes=False, recalc=False):
             continue
         agg_dict[f'{site}-{mode}'] = 'sum'
 
-    for k, v in data:
+    for k, v in data.items():
         assert isinstance(v, pd.DataFrame)
         temp = v.groupby('water_year').aggregate(agg_dict)
         outdata[k] = temp
@@ -111,7 +113,7 @@ def get_make_resample_annual_data(nyrs, winter_takes=False, recalc=False):
             continue
         agg_dict[f'{site}-{mode}'] = np.sum
 
-    for k, v in data:
+    for k, v in data.items():
         temp_out = pd.DataFrame(index=range(num), columns=agg_dict)
         for key, fun in agg_dict.items():
             temp = v.loc[use_years.flatten(), key].values.reshape(random_shape)
@@ -144,7 +146,65 @@ def get_daily_resample(idx, nyrs, winter_takes=False):
         outdata[k] = out
     return outdata
 
-def plot_malf_v_pg():
-    raise NotImplmentedError
 
-# todo run and check!!!!
+def plot_malf_v_pg(nyr, wintertakes=False):
+    use_years, data = get_make_resample_annual_data(nyr, wintertakes)
+    fig, axs = plt.subplots(2, 4, figsize=figsize, sharex=True, sharey=True)
+    for ax, (k, v) in zip(axs.flatten(), data.items()):
+        ax.scatter(v.alf, v.loc[:, 'eyrewell-irrigated'] / 1000)
+        ax.set_title(k)
+        ax.set_ylabel('PG growth')
+        ax.set_xlabel('MALF')
+
+    plt.show()
+
+
+def one_to_one(ax, **kwargs):
+    ymin, ymax = ax.get_ylim()
+    xmin, xmax = ax.get_xlim()
+
+    l = min(xmin, ymin)
+    m = max(xmax, ymax)
+
+    ax.plot([l, m], [l, m], **kwargs)
+
+
+def plot_new_v_current(nyr, wintertakes=False):
+    use_years, data = get_make_resample_annual_data(nyr, wintertakes)
+    current = data.pop('current')
+
+    for mode, site in default_mode_sites:
+        if mode == 'dryland':
+            continue
+        key = f'{site}-{mode}'
+        fig, axs = plt.subplots(2, 3, figsize=figsize, sharex=True, sharey=True)
+        for ax, (k, v) in zip(axs.flatten(), data.items()):
+            ax.scatter(current.loc[:, key] / 1000, v.loc[:, key] / 1000)
+            ax.set_title(k)
+            ax.set_ylabel('new')
+            ax.set_xlabel('current')
+            one_to_one(ax, ls=':')
+        fig.suptitle(f'{key}: PG vs PG')
+
+    fig, axs = plt.subplots(2, 3, figsize=figsize, sharex=True, sharey=True)
+    for ax, (k, v) in zip(axs.flatten(), data.items()):
+        ax.scatter(current.alf, v.alf)
+        ax.set_title(k)
+        ax.set_ylabel('new')
+        ax.set_xlabel('current')
+        one_to_one(ax, ls=':')
+    fig.suptitle('MALF vs MALF')
+
+    plt.show()
+
+
+# todo run, plot, and check!!!!
+if __name__ == '__main__':
+    recalc_data = False
+    all_nyrs = [1, 3, 5, 10]
+    if recalc_data:
+        for y in all_nyrs:
+            for v in [True, False]:
+                print(f'recalcing data for yrs: {y} and winter_takes={v}')
+                get_make_resample_annual_data(nyrs=y, winter_takes=v, recalc=recalc_data)
+    plot_new_v_current(1)
