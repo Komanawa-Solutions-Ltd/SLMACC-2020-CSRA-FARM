@@ -144,4 +144,7 @@ def get_daily_resample(idx, nyrs, winter_takes=False):
         outdata[k] = out
     return outdata
 
+def plot_malf_v_pg():
+    raise NotImplmentedError
+
 # todo run and check!!!!

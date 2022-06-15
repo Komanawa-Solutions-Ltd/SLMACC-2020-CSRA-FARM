@@ -75,7 +75,13 @@ out_variables = (
 
 )
 
-irr_gen = get_irrigation_generator()
+from socket import gethostname
+
+if gethostname() == 'wanganui':
+    irr_gen = None
+else:
+    irr_gen = get_irrigation_generator()
+
 month_len = {
     1: 31,
     2: 28,
@@ -124,12 +130,12 @@ def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_si
     t = time.time()
     assert isinstance(n_parallel, int)
     assert n_parallel > 0
-    zipped=False
+    zipped = False
     try:
         storyline_key = os.path.splitext(os.path.basename(storyline_path))[0]
     except TypeError:
-        storyline_key = os.path.splitext(os.path.basename(storyline_path.name))[0] # to allow zipped files
-        zipped=True
+        storyline_key = os.path.splitext(os.path.basename(storyline_path.name))[0]  # to allow zipped files
+        zipped = True
 
     if zipped:
         storyline_path.seek(0)
