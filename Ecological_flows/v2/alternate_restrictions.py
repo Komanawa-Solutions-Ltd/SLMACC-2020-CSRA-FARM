@@ -16,7 +16,7 @@ alternate_rest_dir = os.path.join(ksl_env.proj_root, 'Ecological_flows/v2/altern
 
 new_flows = {
     # 'name': (min flow start, min flow stop)
-    # 'current': (63, 41)
+    'current': (63, 41),
     'farmer_both': (53, 31),
     'farmer_tail': (63, 31),
     'farmer_front': (53, 41),
