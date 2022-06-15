@@ -6,11 +6,13 @@ import matplotlib.pyplot as plt
 
 from Ecological_flows.v2.alternate_restrictions import naturalise_historical_flow, make_new_rest_record, new_flows
 from Ecological_flows.v2.detrended_historical import get_run_basgra_for_historical_new_flows, default_mode_sites
+from Ecological_flows.v2.visualise_alternate_alf import get_colors
 import pandas as pd
 import numpy as np
 from pathlib import Path
 import ksl_env
 import pickle
+from Ecological_flows.v2.flow_duration_curve import fdc, fdcmatch
 
 base_outdir = Path(ksl_env.slmmac_dir).joinpath('eco_modelling', 'historical_detrended')
 base_outdir.mkdir(exist_ok=True, parents=True)
@@ -42,7 +44,7 @@ def get_make_pg_flow_nat_daily_data(winter_takes=False, recalc=False):
             if mode == 'dryland':
                 continue
             pg = pg_data[(mode, site, name)]
-            data.loc[:, f'{site}-{mode}'] = pg.loc[:, 'pg']  # todo is this correct?
+            data.loc[:, f'{site}-{mode}'] = pg.loc[:, 'pg']
         joint_data[name] = data
     pickle.dump(joint_data, pickle_path.open('wb'))
     return joint_data
@@ -139,7 +141,7 @@ def get_daily_resample(idx, nyrs, winter_takes=False):
     for k, v in daily_data.items():
         out = []
         for y, uy in enumerate(use_years[idx]):
-            temp = daily_data.loc[daily_data.water_year == uy].copy(deep=True)
+            temp = v.loc[v.water_year == uy].copy(deep=True)
             temp.loc[:, 'year'] = y
             out.append(temp)
         out = pd.concat(out).reset_index()
@@ -189,13 +191,88 @@ def plot_new_v_current(nyr, wintertakes=False):
     fig, axs = plt.subplots(2, 3, figsize=figsize, sharex=True, sharey=True)
     for ax, (k, v) in zip(axs.flatten(), data.items()):
         ax.scatter(current.alf, v.alf)
-        ax.set_title(k)
+        ax.set_title(k + ' ' + str(new_flows.get(k)))
         ax.set_ylabel('new')
         ax.set_xlabel('current')
         one_to_one(ax, ls=':')
     fig.suptitle('MALF vs MALF')
 
-    plt.show()
+    plt.show()  # todo save
+
+
+def plot_flow_duration(data=None, winter_takes=False, match=False, func=1, ax=None):
+    """
+
+    :param data: None (use full historical) or input data (from get_daily_resample)
+    :param winter_takes:
+    :param match: bool if True use the fdc match function, else use fdc function
+    :param func: func parameter from fdc_match
+    :return:
+    """
+    if data is None:
+        data = get_make_pg_flow_nat_daily_data(winter_takes=winter_takes)
+    plot_data = {}
+    for k, v in data.items():
+        indata = v.flow.values
+        if match:
+            out_func, par, r_value, stderr = fdcmatch(indata, fun=func)
+            prob = np.arange(1, 101) / 100
+            outdata = out_func(prob, *par)
+            prob *= 100
+        else:
+            prob, outdata = fdc(indata)
+        plot_data[k] = (prob, outdata)
+
+        # add the naturalised FDC
+        indata = v.nat.values
+        if match:
+            out_func, par, r_value, stderr = fdcmatch(indata, fun=func)
+            prob = np.arange(1, 101) / 100
+            outdata = out_func(prob, *par)
+            prob *= 100
+        else:
+            prob, outdata = fdc(indata)
+        if len(k.split('-')) > 1:
+            use_key = 'naturalised' + '-' + '-'.join(k.split('-')[1:])
+        else:
+            use_key = 'naturalised'
+        plot_data[use_key] = (prob, outdata)
+    # plot up the FDC
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.figure
+    colors = get_colors(plot_data, 'tab20')
+    for c, (k, (x, y)) in zip(colors, plot_data.items()):
+        ax.plot(x, y, c=c, label=k + ' ' + str(new_flows.get(k.split('-')[0])))
+    ax.legend()
+    ax.set_ylabel('flow')
+    ax.set_xlabel('probability')
+    ax.set_title('flow duration curve')
+    ax.set_ylim(20, 80)
+    ax.set_xlim(60, 110)
+
+    return fig, ax
+
+
+def prep_flow_duration_compare(data, newlab, keys=None, winter_takes=False, base_lab='historical'):
+    assert isinstance(data, dict)
+    full_data = get_make_pg_flow_nat_daily_data(winter_takes=winter_takes)
+    if keys is None:
+        keys = list(set(full_data.keys()).intersection(data.keys()))
+    keys = np.atleast_1d(keys)
+    outdata = {}
+    for k in keys:
+        outdata[k + '-' + base_lab] = full_data[k]
+        outdata[k + '-' + newlab] = data[k]
+    return outdata
+
+
+def comp_nyr_fdc(nyrs, index, keys=None, winter_takes=False):
+    data = get_daily_resample(index, nyrs, winter_takes=winter_takes)
+    plot_data = prep_flow_duration_compare(data, 'scenario', keys=keys, winter_takes=winter_takes)
+    fig, ax = plot_flow_duration(plot_data)
+    return fig, ax
 
 
 # todo run, plot, and check!!!!
@@ -207,4 +284,9 @@ if __name__ == '__main__':
             for v in [True, False]:
                 print(f'recalcing data for yrs: {y} and winter_takes={v}')
                 get_make_resample_annual_data(nyrs=y, winter_takes=v, recalc=recalc_data)
-    plot_new_v_current(1)
+    data = prep_flow_duration_compare(get_make_pg_flow_nat_daily_data(winter_takes=True), 'winter takes',
+                                      base_lab='no winter takes',
+                                      keys=['current'])
+    temp = get_make_resample_annual_data(10)
+    comp_nyr_fdc(10, 9442, keys='current')
+    plt.show()
