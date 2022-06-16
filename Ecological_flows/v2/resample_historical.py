@@ -268,10 +268,10 @@ def prep_flow_duration_compare(data, newlab, keys=None, winter_takes=False, base
     return outdata
 
 
-def comp_nyr_fdc(nyrs, index, keys=None, winter_takes=False):
+def comp_nyr_fdc(nyrs, index, keys=None, winter_takes=False, ax=None):
     data = get_daily_resample(index, nyrs, winter_takes=winter_takes)
     plot_data = prep_flow_duration_compare(data, 'scenario', keys=keys, winter_takes=winter_takes)
-    fig, ax = plot_flow_duration(plot_data)
+    fig, ax = plot_flow_duration(plot_data, ax=ax)
     return fig, ax
 
 
