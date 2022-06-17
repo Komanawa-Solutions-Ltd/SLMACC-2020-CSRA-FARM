@@ -11,7 +11,7 @@ import glob
 from copy import deepcopy
 import ksl_env
 from Storylines.storyline_building_support import make_sampling_options, base_events, default_storyline_time, \
-    map_storyline_rest, irrig_season, month_len
+    map_storyline_rest, irrig_season, month_len, default_mode_sites
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 from Pasture_Growth_Modelling.full_pgr_model_mp import run_full_model_mp, default_pasture_growth_dir, pgm_log_dir
 
@@ -69,7 +69,7 @@ def run_pasture_growth():
                       padock_rest_mult=False,
                       save_daily_mult=False,
                       verbose=False,
-                      mode_sites_mult=mode_sites)
+                      mode_sites_mult=default_mode_sites)
 
 
 def extract_data(outdir):
@@ -109,15 +109,13 @@ def extract_data(outdir):
                                   'rest'] + temp]
         outdata.to_csv(os.path.join(outdir, f'{sm}-{var}-{cum_nm}-singe_events.csv'))
 
-mode_sites = (
-        ('dryland', 'oxford'),
-        ('irrigated', 'eyrewell'),
-        ('irrigated', 'oxford'),
-    )
 
 if __name__ == '__main__':
-    mk_st = False
-    run_pgr = False
+    # todo need to adjust output data so that it is relative to the two year storyline
+
+    # todo re-run, then need to plot and show
+    mk_st = True
+    run_pgr = True
     extract = True
     if mk_st:
         make_storylines()

@@ -107,6 +107,8 @@ def plot_resampled_sims(paths, ns, n_compare, show=True, save_dir=None, real=Tru
 
 
 if __name__ == '__main__':
+    # todo need to re-run, probably with unique events
+
     all_paths = [
         r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-oxford-dryland.nc",
         r"D:\mh_unbacked\SLMACC_2020\pasture_growth_sims\baseline_sim_no_pad\0-baseline-oxford-irrigated.nc",

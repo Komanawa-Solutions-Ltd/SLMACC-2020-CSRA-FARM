@@ -176,7 +176,7 @@ def final_plots():
     data2 = {e: make_mean_comparison(v, fun) for e, v in data.items()}
     data3 = {e: make_mean_comparison_suite(v, fun) for e, v in data.items()}
     data4 = {e: make_total_suite(v) for e, v in data.items()}
-    data2['Horata'] = get_horarata_data_old()
+    data2['Hororata'] = get_horarata_data_old()
     data2['Winchmore'] = get_witchmore_mean()
     out_vars = ['DM', 'YIELD', 'DMH_RYE', 'DM_RYE_RM', 'IRRIG', 'RAIN', 'EVAP', 'TRAN', 'per_PAW', 'pg', 'RESEEDED',
                 'pga_norm', 'BASAL']
