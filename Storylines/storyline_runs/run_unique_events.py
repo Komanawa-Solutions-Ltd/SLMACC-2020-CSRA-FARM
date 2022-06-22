@@ -75,8 +75,8 @@ def run_pasture_growth():
 def extract_data(outdir):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-
-    for sm, var, cum in itertools.product(['eyrewell-irrigated', 'oxford-dryland', 'oxford-irrigated'],
+    sms = [f'{s}-{m}' for m, s in default_mode_sites]
+    for sm, var, cum in itertools.product(sms,
                                           ['PGRA', 'PGR'],
                                           [True, False]):
         paths = sorted(glob.glob(os.path.join(unique_events_pgr_dir, f'*{sm}.nc')))
@@ -90,7 +90,7 @@ def extract_data(outdir):
             use_data = np.nanmean(np.array(data.variables[f'm_{var}'][idx:]), axis=1)
             if cum:
                 cum_nm = 'monthly_total'
-                outdata.loc[range(len(use_data)), n] = use_data * month_len[int(n.split('-')[0].replace('m',''))]
+                outdata.loc[range(len(use_data)), n] = use_data * month_len[int(n.split('-')[0].replace('m', ''))]
             else:
                 cum_nm = 'daily_total'
                 outdata.loc[range(len(use_data)), n] = use_data
