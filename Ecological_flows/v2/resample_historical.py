@@ -289,4 +289,5 @@ if __name__ == '__main__':
                                       keys=['current'])
     temp = get_make_resample_annual_data(10)
     comp_nyr_fdc(10, 9442, keys='current')
+    plot_new_v_current()
     plt.show()
