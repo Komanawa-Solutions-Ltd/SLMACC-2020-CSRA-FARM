@@ -122,7 +122,7 @@ def plot_unique_events(single_plots=False):
             fig.tight_layout()
             fig.savefig(outdir.joinpath(f'{sm}_unique.png'))
 
-    # todo plot winter months (no variation)
+    # todo plot winter months (no variation) for oxford and eyrewell
 
 
 if __name__ == '__main__':
