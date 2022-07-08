@@ -69,6 +69,9 @@ def plot_unique_events(single_plots=False):
             if single_plots:
                 fig, ax = plt.subplots(figsize=figsize)
             ax.set_title(month_to_month[m])
+            if single_plots:
+                ax.set_xlabel('Months since the event')
+                ax.set_ylabel('kg DM/ha/day')
             idx = data.month == m
             colors = {'H': 'r', 'C': 'b', 'A': 'grey'}
             lss = {'D': ':', 'W': '--', 'A': '-'}
@@ -119,12 +122,92 @@ def plot_unique_events(single_plots=False):
                 fig.savefig(outdir.joinpath(f'{sm}-{month_to_month[m]}_unique.png'))
         if not single_plots:
             fig.suptitle(sm.capitalize())
+            fig.supxlabel('Months since the event')
+            fig.supylabel('kg DM/ha/day')
             fig.tight_layout()
             fig.savefig(outdir.joinpath(f'{sm}_unique.png'))
 
-    # todo plot winter months (no variation) for oxford and eyrewell
+
+def plot_winter_months(single_plots):
+    if single_plots:
+        outdir = outdir_base.joinpath('single_plots_winter')
+    else:
+        outdir = outdir_base.joinpath('overview_plots_winter')
+    outdir.mkdir(exist_ok=True)
+    use_months = [6, 7, 8]
+    if not single_plots:
+        fig, axs = plt.subplots(2, 3, figsize=figsize)
+    else:
+        axs = np.array(use_months)
+
+    for row, site in enumerate(['oxford', 'eyrewell']):
+        sm = f'{site}-irrigated'
+        data = pd.read_csv(data_dir.joinpath(f'{sm}-PGR-daily_total-singe_events.csv'), index_col=0)
+
+        # normalise data to base year
+        cols = np.arange(0, 24).astype(str)
+        for m in data.month.unique():
+            idx = data.month == m
+            print(m)
+            if m in [5, 6, 7, 8]:
+                base_key = f'm{m:02d}-A-A-0-{sm}'
+            else:
+                base_key = f'm{m:02d}-A-A-50-{sm}'
+
+            data.loc[idx, cols] += -1 * data.loc[base_key, cols]
+
+        ks = [f'{p}-{t}' for p, t in itertools.product(['W', 'A', 'D'], ['C', 'A', 'H'])]
+        for col, m in enumerate(use_months):
+            if single_plots:
+                fig, ax = plt.subplots(figsize=figsize)
+            else:
+                ax = axs[row, col]
+            ax.set_title(f'{site.capitalize()} {month_to_month[m]}')
+            if single_plots:
+                ax.set_xlabel('Months since the event')
+                ax.set_ylabel('kg DM/ha/day')
+
+            idx = data.month == m
+            colors = {'H': 'r', 'C': 'b', 'A': 'grey'}
+            lss = {'D': ':', 'W': '--', 'A': '-'}
+            use_cols = np.arange(12).astype(str)
+            for i in data.index[idx]:
+
+                temp = data.loc[i, 'temp']
+                precip = data.loc[i, 'precip']
+                c = colors[temp]
+                ls = lss[precip]
+                ax.plot(use_cols.astype(int), data.loc[i, use_cols], c=c, ls=ls, alpha=0.5)
+                if single_plots:
+                    legend = True
+                elif row == 1 and col == 2:
+                    legend = True
+                else:
+                    legend = False
+
+                if legend:
+                    legend_elements = []
+                    legend_elements.append(Patch(color='w', label='Precip class'))
+                    for k, v in lss.items():
+                        legend_elements.append(Line2D([0], [0], ls=v, label=k, color='k'))
+
+                    legend_elements.append(Patch(color='w', label='Temp class'))
+                    for k, v in colors.items():
+                        legend_elements.append(Patch(color=v, label=k))
+
+                    ax.legend(handles=legend_elements, ncol=2, loc=4)
+            if single_plots:
+                pass
+                fig.savefig(outdir.joinpath(f'{sm}-{month_to_month[m]}_unique_winter.png'))
+    if not single_plots:
+        fig.supxlabel('Months since the event')
+        fig.supylabel('kg DM/ha/day')
+        fig.tight_layout()
+        fig.savefig(outdir.joinpath(f'winter_unique.png'))
 
 
 if __name__ == '__main__':
-    plot_unique_events(single_plots=True)
-    plot_unique_events(single_plots=False)
+    #plot_unique_events(single_plots=False)
+    #plot_unique_events(single_plots=True)
+    plot_winter_months(single_plots=False)
+    plot_winter_months(single_plots=True)
