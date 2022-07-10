@@ -114,8 +114,8 @@ if __name__ == '__main__':
     # todo need to adjust output data so that it is relative to the two year storyline
 
     # todo re-run, then need to plot and show
-    mk_st = True
-    run_pgr = True
+    mk_st = False
+    run_pgr = False
     extract = True
     if mk_st:
         make_storylines()
