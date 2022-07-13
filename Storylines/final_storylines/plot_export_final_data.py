@@ -77,10 +77,10 @@ def print_baseline_limits():
     data = (data.loc[:,keys]/1000).round(2)
     data.describe().transpose().sort_index().to_csv(outdir.joinpath('baseline_limits.csv'))
 
-def plot_storage():
+def plot_storage(): # todo see hydrosoc poster
     raise NotImplementedError
 
-def plot_base():
+def plot_base(): # todo
     sms = ['oxford-dryland', 'oxford-irrigated', 'eyrewell-irrigated']
     raise NotImplementedError
 
