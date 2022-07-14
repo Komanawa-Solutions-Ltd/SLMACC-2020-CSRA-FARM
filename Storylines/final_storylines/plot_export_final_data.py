@@ -7,8 +7,10 @@ from pathlib import Path
 import zipfile
 import matplotlib.pyplot as plt
 import pandas as pd
+
+import ksl_env
 from Storylines.storyline_building_support import month_len
-from Storylines.storyline_runs.run_random_suite import get_1yr_data
+from Storylines.storyline_runs.run_random_suite import get_1yr_data, get_nyr_suite
 
 
 def get_storyline_ids(nm):
@@ -84,21 +86,61 @@ def print_baseline_limits():
 
 
 def plot_storage():  # todo see hydrosoc poster
-    raise NotImplementedError
+    outdir = Path(ksl_env.slmmac_dir).joinpath('0_Y2_and_Final_Reporting', 'final_plots', 'storage_scens')
+    outdir.mkdir(exist_ok=True)
+    scen_data = get_scenario_data()
+    scens = [
+        'baseline-raw',
+        'scare-raw',
+        'hurt-raw'
+    ]
+    sites = ['eyrewell', 'oxford']
+    modes = ['irrigated',
+             'store400',
+             'store600',
+             'store800',
+             ]
+    colors = {
+        'irrigated': 'b',
+        'store400': 'm',
+        'store600': 'y',
+        'store800': 'c',
+    }
+    for site in sites:
+        fig, axs = plt.subplots(nrows=3, sharex=True, figsize=(8, 10))
+        for i, (scen, ax) in enumerate(zip(scens, axs)):
+            for mode in modes:
+                c = colors[mode]
+                plot_months, pdata = _prep_data(scen_data[scen], f'{site}-{mode}', True)
+                ax.plot(range(12), pdata, label=mode, c=c)
+            ax.set_title(scen.strip('-raw'))
+            ax.set_ylim(1,100)
+            if i == 2:
+                ax.legend()
+                ax.set_xticks(range(0, 12))
+                ax.set_xticklabels([month_to_month[m] for m in plot_months])
+            pass
+        fig.suptitle(site.capitalize())
+        fig.supylabel('Pasture Growth kg DM/ha/day')
+        fig.tight_layout()
+        plt.show()
+        fig.savefig(outdir.joinpath(f'{site}_storage.png'))
 
 
-def plot_base():  # todo
+def plot_base():
+    outdir = Path(ksl_env.slmmac_dir).joinpath('0_Y2_and_Final_Reporting', 'final_plots', 'base_scens')
+    outdir.mkdir(exist_ok=True)
     sms = [
         'eyrewell-irrigated',
         'oxford-irrigated',
         'oxford-dryland',
     ]
-    raw_data = get_1yr_data()
     scen_data = get_scenario_data()
     fig, axs = plt.subplots(nrows=3, sharex=True, figsize=(8, 10))
     for sm, ax in zip(sms, axs):
         pass
         # make datasets
+        raw_data = get_nyr_suite(1, sm.strip('-')[0], sm.strip('-')[1], monthly_data=True)
         plot_months, pdata = _prep_data(raw_data, sm)
         ax.boxplot(pdata, labels=[month_to_month[m] for m in plot_months])
         scens = [
@@ -121,16 +163,20 @@ def plot_base():  # todo
     fig.supylabel('Pasture Growth kg DM/ha/day')
     fig.tight_layout()
     plt.show()
+    fig.savefig(outdir.joinpath('base_scenarios.png'))
 
 
-def _prep_data(data, sm, take_mean=False):
+def _prep_data(data, sm, take_mean=False, resampled=False):
     plot_months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
     outdata = []
+    extra = ''
+    if resampled:
+        extra='yr0_'
     for m in plot_months:
         if take_mean:
-            outdata.append(data.loc[:, f'{sm}_pg_m{m:02d}'].dropna().values.mean() / month_len[m])
+            outdata.append(data.loc[:, f'{sm}_pg_{extra}m{m:02d}'].dropna().values.mean() / month_len[m])
         else:
-            outdata.append(data.loc[:, f'{sm}_pg_m{m:02d}'].dropna().values / month_len[m])
+            outdata.append(data.loc[:, f'{sm}_pg_{extra}m{m:02d}'].dropna().values / month_len[m])
 
     return plot_months, outdata
 
@@ -151,4 +197,4 @@ month_to_month = {
 
 }
 if __name__ == '__main__':
-    plot_base()
+    plot_storage()
