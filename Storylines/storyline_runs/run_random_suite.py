@@ -198,6 +198,7 @@ def create_nyr_suite(nyr, use_default_seed=True,
     data_1y = data_1y.dropna()
 
     default_seeds = {
+        1: 654654,
         2: 471121,
         3: 44383,
         4: 80942,
