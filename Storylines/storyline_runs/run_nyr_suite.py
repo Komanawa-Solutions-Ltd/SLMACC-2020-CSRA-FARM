@@ -7,7 +7,7 @@ import time
 
 if __name__ == '__main__':
     t = time.time()
-    create_nyr_suite(1,True, False, correct=False)
+    create_nyr_suite(1, True, False, correct=False, monthly_data=True)
     # create_nyr_suite(2, True, False, correct=False)
     # create_nyr_suite(3, True, False, correct=False)
     # create_nyr_suite(5, True, False, correct=False)

@@ -174,19 +174,21 @@ def get_1yr_data(bad_irr=True, good_irr=True, correct=False):
 
 
 def create_nyr_suite(nyr, use_default_seed=True,
-                     save_to_gdrive=True, correct=False):
+                     save_to_gdrive=True, correct=False, monthly_data=False):
     """
     this does keep the number consitant across sims as the same seed it used
     :param nyr: number of years long, options are: [2, 3, 4, 5, 6, 7, 8, 9, 10, 15]
     :param use_default_seed: bool if true then use the default seed to keep reproducability
     :param save_to_gdrive: bool if True then save to the google drive
     :param correct: bool if True add a correction, if False then use model output.
-
+    :param monthly_data: bool if true save monthly data, else save annual data.
     :return:
     """
     print(f'nyear: {nyr}')
     assert isinstance(nyr, int)
     n = int(2.5e8)
+    if monthly_data:
+        n = int(2.5e7)
     if nyr > 5:
         n = int(2.5e8)
 
@@ -217,6 +219,8 @@ def create_nyr_suite(nyr, use_default_seed=True,
 
     mem = psutil.virtual_memory().available - 3e9  # leave 3 gb spare
     total_mem_needed = np.zeros(1).nbytes * n * nyr * 4
+    if monthly_data:
+        total_mem_needed *= 12
     chunks = int(np.ceil(total_mem_needed / mem))
     print(f'running in {chunks} chunks')
     chunk_size = int(np.ceil(n / chunks))
@@ -261,8 +265,14 @@ def create_nyr_suite(nyr, use_default_seed=True,
             outdata.loc[start_idx:end_idx - 1, f'log10_prob_irrigated'] = prob.sum(axis=1).astype(np.float32)
 
             print('getting pg')
-            pga = data_1y[f'{key}_pg_yr1'].values[idxs[start_idx:end_idx]].reshape(cs, nyr)
-            outdata.loc[start_idx:end_idx - 1, f'{key}_pg_yr{nyr}'] = pga.sum(axis=1).astype(np.float32)
+            if monthly_data:
+                for m in range(1, 13):
+                    pga = data_1y[f'{key}_pg_m{m:02d}'].values[idxs[start_idx:end_idx]].reshape(cs, nyr)
+                    for y in range(nyr):
+                        outdata.loc[start_idx:end_idx - 1, f'{key}_pg_yr{y}_m{m:02d}'] = pga[:, y]
+            else:
+                pga = data_1y[f'{key}_pg_yr1'].values[idxs[start_idx:end_idx]].reshape(cs, nyr)
+                outdata.loc[start_idx:end_idx - 1, f'{key}_pg_yr{nyr}'] = pga.sum(axis=1).astype(np.float32)
 
         if not use_default_seed:
             print('recording indexes')
@@ -270,15 +280,19 @@ def create_nyr_suite(nyr, use_default_seed=True,
                 outdata.loc[:, f'scen_{n + 1}'] = idxs[:, n]
 
         print(f'saving {mode} - {site} to local drive for {nyr}y')
-        if correct:
-            outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr_correct',
-                                   f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
-            outpath_idx = os.path.join(os.path.dirname(random_pg_dir), 'nyr_correct',
-                                       f'IID_stories_{nyr}y_{mode}.npy')
-
+        if monthly_data:
+            if correct:
+                dirnm = 'nyr_correct_monthly'
+            else:
+                dirnm = 'nyr_monthly'
         else:
-            outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr', f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
-            outpath_idx = os.path.join(os.path.dirname(random_pg_dir), 'nyr', f'IID_stories_{nyr}y_{mode}.npy')
+            if correct:
+                dirnm = 'nyr_correct'
+            else:
+                dirnm = 'nyr'
+
+        outpath = os.path.join(os.path.dirname(random_pg_dir), dirnm, f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+        outpath_idx = os.path.join(os.path.dirname(random_pg_dir), dirnm, f'IID_stories_{nyr}y_{mode}.npy')
 
         if not os.path.exists(os.path.dirname(outpath)):
             os.makedirs(os.path.dirname(outpath))
@@ -312,11 +326,14 @@ def create_nyr_suite(nyr, use_default_seed=True,
     pd.Series(data_1y.index).to_csv(outpath)
 
 
-def get_nyr_idxs(nyr, mode, correct=False):
+def get_nyr_idxs(nyr, mode, correct=False, monthly_data=False):  # todo update with monthly
+    extra = ''
+    if monthly_data:
+        extra = '_monthly'
     if correct:
-        dir = os.path.join(os.path.dirname(random_pg_dir), 'nyr_correct')
+        dir = os.path.join(os.path.dirname(random_pg_dir), f'nyr_correct{extra}')
     else:
-        dir = os.path.join(os.path.dirname(random_pg_dir), 'nyr')
+        dir = os.path.join(os.path.dirname(random_pg_dir), f'nyr{extra}')
 
     if 'store' in mode:
         mode = 'irrigated'
@@ -327,7 +344,7 @@ def get_nyr_idxs(nyr, mode, correct=False):
     return stories
 
 
-def get_nyr_suite(nyr, site, mode, correct=False):
+def get_nyr_suite(nyr, site, mode, correct=False, monthly_data=False):  # todo update with monthly
     """
 
     :param nyr:
@@ -336,12 +353,16 @@ def get_nyr_suite(nyr, site, mode, correct=False):
     :param correct: dnz correction applied
     :return:
     """
+    extra = ''
+    if monthly_data:
+        extra = '_monthly'
     if correct:
-        outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr_correct',
-                               f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+        dir = os.path.join(os.path.dirname(random_pg_dir), f'nyr_correct{extra}')
     else:
-        outpath = os.path.join(os.path.dirname(random_pg_dir), 'nyr',
-                               f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
+        dir = os.path.join(os.path.dirname(random_pg_dir), f'nyr{extra}')
+
+    outpath = os.path.join(dir,
+                           f'IID_probs_pg_{nyr}y_{site}-{mode}.npy')
     out = np.load(outpath)
     out = pd.DataFrame(out, columns=pd.read_csv(outpath.replace('.npy', '.csv')).columns)
     return out

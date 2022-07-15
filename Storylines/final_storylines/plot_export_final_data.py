@@ -85,7 +85,7 @@ def print_baseline_limits():
     data.describe().transpose().sort_index().to_csv(outdir.joinpath('baseline_limits.csv'))
 
 
-def plot_storage():  # todo see hydrosoc poster
+def plot_storage():
     outdir = Path(ksl_env.slmmac_dir).joinpath('0_Y2_and_Final_Reporting', 'final_plots', 'storage_scens')
     outdir.mkdir(exist_ok=True)
     scen_data = get_scenario_data()
@@ -140,8 +140,8 @@ def plot_base():
     for sm, ax in zip(sms, axs):
         pass
         # make datasets
-        raw_data = get_nyr_suite(1, sm.strip('-')[0], sm.strip('-')[1], monthly_data=True)
-        plot_months, pdata = _prep_data(raw_data, sm)
+        raw_data = get_nyr_suite(1, sm.split('-')[0], sm.split('-')[1], monthly_data=True)
+        plot_months, pdata = _prep_data(raw_data, sm,resampled=True)
         ax.boxplot(pdata, labels=[month_to_month[m] for m in plot_months])
         scens = [
             'baseline-raw',
@@ -162,7 +162,6 @@ def plot_base():
         ax.set_ylim(0, 100)
     fig.supylabel('Pasture Growth kg DM/ha/day')
     fig.tight_layout()
-    plt.show()
     fig.savefig(outdir.joinpath('base_scenarios.png'))
 
 
@@ -197,4 +196,4 @@ month_to_month = {
 
 }
 if __name__ == '__main__':
-    plot_storage()
+    plot_base()
