@@ -114,7 +114,7 @@ def plot_storage():
                 plot_months, pdata = _prep_data(scen_data[scen], f'{site}-{mode}', True)
                 ax.plot(range(12), pdata, label=mode, c=c)
             ax.set_title(scen.strip('-raw'))
-            ax.set_ylim(1,100)
+            ax.set_ylim(1, 100)
             if i == 2:
                 ax.legend()
                 ax.set_xticks(range(0, 12))
@@ -141,8 +141,10 @@ def plot_base():
         pass
         # make datasets
         raw_data = get_nyr_suite(1, sm.split('-')[0], sm.split('-')[1], monthly_data=True)
-        plot_months, pdata = _prep_data(raw_data, sm,resampled=True)
-        ax.boxplot(pdata, labels=[month_to_month[m] for m in plot_months])
+        plot_months, pdata = _prep_data(raw_data, sm, resampled=True)
+        vparts = ax.violinplot(pdata, widths=0.5, showextrema=False)
+        for p in vparts['bodies']:
+            p.set_color('grey')
         scens = [
             'baseline-raw',
             'scare-raw',
@@ -170,7 +172,7 @@ def _prep_data(data, sm, take_mean=False, resampled=False):
     outdata = []
     extra = ''
     if resampled:
-        extra='yr0_'
+        extra = 'yr0_'
     for m in plot_months:
         if take_mean:
             outdata.append(data.loc[:, f'{sm}_pg_{extra}m{m:02d}'].dropna().values.mean() / month_len[m])
