@@ -79,6 +79,7 @@ def get_exceedence(site, mode, correct):
         impacts = exceedence.pg.values * 1000
     return exceedence
 
+
 def add_exceedence_prob(impact_data, correct,
                         impact_in_tons=False):  # todo how to handle for new mode-sites, this is the hard one.... ?? don't understand
     """
@@ -116,7 +117,8 @@ def add_exceedence_prob(impact_data, correct,
     return impact_data
 
 
-def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None, correct=False, monthly_limits=None):
+def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None, correct=False, monthly_limits=None,
+              use_mode_sites=default_mode_sites, return_pg_data=False):
     """
     get the storylines for the paths where data is between the two bounds, note cannot select from non-default mode sites
     :param lower_bound: dictionary {site-mode: None, float (for annual) or dictionary with at least 1 month limits}
@@ -132,7 +134,7 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None,
     """
     assert isinstance(state_limits, dict) or state_limits is None
     assert isinstance(lower_bound, dict) and isinstance(upper_bound, dict)
-    assert set(lower_bound.keys()) == set(upper_bound.keys()) == {f'{s}-{m}' for m, s in default_mode_sites}
+    assert set(lower_bound.keys()) == set(upper_bound.keys()) == {f'{s}-{m}' for m, s in use_mode_sites}
 
     if isinstance(monthly_limits, dict):
 
@@ -155,7 +157,7 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None,
     full_prob = (10 ** impact_data.loc[:, ['log10_prob_irrigated', 'log10_prob_dryland']]).sum()
 
     idx = np.full((len(impact_data),), True)
-    for mode, site in default_mode_sites:
+    for mode, site in use_mode_sites:
         sm = f'{site}-{mode}'
         if lower_bound[sm] is None:
             assert upper_bound[sm] is None, f'both must be None for sm: {sm}'
@@ -185,10 +187,12 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None,
                 min_v, max_v = v1
                 tidx = (impact_data.loc[:, key] >= min_v) & (impact_data.loc[:, key] <= max_v)
                 idx = idx & tidx
+                print(k, k1, f'{idx.sum()} left')
 
     if not idx.any():
         raise ValueError('montly and annual bounds produced no storylines')
-
+    if return_pg_data:
+        return impact_data.loc[idx]
     # pull out data from the indexes and pre-prepared
     data = get_storyline_data(False)
     if state_limits is None:

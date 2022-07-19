@@ -143,7 +143,7 @@ def add_basgra_nz_path():
 def get_vscn_dir():
     host_nm_dict = {
         'wanganui': {
-            'matt_dumont': '/home/matt_dumont/temp_files'  # todo dummy
+            'matt_dumont': '/home/matt_dumont/temp_files/SLMACC-Subset_vcsn'
         },
 
         'dickie': {

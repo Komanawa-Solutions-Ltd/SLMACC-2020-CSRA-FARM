@@ -180,8 +180,14 @@ def examine_means(ext='png'):
 
 
 def get_irrigation_generator(recalc=False):
-    raise ValueError('#todo use the detrened flow data and set the seeed!!!!')
-    nsims = 1e7
+    from socket import gethostname
+    host = gethostname()
+    if host !='wanganui':
+        nsims = 1e7
+        raise ValueError('#todo use the detrened flow data and set the seeed!!!!')
+    else:
+        nsims = 1e5
+
     nsims = int(nsims)
     input_data, block, sim_len, nmonths_comments = make_input_data_1month()
     comments = '''generator created by get irrigation generator {} to provide daily 
@@ -191,7 +197,7 @@ def get_irrigation_generator(recalc=False):
     generator_path = os.path.join(baseoutdir, 'irrigation_gen.nc')
     boot = MovingBlockBootstrapGenerator(input_data=input_data, blocktype='truncnormal', block=block,
                                          nsims=nsims, data_path=generator_path, sim_len=sim_len, nblocksize=50,
-                                         save_to_nc=True, comments=comments, recalc=recalc) # todo add seed
+                                         save_to_nc=True, comments=comments, recalc=recalc, seed=654685)
     boot.create_1d(make_restriction_mean, suffix='rest', pass_if_exists=True)
 
     return boot

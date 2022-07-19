@@ -392,6 +392,22 @@ class MovingBlockBootstrapGenerator(object):
 
         print(f'suffix: {suffix} calculated')
 
+    def get_suffixes(self):
+        out = []
+        if self.save_to_nc:
+            all_keys = list(self.dataset.variables.keys())
+        else:
+            all_keys = list(self.dataset.keys())
+        for k in all_keys:
+            if 'sim_num' in k:
+                continue
+            temp = k.split('_')
+            if len(temp) ==1:
+                continue
+            out.append('_'.join(temp[1:]))
+        return set(out)
+
+
     def _check_suffix_exists(self, suffix):
         missing_keys = []
         for key in self.keys:
