@@ -3,7 +3,7 @@ created matt_dumont
 on: 27/05/22
 """
 import itertools
-
+from dateutil.relativedelta import relativedelta
 import ksl_env
 from pathlib import Path
 import pickle
@@ -169,5 +169,39 @@ def main(recalc=False, plot=False):
                     plot_resampling_new_flow(nyr=y, site=site, mode=mode)
 
 
+from Ecological_flows.v2.exceedence_probabilities.calculate_exceedence_probability import calc_non_exceedence_prob
+
+
+def export_water_year_data(version):
+    keys = [
+        ('irrigated', 'eyrewell', 'current'),
+        ('irrigated', 'oxford', 'current'),
+    ]
+    all_data = get_run_basgra_for_historical_new_flows(version, False)
+    irr_months = [9, 10, 11, 12, 1, 2, 3, 4]
+    outdir = Path(ksl_env.slmmac_dir).joinpath('0_Y2_and_Final_Reporting/ecological_flows and cultural',
+                                               'histoical_pg_rest')
+    outdir.mkdir(exist_ok=True)
+    for k in keys:
+        rest = get_new_flow_rest_record(name=k[-1], version=version)
+        rest.to_csv(outdir.joinpath('flow_data.csv'))
+        rest.loc[:, 'water_year'] = [(e + relativedelta(months=-6)).year for e in rest.index]
+        rest_data = rest.groupby(['water_year', 'month']).mean()['f_rest']
+        data = all_data[k]
+        data.loc[:, 'water_year'] = [(e + relativedelta(months=-6)).year for e in data.index]
+        outdata = pd.DataFrame(index=data.water_year.unique(),
+                               columns=['pg', 'pg_prob'] + [f'rest_{m:02d}' for m in irr_months])
+        outdata.loc[:, 'pg'] = (data.groupby('water_year').sum().loc[:, 'pg'] / 1000).round(2)
+
+        outdata.loc[:, 'pg_prob'] = calc_non_exceedence_prob(outdata.loc[:, 'pg'], False, k[1], k[0],
+                                                             pg_in_tons=True).round(2)
+        for m in irr_months:
+            outdata.loc[:, f'rest_{m:02d}'] = rest_data.loc[:, m].round(2)
+        outdata.to_csv(outdir.joinpath('{}_{}_{}.csv'.format(*k)))
+
+
 if __name__ == '__main__':
-    main(recalc=True, plot=False) # todo plot
+    export_water_year_data('trended')
+    pass
+
+    # main(recalc=True, plot=False)
