@@ -170,24 +170,32 @@ def main(recalc=False, plot=False):
 
 
 from Ecological_flows.v2.exceedence_probabilities.calculate_exceedence_probability import calc_non_exceedence_prob
+from Pasture_Growth_Modelling.historical_average_baseline import run_past_basgra_irrigated, get_restriction_record
 
 
 def export_water_year_data(version):
     keys = [
         ('irrigated', 'eyrewell', 'current'),
         ('irrigated', 'oxford', 'current'),
+        ('irrigated', 'eyrewell', 'no_nat'),
+        ('irrigated', 'oxford', 'no_nat'),
     ]
     all_data = get_run_basgra_for_historical_new_flows(version, False)
     irr_months = [9, 10, 11, 12, 1, 2, 3, 4]
     outdir = Path(ksl_env.slmmac_dir).joinpath('0_Y2_and_Final_Reporting/ecological_flows and cultural',
-                                               'histoical_pg_rest')
+                                               'histoical_pg_rest_inc_base')
     outdir.mkdir(exist_ok=True)
     for k in keys:
-        rest = get_new_flow_rest_record(name=k[-1], version=version)
+        if k[-1] == 'base':
+            rest = get_new_flow_rest_record(name=k[-1], version=version)
+            data = all_data[k]
+        else:
+            rest = get_restriction_record(version)
+            data = run_past_basgra_irrigated(return_inputs=False, site=k[1], reseed=True, version='trended',
+                                             mode='irrigated')
         rest.to_csv(outdir.joinpath('flow_data.csv'))
         rest.loc[:, 'water_year'] = [(e + relativedelta(months=-6)).year for e in rest.index]
         rest_data = rest.groupby(['water_year', 'month']).mean()['f_rest']
-        data = all_data[k]
         data.loc[:, 'water_year'] = [(e + relativedelta(months=-6)).year for e in data.index]
         outdata = pd.DataFrame(index=data.water_year.unique(),
                                columns=['pg', 'pg_prob'] + [f'rest_{m:02d}' for m in irr_months])
