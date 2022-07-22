@@ -24,7 +24,7 @@ month_len = {
 }
 
 
-def package_random(nc_files, irr_type, irr_mode):
+def package_random(nc_files, irr_type, irr_mode):  # todo would be good if I can read the nc datasets from the compressed archive.
     """
 
     :param nc_files: lsit of paths
