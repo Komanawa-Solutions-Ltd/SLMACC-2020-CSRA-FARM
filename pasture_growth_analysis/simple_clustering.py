@@ -74,6 +74,7 @@ if __name__ == '__main__':
     # note including 9,10,11 months in the pca did not make much of a difference, variability in these months are not
     # very predicitve to the cluster.
 
+    # todo worth looking at wether or not the storyline realisaions fall into different groups for the same storyline
     # todo could break the clusters into groups of good, moderate, bad
     # todo where does the vulnerabilities come from, typify the options
     # todo worth looking at the relative probability of each group!
