@@ -191,9 +191,9 @@ def export_water_year_data(version):
             data = all_data[k]
         else:
             rest = get_restriction_record(version)
-            data = run_past_basgra_irrigated(return_inputs=False, site=k[1], reseed=True, version='trended',
+            data = run_past_basgra_irrigated(return_inputs=False, site=k[1], reseed=True, version=version,
                                              mode='irrigated')
-        rest.to_csv(outdir.joinpath('flow_data.csv'))
+        rest.to_csv(outdir.joinpath('flow_data_{}_{}_{}.csv'.format(*k)))
         rest.loc[:, 'water_year'] = [(e + relativedelta(months=-6)).year for e in rest.index]
         rest_data = rest.groupby(['water_year', 'month']).mean()['f_rest']
         data.loc[:, 'water_year'] = [(e + relativedelta(months=-6)).year for e in data.index]
