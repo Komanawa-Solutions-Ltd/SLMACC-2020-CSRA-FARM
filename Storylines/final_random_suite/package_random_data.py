@@ -4,9 +4,9 @@ on: 22/07/22
 """
 import netCDF4 as nc
 import numpy as np
-import pandas as pd
 from pathlib import Path
-from Storylines.storyline_runs.run_random_suite import get_1yr_data
+import zipfile
+from Storylines.storyline_runs.run_random_suite import get_mean_1yr_data, default_mode_sites
 
 month_len = {
     1: 31,
@@ -24,7 +24,7 @@ month_len = {
 }
 
 
-def package_random(nc_files, irr_type, irr_mode):  # todo would be good if I can read the nc datasets from the compressed archive.
+def package_random(outdir, zippath, bad_irr):
     """
 
     :param nc_files: lsit of paths
@@ -32,54 +32,100 @@ def package_random(nc_files, irr_type, irr_mode):  # todo would be good if I can
     :param irr_mode: either dryland or irrigated (incl storage)
     :return:
     """
-    mean_data = get_1yr_data(correct=False)
+    outdir = Path(outdir)
+    outdir.mkdir(exist_ok=True)
+
+    mean_data = get_mean_1yr_data(correct=False)
     mean_data.loc[:, 'kid'] = mean_data.loc[:, 'ID'] + '_' + mean_data.loc[:, 'irr_type'] + '_irr'
     mean_data.set_index('kid', inplace=True)
-    pg_data = []
-    sids = []
-    probs = []
-    expect_months = np.array([7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6])
-    for i, (nc_file, irr) in enumerate(zip(nc_files, irr_type)):
-        if i % 100 == 0:
-            print(f'{i} of {len(nc_files)}')
-        sid = Path(nc_file)
-        sid = '-'.join(sid.name.split('-')[0:2]) + f'_{irr}_irr'
-        data = nc.Dataset(nc_file)
-        assert data.dimensions['sim_month'].size == 12
-        assert (np.array(data.variables['m_month']) == expect_months).all()
-        key = 'm_PGR'
-        temp = np.array(data.variables[key]).transpose() * np.array([month_len[e] for e in expect_months])
-        temp = np.concatenate((temp, temp.sum(axis=1)[:, np.newaxis]), axis=1)
-        pg_data.append(temp.round())
-        sids.extend(np.repeat(sid, len(temp)))
-        probs.extend(np.repeat(mean_data.loc[sid, f'log10_prob_{irr_mode}'], len(temp)))
-        data.close()
-    pg_data = np.concatenate(pg_data)
+    with zipfile.ZipFile(zippath) as zfile:
+        all_names = zfile.namelist()
+        for mode, site in default_mode_sites:
+            if mode == 'dryland':
+                use_mode = 'dryland'
+            else:
+                use_mode = 'irrigated'
 
-    outdata = pd.DataFrame(columns=[f'pg_{m:02d}' for m in expect_months] + ['pg_1yr'], data=pg_data)
-    outdata.loc[:, 'storyline'] = sids
-    outdata.loc[:, f'log10_prob_{irr_mode}'] = probs
+            if bad_irr:
+                irr = 'bad'
+            else:
+                irr = 'good'
 
-    # todo could manage dtypes if size is a problem.. move to ID, and boolean irr_type
+            use_file_list = [e for e in all_names if f'{site}-{mode}' in e]
 
-    return outdata
-    pass
+            pg_data = []
+            sids = []
+            probs = []
+            out_irr = []
+            expect_months = np.array([7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6])
+            for i, n in enumerate(use_file_list):
+                if i % 100 == 0:
+                    print(f'{i} of {len(use_file_list)}')
+                sid = Path(n)
+                sid_mean = '-'.join(sid.name.split('-')[0:2]) + f'_{irr}_irr'
+                sid = int(sid.name.split('-')[1])
+                with zfile.open(n) as f:
+                    with nc.Dataset('dummy', mode='r', memory=f.read()) as data:
+                        assert data.dimensions['sim_month'].size == 12
+                        assert (np.array(data.variables['m_month']) == expect_months).all()
+                        key = 'm_PGR'
+                        temp = np.array(data.variables[key]).transpose() * np.array(
+                            [month_len[e] for e in expect_months])
+                        temp = np.concatenate((temp, temp.sum(axis=1)[:, np.newaxis]), axis=1)
+                        pg_data.append(temp.round())
+                        sids.extend(np.repeat(sid, len(temp)))
+                        out_irr.extend(np.repeat('bad' in irr, len(temp)))
+                        probs.extend(np.repeat(mean_data.loc[sid_mean, f'log10_prob_{use_mode}'], len(temp)))
+            pg_data = np.concatenate(pg_data)
+
+            sids = np.array(sids)
+            probs = np.array(probs)
+            out_irr = np.zeros(probs.shape) + bad_irr
+            columns = (['storyline', 'bad_irr'] + [f'pg_{m:02d}' for m in expect_months]
+                       + ['pg_1yr', f'log10_prob_{use_mode}'])
+            outdata = np.concatenate((sids[:, np.newaxis], out_irr[:, np.newaxis],
+                                      pg_data, probs[:, np.newaxis]), axis=1)
+            outdata = outdata.transpose()
+
+            # save as np.z file
+            default_type = np.uint16
+            use_types = {c: default_type for c in columns}
+            use_types.update({'bad_irr': np.bool_,
+                              'storyline': np.uint32,
+                              f'log10_prob_{use_mode}': np.float})
+            kwargs = {}
+            for a, k in zip(outdata, columns):
+                kwargs[k] = a.astype(use_types[k])
+            outpath = outdir.joinpath(f'{site}-{mode}_{irr}.npz')
+            np.savez_compressed(outpath, **kwargs)
 
 
 # todo need to re-run probability across full suite otherwise it is wrong.
 # todo need to update the get data to get mean data and get full dataset, both in this repo and in the final repo
-# todo consider compression (which pandas handles natively)
+# todo re-run nyr from full suite
+
+# todo review below to decide what needs to be done with new datasets
+# #### model runs ####
+# Storylines/storyline_runs/historical_quantified_1yr_detrend.py # have run
+# Storylines\storyline_runs\historical_quantified_1yr_trend.py # have run
+
+# Storylines/storyline_runs/run_random_suite.py # have run
+# Storylines/storyline_runs/run_nyr_suite.py # have run
+
+
+# #### exports and plots ####
+# Storylines/storyline_evaluation/plot_historical_trended.py # have run
+# Storylines/storyline_evaluation/plot_historical_detrended.py # have run
+
+# Storylines/storyline_evaluation/export_cum_percentile.py # have run
+# Storylines\storyline_evaluation\plot_site_v_site.py # have run
+# Storylines/storyline_evaluation/plots.py # have run
+# Storylines/storyline_evaluation/storyline_slection/stories_to_ws_pg_threshold.py # have run
+# Storylines/storyline_evaluation/plot_cumulative_historical_v_modelled.py # run
+# Storylines\final_plots\prob_and_pg_with_storage.py # have run
+
 
 if __name__ == '__main__':
-    num = 1000
-    test = package_random(['/home/matt_dumont/Downloads/rsl-000000-eyrewell-irrigated.nc' for e in range(num)],
-
-                          ['bad' for e in range(num)],
-                          'irrigated')
-    print(test.dtypes)
-    print('saving')
-    test.to_hdf(Path().home().joinpath('Downloads/uncompressed.hdf'), 'test')
-    test.to_hdf(Path().home().joinpath('Downloads/compressed_zlib5.hdf'), 'test', complevel=5)
-    test.to_hdf(Path().home().joinpath('Downloads/compressed_zlib_9.hdf'), 'test', complevel=9)
-    test.to_hdf(Path().home().joinpath('Downloads/compressed_lzo.hdf'), 'test', complevel=9, complib='lzo')
-    test.to_hdf(Path().home().joinpath('Downloads/compressed_lz4.hdf'), 'test', complevel=9, complib='blosc:lz4')
+    # todo do bad irr, save these file somewhere
+    package_random(Path.home().joinpath('Downloads/full_suite'), '/home/matt_dumont/Downloads/random_bad_irr.zip',
+                   bad_irr=True)

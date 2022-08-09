@@ -70,7 +70,7 @@ def get_params_doy_irr(mode, site='eyrewell'):
             params['reseed_CSTUB'] = 0
 
             # modify inital  # set from start of simulation month (7) mean for the historical period.
-            # todo worth re-thinking after major change to events
+            # KEYNOTE worth re-thinking after major change to events
             if site == 'eyrewell':
                 params['BASALI'] = 0.747
             elif site == 'oxford':
@@ -155,7 +155,7 @@ def create_days_harvest(mode, matrix_weather, site, fix_leap=True):
         reseed_trig = 0.059
         reseed_basal = 0.090
 
-        weed_dm_frac = {  # todo pull this into documentation
+        weed_dm_frac = {
             1: 0.42,
             2: 0.30,
             3: 0.27,

@@ -108,7 +108,7 @@ def run_IID(story_dict, outpath=None, verbose=False, comments='',
         for i in range(len(df) - 1):
 
             month1 = df.iloc[i]
-            if month1.loc['month'] in [5, 6, 7]:  # todo document change
+            if month1.loc['month'] in [5, 6, 7]:
                 continue
                 # the trasitions to months 6, 7, 8 should not impact probability
                 # as pasture growth is fixed for these months.
@@ -148,7 +148,7 @@ def run_IID(story_dict, outpath=None, verbose=False, comments='',
                 else:
                     # switched to defining restrictions in storylines by percentile rather than value and getting the
                     # restriction from a look up table generated from the de-trened historical data.
-                    # todo document these changes!
+
                     if irr_prob_from_zero:
                         prob += np.log10(1 - month1['rest_per'])  # use the rest percenitle
                     else:
@@ -215,5 +215,5 @@ if __name__ == '__main__':
     expected = pd.read_csv("story_probs.csv", comment="#")
     print(expected)
     assert (np.isclose(np.log10(expected.prob.values),
-                       t.log10_prob.values)).all()  # todo this will not work due to new data
+                       t.log10_prob.values)).all()
     print('passed test')

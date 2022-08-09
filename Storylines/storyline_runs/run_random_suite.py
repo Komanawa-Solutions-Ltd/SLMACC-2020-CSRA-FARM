@@ -18,7 +18,7 @@ from Pasture_Growth_Modelling.full_pgr_model_mp import run_full_model_mp, defaul
     default_mode_sites
 from Pasture_Growth_Modelling.full_model_implementation import add_pasture_growth_anaomoly_to_nc
 from Storylines.storyline_evaluation.storyline_eval_support import get_pgr_prob_baseline_stiched
-from Storylines.storyline_evaluation.transition_to_fraction import corr_pg
+from Storylines.storyline_evaluation.transition_to_fraction import corr_pg, corr_pg_raw
 
 name = 'random'
 random_pg_dir = os.path.join(default_pasture_growth_dir, name)
@@ -149,7 +149,45 @@ def create_1y_pg_data(bad_irr=True):
                 mode='w')
 
 
-def get_1yr_data(bad_irr=True, good_irr=True, correct=False):
+def get_1yr_data(bad_irr=True, good_irr=True, correct=False, site=None, mode=None):
+    base_dir = None
+    if site is None:
+        assert mode is None
+        raise ValueError('no site or mode given, likely the old version which is now named get_mean_1yr_data')
+    elif mode is None:
+        assert site is None
+        raise ValueError('no site or mode given, likely the old version which is now named get_mean_1yr_data')
+
+    use_paths = []
+    if bad_irr:
+        use_paths.append(f'{site}-{mode}_bad.npz')
+    if good_irr:
+        use_paths.append(f'{site}-{mode}_good.npz')
+
+    if len(use_paths) == 0:
+        raise ValueError('no data selected')
+
+    outdata = []
+    for p in use_paths:
+        with np.load(p) as f:
+            outdata.append(pd.DataFrame({k: v for k, v in f.items()}))
+    outdata = pd.concat(outdata)
+
+    # todo I may need to manage types!
+    if correct:
+        outdata = corr_pg_raw(outdata, site, mode)
+
+    # todo make the ID col, check
+    mapper = {True: 'bad', False: 'good'}
+    outdata.loc[:, 'ID'] = [f'rsl-{int(k):06d}_{mapper[i]}_irr' for k, i in outdata.loc[:, ['storyline', 'bad_irr']]]
+    outdata.set_index('ID', inplace=True)
+
+    return outdata
+    # todo pull the full suite in!!  THIS IS THE NEXT STEP
+    # todo check and then copy to other git repo.
+
+
+def get_mean_1yr_data(bad_irr=True, good_irr=True, correct=False):
     """
     get the 1 year data
     :param bad_irr: bool if True return the data from the worse than median irrigation restriction suite
@@ -184,6 +222,7 @@ def create_nyr_suite(nyr, use_default_seed=True,
     :param monthly_data: bool if true save monthly data, else save annual data.
     :return:
     """
+    # todo re-write for full suite, also see other git repo
     print(f'nyear: {nyr}')
     assert isinstance(nyr, int)
     n = int(2.5e8)

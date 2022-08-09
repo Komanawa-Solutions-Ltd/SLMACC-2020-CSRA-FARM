@@ -220,13 +220,6 @@ def get_store_reseed_trig_basal(site, mode):
     return reseed_trig, reseed_basal
 
 
-# todo this will have different seeds than the original???, perhaps just run on subset... of storylines... or re-run everything????, smaller sample...
-# todo possibly best bet at this point is to only run the storylines that we need --> the hurt/scare/subset of 'most probable'
-# todo re-running everything is not really an option time wise.
-
-# todo run a test of every site/mode for a storyline
-# todo perhaps run big suite over break
-# todo scripts that need to be re-run with new storage systems:
 # #### model runs ####
 # Storylines/storyline_runs/historical_quantified_1yr_detrend.py # have run
 # Storylines\storyline_runs\historical_quantified_1yr_trend.py # have run

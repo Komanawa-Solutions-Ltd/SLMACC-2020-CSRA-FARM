@@ -145,7 +145,7 @@ def get_winchmore_boxplot():
             else:
                 tout[n] = v
         out.append(tout)
-    # todo https://stackoverflow.com/questions/23655798/matplotlib-boxplot-using-precalculated-summary-statistics
+    # https://stackoverflow.com/questions/23655798/matplotlib-boxplot-using-precalculated-summary-statistics
 
     return out
 

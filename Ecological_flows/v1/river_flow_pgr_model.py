@@ -86,12 +86,12 @@ def get_river_flow_from_storyline(num_to_pull, storyline, rest_fun, simlen, seed
         idx += month_len[m]
 
     rest = rest_fun(flow)
-    # todo I need to add the naturalisation into this (and or the increased takes)...
+    # tod I need to add the naturalisation into this (and or the increased takes)...
     return rest, flow
 
 
 def get_rest_river_output_from_storyline_path(storyline_path, num_to_pull, rest_fun, seed=None, use_1_seed=False,
-                                              fix_leap=True):  # todo check
+                                              fix_leap=True):  # tod check
     storyline = pd.read_csv(storyline_path)
     simlen = np.array([month_len[e] for e in storyline.month]).sum()
     sm = storyline.month.iloc[0]
@@ -125,7 +125,7 @@ def get_rest_river_output_from_storyline_path(storyline_path, num_to_pull, rest_
 def run_pasture_growth_river_flow(storyline_path, outdir, nsims, rest_fun, mode_sites=default_mode_sites,
                                   save_daily=True, description='', swg_dir=default_swg_dir, verbose=True,
                                   n_parallel=1, fix_leap=True, re_run=True, seed=None, use_1_seed=False,
-                                  use_out_variables=out_variables_flow):  # todo check
+                                  use_out_variables=out_variables_flow):  # tod check
     """
     creates weather data, runs basgra and saves values to a netcdf
     :param storyline_path: path to the storyline
@@ -211,7 +211,7 @@ def _run_simple_rest(storyline, nsims, mode, site, simlen, storyline_key, outdir
         all_out = np.zeros((len(use_out_variables), simlen, number_run)) * np.nan
         for i, (matrix_weather, days_harvest) in enumerate(zip(all_matrix_weathers, all_days_harvests)):
             restrict = 1 - matrix_weather.loc[:, 'max_irr'] / abs_max_irr
-            assert np.isclose(restrict, rest_data[i]).all()  # todo internal check see if this causes problems!
+            assert np.isclose(restrict, rest_data[i]).all()  # tod internal check see if this causes problems!
             out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False, run_365_calendar=fix_leap)
             out.loc[:, 'PER_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
 

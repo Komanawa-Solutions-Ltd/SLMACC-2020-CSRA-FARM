@@ -215,7 +215,7 @@ def _check_data_v1(swg_path, storyline, m, cold_months, wet_months, hot_months, 
     data = read_swg_data(swg_path)[0]
     data = data.loc[np.in1d(data.month, m)]
 
-    # calc SMA # todo event data hard coded in
+    # calc SMA # KEYNOTE event data hard coded in
     data.loc[:, 'sma'] = calc_smd_monthly(data.rain, data.pet, data.index) - data.loc[:, 'doy'].replace(
         get_monthly_smd_mean_detrended(leap=False))
     data.loc[:, 'tmean'] = (data.loc[:, 'tmax'] + data.loc[:, 'tmin']) / 2

@@ -11,7 +11,7 @@ from BS_work.SWG.SWG_wrapper import get_monthly_smd_mean_detrended
 from Climate_Shocks.climate_shocks_env import supporting_data_dir
 from Pasture_Growth_Modelling.historical_average_baseline import get_historical_average_baseline
 
-def make_data(save, save_paths):  # todo add new system to write up
+def make_data(save, save_paths):
     """
     make the final data for greg
     :param org_data: from final_event_recurance import get_org_data

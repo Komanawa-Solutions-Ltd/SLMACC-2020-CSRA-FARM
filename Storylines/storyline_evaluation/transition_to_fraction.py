@@ -102,6 +102,22 @@ def corr_pg(data, mode_site=default_mode_sites):
     return data
 
 
+def corr_pg_raw(data, site, mode):
+    use_mode = mode
+    if 'store' in use_mode:
+        use_mode = 'irrigated'
+    for m in range(1, 13):
+        if m in [6, 7, 8]:
+            data.loc[:, f'pg_{m:02d}'] = fixed_data[(use_mode, site)][m]
+        else:
+            data.loc[:, f'pg_{m:02d}'] *= deltas[m]
+
+    # 1 year
+    data.loc[:, f'pg_yr1'] = data.loc[:, [f'pg_{m:02d}' for m in range(1, 13)]].sum(axis=1)
+
+    return data
+
+
 target_ranges = {
     ('dryland', 'oxford'): (4, 6 * 100000),
     ('irrigated', 'eyrewell'): (15 * 1000, 17 * 1000),
