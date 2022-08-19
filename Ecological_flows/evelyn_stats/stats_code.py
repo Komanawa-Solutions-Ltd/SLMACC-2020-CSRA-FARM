@@ -18,81 +18,66 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     # Default pathway is to the project folder
     # Make sure to double backslash (\\) any pathways
 
-    flow_df = pd.read_csv(pathway + file, parse_dates=['Date'], index_col='Date')
+    flow_df = pd.read_csv(pathway + file, parse_dates=['date'], index_col='date', dayfirst=True)
     # This dataframe has a date and a flow column
 
     # Calculating stats
 
     # Calculating the median flow for all years
     # One value for the entire dataset
-    median_flow = flow_df['Flow'].median()
+    median_flow = flow_df['flow'].median()
     # Printing a string that
     median_flow_output = f"The median flow across all years is {median_flow:.2f} m3/s"
     print(median_flow_output)
 
     # Calculating the average low flow (ALF) for each year
     # The no. of ALFs = no. of years in data set
-    #todo need to figure out how to start in break it up into years as well
-    # This could be a nested function
-    # Automate this process more
 
-    # Figure out how to potentially put these all into one?
-    # Or if the process was automated/in a function might not need to
-    year_1 = flow_df.loc["1972-07-15":"1973-07-15"]
-    year_2 = flow_df.loc["1973-07-15":"1974-07-15"]
-    year_3 = flow_df.loc["1974-07-15":"1975-07-15"]
-    year_4 = flow_df.loc["1975-07-15":"1976-07-15"]
-    year_5 = flow_df.loc["1976-07-15":"1977-07-15"]
-    year_6 = flow_df.loc["1977-07-15":"1978-07-15"]
-    year_7 = flow_df.loc["1978-07-15":"1979-07-15"]
-    year_8 = flow_df.loc["1979-07-15":"1980-07-15"]
-    year_9 = flow_df.loc["1980-07-15":"1981-07-15"]
-    year_10 = flow_df.loc["1981-07-15":"1982-07-15"]
-    year_11 = flow_df.loc["1982-07-15":"1983-07-15"]
-    year_12 = flow_df.loc["1983-07-15":"1984-07-15"]
-    year_13 = flow_df.loc["1984-07-15":"1985-07-15"]
-    year_14 = flow_df.loc["1985-07-15":"1986-07-15"]
-    year_15 = flow_df.loc["1986-07-15":"1987-07-15"]
-    year_16 = flow_df.loc["1987-07-15":"1988-07-15"]
-    year_17 = flow_df.loc["1988-07-15":"1989-07-15"]
-    year_18 = flow_df.loc["1989-07-15":"1990-07-15"]
-    year_19 = flow_df.loc["1990-07-15":"1991-07-15"]
-    year_20 = flow_df.loc["1991-07-15":"1992-07-15"]
-    year_21 = flow_df.loc["1992-07-15":"1993-07-15"]
-    year_22 = flow_df.loc["1993-07-15":"1994-07-15"]
-    year_23 = flow_df.loc["1994-07-15":"1995-07-15"]
-    year_24 = flow_df.loc["1995-07-15":"1996-07-15"]
-    year_25 = flow_df.loc["1996-07-15":"1997-07-15"]
-    year_26 = flow_df.loc["1997-07-15":"1998-07-15"]
-    year_27 = flow_df.loc["1998-07-15":"1999-07-15"]
-    year_28 = flow_df.loc["1999-07-15":"2000-07-15"]
-    year_29 = flow_df.loc["2000-07-15":"2001-07-15"]
-    year_30 = flow_df.loc["2001-07-15":"2002-07-15"]
-    year_31 = flow_df.loc["2002-07-15":"2003-07-15"]
-    year_32 = flow_df.loc["2003-07-15":"2004-07-15"]
-    year_33 = flow_df.loc["2004-07-15":"2005-07-15"]
-    year_34 = flow_df.loc["2005-07-15":"2006-07-15"]
-    year_35 = flow_df.loc["2006-07-15":"2007-07-15"]
-    year_36 = flow_df.loc["2007-07-15":"2008-07-15"]
-    year_37 = flow_df.loc["2008-07-15":"2009-07-15"]
-    year_38 = flow_df.loc["2009-07-15":"2010-07-15"]
-    year_39 = flow_df.loc["2010-07-15":"2011-07-15"]
-    year_40 = flow_df.loc["2011-07-15":"2012-07-15"]
-    year_41 = flow_df.loc["2012-07-15":"2013-07-15"]
-    year_42 = flow_df.loc["2013-07-15":"2014-07-15"]
-    year_43 = flow_df.loc["2014-07-15":"2015-07-15"]
-    year_44 = flow_df.loc["2015-07-15":"2016-07-15"]
-    year_45 = flow_df.loc["2016-07-15":"2017-07-15"]
-    year_46 = flow_df.loc["2017-07-15":"2018-07-15"]
-    year_47 = flow_df.loc["2018-07-15":"2019-07-15"]
+    # Creating a nested function to subset the data into hydrological years
+    def get_hydrological_year(dataframe, startyear):
+        """Testing out a function that can get the hydrological year"""
 
-    print(type(year_47))
+        # Want to do what is done below, but then remove the index, and append the column to a dataframe?
+        storage = pd.DataFrame()
+        endyear = startyear + 1
+        hydro_year = dataframe.loc[f"{startyear}-07-01": f"{endyear}-06-30"]
+        hydro_year = hydro_year.reset_index()
+        # The column title is the START year
+        storage[startyear] = hydro_year.iloc[:, 1]
+        return storage
+
+    list_startdates = [1972, 1973, 1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985,
+                       1986, 1987, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+                       2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016,
+                       2017, 2018, 2019]
+
+    all_hydro_years = pd.DataFrame()
+    for year in list_startdates:
+        x = get_hydrological_year(flow_df, year)
+        all_hydro_years[year] = x
+
     # Creating a nested function to get a 7-day rolling average
     # and then create ALF
+    def seven_day_avg(dataframe):
+        """ A dataframe that creates the 7 day rolling avg of flow for each year"""
 
-    def 7day_avg(dataframe):
-    """A nested function that calculates the 7-day rolling averages for each
-    hydrological year """
+        # Creating an empty dataframe to append the 7 day avg series to
+        all_seven_day_avg = pd.DataFrame()
+        # Creating a column name that will increase for each hydrological year
+        col_name = 0
+        # Need to iterate through the columns and create a 7-day rolling avg for each yr
+        for col in dataframe:
+            col_name += 1
+            # Turning the dataframe into a series in order to do the rolling avg
+            number_series = dataframe.loc[:, col]
+            # Creating a series of moving averages in each window
+            rolling_avg = number_series.rolling(7).mean()
+            all_seven_day_avg[col_name] = rolling_avg
+        print(all_seven_day_avg)
+
+    seven_day_avg(all_hydro_years)
+
+
 
 
 read_and_stats('initial_flow_data.csv')
