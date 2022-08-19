@@ -58,7 +58,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
 
     # Creating a nested function to get a 7-day rolling average
     # and then create ALF
-    def seven_day_avg(dataframe):
+    def get_seven_day_avg(dataframe):
         """ A dataframe that creates the 7 day rolling avg of flow for each year"""
 
         # Creating an empty dataframe to append the 7 day avg series to
@@ -73,12 +73,29 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
             # Creating a series of moving averages in each window
             rolling_avg = number_series.rolling(7).mean()
             all_seven_day_avg[col_name] = rolling_avg
-        print(all_seven_day_avg)
+        return all_seven_day_avg
 
-    seven_day_avg(all_hydro_years)
+    seven_day_avg = get_seven_day_avg(all_hydro_years)
 
+    def get_alf(dataframe):
+        """Calculates the ALF for each hydrological year, which is the minimum value of each column"""
 
+        # Creating an empty list to store all the alfs
+        alf_list = []
+        for col in dataframe:
+            alf = dataframe[col].min()
+            alf_list.append(alf)
+        # turning the list into a df
+        # where startdate is the starting year of the hydrological year
+        # e.g 1972 is the hydrological year 01-07-1972 to 30-06-1973
+        alf_df = pd.DataFrame(alf_list, list_startdates, columns=['ALF'])
+        return alf_df
 
+    alf = get_alf(seven_day_avg)
+
+    # Getting the MALF
+    malf = alf['ALF'].mean()
+    print(malf)
 
 read_and_stats('initial_flow_data.csv')
 
