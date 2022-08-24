@@ -148,7 +148,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     anomaly_1 = malf - worst_alf
 
     # calculating the worst 2 & 3 consecutive years
-
+    # using a function that uses the rolling method
 
     def get_worst_years(dataframe,no_years):
         """ A function that sums the ALF for each year, depending on the period
@@ -177,10 +177,29 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     worst_3 = worst_3_df[1].min()
 
     # check what is wanted out of these - make absolute value?
-
+    # and what is the value wanted?
     anomaly_2 = malf - worst_2
     anomaly_3 = malf - worst_3
     print(anomaly_3, anomaly_2)
+
+    # counting the no. of consecutive days < x per year
+    # testing out using a while loop
+
+    # Finding the number of consecutive days per year below x
+    # testing somethings
+    # creating a boolean array of when flow is < x
+    low_flow_df = pd.DataFrame()
+    for col in all_hydro_years:
+        low_flow_days = all_hydro_years[col] < x
+        low_flow_df[col] = low_flow_days
+
+
+    only_low_flows = all_hydro_years[low_flow_df]
+    low_flow_accrual_df = low_flow_df.cumsum()
+    print(low_flow_accrual_df)
+    low_flow_accrual_total = low_flow_accrual_df.tail(1)
+    print(low_flow_accrual_total)
+
 
 read_and_stats('naturalised_flow_data.csv')
 
