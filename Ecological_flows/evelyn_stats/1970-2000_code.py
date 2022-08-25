@@ -20,7 +20,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
 
     # This code is dependent on the csv read in. The csv file must have two columns
     # one called 'date', one called 'flow' (in m3/s)
-    # the date range for this specific file is 1970-2000
+    # the date range for this specific file is 1970-2000 (hydrological year, so up to June 30 2000 included)
     # Default pathway is to the project folder
     # Make sure to double backslash (\\) any pathways
 
