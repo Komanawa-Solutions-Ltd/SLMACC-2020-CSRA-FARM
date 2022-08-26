@@ -176,71 +176,204 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     # Calculating the WUAs for a given flow, for different species
     # Using a nested function
 
-    def flow_to_wua(flow, species_type):
-        """ A function that takes in a flow and a species name, and based
-        on a polynomial eq, outputs a WUA"""
+    # For each species and each ALF
+    # I want the function to check if the alf is inside the given range
+    # Then depending on the species name want the equation to be calculated
+    # out put a DF with each ALF (the year can be appended later)? and the
+    # WUA for each the species
+    # Outside of this, compare the max WUA to each ALF WUA
+    # start by getting the WUA and then can play around with the comparison
+    # or maybe read in a dataframe and iterate w/n the function...?
 
-        x = flow
+    def flow_to_wua(dataframe, species_name):
+        """A function (that is not the best) but calculates
+        the WUA for each species for each ALF and appends it to the correct DF.
+        It also calculates the WUA % based on the max WUA"""
 
-        # Setting up the correct flow ranges
-        if species_type == "bird":
-            min_range = 35
-            max_range = 85
-        else:
-            min_range = 18
-            max_range = 180
+        WUA_list = []
+        WUA_percen_list = []
+        for index, row in dataframe.iterrows():
+            x = row['ALF']
 
-        # Calculating the WUA for each species based on the input flow
+            if species_name == "longfin_eel":
+                if x > 18 and x < 180:
+                    WUA = -9.045618237519400E-09 * x ** 5 + 3.658952327544510E-06 * x ** 4 - 5.653574369241410E-04 * x ** 3 + 3.858556802202370E-02 * x ** 2 - 3.239955996233250E-01 * x + 9.987638834796250E+01
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA/176 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
+            if species_name == "shortfin_eel":
+                if x > 18 and x < 180:
+                    WUA = -5.964114493071940E-09 * x ** 5 + 2.359764378654360E-06 * x ** 4 - 3.693579872009160E-04 * x ** 3 + 2.683927613703320E-02 * x ** 2 - 3.681012446881110E-01 * x + 8.593725263391190E+01
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA / 132 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
 
-        if flow > max_range or flow < min_range:
-            print("Sorry, flow is out of range")
-        else:
-            # These are all for WUA units in m2/m
-            longfin_eel = -9.045618237519400E-09 * x ** 5 + 3.658952327544510E-06 * x ** 4 - 5.653574369241410E-04 * x ** 3 + 3.858556802202370E-02 * x ** 2 - 3.239955996233250E-01 * x + 9.987638834796250E+01
-            shortfin_eel = -5.964114493071940E-09 * x ** 5 + 2.359764378654360E-06 * x ** 4 - 3.693579872009160E-04 * x ** 3 + 2.683927613703320E-02 * x ** 2 - 3.681012446881110E-01 * x + 8.593725263391190E+01
-            torrent_fish = 2.896163694304270E-08 * x ** 5 - 1.167620629575640E-05 * x ** 4 + 1.801041895279500E-03 * x ** 3 - 1.329402534268910E-01 * x ** 2 + 5.277167341236740E+00 * x - 1.408366189647840E+01
-            common_bully = 3.679138046845140E-09 * x ** 5 - 1.938607130429040E-07 * x ** 4 - 1.923502238925680E-04 * x ** 3 + 2.961375443166340E-02 * x ** 2 - 1.112066360882710E+00 * x + 7.329526111040610E+01
-            upland_bully = -1.670386190380080E-08 * x ** 5 + 7.480690123013630E-06 * x ** 4 - 1.257177384401630E-03 * x ** 3 + 9.648051249735090E-02 * x ** 2 - 3.077836962111130E+00 * x + 8.675954558492810E+01
-            bluegill_bully = -6.471586231748120E-09 * x ** 5 + 1.973356622447410E-06 * x ** 4 - 1.949914099179170E-04 * x ** 3 + 5.570337619808730E-03 * x ** 2 + 3.944431105242500E-01 * x + 3.459956435653860E+01
-            food_production = 2.130431975429750E-08 * x ** 5 - 9.085807849474580E-06 * x ** 4 + 1.464737145368640E-03 * x ** 3 - 1.125512066047600E-01 * x ** 2 + 4.823875351509410E+00 * x + 1.115625470423880E+01
-            brown_trout_adult = 4.716969949537670E-09 * x ** 5 - 2.076496120868080E-06 * x ** 4 + 3.361640291880770E-04 * x ** 3 - 2.557607121249140E-02 * x ** 2 + 1.060052581008110E+00 * x + 3.627596900757210E+00
-            chinook_salmon_juv = 6.430228856812380E-09 * x ** 5 - 1.901413063448040E-06 * x ** 4 + 1.779162094752800E-04 * x ** 3 - 5.287064285669480E-03 * x ** 2 + 6.690264788207550E-02 * x + 2.160739430906840E+01
-            black_fronted_tern = 1.860374649942380E-06 * x ** 5 - 6.206129788530580E-04 * x ** 4 + 8.139025742665820E-02 * x ** 3 - 5.222181017852630E+00 * x ** 2 + 1.629785813832450E+02 * x - 1.908796384066770E+03
+            if species_name == 'torrent_fish':
+                if x > 18 and x < 180:
+                    WUA = 2.896163694304270E-08 * x ** 5 - 1.167620629575640E-05 * x ** 4 + 1.801041895279500E-03 * x ** 3 - 1.329402534268910E-01 * x ** 2 + 5.277167341236740E+00 * x - 1.408366189647840E+01
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA / 120 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
+            if species_name == 'common_bully':
+                if x > 18 and x < 180:
+                    WUA = 3.679138046845140E-09 * x ** 5 - 1.938607130429040E-07 * x ** 4 - 1.923502238925680E-04 * x ** 3 + 2.961375443166340E-02 * x ** 2 - 1.112066360882710E+00 * x + 7.329526111040610E+01
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA / 87 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
+            if species_name == 'upland_bully':
+                if x > 18 and x < 180:
+                    WUA = -1.670386190380080E-08 * x ** 5 + 7.480690123013630E-06 * x ** 4 - 1.257177384401630E-03 * x ** 3 + 9.648051249735090E-02 * x ** 2 - 3.077836962111130E+00 * x + 8.675954558492810E+01
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA / 71 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
+            if species_name == 'bluegill_bully':
+                if x > 18 and x < 180:
+                    WUA = -6.471586231748120E-09 * x ** 5 + 1.973356622447410E-06 * x ** 4 - 1.949914099179170E-04 * x ** 3 + 5.570337619808730E-03 * x ** 2 + 3.944431105242500E-01 * x + 3.459956435653860E+01
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA / 75 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
+            if species_name == 'food_production':
+                if x > 18 and x < 180:
+                    WUA = 2.130431975429750E-08 * x ** 5 - 9.085807849474580E-06 * x ** 4 + 1.464737145368640E-03 * x ** 3 - 1.125512066047600E-01 * x ** 2 + 4.823875351509410E+00 * x + 1.115625470423880E+01
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA / 150 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
+            if species_name == 'brown_trout_adult':
+                if x > 18 and x < 180:
+                    WUA = 4.716969949537670E-09 * x ** 5 - 2.076496120868080E-06 * x ** 4 + 3.361640291880770E-04 * x ** 3 - 2.557607121249140E-02 * x ** 2 + 1.060052581008110E+00 * x + 3.627596900757210E+00
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA / 30 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
+            if species_name == 'chinook_salmon_juv':
+                if x > 18 and x < 180:
+                    WUA = 6.430228856812380E-09 * x ** 5 - 1.901413063448040E-06 * x ** 4 + 1.779162094752800E-04 * x ** 3 - 5.287064285669480E-03 * x ** 2 + 6.690264788207550E-02 * x + 2.160739430906840E+01
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA / 27 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
+            if species_name == 'diatoms':
+                if x > 18 and x < 180:
+                    WUA = 7.415806641571640E-11 * x ** 5 - 3.448627575182280E-08 * x ** 4 + 6.298888857172090E-06 * x ** 3 - 5.672527158325650E-04 * x ** 2 + 2.595917911761800E-02 * x - 1.041530354852930E-01
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA / 0.42 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
+            if species_name == 'long_filamentous':
+                if x > 18 and x < 180:
+                    WUA = -2.146620894005660E-10 * x ** 5 + 8.915219136657130E-08 * x ** 4 - 1.409667339556760E-05 * x ** 3 + 1.057153790947640E-03 * x ** 2 - 3.874332961128240E-02 * x + 8.884973169426100E-01
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA / 0.42 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
+            if species_name == 'short_filamentous':
+                if x > 18 and x < 180:
+                    WUA = 1.411793860210670E-10 * x ** 5 - 5.468836816918290E-08 * x ** 4 + 7.736645471349440E-06 * x ** 3 - 4.767919019192250E-04 * x ** 2 + 1.082051321324740E-02 * x + 3.578139911667070E-01
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA / 0.43 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
+            if species_name == 'black_fronted_tern':
+                if x > 35 and x < 85:
+                    WUA =1.860374649942380E-06 * x ** 5 - 6.206129788530580E-04 * x ** 4 + 8.139025742665820E-02 * x ** 3 - 5.222181017852630E+00 * x ** 2 + 1.629785813832450E+02 * x - 1.908796384066770E+03
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA / 66 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
+            if species_name == 'wrybill_plover':
+                if x > 35 and x < 85:
+                    WUA = 1.992991145099990E-05 * x ** 5 - 6.562761816460400E-03 * x ** 4 + 8.524578863075030E-01 * x ** 3 - 5.444835223306980E+01 * x ** 2 + 1.702284174702220E+03 * x - 2.058208449588460E+04
+                    WUA_list.append(WUA)
+                    WUA_percen = WUA / 203 * 100
+                    WUA_percen_list.append(WUA_percen)
+                else:
+                    WUA = "Sorry, flow is out of range"
+                    WUA_list.append(WUA)
+                    WUA_percen = "Sorry, flow is out of range"
+                    WUA_percen_list.append(WUA_percen)
 
-            # This is WUA units in m2*1000
-            wrybill_plover = 1.992991145099990E-05 * x ** 5 - 6.562761816460400E-03 * x ** 4 + 8.524578863075030E-01 * x ** 3 - 5.444835223306980E+01 * x ** 2 + 1.702284174702220E+03 * x - 2.058208449588460E+04
 
-            # This is proportion of WUA
-            diatoms = 7.415806641571640E-11 * x ** 5 - 3.448627575182280E-08 * x ** 4 + 6.298888857172090E-06 * x ** 3 - 5.672527158325650E-04 * x ** 2 + 2.595917911761800E-02 * x - 1.041530354852930E-01
-            long_filamentous = -2.146620894005660E-10 * x ** 5 + 8.915219136657130E-08 * x ** 4 - 1.409667339556760E-05 * x ** 3 + 1.057153790947640E-03 * x ** 2 - 3.874332961128240E-02 * x + 8.884973169426100E-01
-            short_filamentous = 1.411793860210670E-10 * x ** 5 - 5.468836816918290E-08 * x ** 4 + 7.736645471349440E-06 * x ** 3 - 4.767919019192250E-04 * x ** 2 + 1.082051321324740E-02 * x + 3.578139911667070E-01
+        dataframe[f'WUA score for {species_name}'] = WUA_list
+        dataframe[f"% of max WUA for {species_name}"] = WUA_percen_list
+        return dataframe
 
+    alf_WUA_scores_df = alf.copy()
+    alf_WUA_scores_df['ALF'] = alf_WUA_scores_df['ALF'].fillna(0)
+    flow_to_wua(alf_WUA_scores_df, "longfin_eel")
+    flow_to_wua(alf_WUA_scores_df, "shortfin_eel")
+    flow_to_wua(alf_WUA_scores_df, "torrent_fish")
+    flow_to_wua(alf_WUA_scores_df, "common_bully")
+    flow_to_wua(alf_WUA_scores_df, "upland_bully")
+    flow_to_wua(alf_WUA_scores_df, "bluegill_bully")
+    flow_to_wua(alf_WUA_scores_df, "food_production")
+    flow_to_wua(alf_WUA_scores_df, "brown_trout_adult")
+    flow_to_wua(alf_WUA_scores_df, "chinook_salmon_juv")
+    flow_to_wua(alf_WUA_scores_df, "diatoms")
+    flow_to_wua(alf_WUA_scores_df, "long_filamentous")
+    flow_to_wua(alf_WUA_scores_df, "short_filamentous")
+    flow_to_wua(alf_WUA_scores_df, "black_fronted_tern")
+    flow_to_wua(alf_WUA_scores_df, "wrybill_plover")
 
-        # Assigning the maximum WUA for each species, based on the original graphs
-        # Doing this as a dictionary and then turning into a dataframe
-        max_WUA_dict = {"longfin eel": 176, "shortfin eel": 132, "torrent fish": 120, "common bully": 87,
-                        "upland bully": 71, "bluegill bully": 75, "food production" : 150, "brown trout adult": 30,
-                        "chinook salmon juvenile": 27, "diatoms":0.42, "long filamentous": 0.42, "short filamentous":0.43,
-                        "black fronted tern" : 66, "wrybill plover": 203}
-        WUA_df = pd.DataFrame(list(max_WUA_dict.items()), columns=['Species', 'Max WUA'])
-
-        # Adding the WUA based on the input flow to the dataframe
-        WUA_df['Calculated WUA'] = [longfin_eel, shortfin_eel, torrent_fish, common_bully,
-                                    upland_bully,bluegill_bully, food_production, brown_trout_adult,
-                                    chinook_salmon_juv, diatoms, long_filamentous, short_filamentous,
-                                    black_fronted_tern, wrybill_plover]
-        # Calculating the percentage
-
-        WUA_df['Percentage score'] = WUA_df['Calculated WUA'] / WUA_df['Max WUA'] * 100
-
-        # Getting the range - this is just testing
-        min_WUA = WUA_df['Percentage score'].min()
-        max_WUA = WUA_df['Percentage score'].max()
-        range_WUA = max_WUA - min_WUA
-        print(max_WUA, min_WUA, range_WUA)
+    print(alf_WUA_scores_df)
 
 
-    flow_to_wua(60, "bird")
-
-# NB going to have to iterate through both ALFs AND species names to get this function to work??
 read_and_stats('period_a.csv')
