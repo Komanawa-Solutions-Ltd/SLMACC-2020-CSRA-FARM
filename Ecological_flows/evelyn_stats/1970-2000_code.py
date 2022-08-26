@@ -373,7 +373,8 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     flow_to_wua(alf_WUA_scores_df, "black_fronted_tern")
     flow_to_wua(alf_WUA_scores_df, "wrybill_plover")
 
-    print(alf_WUA_scores_df)
+    alf_WUA_scores_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\WUA_scores_1970.csv")
+
 
 
 read_and_stats('period_a.csv')
