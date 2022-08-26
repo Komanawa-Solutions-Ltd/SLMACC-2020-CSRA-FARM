@@ -356,8 +356,11 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
         dataframe[f"% of max WUA for {species_name}"] = WUA_percen_list
         return dataframe
 
+    # creating a copy of the alf df to populate
     alf_WUA_scores_df = alf.copy()
+    # Filling any NaNs with 0
     alf_WUA_scores_df['ALF'] = alf_WUA_scores_df['ALF'].fillna(0)
+    # Calling the function to calculate the WUA score and WUA%
     flow_to_wua(alf_WUA_scores_df, "longfin_eel")
     flow_to_wua(alf_WUA_scores_df, "shortfin_eel")
     flow_to_wua(alf_WUA_scores_df, "torrent_fish")
@@ -374,6 +377,43 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     flow_to_wua(alf_WUA_scores_df, "wrybill_plover")
 
     alf_WUA_scores_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\WUA_scores_1970.csv")
+
+    # Reading in a csv that only has the % columns
+    WUA_percen_df = pd.read_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\percen_only.csv")
+
+    WUA_percen_df = WUA_percen_df.replace(to_replace='Sorry, flow is out of range', value=0)
+    WUA_percen_df = WUA_percen_df.astype(dtype=float)
+
+    col_title = 0
+    for col in WUA_percen_df.iloc[:,1:]:
+        list_scores = []
+        range = WUA_percen_df[col].max() - WUA_percen_df[col].min()
+        increments = range/5
+        col_title += 1
+        for value in WUA_percen_df[col]:
+            if value < increments:
+                score = 1
+                list_scores.append(score)
+            elif increments < value < (increments*2):
+                score = 2
+                list_scores.append(score)
+            elif (increments * 2) < value < (increments * 3):
+                score = 3
+                list_scores.append(score)
+            elif (increments * 3) < value < (increments * 4):
+                score = 4
+                list_scores.append(score)
+            elif (increments * 4) < value < (increments * 5):
+                score = 5
+                list_scores.append(score)
+            else:
+                score = "Outside of score range"
+                list_scores.append(score)
+        WUA_percen_df[col_title] = list_scores
+
+    WUA_percen_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\scores.csv")
+
+    # NB ignore the first values because they are for the ALF
 
 
 

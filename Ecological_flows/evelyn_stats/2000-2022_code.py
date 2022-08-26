@@ -167,7 +167,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     anomaly_2 = malf - worst_2
     anomaly_3 = malf - worst_3
 
-    d    def flow_to_wua(dataframe, species_name):
+    def flow_to_wua(dataframe, species_name):
         """A function (that is not the best) but calculates
         the WUA for each species for each ALF and appends it to the correct DF.
         It also calculates the WUA % based on the max WUA"""
@@ -355,7 +355,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     flow_to_wua(alf_WUA_scores_df, "black_fronted_tern")
     flow_to_wua(alf_WUA_scores_df, "wrybill_plover")
 
-    alf_WUA_scores_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\WUA_scores_1970.csv")
+    alf_WUA_scores_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\WUA_scores_2000.csv")
 
 
 
