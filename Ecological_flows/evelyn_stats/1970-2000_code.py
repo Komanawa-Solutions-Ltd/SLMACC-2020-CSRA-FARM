@@ -120,7 +120,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     days_per_year_below_malf_df = pd.DataFrame(days_per_year_below_malf, list_startdates,
                                                columns=['Days below MALF per Year'])
 
-    days_per_year_below_malf_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\days_below_malf_1970.csv")
+    days_per_year_below_malf_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\days_below_malf_1970_pert.csv")
 
     # Getting the low flow stress days - days below x per year
     # Same process as above
@@ -134,7 +134,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
         days_per_year_stress.append(total_days_2)
     days_per_year_stress_df = pd.DataFrame(days_per_year_stress, list_startdates,
                                            columns=['Low Flow Stress Accrual Days'])
-    days_per_year_stress_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\low_flow_stress_days_1970.csv")
+    days_per_year_stress_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\low_flow_stress_days_1970_pert.csv")
 
     # Finding the ALF anomaly for the worst 1, 2 and 3 yrs
     # The worst ALF year is min of the alf df
@@ -172,10 +172,10 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     worst_2 = worst_2_df[1].min()
     worst_3 = worst_3_df[1].min()
 
-    # todo check what is wanted out of these - make absolute value?
-    # and what is the value wanted?
-    anomaly_2 = malf - worst_2
-    anomaly_3 = malf - worst_3
+    # Getting the anomalies for consecutive worst years
+    # Using the average
+    anomaly_2 = malf - (worst_2/2)
+    anomaly_3 = malf - (worst_3/3)
     print(f"this is anomaly 2{anomaly_2}")
     print(f"this is anomaly 3{anomaly_3}")
 
@@ -395,25 +395,23 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
         list_scores = []
         range = WUA_percen_df[col].max() - WUA_percen_df[col].min()
         increments = range/5
+        min_val = WUA_percen_df[col].min()
         print(increments)
         col_title += 1
         for value in WUA_percen_df[col]:
-            if value < increments:
-                score = 0
-                list_scores.append(score)
-            elif increments < value < (increments*2):
+            if min_val <= value < (min_val +increments):
                 score = 1
                 list_scores.append(score)
-            elif (increments * 2) < value < (increments * 3):
+            elif (min_val+ increments) < value < (min_val +(increments * 2)):
                 score = 2
                 list_scores.append(score)
-            elif (increments * 3) < value < (increments * 4):
+            elif (min_val +(increments * 2)) < value < (min_val +(increments * 3)):
                 score = 3
                 list_scores.append(score)
-            elif (increments * 4) < value < (increments*5):
+            elif (min_val +(increments * 3)) < value < (min_val +(increments * 4)):
                 score = 4
                 list_scores.append(score)
-            elif value > (increments * 5):
+            elif (min_val +(increments * 4)) < value <= (min_val +(increments * 5)):
                 score = 5
                 list_scores.append(score)
             else:

@@ -377,25 +377,23 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
         list_scores = []
         range = WUA_percen_df[col].max() - WUA_percen_df[col].min()
         increments = range / 5
+        min_val = WUA_percen_df[col].min()
         print(increments)
         col_title += 1
         for value in WUA_percen_df[col]:
-            if value < increments:
-                score = 0
-                list_scores.append(score)
-            elif increments < value < (increments * 2):
+            if min_val <= value < (min_val + increments):
                 score = 1
                 list_scores.append(score)
-            elif (increments * 2) < value < (increments * 3):
+            elif (min_val + increments) < value < (min_val + (increments * 2)):
                 score = 2
                 list_scores.append(score)
-            elif (increments * 3) < value < (increments * 4):
+            elif (min_val + (increments * 2)) < value < (min_val + (increments * 3)):
                 score = 3
                 list_scores.append(score)
-            elif (increments * 4) < value < (increments * 5):
+            elif (min_val + (increments * 3)) < value < (min_val + (increments * 4)):
                 score = 4
                 list_scores.append(score)
-            elif value > (increments * 5):
+            elif (min_val + (increments * 4)) < value <= (min_val + (increments * 5)):
                 score = 5
                 list_scores.append(score)
             else:
