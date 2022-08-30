@@ -26,6 +26,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     # Calculating the median flow for all years
     # One value for the entire dataset
     median_flow = flow_df['flow'].median()
+    print(f"This is the median {median_flow}")
 
     # Calculating the ALF
     # One ALF per year
@@ -103,6 +104,8 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     # Getting the MALF
     malf = alf['ALF'].mean()
 
+    print(f"This is the malf {malf}")
+
     # Calculating the days per year spent below MALF
     # Difficult to do as a dataframe, so doing as a list and then turning into a dataframe
     days_per_year_below_malf = []
@@ -113,6 +116,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     days_per_year_below_malf_df = pd.DataFrame(days_per_year_below_malf, list_startdates,
                                                columns=['Days below MALF per Year'])
 
+    days_per_year_below_malf_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\days_below_malf_2000.csv")
     # Getting the low flow stress days - days below x per year
     # Same process as above
     # Difficult to do as a dataframe, so doing as a list and then turning into a dataframe
@@ -125,12 +129,14 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
         days_per_year_stress.append(total_days_2)
     days_per_year_stress_df = pd.DataFrame(days_per_year_stress, list_startdates,
                                            columns=['Low Flow Stress Accrual Days'])
+    days_per_year_stress_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\low_flow_stress_days_2000.csv")
 
     # Finding the ALF anomaly for the worst 1, 2 and 3 yrs
     # The worst ALF year is min of the alf df
     worst_alf = alf['ALF'].min()
     # Calculating the anomaly of malf - alf for the worst alf year
     anomaly_1 = malf - worst_alf
+    print(f"This is anomaly 1  {anomaly_1}")
 
     # Calculating the worst 2 & 3 consecutive years
     # Using a nested function that uses the rolling method
@@ -166,6 +172,9 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     # and what is the value wanted?
     anomaly_2 = malf - worst_2
     anomaly_3 = malf - worst_3
+
+    print(f"This is anomaly 2  {anomaly_2}")
+    print(f"This is anomaly 3  {anomaly_3}")
 
     def flow_to_wua(dataframe, species_name):
         """A function (that is not the best) but calculates
@@ -357,6 +366,46 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
 
     alf_WUA_scores_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\WUA_scores_2000.csv")
 
+    # Reading in a csv that only has the % columns
+    WUA_percen_df = pd.read_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\percen_only_2000.csv")
+    print(WUA_percen_df)
+    WUA_percen_df = WUA_percen_df.replace(to_replace='Sorry, flow is out of range', value=np.NaN)
+    WUA_percen_df = WUA_percen_df.astype(dtype=float)
+
+    col_title = 0
+    for col in WUA_percen_df.iloc[:, 1:]:
+        list_scores = []
+        range = WUA_percen_df[col].max() - WUA_percen_df[col].min()
+        increments = range / 5
+        print(increments)
+        col_title += 1
+        for value in WUA_percen_df[col]:
+            if value < increments:
+                score = 0
+                list_scores.append(score)
+            elif increments < value < (increments * 2):
+                score = 1
+                list_scores.append(score)
+            elif (increments * 2) < value < (increments * 3):
+                score = 2
+                list_scores.append(score)
+            elif (increments * 3) < value < (increments * 4):
+                score = 3
+                list_scores.append(score)
+            elif (increments * 4) < value < (increments * 5):
+                score = 4
+                list_scores.append(score)
+            elif value > (increments * 5):
+                score = 5
+                list_scores.append(score)
+            else:
+                score = "Outside of range"
+                list_scores.append(score)
+        WUA_percen_df[col_title] = list_scores
+
+    WUA_percen_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\scores_2000.csv")
+
+    # NB ignore the first values because they are for the ALF
 
 
 read_and_stats('period_b.csv')
