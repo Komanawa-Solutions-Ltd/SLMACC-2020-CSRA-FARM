@@ -4,7 +4,6 @@ on: 25/08/2022
 """
 
 # taking what was done in the original code and optimising it for the specific time period
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -174,6 +173,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
 
     # Getting the anomalies for consecutive worst years
     # Using the average
+    # dividing by the no. consecutive yrs so the anomaly is not negative
     anomaly_2 = malf - (worst_2/2)
     anomaly_3 = malf - (worst_3/3)
     print(f"this is anomaly 2{anomaly_2}")
@@ -399,19 +399,19 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
         print(increments)
         col_title += 1
         for value in WUA_percen_df[col]:
-            if min_val <= value < (min_val +increments):
+            if min_val <= value < (min_val + increments):
                 score = 1
                 list_scores.append(score)
-            elif (min_val+ increments) < value < (min_val +(increments * 2)):
+            elif (min_val + increments) < value < (min_val + (increments * 2)):
                 score = 2
                 list_scores.append(score)
-            elif (min_val +(increments * 2)) < value < (min_val +(increments * 3)):
+            elif (min_val + (increments * 2)) < value < (min_val + (increments * 3)):
                 score = 3
                 list_scores.append(score)
-            elif (min_val +(increments * 3)) < value < (min_val +(increments * 4)):
+            elif (min_val + (increments * 3)) < value < (min_val + (increments * 4)):
                 score = 4
                 list_scores.append(score)
-            elif (min_val +(increments * 4)) < value <= (min_val +(increments * 5)):
+            elif (min_val + (increments * 4)) < value <= (min_val + (increments * 5)):
                 score = 5
                 list_scores.append(score)
             else:

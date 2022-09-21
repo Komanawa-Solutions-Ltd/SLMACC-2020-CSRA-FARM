@@ -13,6 +13,8 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     """A function that reads in a file of flows (associated w/ dates) and performs stats on them,
     allowing the outputs to be input into other eqs"""
 
+# fixme
+
     # This code is dependent on the csv read in. The csv file must have two columns
     # one called 'date', one called 'flow' (in m3/s)
     # the date range for this specific file is 2000-2022
@@ -53,7 +55,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     list_startdates = [2000,
                        2001, 2002, 2003, 2004, 2005, 2006,
                        2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016,
-                       2017, 2018, 2019, 2020, 2021, 2022]
+                       2017, 2018, 2019, 2020, 2021]
 
     # Creating an empty dataframe to put the hydro years into from the nested function
     all_hydro_years_df = pd.DataFrame()
@@ -170,8 +172,9 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
 
     # todo check what is wanted out of these - make absolute value?
     # and what is the value wanted?
-    anomaly_2 = malf - worst_2
-    anomaly_3 = malf - worst_3
+    # dividing by the no. consecutive yrs so the anomaly is not negative
+    anomaly_2 = malf - (worst_2 / 2)
+    anomaly_3 = malf - (worst_3 / 3)
 
     print(f"This is anomaly 2  {anomaly_2}")
     print(f"This is anomaly 3  {anomaly_3}")
@@ -364,11 +367,13 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     flow_to_wua(alf_WUA_scores_df, "black_fronted_tern")
     flow_to_wua(alf_WUA_scores_df, "wrybill_plover")
 
+
+
     alf_WUA_scores_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\WUA_scores_2000.csv")
 
     # Reading in a csv that only has the % columns
     WUA_percen_df = pd.read_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\percen_only_2000.csv")
-    print(WUA_percen_df)
+    #print(WUA_percen_df)
     WUA_percen_df = WUA_percen_df.replace(to_replace='Sorry, flow is out of range', value=np.NaN)
     WUA_percen_df = WUA_percen_df.astype(dtype=float)
 
