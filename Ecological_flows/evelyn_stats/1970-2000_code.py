@@ -54,6 +54,8 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
         return storage_df
 
     # A list of all the years in the dataset, 1970-2000 in this case
+    # help I want this to be more easily chanageble, rather than having two separate pieces of code for different
+    # help years
     list_startdates = [1970, 1971,
                        1972, 1973, 1974, 1975, 1976, 1977,
                        1978, 1979, 1980, 1981, 1982, 1983,1984, 1985,
@@ -111,6 +113,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
 
     # Calculating the days per year spent below MALF
     # Difficult to do as a dataframe, so doing as a list and then turning into a dataframe
+    # help less long winded way?
     days_per_year_below_malf = []
     for col in all_hydro_years_df:
         days_count = all_hydro_years_df[col] < malf
@@ -190,6 +193,12 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     # Outside of this, compare the max WUA to each ALF WUA
     # start by getting the WUA and then can play around with the comparison
     # or maybe read in a dataframe and iterate w/n the function...?
+
+    # help found this really hard to put into a more efficient function because
+    # help the polynomial eq is different for each species
+    # help couldn't quite figure out a more efficient way
+    # help ideally would like the species name to connect to a polynomial outside of the function
+    # help or something so only species had to be arg but not so many if statements
 
     def flow_to_wua(dataframe, species_name):
         """A function (that is not the best) but calculates
@@ -383,6 +392,8 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     flow_to_wua(alf_WUA_scores_df, "wrybill_plover")
 
     alf_WUA_scores_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\WUA_scores_1970.csv")
+    # help I have to manually change this spreadsheet and read it back in
+    # help would ideally like to not have to do this
 
     # Reading in a csv that only has the % columns
     WUA_percen_df = pd.read_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\percen_only.csv")
