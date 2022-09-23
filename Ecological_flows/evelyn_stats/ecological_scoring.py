@@ -12,9 +12,6 @@ from itertools import groupby
 from kslcore import KslEnv
 
 
-# taking what was done in the original code and optimising it for the specific time period
-# Reading in the files
-
 def _wua_poly(x, a, b, c, d, e, f):
     return a * x ** 5 + b * x ** 4 + c * x ** 3 + d * x ** 2 + e * x + f
 
@@ -81,6 +78,7 @@ species_max_wua = {
 }
 
 #todo change so that the max wua is for malf value
+
 def get_dataset():
     base_path = kslcore.KslEnv.shared_gdrive.joinpath(
         'Z2003_SLMACC/eco_modelling/stats_info/66401_Naturalised_flow.csv')
@@ -130,12 +128,6 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     :return:
     """
 
-    # This code is dependent on the csv read in. The csv file must have two columns
-    # one called 'date', one called 'flow' (in m3/s)
-    # the date range for this specific file is 2000-2022
-    # Default pathway is to the project folder
-    # Make sure to double backslash (\\) any pathways
-
     flow_df = get_dataset()
     list_startdates = range(start_water_year, end_water_year + 1)
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
@@ -173,10 +165,11 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     # Getting the MALF
     outdata.loc[:, 'malf'] = malf = outdata['alf'].mean()
 
-    print(f"This is the malf {malf}")
+    # putting the median in outdata
+    outdata.loc[:, 'median'] = median_flow
+
 
     # Calculating the days per year spent below MALF
-    # Difficult to do as a dataframe, so doing as a list and then turning into a dataframe
     outdata.loc[:, 'days_below_malf'] = (all_hydro_years_df < malf).sum()
     # calculate flow limits
     if flow_limits is not None:
@@ -185,7 +178,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
             f = round(f)
             outdata.loc[:, f'days_below_{f}'] = (all_hydro_years_df < f).sum()
 
-    # consecuative days
+    # consecutive days
     for y in list_startdates:
         t = all_hydro_years_df.loc[:, y]
         t2 = (t < malf)
@@ -204,7 +197,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
             prev_day = current_day
         outperiods = np.array(outperiods)
         day = np.array(day)
-        # total days that are consecuative (e.g. 2 days = 1 consecutive day, 3 days below restriction = 2)
+        # total days that are consecutive (e.g. 2 days = 1 consecutive day, 3 days below restriction = 2)
         outdata.loc[y, 'consec_days'] = len(outperiods)
         outdata.loc[y, 'num_events'] = len(np.unique(outperiods))
 
@@ -213,12 +206,8 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     worst_alf = outdata.loc[:, 'alf'].min()
     # Calculating the anomaly of malf - alf for the worst alf year
     outdata.loc[:, 'anomaly_1'] = anomaly_1 = malf - worst_alf
-    print(f"This is anomaly 1  {anomaly_1}")
 
-    # Calculating the worst 2 & 3 consecutive years
-    # Using a nested function that uses the rolling method
-
-    # Using the function to get the worst 2yr consecutive ALf and worst 3yr
+   # getting the worst 2yr consecutive ALf and worst 3yr
     consecutive_alfs = [2, 3]
     for cy in consecutive_alfs:
         outdata.loc[:, f'rolling_alf_{cy}'] = t = outdata.loc[:, 'alf'].rolling(cy).mean()
