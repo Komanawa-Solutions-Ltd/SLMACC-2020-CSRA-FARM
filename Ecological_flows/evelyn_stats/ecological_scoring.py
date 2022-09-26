@@ -73,7 +73,6 @@ species_max_wua = {
 "chinook_salmon_junior": 23, "diatoms": 0.35, "long_filamentous": 0.34, "short_filamentous": 0.40,
 "black_fronted_tern": 65, "wrybill_plover": 182}
 
-#todo change so that the max wua is for malf value
 
 def get_dataset():
     base_path = kslcore.KslEnv.shared_gdrive.joinpath(
@@ -209,45 +208,30 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         outdata.loc[:, f'worst_rolling_{cy}_alf'] = t.min()
         outdata.loc[:, f'malf_worst_{cy}_anom'] = malf - t.min()
 
+    #fixme this is throwing an error due to itertuples
+    # need this in order to calculate the scoring system
+    #help feeling confused about how this connects to the other sps functions
     for sp in species_limits:
         for k, v in outdata.loc[:, 'alf'].itertuples(True, None):
             outdata.loc[k, f'{sp}'] = flow_to_wua(v, sp)
 
     # todo scoring system function
-    col_title = 0
-    for col in WUA_percen_df.iloc[:, 1:]:
-        list_scores = []
-        range_per = WUA_percen_df[col].max() - WUA_percen_df[col].min()
-        increments = range_per / 5
-        min_val = WUA_percen_df[col].min()
-        print(increments)
-        col_title += 1
-        for value in WUA_percen_df[col]:
-            if min_val <= value < (min_val + increments):
-                score = 1
-                list_scores.append(score)
-            elif (min_val + increments) < value < (min_val + (increments * 2)):
-                score = 2
-                list_scores.append(score)
-            elif (min_val + (increments * 2)) < value < (min_val + (increments * 3)):
-                score = 3
-                list_scores.append(score)
-            elif (min_val + (increments * 3)) < value < (min_val + (increments * 4)):
-                score = 4
-                list_scores.append(score)
-            elif (min_val + (increments * 4)) < value <= (min_val + (increments * 5)):
-                score = 5
-                list_scores.append(score)
-            else:
-                score = "Outside of range"
-                list_scores.append(score)
-        WUA_percen_df[col_title] = list_scores
 
-    WUA_percen_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\scores_2000.csv")
+    # take the wua_per from outdata for each species and find the range
+    # if the wua produced by the alf = max wua, score = 0
+    # if wua => max wua for baseline period (1970-2000) then score = 3
+    # if wua =< min wua " " then score = -3
+    # have the min and max wua for baseline period for each species in a dict (same as others)
+    # other scores are assigned based on the range between max & MALF and min & MALF?
+    # need to run this for the baseline period to get those figures?
+
+
+
+    return outdata
     outdata.to_csv(outpath)
 
-    # NB ignore the first values because they are for the ALF
+
 
 
 if __name__ == '__main__':
-    read_and_stats(None, 2000, 2010) # todo path
+    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info'), 2000, 2010)
