@@ -13,6 +13,8 @@ from kslcore import KslEnv
 
 
 def _wua_poly(x, a, b, c, d, e, f):
+    """a function that reads in coefficients and returns a polynomial with the coeffs
+    inserted"""
     return a * x ** 5 + b * x ** 4 + c * x ** 3 + d * x ** 2 + e * x + f
 
 species_coeffs = {
@@ -57,25 +59,19 @@ species_coeffs = {
                            + 1.629785813832450E+02, - 1.908796384066770E+03),
     "wrybill_plover": (1.992991145099990E-05, - 6.562761816460400E-03,
                        + 8.524578863075030E-01, - 5.444835223306980E+01,
-                       + 1.702284174702220E+03, - 2.058208449588460E+04)
-
-
-
-}
+                       + 1.702284174702220E+03, - 2.058208449588460E+04)}
 species_limits = {
-    "longfin_eel": (18, 180), "shortfin_eel": (18, 180), "torrent_fish": (18, 180),
-    "common_bully": (18, 180), "upland_bully": (18, 180), "bluegill_bully": (18, 180),
-    "food_production": (18, 180), "brown_trout_adult": (18, 180), "chinook_salmon_junior": (18, 180),
-    "diatoms": (18, 180), "long_filamentous": (18, 180), "short_filamentous": (18, 180),
-"black_fronted_tern": (35, 85), "wrybill_plover": (35, 85)
-}
+    "longfin_eel": (18, 130), "shortfin_eel": (18, 130), "torrent_fish": (18, 130),
+    "common_bully": (18, 130), "upland_bully": (18, 130), "bluegill_bully": (18, 130),
+    "food_production": (18, 130), "brown_trout_adult": (18, 130), "chinook_salmon_junior": (18, 130),
+    "diatoms": (18, 130), "long_filamentous": (18, 130), "short_filamentous": (18, 130),
+"black_fronted_tern": (35, 85), "wrybill_plover": (35, 85)}
 
 species_max_wua = {
-    "longfin_eel": 172, "shortfin_eel": 132, "torrent_fish": 120, "common_bully": 87,
-    "upland_bully": 71, "bluegill_bully": 75, "food_production": 150, "brown_trout_adult": 30,
-"chinook_salmon_junior": 27, "diatoms": 0.42, "long_filamentous": 0.42, "short_filamentous": 0.43,
-"black_fronted_tern": 66, "wrybill_plover": 203
-}
+    "longfin_eel": 120, "shortfin_eel": 96, "torrent_fish": 72, "common_bully": 64,
+    "upland_bully": 55, "bluegill_bully": 51, "food_production": 96, "brown_trout_adult": 22,
+"chinook_salmon_junior": 23, "diatoms": 0.35, "long_filamentous": 0.34, "short_filamentous": 0.40,
+"black_fronted_tern": 65, "wrybill_plover": 182}
 
 #todo change so that the max wua is for malf value
 
@@ -137,7 +133,6 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     # Calculating the median flow for all years
     # One value for the entire dataset
     median_flow = flow_df['flow'].median()
-    print(f"This is the median {median_flow}")
 
     # Calculating the ALF
     # One ALF per year
