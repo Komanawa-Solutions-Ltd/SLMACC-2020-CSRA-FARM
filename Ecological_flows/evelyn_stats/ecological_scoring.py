@@ -5,6 +5,7 @@ on: 25/08/2022
 import kslcore
 import pandas as pd
 import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -135,10 +136,9 @@ def flow_to_score(min_wua, max_wua, malf_wua, alf_wua):
         score = (alf_wua -malf_wua)/(malf_wua - min_wua)
     else:
         score = 0
-    return score
-#fixme workout how to get the scale the way it is wanted
-#fixme right now gives values -1 to 1
-# otherwise ok
+    # have adjusted the score based on wanting to score from -3 to 3
+    return score*3
+
 
 def days_below_score(min_days,  max_days, mean_days, days_below):
     """"Calculates a score for each hydrological year based on the no.
@@ -152,7 +152,8 @@ def days_below_score(min_days,  max_days, mean_days, days_below):
         score1 = (mean_days - days_below)/(mean_days-min_days)
     else:
         score1 = 0
-    return score1
+    # have adjusted the score based on wanting to score from -3 to 3
+    return score1*3
 
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     """
@@ -229,8 +230,8 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         outperiods = np.array(outperiods)
         day = np.array(day)
         # total days that are consecutive (e.g. 2 days = 1 consecutive day, 3 days below restriction = 2)
-        outdata.loc[y, 'consec_days'] = len(outperiods)
-        outdata.loc[y, 'num_events'] = len(np.unique(outperiods))
+        outdata.loc[y, 'malf_consec_days'] = len(outperiods)
+        outdata.loc[y, 'malf_num_events'] = len(np.unique(outperiods))
 
         # calculate flow limits
     if flow_limits is not None:
@@ -262,18 +263,25 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
                 outdata.loc[d, 'flow_limits_consec_days'] = len(outperiods1)
                 outdata.loc[d, 'flow_limits_num_events'] = len(np.unique(outperiods1))
 
+    #todo calculate the no of consec_days above and = to 7, 14, 21, 28
+    #todo count these per year? need to do per year in order to generate:
+    #todo min per period, max per period and avg across whole baseline?
+    #todo create a scoring range based on these baselines
+
+    #fixme change this to be the median?
+
     # Finding the ALF anomaly for the worst 1, 2 and 3 yrs
     # The worst ALF year is min of the alf df
     worst_alf = outdata.loc[:, 'alf'].min()
     # Calculating the anomaly of malf - alf for the worst alf year
-    outdata.loc[:, 'anomaly_1'] = anomaly_1 = malf - worst_alf
+    outdata.loc[:, 'anomaly_1'] = anomaly_1 = median_flow - worst_alf
 
    # getting the worst 2yr consecutive ALf and worst 3yr
     consecutive_alfs = [2, 3]
     for cy in consecutive_alfs:
         outdata.loc[:, f'rolling_alf_{cy}'] = t = outdata.loc[:, 'alf'].rolling(cy).mean()
         outdata.loc[:, f'worst_rolling_{cy}_alf'] = t.min()
-        outdata.loc[:, f'malf_worst_{cy}_anom'] = malf - t.min()
+        outdata.loc[:, f'malf_worst_{cy}_anom'] = median_flow - t.min()
 
     for sp in species_limits:
         for k, v in outdata.loc[:, 'alf'].items():
@@ -304,6 +312,9 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         days_score1 = days_below_score(min_v1, max_v1, mean_v1, value2)
         outdata.loc[idx2, 'days_below_flow_lim_score'] = days_score1
 
+    #fixme practicing plotting, is this what is wanted at all?
+    sns.lineplot(data=outdata[['median', 'alf']])
+    plt.show()
     return outdata
     outdata.to_csv(outpath)
 
