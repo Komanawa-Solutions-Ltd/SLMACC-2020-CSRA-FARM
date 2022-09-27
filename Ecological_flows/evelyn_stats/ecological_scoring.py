@@ -210,7 +210,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     #fixme this is throwing an error due to itertuples
     # need this in order to calculate the scoring system
-    #help feeling confused about how this connects to the other sps functions
+    #help unsure of what the for k, v is doing
     for sp in species_limits:
         for k, v in outdata.loc[:, 'alf'].itertuples(True, None):
             outdata.loc[k, f'{sp}'] = flow_to_wua(v, sp)
