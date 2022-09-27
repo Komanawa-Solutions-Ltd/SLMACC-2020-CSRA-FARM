@@ -67,12 +67,23 @@ species_limits = {
     "diatoms": (18, 130), "long_filamentous": (18, 130), "short_filamentous": (18, 130),
 "black_fronted_tern": (35, 85), "wrybill_plover": (35, 85)}
 
-species_max_wua = {
-    "longfin_eel": 120, "shortfin_eel": 96, "torrent_fish": 72, "common_bully": 64,
-    "upland_bully": 55, "bluegill_bully": 51, "food_production": 96, "brown_trout_adult": 22,
-"chinook_salmon_junior": 23, "diatoms": 0.35, "long_filamentous": 0.34, "short_filamentous": 0.40,
-"black_fronted_tern": 65, "wrybill_plover": 182}
+species_baseline_malf_wua = {
+    "longfin_eel": 228, "shortfin_eel": 97, "torrent_fish": 141, "common_bully": 65,
+    "upland_bully": 55, "bluegill_bully": 52, "food_production": 98, "brown_trout_adult": 22,
+"chinook_salmon_junior": 23, "diatoms": 0.35, "long_filamentous": 0.33, "short_filamentous": 0.39,
+"black_fronted_tern": 66.24, "wrybill_plover": 202}
 
+species_baseline_min_wua = {
+    "longfin_eel": 134, "shortfin_eel": 88, "torrent_fish": 61, "common_bully": 61,
+    "upland_bully": 53, "bluegill_bully": 45, "food_production": 77, "brown_trout_adult": 18,
+"chinook_salmon_junior": 22, "diatoms": 0.26, "long_filamentous": 0.31, "short_filamentous": 0.36,
+"black_fronted_tern": 54, "wrybill_plover": 52}
+
+species_baseline_max_wua = {
+    "longfin_eel": 426, "shortfin_eel": 107, "torrent_fish": 395, "common_bully": 77,
+    "upland_bully": 62, "bluegill_bully": 57, "food_production": 111, "brown_trout_adult": 25,
+"chinook_salmon_junior": 25, "diatoms": 0.38, "long_filamentous": 0.41, "short_filamentous": 0.43,
+"black_fronted_tern": 66.39, "wrybill_plover": 211}
 
 def get_dataset():
     base_path = kslcore.KslEnv.shared_gdrive.joinpath(
@@ -105,10 +116,9 @@ def flow_to_wua(alf, species):
     minf, maxf = species_limits[species]
     if alf > minf and alf < maxf:
         wua = _wua_poly(alf, *species_coeffs[species])
-        wua_per = wua / species_max_wua[species] * 100
     else:
-        wua, wua_per = None, None
-    return wua, wua_per
+        wua = None
+    return wua
 
 
 
@@ -208,12 +218,12 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         outdata.loc[:, f'worst_rolling_{cy}_alf'] = t.min()
         outdata.loc[:, f'malf_worst_{cy}_anom'] = malf - t.min()
 
-    #fixme this is throwing an error due to itertuples
-    # need this in order to calculate the scoring system
-    #help unsure of what the for k, v is doing
+
     for sp in species_limits:
-        for k, v in outdata.loc[:, 'alf'].itertuples(True, None):
-            outdata.loc[k, f'{sp}'] = flow_to_wua(v, sp)
+        for k, v in outdata.loc[:, 'alf'].items():
+            wua = flow_to_wua(v, sp)
+            outdata.loc[k, f'{sp}_wua'] = wua
+
 
     # todo scoring system function
 
@@ -234,4 +244,4 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 
 if __name__ == '__main__':
-    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info'), 2000, 2010)
+    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info'), 1970, 2001)
