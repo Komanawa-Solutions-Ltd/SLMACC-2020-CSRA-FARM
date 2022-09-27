@@ -138,6 +138,7 @@ def flow_to_score(min_wua, max_wua, malf_wua, alf_wua):
     return score
 #fixme workout how to get the scale the way it is wanted
 #fixme right now gives values -1 to 1
+# otherwise ok
 
 
 
@@ -249,16 +250,14 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         score = flow_to_score(134, 426, 228, v)
         outdata.loc[k, 'longfin_eel_score'] = score
 
-
-    # todo scoring system function
-
-    # take the wua_per from outdata for each species and find the range
-    # if the wua produced by the alf = max wua, score = 0
-    # if wua => max wua for baseline period (1970-2000) then score = 3
-    # if wua =< min wua " " then score = -3
-    # have the min and max wua for baseline period for each species in a dict (same as others)
-    # other scores are assigned based on the range between max & MALF and min & MALF?
-    # need to run this for the baseline period to get those figures?
+    for species in species_limits:
+        min_wua = species_baseline_min_wua[species]
+        max_wua = species_baseline_max_wua[species]
+        malf_wua = species_baseline_malf_wua[species]
+        for idx, v in outdata.loc[:, f'{species}_wua'].items():
+            alf_wua = v
+            score = flow_to_score(min_wua, max_wua, malf_wua, alf_wua)
+            outdata.loc[idx, f'{species}_score' ] = score
 
 
 
