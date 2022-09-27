@@ -142,8 +142,6 @@ def flow_to_score(min_wua, max_wua, malf_wua, alf_wua):
 
 
 
-
-
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     """
     A function that reads in a file of flows (associated w/ dates) and performs stats on them,
@@ -197,17 +195,12 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     # Calculating the days per year spent below MALF
     outdata.loc[:, 'days_below_malf'] = (all_hydro_years_df < malf).sum()
-    # calculate flow limits
-    if flow_limits is not None:
-        flow_limits = np.atleast_1d(flow_limits)
-        for f in flow_limits:
-            f = round(f)
-            outdata.loc[:, f'days_below_{f}'] = (all_hydro_years_df < f).sum()
 
-    # consecutive days
+
+    # consecutive days for malf
     for y in list_startdates:
         t = all_hydro_years_df.loc[:, y]
-        t2 = (t < malf)
+        t2 = (t <= malf)
         outperiods = []
         day = []
         prev_day = False
@@ -226,6 +219,36 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         # total days that are consecutive (e.g. 2 days = 1 consecutive day, 3 days below restriction = 2)
         outdata.loc[y, 'consec_days'] = len(outperiods)
         outdata.loc[y, 'num_events'] = len(np.unique(outperiods))
+
+        # calculate flow limits
+    if flow_limits is not None:
+        flow_limits = np.atleast_1d(flow_limits)
+        for f in flow_limits:
+            f = round(f)
+            outdata.loc[:, f'days_below_{f}'] = (all_hydro_years_df < f).sum()
+
+        # consecutive days for flow_limits
+            for d in list_startdates:
+                test = all_hydro_years_df.loc[:, d]
+                test2 = (test <= f)
+                outperiods1 = []
+                day1 = []
+                prev_day1 = False
+                period1 = 0
+                for did1, current_day1 in zip(test2.index, test2):
+                    if prev_day1 and current_day1:
+                        outperiods1.append(period1)
+                        day1.append(did1)
+                    else:
+                        pass
+                    if prev_day1 and not current_day1:
+                        period1 += 1
+                    prev_day1 = current_day1
+                outperiods1 = np.array(outperiods1)
+                day1 = np.array(day1)
+                # total days that are consecutive (e.g. 2 days = 1 consecutive day, 3 days below restriction = 2)
+                outdata.loc[d, 'flow_limits_consec_days'] = len(outperiods1)
+                outdata.loc[d, 'flow_limits_num_events'] = len(np.unique(outperiods1))
 
     # Finding the ALF anomaly for the worst 1, 2 and 3 yrs
     # The worst ALF year is min of the alf df
@@ -268,4 +291,4 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 
 if __name__ == '__main__':
-    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info'), 2000, 2021)
+    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info'), 1970, 2000, 50)
