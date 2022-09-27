@@ -140,7 +140,19 @@ def flow_to_score(min_wua, max_wua, malf_wua, alf_wua):
 #fixme right now gives values -1 to 1
 # otherwise ok
 
+def days_below_score(min_days,  max_days, mean_days, days_below):
+    """"Calculates a score for each hydrological year based on the no.
+    of days below malf and/or the flow_limits value"""
+    # the score is positive for lesser days
+    # and negative for more days (representative of the fact that more days at low flow is bad)
 
+    if days_below > mean_days:
+        score1 = (mean_days - days_below)/(max_days - mean_days)
+    elif days_below < mean_days:
+        score1 = (mean_days - days_below)/(mean_days-min_days)
+    else:
+        score1 = 0
+    return score1
 
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     """
@@ -263,15 +275,10 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         outdata.loc[:, f'worst_rolling_{cy}_alf'] = t.min()
         outdata.loc[:, f'malf_worst_{cy}_anom'] = malf - t.min()
 
-
     for sp in species_limits:
         for k, v in outdata.loc[:, 'alf'].items():
             wua = flow_to_wua(v, sp)
             outdata.loc[k, f'{sp}_wua'] = wua
-
-    for k, v in outdata.loc[:, 'longfin_eel_wua'].items():
-        score = flow_to_score(134, 426, 228, v)
-        outdata.loc[k, 'longfin_eel_score'] = score
 
     for species in species_limits:
         min_wua = species_baseline_min_wua[species]
@@ -282,7 +289,20 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
             score = flow_to_score(min_wua, max_wua, malf_wua, alf_wua)
             outdata.loc[idx, f'{species}_score' ] = score
 
+    baseline_days_below_malf = {'min': 0, 'max': 121, 'mean': 20}
+    baseline_days_below_flow_lims = {'min': 0, 'max': 141, 'mean': 39}
 
+    for idx1, value in outdata.loc[:, 'days_below_malf'].items():
+        min_v, max_v, mean_v = baseline_days_below_malf['min'], baseline_days_below_malf['max'], baseline_days_below_malf['mean']
+        days_score = days_below_score(min_v, max_v, mean_v, value)
+        outdata.loc[idx1, 'days_below_malf_score'] = days_score
+#fixme can make the column name chanageble based on flowlimits (e.g using f{})
+#fixme but not a priority
+    for idx2, value2 in outdata.loc[:, 'days_below_50'].items():
+        min_v1, max_v1, mean_v1 = baseline_days_below_flow_lims['min'], baseline_days_below_flow_lims['max'], \
+                               baseline_days_below_flow_lims['mean']
+        days_score1 = days_below_score(min_v1, max_v1, mean_v1, value2)
+        outdata.loc[idx2, 'days_below_flow_lim_score'] = days_score1
 
     return outdata
     outdata.to_csv(outpath)
