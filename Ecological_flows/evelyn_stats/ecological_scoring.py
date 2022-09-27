@@ -120,6 +120,27 @@ def flow_to_wua(alf, species):
         wua = None
     return wua
 
+def flow_to_score(min_wua, max_wua, malf_wua, alf_wua):
+    """Calculates a score for each alf calculated wua based
+    on the baseline period min, max and malf wua for each species
+    :param min_wua: the min wua for the species from the baseline period
+    :param max_wua: the max wua ' '
+    :param malf_wua: the 'average' wua calculated using the baseline period malf
+    :param species: the species
+    :param alf_wua: the comparison wua"""
+
+    if alf_wua > malf_wua:
+        score = (alf_wua - malf_wua)/(max_wua-malf_wua)
+    elif alf_wua < malf_wua:
+        score = (alf_wua -malf_wua)/(malf_wua - min_wua)
+    else:
+        score = 0
+    return score
+#fixme workout how to get the scale the way it is wanted
+#fixme right now gives values -1 to 1
+
+
+
 
 
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
@@ -224,6 +245,10 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
             wua = flow_to_wua(v, sp)
             outdata.loc[k, f'{sp}_wua'] = wua
 
+    for k, v in outdata.loc[:, 'longfin_eel_wua'].items():
+        score = flow_to_score(134, 426, 228, v)
+        outdata.loc[k, 'longfin_eel_score'] = score
+
 
     # todo scoring system function
 
@@ -244,4 +269,4 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 
 if __name__ == '__main__':
-    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info'), 1970, 2001)
+    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info'), 2000, 2021)
