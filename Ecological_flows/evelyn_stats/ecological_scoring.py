@@ -155,6 +155,21 @@ def days_below_score(min_days,  max_days, mean_days, days_below):
     # have adjusted the score based on wanting to score from -3 to 3
     return score1*3
 
+def malf_alf_anomaly_score(min_anomaly, max_anomaly, mean_anomaly, anomaly):
+    """A function that creates a score based on the malf - alf anomalies
+    :param min_anomaly: the minimum anomaly for the baseline period. this gives a +ve score
+    :param max_anomaly the maximum anomaly for the baseline period. this gives a -ve score
+    :param malf
+    :param your calculated anomaly"""
+
+    if anomaly < mean_anomaly:
+        score2 = (mean_anomaly - anomaly)/(mean_anomaly - min_anomaly)
+    elif anomaly > mean_anomaly:
+        score2 = (mean_anomaly - anomaly)/(max_anomaly - mean_anomaly)
+    else:
+        score2 = 0
+    return score2*3
+
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     """
     A function that reads in a file of flows (associated w/ dates) and performs stats on them,
@@ -268,8 +283,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     #todo min per period, max per period and avg across whole baseline?
     #todo create a scoring range based on these baselines
 
-    #fixme change this to be the median?
-
+#fixme might not need this code anymore
     # Finding the ALF anomaly for the worst 1, 2 and 3 yrs
     # The worst ALF year is min of the alf df
     worst_alf = outdata.loc[:, 'alf'].min()
@@ -282,6 +296,12 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         outdata.loc[:, f'rolling_alf_{cy}'] = t = outdata.loc[:, 'alf'].rolling(cy).mean()
         outdata.loc[:, f'worst_rolling_{cy}_alf'] = t.min()
         outdata.loc[:, f'malf_worst_{cy}_anom'] = median_flow - t.min()
+
+    # getting malf - alf for each year
+    for i, a in outdata.loc[:, 'alf'].items():
+        outdata.loc[i, 'anomalies'] = malf - a
+
+#todo create the scores - using a function
 
     for sp in species_limits:
         for k, v in outdata.loc[:, 'alf'].items():
@@ -312,9 +332,20 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         days_score1 = days_below_score(min_v1, max_v1, mean_v1, value2)
         outdata.loc[idx2, 'days_below_flow_lim_score'] = days_score1
 
-    #fixme practicing plotting, is this what is wanted at all?
-    sns.lineplot(data=outdata[['median', 'alf']])
-    plt.show()
+    # getting base anomalies score
+    baseline_anomalies = {'min': -18.90492, 'max':18.87149, 'mean': 0}
+    for idx3, value3 in outdata.loc[:, 'anomalies'].items():
+        min_v2, max_v2, mean_v2 = baseline_anomalies['min'], baseline_anomalies['max'], baseline_anomalies['mean']
+        anomalies_score = malf_alf_anomaly_score(min_v2, max_v2, mean_v2, value3)
+        outdata.loc[idx3, 'anomalies_score'] = anomalies_score
+
+
+    #plotting e.gs
+    #sns.lineplot(data=outdata[['malf', 'alf']])
+    #sns.lineplot(data=outdata[['longfin_eel_wua', 'shortfin_eel_wua', 'torrent_fish_wua', 'common_bully_wua','upland_bully_wua', 'bluegill_bully_wua']])
+    #plt.show()
+
+
     return outdata
     outdata.to_csv(outpath)
 
