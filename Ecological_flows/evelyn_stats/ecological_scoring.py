@@ -86,7 +86,7 @@ species_baseline_max_wua = {
 "chinook_salmon_junior": 25, "diatoms": 0.38, "long_filamentous": 0.41, "short_filamentous": 0.43,
 "black_fronted_tern": 66.39, "wrybill_plover": 211}
 
-def get_dataset():
+def get_flow_dataset():
     base_path = kslcore.KslEnv.shared_gdrive.joinpath(
         'Z2003_SLMACC/eco_modelling/stats_info/66401_Naturalised_flow.csv')
     data = pd.read_csv(base_path)
@@ -96,6 +96,18 @@ def get_dataset():
     data = data.loc[:, ['date', 'flow', 'water_year']]
     return data
 
+#def get_temp_dataset():
+    """a function that gets the daily water temperature dataset"""
+    #todo fill in filename when have flow data
+   #filename = ''
+   #base_path = kslcore.KslEnv.shared_gdrive.joinpath(filename)
+   #data = pd.read_csv(base_path)
+   ##todo change this once the format of the file is better known
+   #data.loc[:, 'Datetime'] = pd.to_datetime(data.loc[:, 'Datetime'], format='%d/%m/%Y')
+   #data.loc[:, 'water_year'] = [e.year for e in (data.loc[:, 'Datetime'].dt.to_pydatetime() + relativedelta(months=6))]
+   #data = data.rename(columns={'Datetime': 'date', 'Water temp (degC)': 'daily_water_temp'})
+   #data = data.loc[:, ['date', 'daily_water_temp', 'water_year']]
+   #return data
 
 def get_seven_day_avg(dataframe):
     """ A function that creates the 7-day rolling avg of flow for each year"""
@@ -183,6 +195,28 @@ def event_score(event_min, event_max, event_mean, event_count):
         score3 = 0
     return score3*3
 
+#todo once get temp data
+#def get_temp_score(min, max, mean, count):
+    #"""assigns a temperature score based on the baseline min, max and mean
+    #by comparing the number of temp events in a year to these for 19, 21 and 24 deg
+    #
+    #:param min: minimum days above x for the baseline period
+    #:param max: maximum days above x for the baseline period
+    #:param mean: mean days above x for the baseline period
+    #:param count: the days above x for that hydrological year (from the input data)
+    #:return:
+    #"""
+    # this is a negative score because worse if count is higher than mean
+    #if count > mean:
+    #    score4 = (mean - count)/(max - mean)
+    ## this score is positive because good if the count is less than the mean
+    #elif count < mean:
+    #    score4 = (mean - count)/(mean - min)
+    #else:
+    #    score4 = 0
+    #return score4*3
+
+
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     """
     A function that reads in a file of flows (associated w/ dates) and performs stats on them,
@@ -194,9 +228,16 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     :return:
     """
 
-    flow_df = get_dataset()
+    # getting flow data
+    flow_df = get_flow_dataset()
     list_startdates = range(start_water_year, end_water_year + 1)
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
+
+    #todo getting temperature data
+    #temperature_df = get_temp_dataset()
+    #temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
+
+
 
     # Calculating stats
 
@@ -204,20 +245,17 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     # One value for the entire dataset
     median_flow = flow_df['flow'].median()
 
-    # Calculating the ALF
-    # One ALF per year
-
-    # First, long to wide by hydrological years using a nested function
+    # First, long to wide by hydrological years
     all_hydro_years_df = pd.DataFrame(index=range(1, 367), columns=list_startdates)
     for y in list_startdates:
         l = range(1, len(flow_df.loc[flow_df.water_year == y, 'flow']) + 1)
         all_hydro_years_df.loc[l, y] = flow_df.loc[flow_df.water_year == y, 'flow'].values
 
-    # A list of all the years in the dataset, 1970-2000 in this case
-    # Creating an empty dataframe to put the hydro years into from the nested function
-
-    # Iterating through the start year dates using the nested function get_hydrological_year
-    # Creating a nested function to get a 7-day rolling average in order to get the ALF
+    #todo long to wide for temperature data
+    #temperature_wide_df = pd.DataFrame(index=range(1, 367), columns=list_startdates)
+    #for x in list_startdates:
+       #length = range(1, len(flow_df.loc[flow_df.water_year == x, 'daily_water_temp']) + 1)
+       #temperature_wide_df.loc[length, x] = temperature_df.loc[temperature_df.water_year == x, 'daily_water_temp'].values
 
     seven_day_avg_df = get_seven_day_avg(all_hydro_years_df)
 
@@ -236,6 +274,11 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     # Calculating the days per year spent below MALF
     outdata.loc[:, 'days_below_malf'] = (all_hydro_years_df < malf).sum()
+
+    #todo getting temperature days
+    #outdata.loc[:, 'temp_days_above_19'] = (temperature_wide_df > 19).sum()
+    #outdata.loc[:, 'temp_days_above_21'] = (temperature_wide_df > 21).sum()
+    #outdata.loc[:, 'temp_days_above_24'] = (temperature_wide_df > 24).sum()
 
 
     # consecutive days for malf
@@ -333,13 +376,13 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     for i, a in outdata.loc[:, 'alf'].items():
         outdata.loc[i, 'anomalies'] = malf - a
 
-#todo create the scores - using a function
-
+    # getting wua for each species for each alf
     for sp in species_limits:
         for k, v in outdata.loc[:, 'alf'].items():
             wua = flow_to_wua(v, sp)
             outdata.loc[k, f'{sp}_wua'] = wua
 
+    # getting the wua score for each species
     for species in species_limits:
         min_wua = species_baseline_min_wua[species]
         max_wua = species_baseline_max_wua[species]
@@ -352,25 +395,29 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     baseline_days_below_malf = {'min': 0, 'max': 121, 'mean': 20}
     baseline_days_below_flow_lims = {'min': 0, 'max': 141, 'mean': 39}
 
+    # getting the days below malf score
     for idx1, value in outdata.loc[:, 'days_below_malf'].items():
         min_v, max_v, mean_v = baseline_days_below_malf['min'], baseline_days_below_malf['max'], baseline_days_below_malf['mean']
         days_score = days_below_score(min_v, max_v, mean_v, value)
         outdata.loc[idx1, 'days_below_malf_score'] = days_score
 #fixme can make the column name chanageble based on flowlimits (e.g using f{})
 #fixme but not a priority
+
+    # getting the days below flow lim score
     for idx2, value2 in outdata.loc[:, 'days_below_50'].items():
         min_v1, max_v1, mean_v1 = baseline_days_below_flow_lims['min'], baseline_days_below_flow_lims['max'], \
                                baseline_days_below_flow_lims['mean']
         days_score1 = days_below_score(min_v1, max_v1, mean_v1, value2)
         outdata.loc[idx2, 'days_below_flow_lim_score'] = days_score1
 
-    # getting base anomalies score
+    # getting the anomalies score
     baseline_anomalies = {'min': -18.90492, 'max':18.87149, 'mean': 0}
     for idx3, value3 in outdata.loc[:, 'anomalies'].items():
         min_v2, max_v2, mean_v2 = baseline_anomalies['min'], baseline_anomalies['max'], baseline_anomalies['mean']
         anomalies_score = malf_alf_anomaly_score(min_v2, max_v2, mean_v2, value3)
         outdata.loc[idx3, 'anomalies_score'] = anomalies_score
 
+    # getting the event length score
     baseline_event_length = {'min_malf_events_greater_7': 0, 'max_malf_events_greater_7': 4, 'mean_malf_events_greater_7':1,
                                   'min_malf_events_greater_14': 0, 'max_malf_events_greater_14': 2, 'mean_malf_events_greater_14':0.387096774,
                                   'min_malf_events_greater_21': 0, 'max_malf_events_greater_21': 2, 'mean_malf_events_greater_21':0.161290323,
@@ -391,6 +438,24 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
             event_length = value4
             event_score_output = event_score(min_v3, max_v3, mean_v3, event_length)
             outdata.loc[idx4, f'{c}_score'] = event_score_output
+
+
+    #todo getting days above 19, 21, 24 temperature score
+    #todo need to actually get baseline numbers once have data
+   #baseline_temperature_days = {'min_temp_days_above_19': 0, 'max_temp_days_above_19': 0, 'mean_temp_days_above_19': 0,
+   #                             'min_temp_days_above_21': 0, 'max_temp_days_above_21':0, 'mean_temp_days_above_21':0,
+   #                             'min_temp_days_above_24':0, 'max_temp_days_above_24':0, 'mean_temp_days_above_24':0}
+   #
+   #temp_col_names = ['temp_days_above_19', 'temp_days_above_21', 'temp_days_above_24']
+   #for col in temp_col_names:
+        #for idx5, value5 in outdata.loc[:, col].items():
+            #min_v4 = baseline_temperature_days[f'min_{col}']
+            #max_v4 = baseline_temperature_days[f'max_{col}']
+            #mean_v4 = baseline_temperature_days[f'mean_{col}']
+            #daily_temp = value5
+            #temp_score = get_temp_score(min_v4, max_v4, mean_v4, daily_temp)
+            #outdata.loc[idx5, f'{col}_score'] = temp_score
+
     #plotting e.gs
     #sns.lineplot(data=outdata[['malf', 'alf']])
     #sns.lineplot(data=outdata[['longfin_eel_wua', 'shortfin_eel_wua', 'torrent_fish_wua', 'common_bully_wua','upland_bully_wua', 'bluegill_bully_wua']])
