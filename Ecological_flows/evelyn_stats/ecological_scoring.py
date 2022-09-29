@@ -97,18 +97,17 @@ def get_flow_dataset():
     data = data.loc[:, ['date', 'flow', 'water_year']]
     return data
 
-#def get_temp_dataset():
+def get_temp_dataset():
     """a function that gets the daily water temperature dataset"""
     #todo fill in filename when have flow data
-   #filename = ''
-   #base_path = kslcore.KslEnv.shared_gdrive.joinpath(filename)
-   #data = pd.read_csv(base_path)
-   ##todo change this once the format of the file is better known
-   #data.loc[:, 'Datetime'] = pd.to_datetime(data.loc[:, 'Datetime'], format='%d/%m/%Y')
-   #data.loc[:, 'water_year'] = [e.year for e in (data.loc[:, 'Datetime'].dt.to_pydatetime() + relativedelta(months=6))]
-   #data = data.rename(columns={'Datetime': 'date', 'Water temp (degC)': 'daily_water_temp'})
-   #data = data.loc[:, ['date', 'daily_water_temp', 'water_year']]
-   #return data
+    data = get_vcsn_record(version='trended', site='eyrewell')
+    #todo change this once the format of the file is better known
+    #data.loc[:, 'Datetime'] = pd.to_datetime(data.loc[:, 'Datetime'], format='%d/%m/%Y')
+    #data.loc[:, 'water_year'] = [e.year for e in (data.loc[:, 'date'].dt.to_pydatetime() + relativedelta(months=6))]
+    #data = data.rename(columns={'Datetime': 'date', 'Water temp (degC)': 'daily_water_temp'})
+    data.loc[:, 'mean_daily_temp'] = (data['tmax'] + data['tmin']).mean()
+    data = data.loc[:, ['year', 'tmax', 'tmin', 'mean_daily_temp']]
+    return data
 
 def get_seven_day_avg(dataframe):
     """ A function that creates the 7-day rolling avg of flow for each year"""
@@ -235,7 +234,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
 
     #todo getting temperature data
-    temperature_df = get_vcsn_record(version='trended', site='eyrewell')
+    temperature_df = get_temp_dataset()
     #temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
 
 
