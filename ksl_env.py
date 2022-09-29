@@ -26,7 +26,9 @@ def mh_backed(path):
         'Healey': {
             'Matt Hanson': r"M:\My Drive\MH_work_backed"},
         'DESKTOP-G2QSULJ': {
-            'Matt Hanson': r"M:\My Drive\MH_work_backed"}
+            'Matt Hanson': r"M:\My Drive\MH_work_backed"},
+        'DESKTOP-2KA91LK': {'evelyn': r"C:\Users\Evelyn_Charlesworth\temp_python_files" }
+
     }
 
     if hostname not in host_nm_dict.keys():
