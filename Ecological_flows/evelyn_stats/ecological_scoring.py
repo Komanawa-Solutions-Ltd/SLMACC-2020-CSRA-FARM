@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from itertools import groupby
 from kslcore import KslEnv
+from Climate_Shocks.get_past_record import get_vcsn_record
 
 
 def _wua_poly(x, a, b, c, d, e, f):
@@ -234,7 +235,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
 
     #todo getting temperature data
-    #temperature_df = get_temp_dataset()
+    temperature_df = get_vcsn_record(version='trended', site='eyrewell')
     #temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
 
 
