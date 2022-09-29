@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from datetime import datetime, timedelta
+import datetime
 from dateutil.relativedelta import relativedelta
 from itertools import groupby
 from kslcore import KslEnv
@@ -105,9 +105,20 @@ def get_temp_dataset():
     #data.loc[:, 'Datetime'] = pd.to_datetime(data.loc[:, 'Datetime'], format='%d/%m/%Y')
     #data.loc[:, 'water_year'] = [e.year for e in (data.loc[:, 'date'].dt.to_pydatetime() + relativedelta(months=6))]
     #data = data.rename(columns={'Datetime': 'date', 'Water temp (degC)': 'daily_water_temp'})
-    data.loc[:, 'mean_daily_temp'] = (data['tmax'] + data['tmin']).mean()
-    data = data.loc[:, ['year', 'tmax', 'tmin', 'mean_daily_temp']]
-    return data
+    data = data.reset_index()
+    for d, t in data.loc[:, 'tmin'].items():
+        mean_temp = (t + data.loc[d,'tmax'])/2
+        data.loc[d, 'mean_daily_temp'] = mean_temp
+    #getting the monthly mean air temp in order to use regression relationship
+    monthly_mean = pd.DataFrame()
+    monthly_mean.loc[:,'monthly_mean_temp'] = data.groupby(pd.PeriodIndex(data["date"], freq="M"))['mean_daily_temp'].mean()
+    monthly_mean = monthly_mean.reset_index()
+    #monthly_mean.loc[:, 'date'] = monthly_mean['date'].dt.to_timestamp('s').dt.strftime('%d/%m/%Y')
+    #monthly_mean.loc[:, 'date'] = pd.to_datetime(monthly_mean.loc[:, 'date'], format='%d/%m/%Y')
+    monthly_mean['date'] = monthly_mean['date'].astype(str)
+    monthly_mean['date'] = pd.to_datetime(monthly_mean['date'])
+    monthly_mean.loc[:, 'water_year'] = [e.year for e in (monthly_mean.loc[:, 'date'].dt.to_pydatetime() + relativedelta(months=6))]
+    return monthly_mean
 
 def get_seven_day_avg(dataframe):
     """ A function that creates the 7-day rolling avg of flow for each year"""
