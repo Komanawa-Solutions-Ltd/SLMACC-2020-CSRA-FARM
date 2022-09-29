@@ -170,6 +170,19 @@ def malf_alf_anomaly_score(min_anomaly, max_anomaly, mean_anomaly, anomaly):
         score2 = 0
     return score2*3
 
+def event_score(event_min, event_max, event_mean, event_count):
+    """A function that calculates the score for the no. of events >= than 7, 14, 21 and 28 days"""
+
+    if event_count > event_mean:
+    # this is a negative score - worse if count is higher than mean
+        score3 = (event_mean - event_count)/(event_max - event_mean)
+    elif event_count < event_mean:
+    # this is a postive score - better if count is less than mean
+        score3 = (event_mean - event_count)/ (event_mean - event_min)
+    else:
+        score3 = 0
+    return score3*3
+
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     """
     A function that reads in a file of flows (associated w/ dates) and performs stats on them,
@@ -248,6 +261,17 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         outdata.loc[y, 'malf_consec_days'] = len(outperiods)
         outdata.loc[y, 'malf_num_events'] = len(np.unique(outperiods))
 
+        outperiods_df = pd.DataFrame({'malf_events': outperiods, 'malf_length': 1})
+        outdata.loc[y, 'malf_event_lengths'] = '-'.join(
+            (outperiods_df.groupby('malf_events').count() + 1).values.astype(str)[:, 0])
+        outperiods_df = outperiods_df.groupby('malf_events').count()+1
+        outperiods_df = np.array(outperiods_df)
+        outdata.loc[y,'malf_events_greater_7'] = (outperiods_df >= 7).sum()
+        outdata.loc[y,'malf_events_greater_14'] = (outperiods_df >= 14).sum()
+        outdata.loc[y, 'malf_events_greater_21'] = (outperiods_df >= 21).sum()
+        outdata.loc[y, 'malf_events_greater_28'] = (outperiods_df >= 28).sum()
+
+
         # calculate flow limits
     if flow_limits is not None:
         flow_limits = np.atleast_1d(flow_limits)
@@ -278,10 +302,18 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
                 outdata.loc[d, 'flow_limits_consec_days'] = len(outperiods1)
                 outdata.loc[d, 'flow_limits_num_events'] = len(np.unique(outperiods1))
 
-    #todo calculate the no of consec_days above and = to 7, 14, 21, 28
-    #todo count these per year? need to do per year in order to generate:
-    #todo min per period, max per period and avg across whole baseline?
-    #todo create a scoring range based on these baselines
+                outperiods1_df = pd.DataFrame({'flow_events': outperiods1, 'flow_length': 1})
+                outdata.loc[d, 'flow_event_lengths'] = '-'.join(
+                    (outperiods1_df.groupby('flow_events').count() + 1).values.astype(str)[:, 0])
+                outperiods1_df = outperiods1_df.groupby('flow_events').count() + 1
+                outperiods1_df = np.array(outperiods1_df)
+                outdata.loc[d, 'flow_events_greater_7'] = (outperiods1_df >= 7).sum()
+                outdata.loc[d, 'flow_events_greater_14'] = (outperiods1_df >= 14).sum()
+                outdata.loc[d, 'flow_events_greater_21'] = (outperiods1_df >= 21).sum()
+                outdata.loc[d, 'flow_events_greater_28'] = (outperiods1_df >= 28).sum()
+
+
+
 
 #fixme might not need this code anymore
     # Finding the ALF anomaly for the worst 1, 2 and 3 yrs
@@ -339,7 +371,26 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         anomalies_score = malf_alf_anomaly_score(min_v2, max_v2, mean_v2, value3)
         outdata.loc[idx3, 'anomalies_score'] = anomalies_score
 
+    baseline_event_length = {'min_malf_events_greater_7': 0, 'max_malf_events_greater_7': 4, 'mean_malf_events_greater_7':1,
+                                  'min_malf_events_greater_14': 0, 'max_malf_events_greater_14': 2, 'mean_malf_events_greater_14':0.387096774,
+                                  'min_malf_events_greater_21': 0, 'max_malf_events_greater_21': 2, 'mean_malf_events_greater_21':0.161290323,
+                                  'min_malf_events_greater_28': 0, 'max_malf_events_greater_28': 2, 'mean_malf_events_greater_28':0.161290323,
+                             'min_flow_events_greater_7': 0, 'max_flow_events_greater_7': 6, 'mean_flow_events_greater_7':1.6451613,
+                                  'min_flow_events_greater_14': 0, 'max_flow_events_greater_14': 4, 'mean_flow_events_greater_14':0.8709677,
+                                  'min_flow_events_greater_21': 0, 'max_flow_events_greater_21': 2, 'mean_flow_events_greater_21':0.516129032,
+                                  'min_flow_events_greater_28': 0, 'max_flow_events_greater_28': 2, 'mean_flow_events_greater_28':0.258064516}
 
+    col_names = ['malf_events_greater_7', 'malf_events_greater_14', 'malf_events_greater_21', 'malf_events_greater_28',
+                 'flow_events_greater_7', 'flow_events_greater_14', 'flow_events_greater_21', 'flow_events_greater_28']
+
+    for c in col_names:
+        for idx4, value4 in outdata.loc[:, c].items():
+            min_v3 = baseline_event_length[f'min_{c}']
+            max_v3 = baseline_event_length[f'max_{c}']
+            mean_v3 = baseline_event_length[f'mean_{c}']
+            event_length = value4
+            event_score_output = event_score(min_v3, max_v3, mean_v3, event_length)
+            outdata.loc[idx4, f'{c}_score'] = event_score_output
     #plotting e.gs
     #sns.lineplot(data=outdata[['malf', 'alf']])
     #sns.lineplot(data=outdata[['longfin_eel_wua', 'shortfin_eel_wua', 'torrent_fish_wua', 'common_bully_wua','upland_bully_wua', 'bluegill_bully_wua']])
