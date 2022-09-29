@@ -52,7 +52,8 @@ def shared_drives(path):
         'Healey': {
             'Matt Hanson': "M:/Shared drives"},
         'DESKTOP-G2QSULJ': {
-            'Matt Hanson': "M:/Shared drives"}
+            'Matt Hanson': "M:/Shared drives"},
+        'DESKTOP-2KA91LK': {'evelyn': r"C:\Users\Evelyn_Charlesworth\temp_python_files"}
     }
 
     if hostname not in host_nm_dict.keys():
@@ -76,7 +77,9 @@ def mh_unbacked(path):
         'Healey': {
             'Matt Hanson': "C:/matt_modelling_unbackedup"},
         'DESKTOP-G2QSULJ': {
-            'Matt Hanson': r"C:\Users\Matt Hanson\Documents\unbacked"}
+            'Matt Hanson': r"C:\Users\Matt Hanson\Documents\unbacked"},
+
+        'DESKTOP-2KA91LK': {'evelyn': r"C:\Users\Evelyn_Charlesworth\temp_python_files"}
     }
 
     if hostname not in host_nm_dict.keys():
@@ -101,7 +104,8 @@ def tempfiles(path):
         'Healey': {
             'Matt Hanson': "C:/Users/Matt Hanson/Downloads/temp_python_files"},
         'DESKTOP-G2QSULJ': {
-            'Matt Hanson': "C:/Users/Matt Hanson/Downloads/temp_python_files"}
+            'Matt Hanson': "C:/Users/Matt Hanson/Downloads/temp_python_files"},
+        'DESKTOP-2KA91LK': {'evelyn': r"C:\Users\Evelyn_Charlesworth\temp_python_files"}
     }
 
     if hostname not in host_nm_dict.keys():
@@ -130,7 +134,8 @@ def add_basgra_nz_path():
         'Healey': {
             'Matt Hanson': 'C:/Users/Matt Hanson/python_projects/BASGRA_NZ_PY'},
         'DESKTOP-G2QSULJ': {
-            'Matt Hanson': 'C:/Users/Matt Hanson/python_projects/BASGRA_NZ_PY'}
+            'Matt Hanson': 'C:/Users/Matt Hanson/python_projects/BASGRA_NZ_PY'},
+        'DESKTOP-2KA91LK': {'evelyn': r"C:\Users\Evelyn_Charlesworth\temp_python_files"}
     }
 
     if hostname not in host_nm_dict.keys():
@@ -156,7 +161,8 @@ def get_vscn_dir():
             'Matt Hanson': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn"},
         'DESKTOP-G2QSULJ': {
             'Matt Hanson': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn"
-        }
+        },
+        'DESKTOP-2KA91LK': {'evelyn': r"C:\Users\Evelyn_Charlesworth\temp_python_files"}
     }
 
     if hostname not in host_nm_dict.keys():
