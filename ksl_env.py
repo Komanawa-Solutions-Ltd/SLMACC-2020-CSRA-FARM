@@ -27,7 +27,7 @@ def mh_backed(path):
             'Matt Hanson': r"M:\My Drive\MH_work_backed"},
         'DESKTOP-G2QSULJ': {
             'Matt Hanson': r"M:\My Drive\MH_work_backed"},
-        'DESKTOP-2KA91LK': {'Evelyn_Charlesworth': r"C:\Users\Evelyn_Charlesworth\temp_python_files" }
+        'DESKTOP-2KA91LK': {'Evelyn_Charlesworth': r"V:\My Drive\unbacked" }
 
     }
 
@@ -53,7 +53,7 @@ def shared_drives(path):
             'Matt Hanson': "M:/Shared drives"},
         'DESKTOP-G2QSULJ': {
             'Matt Hanson': "M:/Shared drives"},
-        'DESKTOP-2KA91LK': {'Evelyn_Charlesworth': r"C:\Users\Evelyn_Charlesworth\temp_python_files"}
+        'DESKTOP-2KA91LK': {'Evelyn_Charlesworth': "V:/Shared drives"}
     }
 
     if hostname not in host_nm_dict.keys():
@@ -79,7 +79,7 @@ def mh_unbacked(path):
         'DESKTOP-G2QSULJ': {
             'Matt Hanson': r"C:\Users\Matt Hanson\Documents\unbacked"},
 
-        'DESKTOP-2KA91LK': {'Evelyn_Charlesworth': r"C:\Users\Evelyn_Charlesworth\temp_python_files"}
+        'DESKTOP-2KA91LK': {'Evelyn_Charlesworth': "V:/My Drive/unbacked"}
     }
 
     if hostname not in host_nm_dict.keys():
@@ -105,7 +105,7 @@ def tempfiles(path):
             'Matt Hanson': "C:/Users/Matt Hanson/Downloads/temp_python_files"},
         'DESKTOP-G2QSULJ': {
             'Matt Hanson': "C:/Users/Matt Hanson/Downloads/temp_python_files"},
-        'DESKTOP-2KA91LK': {'Evelyn_Charlesworth': r"C:\Users\Evelyn_Charlesworth\temp_python_files"}
+        'DESKTOP-2KA91LK': {'Evelyn_Charlesworth': "C:/Users/Evelyn_Charlesworth/temp_python_files"}
     }
 
     if hostname not in host_nm_dict.keys():
@@ -135,7 +135,7 @@ def add_basgra_nz_path():
             'Matt Hanson': 'C:/Users/Matt Hanson/python_projects/BASGRA_NZ_PY'},
         'DESKTOP-G2QSULJ': {
             'Matt Hanson': 'C:/Users/Matt Hanson/python_projects/BASGRA_NZ_PY'},
-        'DESKTOP-2KA91LK': {'Evelyn_Charlesworth': r"C:\Users\Evelyn_Charlesworth\temp_python_files"}
+        'DESKTOP-2KA91LK': {'Evelyn_Charlesworth': "C:/Users/Evelyn_Charlesworth/PycharmProjects"}
     }
 
     if hostname not in host_nm_dict.keys():
@@ -162,7 +162,7 @@ def get_vscn_dir():
         'DESKTOP-G2QSULJ': {
             'Matt Hanson': r"D:\SLMMAC_SWG/SLMACC-Subset_vcsn"
         },
-        'DESKTOP-2KA91LK': {'Evelyn_Charlesworth': r"C:\Users\Evelyn_Charlesworth\temp_python_files"}
+        'DESKTOP-2KA91LK': {'Evelyn_Charlesworth': "V:/Shared drives/Z2003_SLMACC/BS_code/BS_Project_Final/SLMACC-Subset"}
     }
 
     if hostname not in host_nm_dict.keys():
