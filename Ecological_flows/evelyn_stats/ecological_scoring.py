@@ -12,6 +12,7 @@ from dateutil.relativedelta import relativedelta
 from itertools import groupby
 from kslcore import KslEnv
 from Climate_Shocks.get_past_record import get_vcsn_record
+from water_temp_monthly import temp_regr
 
 
 def _wua_poly(x, a, b, c, d, e, f):
@@ -103,15 +104,20 @@ def get_temp_dataset():
     data = data.reset_index()
     for d, t in data.loc[:, 'tmin'].items():
         mean_temp = (t + data.loc[d,'tmax'])/2
-        data.loc[d, 'mean_daily_temp'] = mean_temp
+        data.loc[d, 'mean_daily_air_temp'] = mean_temp
+    data['date'] = pd.to_datetime(data['date'])
+    data.loc[:, 'water_year'] = [e.year for e in (data.loc[:, 'date'].dt.to_pydatetime() + relativedelta(months=6))]
+    x = data.loc[:, 'mean_daily_air_temp'].values.reshape(-1, 1)
+    data.loc[:, 'mean_daily_water_temp'] = temp_regr.predict(x)
+    data = data.loc[:, ['date', 'water_year', 'mean_daily_air_temp', 'mean_daily_water_temp']]
     #getting the monthly mean air temp in order to use regression relationship
-    monthly_mean = pd.DataFrame()
-    monthly_mean.loc[:,'monthly_mean_temp'] = data.groupby(pd.PeriodIndex(data["date"], freq="M"))['mean_daily_temp'].mean()
-    monthly_mean = monthly_mean.reset_index()
-    monthly_mean['date'] = monthly_mean['date'].astype(str)
-    monthly_mean['date'] = pd.to_datetime(monthly_mean['date'])
-    monthly_mean.loc[:, 'water_year'] = [e.year for e in (monthly_mean.loc[:, 'date'].dt.to_pydatetime() + relativedelta(months=6))]
-    return monthly_mean
+    #monthly_mean = pd.DataFrame()
+    #monthly_mean.loc[:,'monthly_mean_temp'] = data.groupby(pd.PeriodIndex(data["date"], freq="M"))['mean_daily_temp'].mean()
+    #monthly_mean = monthly_mean.reset_index()
+    #monthly_mean['date'] = monthly_mean['date'].astype(str)
+    #monthly_mean['date'] = pd.to_datetime(monthly_mean['date'])
+    #monthly_mean.loc[:, 'water_year'] = [e.year for e in (monthly_mean.loc[:, 'date'].dt.to_pydatetime() + relativedelta(months=6))]
+    return data
 
 def get_seven_day_avg(dataframe):
     """ A function that creates the 7-day rolling avg of flow for each year"""
