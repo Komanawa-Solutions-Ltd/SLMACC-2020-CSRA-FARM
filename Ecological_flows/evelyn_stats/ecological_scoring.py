@@ -99,12 +99,7 @@ def get_flow_dataset():
 
 def get_temp_dataset():
     """a function that gets the daily water temperature dataset"""
-    #todo fill in filename when have flow data
     data = get_vcsn_record(version='trended', site='eyrewell')
-    #todo change this once the format of the file is better known
-    #data.loc[:, 'Datetime'] = pd.to_datetime(data.loc[:, 'Datetime'], format='%d/%m/%Y')
-    #data.loc[:, 'water_year'] = [e.year for e in (data.loc[:, 'date'].dt.to_pydatetime() + relativedelta(months=6))]
-    #data = data.rename(columns={'Datetime': 'date', 'Water temp (degC)': 'daily_water_temp'})
     data = data.reset_index()
     for d, t in data.loc[:, 'tmin'].items():
         mean_temp = (t + data.loc[d,'tmax'])/2
@@ -113,8 +108,6 @@ def get_temp_dataset():
     monthly_mean = pd.DataFrame()
     monthly_mean.loc[:,'monthly_mean_temp'] = data.groupby(pd.PeriodIndex(data["date"], freq="M"))['mean_daily_temp'].mean()
     monthly_mean = monthly_mean.reset_index()
-    #monthly_mean.loc[:, 'date'] = monthly_mean['date'].dt.to_timestamp('s').dt.strftime('%d/%m/%Y')
-    #monthly_mean.loc[:, 'date'] = pd.to_datetime(monthly_mean.loc[:, 'date'], format='%d/%m/%Y')
     monthly_mean['date'] = monthly_mean['date'].astype(str)
     monthly_mean['date'] = pd.to_datetime(monthly_mean['date'])
     monthly_mean.loc[:, 'water_year'] = [e.year for e in (monthly_mean.loc[:, 'date'].dt.to_pydatetime() + relativedelta(months=6))]
@@ -210,24 +203,22 @@ def event_score(event_min, event_max, event_mean, event_count):
 #def get_temp_score(min, max, mean, count):
     #"""assigns a temperature score based on the baseline min, max and mean
     #by comparing the number of temp events in a year to these for 19, 21 and 24 deg
-    #
     #:param min: minimum days above x for the baseline period
     #:param max: maximum days above x for the baseline period
     #:param mean: mean days above x for the baseline period
     #:param count: the days above x for that hydrological year (from the input data)
     #:return:
     #"""
-    # this is a negative score because worse if count is higher than mean
+    ##this is a negative score because worse if count is higher than mean
     #if count > mean:
     #    score4 = (mean - count)/(max - mean)
-    ## this score is positive because good if the count is less than the mean
+    ##this score is positive because good if the count is less than the mean
     #elif count < mean:
     #    score4 = (mean - count)/(mean - min)
     #else:
     #    score4 = 0
     #return score4*3
-
-
+#
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     """
     A function that reads in a file of flows (associated w/ dates) and performs stats on them,
@@ -244,11 +235,10 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     list_startdates = range(start_water_year, end_water_year + 1)
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
 
-    #todo getting temperature data
+    #getting temperature data
     temperature_df = get_temp_dataset()
+    # NB temp data starts at 1972 as earliest date
     #temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
-
-
 
     # Calculating stats
 
