@@ -244,7 +244,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     #getting temperature data
     temperature_df = get_temp_dataset()
     # NB temp data starts at 1972 as earliest date
-    #temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
+    temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
 
     # Calculating stats
 
@@ -259,10 +259,10 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         all_hydro_years_df.loc[l, y] = flow_df.loc[flow_df.water_year == y, 'flow'].values
 
     #todo long to wide for temperature data
-    #temperature_wide_df = pd.DataFrame(index=range(1, 367), columns=list_startdates)
-    #for x in list_startdates:
-       #length = range(1, len(flow_df.loc[flow_df.water_year == x, 'daily_water_temp']) + 1)
-       #temperature_wide_df.loc[length, x] = temperature_df.loc[temperature_df.water_year == x, 'daily_water_temp'].values
+    temperature_wide_df = pd.DataFrame(index=range(1, 367), columns=list_startdates)
+    for x in list_startdates:
+       length = range(1, len(temperature_df.loc[temperature_df.water_year == x, 'mean_daily_water_temp']) + 1)
+       temperature_wide_df.loc[length, x] = temperature_df.loc[temperature_df.water_year == x, 'mean_daily_water_temp'].values
 
     seven_day_avg_df = get_seven_day_avg(all_hydro_years_df)
 
