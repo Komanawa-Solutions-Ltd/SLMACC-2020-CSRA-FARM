@@ -198,7 +198,7 @@ def event_score(event_min, event_max, event_mean, event_count):
         score3 = 0
     return score3*3
 
-#once get temp data
+
 def get_temp_score(min, max, mean, count):
     """assigns a temperature score based on the baseline min, max and mean
     by comparing the number of temp events in a year to these for 19, 21 and 24 deg
@@ -209,13 +209,23 @@ def get_temp_score(min, max, mean, count):
     :return:
     """
     #this is a negative score because worse if count is higher than mean
-    if count > mean:
-        score4 = (mean - count)/(max - mean)
+    if mean == 0:
+        if count > mean:
+            score4 = -1
+        elif count < mean:
+            score4 = 1
+        else:
+            score4 = 0
+    elif mean != 0:
+    # this score is negative because good if the count is less than the mean
+        if count > mean:
+            score4 = (mean - count)/(max - mean)
     #this score is positive because good if the count is less than the mean
-    elif count < mean:
-        score4 = (mean - count)/(mean - min)
-    else:
-        score4 = 0
+        elif count < mean:
+            score4 = (mean - count)/(mean - min)
+        else:
+            score4 = 0
+
     return score4*3
 
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
@@ -441,7 +451,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
    #getting days above 19, 21, 24 temperature score
    baseline_temperature_days = {'min_temp_days_above_19': 0, 'max_temp_days_above_19': 22, 'mean_temp_days_above_19': 5,
                                 'min_temp_days_above_21': 0, 'max_temp_days_above_21':3, 'mean_temp_days_above_21':0.258064516,
-                                'min_temp_days_above_24':0, 'max_temp_days_above_24':0, 'mean_temp_days_above_24':0}
+                                'min_temp_days_above_24':0, 'max_temp_days_above_24':1, 'mean_temp_days_above_24':0}
 
    #temp_col_names = ['temp_days_above_19', 'temp_days_above_21', 'temp_days_above_24']
    #for col in temp_col_names:
