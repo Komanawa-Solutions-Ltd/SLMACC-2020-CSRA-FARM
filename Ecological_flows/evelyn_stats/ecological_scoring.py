@@ -110,13 +110,6 @@ def get_temp_dataset():
     x = data.loc[:, 'mean_daily_air_temp'].values.reshape(-1, 1)
     data.loc[:, 'mean_daily_water_temp'] = temp_regr.predict(x)
     data = data.loc[:, ['date', 'water_year', 'mean_daily_air_temp', 'mean_daily_water_temp']]
-    #getting the monthly mean air temp in order to use regression relationship
-    #monthly_mean = pd.DataFrame()
-    #monthly_mean.loc[:,'monthly_mean_temp'] = data.groupby(pd.PeriodIndex(data["date"], freq="M"))['mean_daily_temp'].mean()
-    #monthly_mean = monthly_mean.reset_index()
-    #monthly_mean['date'] = monthly_mean['date'].astype(str)
-    #monthly_mean['date'] = pd.to_datetime(monthly_mean['date'])
-    #monthly_mean.loc[:, 'water_year'] = [e.year for e in (monthly_mean.loc[:, 'date'].dt.to_pydatetime() + relativedelta(months=6))]
     return data
 
 def get_seven_day_avg(dataframe):
@@ -205,26 +198,26 @@ def event_score(event_min, event_max, event_mean, event_count):
         score3 = 0
     return score3*3
 
-#todo once get temp data
-#def get_temp_score(min, max, mean, count):
-    #"""assigns a temperature score based on the baseline min, max and mean
-    #by comparing the number of temp events in a year to these for 19, 21 and 24 deg
-    #:param min: minimum days above x for the baseline period
-    #:param max: maximum days above x for the baseline period
-    #:param mean: mean days above x for the baseline period
-    #:param count: the days above x for that hydrological year (from the input data)
-    #:return:
-    #"""
-    ##this is a negative score because worse if count is higher than mean
-    #if count > mean:
-    #    score4 = (mean - count)/(max - mean)
-    ##this score is positive because good if the count is less than the mean
-    #elif count < mean:
-    #    score4 = (mean - count)/(mean - min)
-    #else:
-    #    score4 = 0
-    #return score4*3
-#
+#once get temp data
+def get_temp_score(min, max, mean, count):
+    """assigns a temperature score based on the baseline min, max and mean
+    by comparing the number of temp events in a year to these for 19, 21 and 24 deg
+    :param min: minimum days above x for the baseline period
+    :param max: maximum days above x for the baseline period
+    :param mean: mean days above x for the baseline period
+    :param count: the days above x for that hydrological year (from the input data)
+    :return:
+    """
+    #this is a negative score because worse if count is higher than mean
+    if count > mean:
+        score4 = (mean - count)/(max - mean)
+    #this score is positive because good if the count is less than the mean
+    elif count < mean:
+        score4 = (mean - count)/(mean - min)
+    else:
+        score4 = 0
+    return score4*3
+
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     """
     A function that reads in a file of flows (associated w/ dates) and performs stats on them,
@@ -258,7 +251,6 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         l = range(1, len(flow_df.loc[flow_df.water_year == y, 'flow']) + 1)
         all_hydro_years_df.loc[l, y] = flow_df.loc[flow_df.water_year == y, 'flow'].values
 
-    #todo long to wide for temperature data
     temperature_wide_df = pd.DataFrame(index=range(1, 367), columns=list_startdates)
     for x in list_startdates:
        length = range(1, len(temperature_df.loc[temperature_df.water_year == x, 'mean_daily_water_temp']) + 1)
@@ -282,11 +274,10 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     # Calculating the days per year spent below MALF
     outdata.loc[:, 'days_below_malf'] = (all_hydro_years_df < malf).sum()
 
-    #todo getting temperature days
-    #outdata.loc[:, 'temp_days_above_19'] = (temperature_wide_df > 19).sum()
-    #outdata.loc[:, 'temp_days_above_21'] = (temperature_wide_df > 21).sum()
-    #outdata.loc[:, 'temp_days_above_24'] = (temperature_wide_df > 24).sum()
-
+    #getting temperature days
+    outdata.loc[:, 'temp_days_above_19'] = (temperature_wide_df > 19).sum()
+    outdata.loc[:, 'temp_days_above_21'] = (temperature_wide_df > 21).sum()
+    outdata.loc[:, 'temp_days_above_24'] = (temperature_wide_df > 24).sum()
 
     # consecutive days for malf
     for y in list_startdates:
@@ -447,12 +438,11 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
             outdata.loc[idx4, f'{c}_score'] = event_score_output
 
 
-    #todo getting days above 19, 21, 24 temperature score
-    #todo need to actually get baseline numbers once have data
-   #baseline_temperature_days = {'min_temp_days_above_19': 0, 'max_temp_days_above_19': 0, 'mean_temp_days_above_19': 0,
-   #                             'min_temp_days_above_21': 0, 'max_temp_days_above_21':0, 'mean_temp_days_above_21':0,
-   #                             'min_temp_days_above_24':0, 'max_temp_days_above_24':0, 'mean_temp_days_above_24':0}
-   #
+   #getting days above 19, 21, 24 temperature score
+   baseline_temperature_days = {'min_temp_days_above_19': 0, 'max_temp_days_above_19': 22, 'mean_temp_days_above_19': 5,
+                                'min_temp_days_above_21': 0, 'max_temp_days_above_21':3, 'mean_temp_days_above_21':0.258064516,
+                                'min_temp_days_above_24':0, 'max_temp_days_above_24':0, 'mean_temp_days_above_24':0}
+
    #temp_col_names = ['temp_days_above_19', 'temp_days_above_21', 'temp_days_above_24']
    #for col in temp_col_names:
         #for idx5, value5 in outdata.loc[:, col].items():
