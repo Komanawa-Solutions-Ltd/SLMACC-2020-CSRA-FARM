@@ -449,25 +449,24 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 
    #getting days above 19, 21, 24 temperature score
-   baseline_temperature_days = {'min_temp_days_above_19': 0, 'max_temp_days_above_19': 22, 'mean_temp_days_above_19': 5,
+    baseline_temperature_days = {'min_temp_days_above_19': 0, 'max_temp_days_above_19': 22, 'mean_temp_days_above_19': 5,
                                 'min_temp_days_above_21': 0, 'max_temp_days_above_21':3, 'mean_temp_days_above_21':0.258064516,
                                 'min_temp_days_above_24':0, 'max_temp_days_above_24':1, 'mean_temp_days_above_24':0}
+    temp_col_names = ['temp_days_above_19', 'temp_days_above_21', 'temp_days_above_24']
 
-   #temp_col_names = ['temp_days_above_19', 'temp_days_above_21', 'temp_days_above_24']
-   #for col in temp_col_names:
-        #for idx5, value5 in outdata.loc[:, col].items():
-            #min_v4 = baseline_temperature_days[f'min_{col}']
-            #max_v4 = baseline_temperature_days[f'max_{col}']
-            #mean_v4 = baseline_temperature_days[f'mean_{col}']
-            #daily_temp = value5
-            #temp_score = get_temp_score(min_v4, max_v4, mean_v4, daily_temp)
-            #outdata.loc[idx5, f'{col}_score'] = temp_score
+    for col in temp_col_names:
+        for idx5, value5 in outdata.loc[:, col].items():
+            min_v4 = baseline_temperature_days[f'min_{col}']
+            max_v4 = baseline_temperature_days[f'max_{col}']
+            mean_v4 = baseline_temperature_days[f'mean_{col}']
+            daily_temp = value5
+            temp_score = get_temp_score(min_v4, max_v4, mean_v4, daily_temp)
+            outdata.loc[idx5, f'{col}_score'] = temp_score
 
     #plotting e.gs
     #sns.lineplot(data=outdata[['malf', 'alf']])
     #sns.lineplot(data=outdata[['longfin_eel_wua', 'shortfin_eel_wua', 'torrent_fish_wua', 'common_bully_wua','upland_bully_wua', 'bluegill_bully_wua']])
     #plt.show()
-
 
     return outdata
     outdata.to_csv(outpath)
