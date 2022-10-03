@@ -471,8 +471,8 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     plt.figure(figsize=(40, 20))
     #sns.barplot(data=outdata, x=outdata.index, y='days_below_malf')
     #sns.barplot(data=outdata, x=outdata.index, y='days_below_50')
-    sns.lineplot(data=outdata[['median', 'alf']])
-    plt.savefig(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/median_alf_baseline.png'))
+    #sns.lineplot(data=outdata[['median', 'alf']])
+    #plt.savefig(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/median_alf_baseline.png'))
     #plt.show()
 
 
