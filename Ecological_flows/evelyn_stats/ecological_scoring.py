@@ -465,14 +465,23 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     #plotting e.gs
     #sns.lineplot(data=outdata[['malf', 'alf']])
+    #plt.savefig(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/malf_alf_baseline.png'))
     #sns.lineplot(data=outdata[['longfin_eel_wua', 'shortfin_eel_wua', 'torrent_fish_wua', 'common_bully_wua','upland_bully_wua', 'bluegill_bully_wua']])
+    #plt.savefig(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/fish_scores_baseline.png'))
+    plt.figure(figsize=(40, 20))
+    #sns.barplot(data=outdata, x=outdata.index, y='days_below_malf')
+    #sns.barplot(data=outdata, x=outdata.index, y='days_below_50')
+    sns.lineplot(data=outdata[['median', 'alf']])
+    plt.savefig(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/median_alf_baseline.png'))
     #plt.show()
 
+
+    #outdata.to_csv(outpath)
     return outdata
-    outdata.to_csv(outpath)
+
 
 
 
 
 if __name__ == '__main__':
-    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info'), 1970, 2000, 50)
+    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/final_stats.csv'), 1970, 2000, 50)
