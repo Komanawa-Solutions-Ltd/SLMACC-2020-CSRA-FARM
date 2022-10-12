@@ -69,38 +69,38 @@ variable_names_hist = ['longfin_eel_score_rounded', 'shortfin_eel_score_rounded'
                        'temp_days_above_21_score_rounded',
                        'temp_days_above_24_score_rounded']
 
-temp_df = df.copy(deep=True)
-temp_df.loc[:, variable_names_bar] *= 1 / 2
-datasets = [df, temp_df]  # todo this is a holder for all of your 6 datasets, make in sets of years
-dataset_names = ['original', 'half']  # todo this is a holder for all of your 6 datasets
-colors = get_colors(datasets)
 
-nrows, ncol = (3, 2)
-figsize = (12, 9)
-num_figs = len(variable_names_bar) // (nrows * ncol) + 1
-all_axes = []
-all_figs = []
-for n in range(num_figs):
-    f, axs = plt.subplots(nrows, ncol, figsize=figsize)
-    all_figs.append(f)
-    all_axes.extend(axs.flatten())
+def plot_barcharts(datasets, dataset_names, colors):
 
-water_years = datasets[0]['water_year']
-for var, ax in zip(variable_names_bar, all_axes):
-    x = (water_years - min(water_years)) * len(datasets)  # keynote this assumes datasets have same x
-    for i, (df, n, c) in enumerate(zip(datasets, dataset_names, colors)):
-        ax.bar(x + i, df[var], color=c, label=n)
-    for xi in x:
-        ax.axvline(xi - 0.5, color='k', ls=':', alpha=0.5)
-    ax.set_title(var.upper())
-    ax.set_xticks(x + (len(datasets) - 1) / 2)
-    ax.set_xticklabels(water_years, rotation=-60)
-    ax.legend()
+    nrows, ncol = (3, 2)
+    figsize = (12, 9)
+    num_figs = len(variable_names_bar) // (nrows * ncol) + 1
+    all_axes = []
+    all_figs = []
+    for n in range(num_figs):
+        f, axs = plt.subplots(nrows, ncol, figsize=figsize)
+        all_figs.append(f)
+        all_axes.extend(axs.flatten())
 
-for f in all_figs:
-    f.tight_layout()
+    water_years = datasets[0]['water_year']
+    for var, ax in zip(variable_names_bar, all_axes):
+        x = (water_years - min(water_years)) * len(datasets)  # keynote this assumes datasets have same x
+        for i, (df, n, c) in enumerate(zip(datasets, dataset_names, colors)):
+            ax.bar(x + i, df[var], color=c, label=n)
+        for xi in x:
+            ax.axvline(xi - 0.5, color='k', ls=':', alpha=0.5)
+        ax.set_title(var.upper())
+        ax.set_xticks(x + (len(datasets) - 1) / 2)
+        ax.set_xticklabels(water_years, rotation=-60)
+        ax.legend()
 
-plt.show()
+    for f in all_figs:
+        f.tight_layout()
+
+    plt.show()
+
+
+
 
 # todo EC work thourgh this
 
@@ -147,3 +147,11 @@ plt.show()
 # testing getting multiple on one grid
 
 pass
+
+if __name__ == '__main__':
+    temp_df = df.copy(deep=True)
+    temp_df.loc[:, variable_names_bar] *= 1 / 2
+    datasets = [df, temp_df]  # todo this is a holder for all of your 6 datasets, make in sets of years
+    dataset_names = ['original', 'half']  # todo this is a holder for all of your 6 datasets
+    colors = get_colors(datasets)
+    plot_barcharts(datasets, dataset_names, colors)
