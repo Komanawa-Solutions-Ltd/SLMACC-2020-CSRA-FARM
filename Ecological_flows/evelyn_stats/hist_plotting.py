@@ -70,7 +70,27 @@ variable_names_hist = ['longfin_eel_score_rounded', 'shortfin_eel_score_rounded'
                       'temp_days_above_24_score_rounded']
 
 
-fig, axes = plt.subplots(10, 3, sharex=True, figsize=(15,20))
+fig, axes = plt.subplots(10, 3, sharex=True, figsize=(10, 12))
+
+
+for var, ax in zip(variable_names_bar, axes.ravel()):
+    ax.bar(df['water_year'], df[var], color='g')
+    ax.set_title(var.upper())
+    fig.tight_layout()
+plt.show()
+
+fig1, axes1 = plt.subplots(7, 4, sharex=True, figsize=(10,12))
+
+for var1, ax1 in zip(variable_names_hist, axes1.ravel()):
+    ax1.hist(df[var1], color='g', bins=8)
+    ax1.set_title(var1.upper())
+    fig.tight_layout()
+plt.show()
+
+#for var in variable_names_bar:
+#    plt.bar(df['water_year'], df['days_below_malf'])
+#    fig, axes = fig, axes + 1
+
 
 #for var in variable_names_bar:
 #    sns.set_color_codes('deep')
@@ -87,11 +107,7 @@ fig, axes = plt.subplots(10, 3, sharex=True, figsize=(15,20))
 
 #testing getting multiple on one grid
 
-
-
-for var2 in variable_names_bar:
-    for ax in axes:
-        plt.bar(df['water_year'], df[var2], ax=ax)
-plt.show()
-
 pass
+
+
+
