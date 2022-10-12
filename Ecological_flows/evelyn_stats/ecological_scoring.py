@@ -10,9 +10,8 @@ import datetime
 from dateutil.relativedelta import relativedelta
 from itertools import groupby
 from kslcore import KslEnv
-from Climate_Shocks.get_past_record import get_vcsn_record
+from Climate_Shocks.get_past_record import get_vcsn_record, get_restriction_record
 from water_temp_monthly import temp_regr
-
 
 def _wua_poly(x, a, b, c, d, e, f):
     """a function that reads in coefficients and returns a polynomial with the coeffs
@@ -110,6 +109,14 @@ def get_temp_dataset():
     data.loc[:, 'mean_daily_water_temp'] = temp_regr.predict(x)
     data = data.loc[:, ['date', 'water_year', 'mean_daily_air_temp', 'mean_daily_water_temp']]
     return data
+
+def get_measured_flow_dataset():
+    record = get_restriction_record('trended')
+    record = record.reset_index()
+    record.loc[:, 'date'] = pd.to_datetime(record.loc[:, 'date'], format='%d/%m/%Y')
+    record.loc[:, 'water_year'] = [e.year for e in (record.loc[:, 'date'].dt.to_pydatetime() + relativedelta(months=6))]
+    record = record.loc[:, ['date', 'flow', 'water_year']]
+    return record
 
 def get_seven_day_avg(dataframe):
     """ A function that creates the 7-day rolling avg of flow for each year"""
@@ -239,7 +246,8 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     """
 
     # getting flow data
-    flow_df = get_flow_dataset()
+    flow_df = get_measured_flow_dataset()
+    pass
     list_startdates = range(start_water_year, end_water_year + 1)
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
 
