@@ -57,36 +57,28 @@ species_coeffs = {
     "short_filamentous": (1.411793860210670E-10, - 5.468836816918290E-08,
                           + 7.736645471349440E-06, - 4.767919019192250E-04,
                           + 1.082051321324740E-02, + 3.578139911667070E-01),
-    "black_fronted_tern": (1.860374649942380E-06, - 6.206129788530580E-04,
-                           + 8.139025742665820E-02, - 5.222181017852630E+00,
-                           + 1.629785813832450E+02, - 1.908796384066770E+03),
-    "wrybill_plover": (1.992991145099990E-05, - 6.562761816460400E-03,
-                       + 8.524578863075030E-01, - 5.444835223306980E+01,
-                       + 1.702284174702220E+03, - 2.058208449588460E+04)}
+    }
 species_limits = {
     "longfin_eel": (18, 130), "shortfin_eel": (18, 130), "torrent_fish": (18, 130),
     "common_bully": (18, 130), "upland_bully": (18, 130), "bluegill_bully": (18, 130),
     "food_production": (18, 130), "brown_trout_adult": (18, 130), "chinook_salmon_junior": (18, 130),
-    "diatoms": (18, 130), "long_filamentous": (18, 130), "short_filamentous": (18, 130),
-    "black_fronted_tern": (35, 85), "wrybill_plover": (35, 85)}
+    "diatoms": (18, 130), "long_filamentous": (18, 130), "short_filamentous": (18, 130)}
 
-species_baseline_malf_wua = {
-    "longfin_eel": 228, "shortfin_eel": 97, "torrent_fish": 141, "common_bully": 65,
-    "upland_bully": 55, "bluegill_bully": 52, "food_production": 98, "brown_trout_adult": 22,
-    "chinook_salmon_junior": 23, "diatoms": 0.35, "long_filamentous": 0.33, "short_filamentous": 0.39,
-    "black_fronted_tern": 66.24, "wrybill_plover": 202}
+#species_baseline_malf_wua = {
+#    "longfin_eel": 228, "shortfin_eel": 97, "torrent_fish": 141, "common_bully": 65,
+#    "upland_bully": 55, "bluegill_bully": 52, "food_production": 98, "brown_trout_adult": 22,
+#    "chinook_salmon_junior": 23, "diatoms": 0.35, "long_filamentous": 0.33, "short_filamentous": 0.39,
+#    "black_fronted_tern": 66.24, "wrybill_plover": 202}
 
 species_baseline_min_wua = {
     "longfin_eel": 134, "shortfin_eel": 88, "torrent_fish": 61, "common_bully": 61,
     "upland_bully": 53, "bluegill_bully": 45, "food_production": 77, "brown_trout_adult": 18,
-    "chinook_salmon_junior": 22, "diatoms": 0.26, "long_filamentous": 0.31, "short_filamentous": 0.36,
-    "black_fronted_tern": 54, "wrybill_plover": 52}
+    "chinook_salmon_junior": 22, "diatoms": 0.26, "long_filamentous": 0.31, "short_filamentous": 0.36}
 
 species_baseline_max_wua = {
     "longfin_eel": 426, "shortfin_eel": 107, "torrent_fish": 395, "common_bully": 77,
     "upland_bully": 62, "bluegill_bully": 57, "food_production": 111, "brown_trout_adult": 25,
-    "chinook_salmon_junior": 25, "diatoms": 0.38, "long_filamentous": 0.41, "short_filamentous": 0.43,
-    "black_fronted_tern": 66.39, "wrybill_plover": 211}
+    "chinook_salmon_junior": 25, "diatoms": 0.38, "long_filamentous": 0.41, "short_filamentous": 0.43}
 
 
 def get_flow_dataset():
@@ -149,98 +141,74 @@ def flow_to_wua(alf, species):
     return wua
 
 
-def flow_to_score(min_wua, max_wua, malf_wua, alf_wua):
-    """Calculates a score for each alf calculated wua based
-    on the baseline period min, max and malf wua for each species
-    :param min_wua: the min wua for the species from the baseline period
-    :param max_wua: the max wua ' '
-    :param malf_wua: the 'average' wua calculated using the baseline period malf
-    :param species: the species
-    :param alf_wua: the comparison wua"""
+def higher_is_better(min_value, max_value, input_value):
+    """A function for all the parameters where a larger value means a higher score e.g +++"""
 
-    # todo NEW scoring system, mult by -1 to swich directions
+    # keynote NEW scoring system, mult by -1 to switch directions
     # shift to 0-1
-    score = alf_wua / (max_wua - min_wua)
-    score = score * 2 - 1  # shift score to -1 to 1
+    score = (input_value - min_value) / (max_value - min_value)
+    score = (score * 2) - 1  # shift score to -1 to 1
 
     # have adjusted the score based on wanting to score from -3 to 3
+    # rounding to the nearest 0.5
     return round((score * 3) * 2.0) / 2.0
 
 
-def days_below_score(min_days, max_days, mean_days, days_below):
-    """"Calculates a score for each hydrological year based on the no.
-    of days below malf and/or the flow_limits value"""
-    # the score is positive for lesser days
-    # and negative for more days (representative of the fact that more days at low flow is bad)
+def higher_is_worse(min_value, max_value, input_value):
+    """"A function where a larger value means a worse score e.g ---- """
 
-    if days_below > mean_days:
-        score1 = (mean_days - days_below) / (max_days - mean_days)
-    elif days_below < mean_days:
-        score1 = (mean_days - days_below) / (mean_days - min_days)
-    else:
-        score1 = 0
+    score1 = ((input_value - min_value) / (max_value - min_value)) * -1
+    score1 = score1 * 2 - 1 # shift score to -1 to 1
     # have adjusted the score based on wanting to score from -3 to 3
+    # rounding
     return round((score1 * 3) * 2.0) / 2.0
 
 
-def malf_alf_anomaly_score(min_anomaly, max_anomaly, mean_anomaly, anomaly):
-    """A function that creates a score based on the malf - alf anomalies
-    :param min_anomaly: the minimum anomaly for the baseline period. this gives a +ve score
-    :param max_anomaly the maximum anomaly for the baseline period. this gives a -ve score
-    :param malf
-    :param your calculated anomaly"""
-
-    if anomaly < mean_anomaly:
-        score2 = (mean_anomaly - anomaly) / (mean_anomaly - min_anomaly)
-    elif anomaly > mean_anomaly:
-        score2 = (mean_anomaly - anomaly) / (max_anomaly - mean_anomaly)
-    else:
-        score2 = 0
-    return round((score2 * 3) * 2.0) / 2.0
-
-
-def event_score(event_min, event_max, event_mean, event_count):
-    """A function that calculates the score for the no. of events >= than 7, 14, 21 and 28 days"""
-
-    if event_count > event_mean:
-        # this is a negative score - worse if count is higher than mean
-        score3 = (event_mean - event_count) / (event_max - event_mean)
-    elif event_count < event_mean:
-        # this is a postive score - better if count is less than mean
-        score3 = (event_mean - event_count) / (event_mean - event_min)
-    else:
-        score3 = 0
-    return round((score3 * 3) * 2.0) / 2.0
-
-
-def get_temp_score(min, max, mean, count):
-    """assigns a temperature score based on the baseline min, max and mean
-    by comparing the number of temp events in a year to these for 19, 21 and 24 deg
-    :param min: minimum days above x for the baseline period
-    :param max: maximum days above x for the baseline period
-    :param mean: mean days above x for the baseline period
-    :param count: the days above x for that hydrological year (from the input data)
-    :return:
-    """
-    # this is a negative score because worse if count is higher than mean
-    if mean == 0:
-        if count > mean:
-            score4 = -1
-        elif count < mean:
-            score4 = 1
-        else:
-            score4 = 0
-    elif mean != 0:
-        # this score is negative because good if the count is less than the mean
-        if count > mean:
-            score4 = (mean - count) / (max - mean)
-        # this score is positive because good if the count is less than the mean
-        elif count < mean:
-            score4 = (mean - count) / (mean - min)
-        else:
-            score4 = 0
-
-    return round((score4 * 3) * 2.0) / 2.0
+#def malf_alf_anomaly_score(min_anomaly, max_anomaly, anomaly):
+#    """A function that creates a score based on the malf - alf anomalies
+#    :param min_anomaly: the minimum anomaly for the baseline period. this gives a +ve score
+#    :param max_anomaly the maximum anomaly for the baseline period. this gives a -ve score
+#    :param malf
+#    :param your calculated anomaly"""
+#
+#    # therefore multiplying by -1 to switch directions
+#
+#    score2 = (anomaly / (max_anomaly - min_anomaly)) * -1
+#    score2 = score2 * 2 - 1  # shift score to -1 to 1
+#    # have adjusted the score based on wanting to score from -3 to 3
+#    # rounding
+#    return round((score2 * 3) * 2.0) / 2.0
+#
+#
+#def event_score(event_min, event_max, event_count):
+#    """A function that calculates the score for the no. of events >= than 7, 14, 21 and 28 days"""
+#    # larger no. events = worse
+#    # therefore multiplying by -1 to switch directions
+#
+#    score3 = (event_count / (event_max - event_min)) * -1
+#    score3 = score3 * 2 - 1  # shift score to -1 to 1
+#    # have adjusted the score based on wanting to score from -3 to 3
+#    # rounding
+#    return round((score3 * 3) * 2.0) / 2.0
+#
+#
+#def get_temp_score(temp_min, temp_max, temp_count):
+#    """assigns a temperature score based on the baseline min, max and mean
+#    by comparing the number of temp events in a year to these for 19, 21 and 24 deg
+#    :param min: minimum days above x for the baseline period
+#    :param max: maximum days above x for the baseline period
+#    :param mean: mean days above x for the baseline period
+#    :param count: the days above x for that hydrological year (from the input data)
+#    :return:
+#    """
+#    # this is a negative score because worse if count is higher than mean
+#    # therefore multiplying by -1 to switch directions
+#
+#    score4 = (temp_count / (temp_max - temp_min)) * -1
+#    score4 = score4 * 2 - 1  # shift score to -1 to 1
+#    # have adjusted the score based on wanting to score from -3 to 3
+#    # rounding
+#    return round((score4 * 3) * 2.0) / 2.0
 
 
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
@@ -256,8 +224,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     # getting flow data
     # keynote change which function is called based on whether getting naturalised or measured flow
-    flow_df = get_measured_flow_dataset()
-    flow_df.to_csv(outpath)
+    flow_df = get_flow_dataset()
 
     list_startdates = range(start_water_year, end_water_year + 1)
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
@@ -408,55 +375,44 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     for species in species_limits:
         min_wua = species_baseline_min_wua[species]
         max_wua = species_baseline_max_wua[species]
-        malf_wua = species_baseline_malf_wua[species]
         for idx, v in outdata.loc[:, f'{species}_wua'].items():
             alf_wua = v
-            score = flow_to_score(min_wua, max_wua, malf_wua, alf_wua)
+            score = higher_is_better(min_wua, max_wua, alf_wua)
             outdata.loc[idx, f'{species}_score'] = score
 
-    baseline_days_below_malf = {'min': 0, 'max': 121, 'mean': 20}
-    baseline_days_below_flow_lims = {'min': 0, 'max': 141, 'mean': 39}
+    baseline_days_below_malf = {'min': 0, 'max': 121}
+    baseline_days_below_flow_lims = {'min': 0, 'max': 141}
 
     # getting the days below malf score
     for idx1, value in outdata.loc[:, 'days_below_malf'].items():
-        min_v, max_v, mean_v = baseline_days_below_malf['min'], baseline_days_below_malf['max'], \
-                               baseline_days_below_malf['mean']
-        days_score = days_below_score(min_v, max_v, mean_v, value)
+        min_v, max_v = baseline_days_below_malf['min'], baseline_days_below_malf['max']
+        days_score = higher_is_worse(min_v, max_v, value)
         outdata.loc[idx1, 'days_below_malf_score'] = days_score
     # fixme can make the column name chanageble based on flowlimits (e.g using f{})
     # fixme but not a priority
 
     # getting the days below flow lim score
     for idx2, value2 in outdata.loc[:, 'days_below_50'].items():
-        min_v1, max_v1, mean_v1 = baseline_days_below_flow_lims['min'], baseline_days_below_flow_lims['max'], \
-                                  baseline_days_below_flow_lims['mean']
-        days_score1 = days_below_score(min_v1, max_v1, mean_v1, value2)
+        min_v1, max_v1 = baseline_days_below_flow_lims['min'], baseline_days_below_flow_lims['max']
+        days_score1 = higher_is_worse(min_v1, max_v1, value2)
         outdata.loc[idx2, 'days_below_flow_lim_score'] = days_score1
 
     # getting the anomalies score
-    baseline_anomalies = {'min': -18.90492, 'max': 18.87149, 'mean': 0}
+    baseline_anomalies = {'min': -18.90492, 'max': 18.87149}
     for idx3, value3 in outdata.loc[:, 'anomalies'].items():
-        min_v2, max_v2, mean_v2 = baseline_anomalies['min'], baseline_anomalies['max'], baseline_anomalies['mean']
-        anomalies_score = malf_alf_anomaly_score(min_v2, max_v2, mean_v2, value3)
+        min_v2, max_v2 = baseline_anomalies['min'], baseline_anomalies['max']
+        anomalies_score = higher_is_worse(min_v2, max_v2, value3)
         outdata.loc[idx3, 'anomalies_score'] = anomalies_score
 
     # getting the event length score
     baseline_event_length = {'min_malf_events_greater_7': 0, 'max_malf_events_greater_7': 4,
-                             'mean_malf_events_greater_7': 1,
                              'min_malf_events_greater_14': 0, 'max_malf_events_greater_14': 2,
-                             'mean_malf_events_greater_14': 0.387096774,
                              'min_malf_events_greater_21': 0, 'max_malf_events_greater_21': 2,
-                             'mean_malf_events_greater_21': 0.161290323,
                              'min_malf_events_greater_28': 0, 'max_malf_events_greater_28': 2,
-                             'mean_malf_events_greater_28': 0.161290323,
                              'min_flow_events_greater_7': 0, 'max_flow_events_greater_7': 6,
-                             'mean_flow_events_greater_7': 1.6451613,
                              'min_flow_events_greater_14': 0, 'max_flow_events_greater_14': 4,
-                             'mean_flow_events_greater_14': 0.8709677,
                              'min_flow_events_greater_21': 0, 'max_flow_events_greater_21': 2,
-                             'mean_flow_events_greater_21': 0.516129032,
-                             'min_flow_events_greater_28': 0, 'max_flow_events_greater_28': 2,
-                             'mean_flow_events_greater_28': 0.258064516}
+                             'min_flow_events_greater_28': 0, 'max_flow_events_greater_28': 2}
 
     col_names = ['malf_events_greater_7', 'malf_events_greater_14', 'malf_events_greater_21', 'malf_events_greater_28',
                  'flow_events_greater_7', 'flow_events_greater_14', 'flow_events_greater_21', 'flow_events_greater_28']
@@ -465,26 +421,22 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         for idx4, value4 in outdata.loc[:, c].items():
             min_v3 = baseline_event_length[f'min_{c}']
             max_v3 = baseline_event_length[f'max_{c}']
-            mean_v3 = baseline_event_length[f'mean_{c}']
             event_length = value4
-            event_score_output = event_score(min_v3, max_v3, mean_v3, event_length)
+            event_score_output = higher_is_worse(min_v3, max_v3, event_length)
             outdata.loc[idx4, f'{c}_score'] = event_score_output
 
     # getting days above 19, 21, 24 temperature score
     baseline_temperature_days = {'min_temp_days_above_19': 0, 'max_temp_days_above_19': 22,
-                                 'mean_temp_days_above_19': 5,
                                  'min_temp_days_above_21': 0, 'max_temp_days_above_21': 3,
-                                 'mean_temp_days_above_21': 0.258064516,
-                                 'min_temp_days_above_24': 0, 'max_temp_days_above_24': 1, 'mean_temp_days_above_24': 0}
+                                 'min_temp_days_above_24': 0, 'max_temp_days_above_24': 1}
     temp_col_names = ['temp_days_above_19', 'temp_days_above_21', 'temp_days_above_24']
 
     for col in temp_col_names:
         for idx5, value5 in outdata.loc[:, col].items():
             min_v4 = baseline_temperature_days[f'min_{col}']
             max_v4 = baseline_temperature_days[f'max_{col}']
-            mean_v4 = baseline_temperature_days[f'mean_{col}']
             daily_temp = value5
-            temp_score = get_temp_score(min_v4, max_v4, mean_v4, daily_temp)
+            temp_score = higher_is_worse(min_v4, max_v4, daily_temp)
             outdata.loc[idx5, f'{col}_score'] = temp_score
 
     # plotting e.gs
@@ -499,12 +451,12 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     # plt.savefig(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/median_alf_baseline.png'))
     # plt.show()
 
-    # outdata.to_csv(outpath)
+    outdata.to_csv(outpath)
     return outdata
 
 
 if __name__ == '__main__':
     read_and_stats(
-        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/measured_flow_data.csv'), 1972,
+        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/naturalised_climate_stats.csv'), 2000,
         2022, 50)
     # pass
