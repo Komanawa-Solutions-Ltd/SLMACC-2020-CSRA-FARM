@@ -106,20 +106,24 @@ def plot_barcharts(datasets, dataset_names, colors):
         f.tight_layout()
     plt.show()
 
-def plot_histograms(datasets, dataset_names, colors):
-    """plotting histograms """
-
-
-# todo EC work through this
 
 # example
+# testing
+# todo EC work through this
     from scipy.stats import gaussian_kde
 
     data = [1.5] * 7 + [2.5] * 2 + [3.5] * 8 + [4.5] * 3 + [5.5] * 1 + [6.5] * 8
     density = gaussian_kde(data)
     xs = np.linspace(0, 8, 200)
     ys = density(xs)
+    plt.fill_between(xs, density, alpha=0.5)
+    plt.plot(data)
+    plt.show()
+    pass
 
+
+def plot_histograms(datasets, dataset_names, colors):
+    """plotting histograms """
 
     nrows, ncol = (2, 2)
     figsize = (12, 10)
@@ -131,33 +135,34 @@ def plot_histograms(datasets, dataset_names, colors):
         all_figs.append(f)
         all_axes.extend(axs.flatten())
 
-    water_years = datasets[0]['water_year']
     for var, ax in zip(variable_names_hist, all_axes):
-        x = (water_years - min(water_years)) * len(datasets)
         for i, (df, n, c) in enumerate(zip(datasets, dataset_names, colors)):
-            density = gaussian_kde(df[var])
-
-
-        # todo calculate density here
-        ax.plot()
-        ax.fill_between()
-
-    fig1, axes1 = plt.subplots(7, 4, sharex=True, figsize=(10, 12))
-
-    for var1, ax1 in zip(variable_names_hist, axes1.ravel()):
-        ax1.hist(df[var1], color='g', bins=8)
-        ax1.set_title(var1.upper())
-        ax1.set_xlim(-3.5, 3.5)
-    fig.tight_layout()
+            ax.hist(df[var], color=c, bins=8, alpha=0.2)
+        ax.set_title(var.upper())
+        ax.legend()
+    for f in all_figs:
+        f.tight_layout()
     plt.show()
+
+
+
+    #fig1, axes1 = plt.subplots(7, 4, sharex=True, figsize=(10, 12))
+#
+    #for var1, ax1 in zip(variable_names_hist, axes1.ravel()):
+    #    ax1.hist(df[var1], color='g', bins=8)
+    #    ax1.set_title(var1.upper())
+    #    ax1.set_xlim(-3.5, 3.5)
+    #fig.tight_layout()
+    #plt.show()
 
 
 
 
 if __name__ == '__main__':
-    datasets = [measured_climate_df, nat_climate_df]  # todo this is a holder for all of your 6 datasets, make in sets of years
-    dataset_names = ['Measured_climate', 'Naturalised_climate']  # todo this is a holder for all of your 6 datasets
+    datasets = [measured_climate_df, nat_climate_df]
+    dataset_names = ['Measured_climate', 'Naturalised_climate']
     colors = get_colors(datasets)
-    plot_barcharts(datasets, dataset_names, colors)
-    #pass
+    #plot_barcharts(datasets, dataset_names, colors)
+    #plot_histograms(datasets, dataset_names, colors)
+    pass
 
