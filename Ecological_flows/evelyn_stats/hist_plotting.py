@@ -29,8 +29,6 @@ nat_full_df = pd.read_csv(basepath.joinpath("final_stats_nat_full.csv"))
 nat_baseline_df = pd.read_csv(basepath.joinpath("final_stats_nat_baseline.csv"))
 nat_climate_df = pd.read_csv(basepath.joinpath("final_stats_nat_climate.csv"))
 
-
-
 # listing the variable names of the columns to plot
 
 variable_names_bar = ['days_below_malf',
@@ -80,7 +78,7 @@ variable_names_hist = ['longfin_eel_score', 'shortfin_eel_score',
 # todo EC work through this
 from scipy.stats import gaussian_kde
 
-data = [1.5] * 7 + [2.5] * 2 + [3.5] * 8 + [4.5] * 3 + [5.5] * 1 + [6.5] * 8
+'''data = [1.5] * 7 + [2.5] * 2 + [3.5] * 8 + [4.5] * 3 + [5.5] * 1 + [6.5] * 8
 density = gaussian_kde(data)
 xs = np.linspace(0, 8, 200)
 ys = density(xs)
@@ -88,10 +86,13 @@ plt.fill_between(xs, density, alpha=0.5)
 plt.plot(data)
 plt.show()
 pass
+'''
+
 
 def plot_barcharts(datasets, dataset_names, colors):
     """Plotting bar charts from data frames onto an appropriate figure layout"""
 
+    # initalise figures
     nrows, ncol = (2, 2)
     figsize = (12, 10)
     num_figs = len(variable_names_bar) // (nrows * ncol) + 1
@@ -102,9 +103,9 @@ def plot_barcharts(datasets, dataset_names, colors):
         all_figs.append(f)
         all_axes.extend(axs.flatten())
 
+    # plot data
     water_years = datasets[0]['water_year']
     for var, ax in zip(variable_names_bar, all_axes):
-        outpath = kslcore.KslEnv.shared_gdrive.joinpath(f"Z2003_SLMACC/eco_modelling/stats_info/V3/.f{var}")
         x = (water_years - min(water_years)) * len(datasets)  # keynote this assumes datasets have same x
         for i, (df, n, c) in enumerate(zip(datasets, dataset_names, colors)):
             ax.bar(x + i, df[var], color=c, label=n)
@@ -114,14 +115,17 @@ def plot_barcharts(datasets, dataset_names, colors):
         ax.set_xticks(x + (len(datasets) - 1) / 2)
         ax.set_xticklabels(water_years, rotation=-60)
         ax.legend()
-    for f in all_figs:
+
+    # post plotting functions
+    for i, f in enumerate(all_figs):
+        outpath = kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/stats_info/V3",
+                                                        f'barplots_{i:02d}_of_{len(all_figs):02d}.png')
         f.tight_layout()
+        f.savefig(outpath)
     plt.show()
 
 
-
-
-def plot_histograms(datasets, dataset_names, colors):
+def plot_histograms(datasets, dataset_names, colors, density=True):
     """plotting histograms """
 
     nrows, ncol = (2, 2)
@@ -134,34 +138,48 @@ def plot_histograms(datasets, dataset_names, colors):
         all_figs.append(f)
         all_axes.extend(axs.flatten())
 
+    var_lims = {}
+    for var in variable_names_hist:
+        all_data = []
+        for df in datasets:
+            all_data.extend(df[var])
+        var_lims[var] = (np.nanmin(all_data), np.nanmax(all_data))
+
     for var, ax in zip(variable_names_hist, all_axes):
         for i, (df, n, c) in enumerate(zip(datasets, dataset_names, colors)):
-            ax.hist(df[var], color=c, bins=8, alpha=0.2)
+            if density:
+                try:
+                    dens = gaussian_kde(df[var])
+                    xs = np.linspace(*var_lims[var], 100)
+                    ys = dens(xs)
+                    ax.plot(xs, ys, c=c, label=n)
+                    ax.fill_between(xs, ys, color=c, alpha=0.3)
+                except np.linalg.LinAlgError:
+                    pass
+            else:
+                ax.hist(df[var], color=c, bins=8, alpha=0.2)
         ax.set_title(var.upper())
         ax.legend()
     for f in all_figs:
         f.tight_layout()
     plt.show()
 
+    # fig1, axes1 = plt.subplots(7, 4, sharex=True, figsize=(10, 12))
 
 
-    #fig1, axes1 = plt.subplots(7, 4, sharex=True, figsize=(10, 12))
 #
-    #for var1, ax1 in zip(variable_names_hist, axes1.ravel()):
-    #    ax1.hist(df[var1], color='g', bins=8)
-    #    ax1.set_title(var1.upper())
-    #    ax1.set_xlim(-3.5, 3.5)
-    #fig.tight_layout()
-    #plt.show()
-
-
+# for var1, ax1 in zip(variable_names_hist, axes1.ravel()):
+#    ax1.hist(df[var1], color='g', bins=8)
+#    ax1.set_title(var1.upper())
+#    ax1.set_xlim(-3.5, 3.5)
+# fig.tight_layout()
+# plt.show()
 
 
 if __name__ == '__main__':
     datasets = [measured_climate_df, nat_climate_df]
     dataset_names = ['Measured_climate', 'Naturalised_climate']
     colors = get_colors(datasets)
-    #plot_barcharts(datasets, dataset_names, colors)
-    #plot_histograms(datasets, dataset_names, colors)
+    # plot_barcharts(datasets, dataset_names, colors)
+    plot_histograms(datasets, dataset_names, colors)
     pass
-
