@@ -158,7 +158,7 @@ def flow_to_score(min_wua, max_wua, malf_wua, alf_wua):
     else:
         score = 0
     # have adjusted the score based on wanting to score from -3 to 3
-    return score*3
+    return round((score*3)*2.0)/2.0
 
 
 def days_below_score(min_days,  max_days, mean_days, days_below):
@@ -174,7 +174,7 @@ def days_below_score(min_days,  max_days, mean_days, days_below):
     else:
         score1 = 0
     # have adjusted the score based on wanting to score from -3 to 3
-    return score1*3
+    return round((score1*3)*2.0)/2.0
 
 def malf_alf_anomaly_score(min_anomaly, max_anomaly, mean_anomaly, anomaly):
     """A function that creates a score based on the malf - alf anomalies
@@ -189,7 +189,7 @@ def malf_alf_anomaly_score(min_anomaly, max_anomaly, mean_anomaly, anomaly):
         score2 = (mean_anomaly - anomaly)/(max_anomaly - mean_anomaly)
     else:
         score2 = 0
-    return score2*3
+    return round((score2*3)*2.0)/2.0
 
 def event_score(event_min, event_max, event_mean, event_count):
     """A function that calculates the score for the no. of events >= than 7, 14, 21 and 28 days"""
@@ -202,7 +202,7 @@ def event_score(event_min, event_max, event_mean, event_count):
         score3 = (event_mean - event_count)/ (event_mean - event_min)
     else:
         score3 = 0
-    return score3*3
+    return round((score3*3)*2.0)/2.0
 
 
 def get_temp_score(min, max, mean, count):
@@ -232,7 +232,7 @@ def get_temp_score(min, max, mean, count):
         else:
             score4 = 0
 
-    return score4*3
+    return round((score4*3)*2.0)/2.0
 
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     """
@@ -247,7 +247,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     # getting flow data
     # keynote change which function is called based on whether getting naturalised or measured flow
-    flow_df = get_flow_dataset()
+    flow_df = get_measured_flow_dataset()
 
     list_startdates = range(start_water_year, end_water_year + 1)
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
@@ -485,7 +485,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     #plt.show()
 
 
-    #outdata.to_csv(outpath)
+    #.outdatato_csv(outpath)
     return outdata
 
 
@@ -494,5 +494,5 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 
 if __name__ == '__main__':
-    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/final_stats_nat_climate.csv'), 2000, 2019, 50)
+    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/final_stats_measured_baseline.csv'), 1972, 2000, 50)
     pass
