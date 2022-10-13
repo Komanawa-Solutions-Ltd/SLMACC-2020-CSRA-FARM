@@ -75,7 +75,19 @@ variable_names_hist = ['longfin_eel_score', 'shortfin_eel_score',
                        'temp_days_above_21_score',
                        'temp_days_above_24_score']
 
+# example
+# testing
+# todo EC work through this
+from scipy.stats import gaussian_kde
 
+data = [1.5] * 7 + [2.5] * 2 + [3.5] * 8 + [4.5] * 3 + [5.5] * 1 + [6.5] * 8
+density = gaussian_kde(data)
+xs = np.linspace(0, 8, 200)
+ys = density(xs)
+plt.fill_between(xs, density, alpha=0.5)
+plt.plot(data)
+plt.show()
+pass
 
 def plot_barcharts(datasets, dataset_names, colors):
     """Plotting bar charts from data frames onto an appropriate figure layout"""
@@ -107,19 +119,6 @@ def plot_barcharts(datasets, dataset_names, colors):
     plt.show()
 
 
-# example
-# testing
-# todo EC work through this
-    from scipy.stats import gaussian_kde
-
-    data = [1.5] * 7 + [2.5] * 2 + [3.5] * 8 + [4.5] * 3 + [5.5] * 1 + [6.5] * 8
-    density = gaussian_kde(data)
-    xs = np.linspace(0, 8, 200)
-    ys = density(xs)
-    plt.fill_between(xs, density, alpha=0.5)
-    plt.plot(data)
-    plt.show()
-    pass
 
 
 def plot_histograms(datasets, dataset_names, colors):
