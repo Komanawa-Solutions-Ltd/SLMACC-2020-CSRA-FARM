@@ -247,7 +247,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     # getting flow data
     # keynote change which function is called based on whether getting naturalised or measured flow
-    flow_df = get_measured_flow_dataset()
+    flow_df = get_flow_dataset()
 
     list_startdates = range(start_water_year, end_water_year + 1)
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
@@ -485,7 +485,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     #plt.show()
 
 
-    #.outdatato_csv(outpath)
+    #outdata.to_csv(outpath)
     return outdata
 
 
@@ -494,5 +494,5 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 
 if __name__ == '__main__':
-    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/final_stats_measured_baseline.csv'), 1972, 2000, 50)
+    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/final_stats_nat_climate.csv'), 2000, 2019, 50)
     pass
