@@ -246,8 +246,9 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     """
 
     # getting flow data
-    flow_df = get_measured_flow_dataset()
-    pass
+    # keynote change which function is called based on whether getting naturalised or measured flow
+    flow_df = get_flow_dataset()
+
     list_startdates = range(start_water_year, end_water_year + 1)
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
 
@@ -255,6 +256,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     temperature_df = get_temp_dataset()
     # NB temp data starts at 1972 as earliest date
     temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
+
 
     # Calculating stats
 
@@ -475,7 +477,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     #plt.savefig(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/malf_alf_baseline.png'))
     #sns.lineplot(data=outdata[['longfin_eel_wua', 'shortfin_eel_wua', 'torrent_fish_wua', 'common_bully_wua','upland_bully_wua', 'bluegill_bully_wua']])
     #plt.savefig(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/fish_scores_baseline.png'))
-    plt.figure(figsize=(40, 20))
+    #plt.figure(figsize=(40, 20))
     #sns.barplot(data=outdata, x=outdata.index, y='days_below_malf')
     #sns.barplot(data=outdata, x=outdata.index, y='days_below_50')
     #sns.lineplot(data=outdata[['median', 'alf']])
@@ -490,5 +492,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 
 
+
 if __name__ == '__main__':
-    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/final_stats.csv'), 1970, 2000, 50)
+    read_and_stats(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/final_stats_nat_climate.csv'), 2000, 2019, 50)
+    pass
