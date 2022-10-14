@@ -78,7 +78,7 @@ species_baseline_min_wua = {
 species_baseline_max_wua = {
     "longfin_eel": 426, "shortfin_eel": 107, "torrent_fish": 395, "common_bully": 77,
     "upland_bully": 62, "bluegill_bully": 57, "food_production": 111, "brown_trout_adult": 25,
-    "chinook_salmon_junior": 25, "diatoms": 0.38, "long_filamentous": 0.39, "short_filamentous": 0.43}
+    "chinook_salmon_junior": 25.5, "diatoms": 0.38, "long_filamentous": 0.39, "short_filamentous": 0.43}
 
 
 def get_flow_dataset():
@@ -157,58 +157,11 @@ def higher_is_better(min_value, max_value, input_value):
 def higher_is_worse(min_value, max_value, input_value):
     """"A function where a larger value means a worse score e.g ---- """
 
-    score1 = ((input_value - min_value) / (max_value - min_value)) * -1
-    score1 = score1 * 2 - 1 # shift score to -1 to 1
+    score1 = ((input_value - min_value) / (max_value - min_value))
+    score1 = (score1 * 2) - 1 # shift score to -1 to 1
     # have adjusted the score based on wanting to score from -3 to 3
     # rounding
-    return round((score1 * 3) * 2.0) / 2.0
-
-
-#def malf_alf_anomaly_score(min_anomaly, max_anomaly, anomaly):
-#    """A function that creates a score based on the malf - alf anomalies
-#    :param min_anomaly: the minimum anomaly for the baseline period. this gives a +ve score
-#    :param max_anomaly the maximum anomaly for the baseline period. this gives a -ve score
-#    :param malf
-#    :param your calculated anomaly"""
-#
-#    # therefore multiplying by -1 to switch directions
-#
-#    score2 = (anomaly / (max_anomaly - min_anomaly)) * -1
-#    score2 = score2 * 2 - 1  # shift score to -1 to 1
-#    # have adjusted the score based on wanting to score from -3 to 3
-#    # rounding
-#    return round((score2 * 3) * 2.0) / 2.0
-#
-#
-#def event_score(event_min, event_max, event_count):
-#    """A function that calculates the score for the no. of events >= than 7, 14, 21 and 28 days"""
-#    # larger no. events = worse
-#    # therefore multiplying by -1 to switch directions
-#
-#    score3 = (event_count / (event_max - event_min)) * -1
-#    score3 = score3 * 2 - 1  # shift score to -1 to 1
-#    # have adjusted the score based on wanting to score from -3 to 3
-#    # rounding
-#    return round((score3 * 3) * 2.0) / 2.0
-#
-#
-#def get_temp_score(temp_min, temp_max, temp_count):
-#    """assigns a temperature score based on the baseline min, max and mean
-#    by comparing the number of temp events in a year to these for 19, 21 and 24 deg
-#    :param min: minimum days above x for the baseline period
-#    :param max: maximum days above x for the baseline period
-#    :param mean: mean days above x for the baseline period
-#    :param count: the days above x for that hydrological year (from the input data)
-#    :return:
-#    """
-#    # this is a negative score because worse if count is higher than mean
-#    # therefore multiplying by -1 to switch directions
-#
-#    score4 = (temp_count / (temp_max - temp_min)) * -1
-#    score4 = score4 * 2 - 1  # shift score to -1 to 1
-#    # have adjusted the score based on wanting to score from -3 to 3
-#    # rounding
-#    return round((score4 * 3) * 2.0) / 2.0
+    return round((score1 * -3) * 2.0) / 2.0
 
 
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
@@ -388,8 +341,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         min_v, max_v = baseline_days_below_malf['min'], baseline_days_below_malf['max']
         days_score = higher_is_worse(min_v, max_v, value)
         outdata.loc[idx1, 'days_below_malf_score'] = days_score
-    # fixme can make the column name chanageble based on flowlimits (e.g using f{})
-    # fixme but not a priority
+
 
     # getting the days below flow lim score
     for idx2, value2 in outdata.loc[:, 'days_below_50'].items():
@@ -447,6 +399,6 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 if __name__ == '__main__':
     read_and_stats(
-        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/naturalised_climate_stats.csv'), 1972,
-        2000, 50)
+        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/naturalised_climate_stats.csv'), 2000,
+        2019, 50)
     #pass
