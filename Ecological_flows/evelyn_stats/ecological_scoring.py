@@ -458,5 +458,5 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 if __name__ == '__main__':
     read_and_stats(
         kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/naturalised_climate_stats.csv'), 2000,
-        2022, 50)
+        2019, 50)
     # pass
