@@ -71,14 +71,14 @@ species_limits = {
 #    "black_fronted_tern": 66.24, "wrybill_plover": 202}
 
 species_baseline_min_wua = {
-    "longfin_eel": 134, "shortfin_eel": 88, "torrent_fish": 61, "common_bully": 61,
-    "upland_bully": 53, "bluegill_bully": 45, "food_production": 77, "brown_trout_adult": 18,
-    "chinook_salmon_junior": 22, "diatoms": 0.26, "long_filamentous": 0.31, "short_filamentous": 0.36}
+    "longfin_eel": 146, "shortfin_eel": 89, "torrent_fish": 71, "common_bully": 61,
+    "upland_bully": 53, "bluegill_bully": 46, "food_production": 82, "brown_trout_adult": 19,
+    "chinook_salmon_junior": 22, "diatoms": 0.28, "long_filamentous": 0.31, "short_filamentous": 0.36}
 
 species_baseline_max_wua = {
     "longfin_eel": 426, "shortfin_eel": 107, "torrent_fish": 395, "common_bully": 77,
     "upland_bully": 62, "bluegill_bully": 57, "food_production": 111, "brown_trout_adult": 25,
-    "chinook_salmon_junior": 25, "diatoms": 0.38, "long_filamentous": 0.41, "short_filamentous": 0.43}
+    "chinook_salmon_junior": 25, "diatoms": 0.38, "long_filamentous": 0.39, "short_filamentous": 0.43}
 
 
 def get_flow_dataset():
@@ -380,8 +380,8 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
             score = higher_is_better(min_wua, max_wua, alf_wua)
             outdata.loc[idx, f'{species}_score'] = score
 
-    baseline_days_below_malf = {'min': 0, 'max': 121}
-    baseline_days_below_flow_lims = {'min': 0, 'max': 141}
+    baseline_days_below_malf = {'min': 0, 'max': 70}
+    baseline_days_below_flow_lims = {'min': 0, 'max': 108}
 
     # getting the days below malf score
     for idx1, value in outdata.loc[:, 'days_below_malf'].items():
@@ -398,7 +398,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         outdata.loc[idx2, 'days_below_flow_lim_score'] = days_score1
 
     # getting the anomalies score
-    baseline_anomalies = {'min': -18.90492, 'max': 18.87149}
+    baseline_anomalies = {'min': -18.20, 'max': 16.15}
     for idx3, value3 in outdata.loc[:, 'anomalies'].items():
         min_v2, max_v2 = baseline_anomalies['min'], baseline_anomalies['max']
         anomalies_score = higher_is_worse(min_v2, max_v2, value3)
@@ -407,12 +407,12 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     # getting the event length score
     baseline_event_length = {'min_malf_events_greater_7': 0, 'max_malf_events_greater_7': 4,
                              'min_malf_events_greater_14': 0, 'max_malf_events_greater_14': 2,
-                             'min_malf_events_greater_21': 0, 'max_malf_events_greater_21': 2,
-                             'min_malf_events_greater_28': 0, 'max_malf_events_greater_28': 2,
+                             'min_malf_events_greater_21': 0, 'max_malf_events_greater_21': 1,
+                             'min_malf_events_greater_28': 0, 'max_malf_events_greater_28': 1,
                              'min_flow_events_greater_7': 0, 'max_flow_events_greater_7': 6,
                              'min_flow_events_greater_14': 0, 'max_flow_events_greater_14': 4,
                              'min_flow_events_greater_21': 0, 'max_flow_events_greater_21': 2,
-                             'min_flow_events_greater_28': 0, 'max_flow_events_greater_28': 2}
+                             'min_flow_events_greater_28': 0, 'max_flow_events_greater_28': 1}
 
     col_names = ['malf_events_greater_7', 'malf_events_greater_14', 'malf_events_greater_21', 'malf_events_greater_28',
                  'flow_events_greater_7', 'flow_events_greater_14', 'flow_events_greater_21', 'flow_events_greater_28']
@@ -439,17 +439,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
             temp_score = higher_is_worse(min_v4, max_v4, daily_temp)
             outdata.loc[idx5, f'{col}_score'] = temp_score
 
-    # plotting e.gs
-    # sns.lineplot(data=outdata[['malf', 'alf']])
-    # plt.savefig(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/malf_alf_baseline.png'))
-    # sns.lineplot(data=outdata[['longfin_eel_wua', 'shortfin_eel_wua', 'torrent_fish_wua', 'common_bully_wua','upland_bully_wua', 'bluegill_bully_wua']])
-    # plt.savefig(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/fish_scores_baseline.png'))
-    # plt.figure(figsize=(40, 20))
-    # sns.barplot(data=outdata, x=outdata.index, y='days_below_malf')
-    # sns.barplot(data=outdata, x=outdata.index, y='days_below_50')
-    # sns.lineplot(data=outdata[['median', 'alf']])
-    # plt.savefig(kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/median_alf_baseline.png'))
-    # plt.show()
+
 
     outdata.to_csv(outpath)
     return outdata
@@ -457,6 +447,6 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 if __name__ == '__main__':
     read_and_stats(
-        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/naturalised_climate_stats.csv'), 2000,
-        2019, 50)
-    # pass
+        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/naturalised_climate_stats.csv'), 1972,
+        2000, 50)
+    #pass

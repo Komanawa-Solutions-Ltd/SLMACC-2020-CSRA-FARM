@@ -30,12 +30,12 @@ variable_names_bar = ['days_below_malf',
                       'malf_events_greater_21', 'malf_events_greater_28', 'days_below_50',
                       'flow_limits_consec_days', 'flow_limits_num_events', 'flow_events_greater_7',
                       'flow_events_greater_14',
-                      'flow_events_greater_21', 'flow_events_greater_28', 'anomaly_1',
+                      'flow_events_greater_21', 'flow_events_greater_28',
                       'longfin_eel_wua', 'shortfin_eel_wua', 'torrent_fish_wua',
                       'common_bully_wua', 'upland_bully_wua', 'bluegill_bully_wua',
                       'food_production_wua', 'brown_trout_adult_wua',
                       'chinook_salmon_junior_wua', 'diatoms_wua', 'long_filamentous_wua',
-                      'short_filamentous_wua'
+                      'short_filamentous_wua', 'anomalies'
                       ]
 
 variable_names_hist = ['longfin_eel_score', 'shortfin_eel_score',
@@ -69,7 +69,7 @@ from scipy.stats import gaussian_kde
 
 colours1 = ['midnightblue', 'lightskyblue']
 colours2 = ['darkgreen', 'lightgreen']
-colours3 = ['hotpink', 'pink']
+colours3 = ['darkmagenta', 'plum']
 
 
 def plot_barcharts(datasets, dataset_names):
