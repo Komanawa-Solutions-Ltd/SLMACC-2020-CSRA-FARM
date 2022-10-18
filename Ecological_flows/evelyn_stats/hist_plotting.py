@@ -90,7 +90,7 @@ def plot_barcharts(datasets, dataset_names):
     water_years = datasets[0]['water_year']
     for var, ax in zip(variable_names_bar, all_axes):
         x = (water_years - min(water_years)) * len(datasets)  # keynote this assumes datasets have same x
-        for i, (df, n, c) in enumerate(zip(datasets, dataset_names, colours1)):
+        for i, (df, n, c) in enumerate(zip(datasets, dataset_names, colours3)):
             ax.bar(x + i, df[var], color=c, label=n)
         for xi in x:
             ax.axvline(xi - 0.5, color='k', ls=':', alpha=0.5)
@@ -102,7 +102,7 @@ def plot_barcharts(datasets, dataset_names):
     # post plotting functions
     for i, f in enumerate(all_figs):
         outpath = kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/stats_info/V3",
-                                                        f'barplots_full_{i:02d}_of_{len(all_figs):02d}.png')
+                                                        f'barplots_climate_{i:02d}_of_{len(all_figs):02d}.png')
         f.tight_layout()
         f.savefig(outpath)
     plt.show()
@@ -129,7 +129,7 @@ def plot_histograms(datasets, dataset_names, density=True):
         var_lims[var] = (np.nanmin(all_data), np.nanmax(all_data))
 
     for var, ax in zip(variable_names_hist, all_axes):
-        for i, (df, n, c) in enumerate(zip(datasets, dataset_names, colours1)):
+        for i, (df, n, c) in enumerate(zip(datasets, dataset_names, colours3)):
             if density:
                 try:
                     dens = gaussian_kde(df[var])
@@ -145,7 +145,7 @@ def plot_histograms(datasets, dataset_names, density=True):
         ax.legend()
     for i, f in enumerate(all_figs):
         outpath = kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/stats_info/V3",
-                                                        f'histplots_full_{i:02d}_of_{len(all_figs):02d}.png')
+                                                        f'histplots_climate_{i:02d}_of_{len(all_figs):02d}.png')
         f.tight_layout()
         f.savefig(outpath)
     plt.show()
@@ -154,8 +154,8 @@ def plot_histograms(datasets, dataset_names, density=True):
 
 
 if __name__ == '__main__':
-    datasets = [measured_full_df, nat_full_df]
-    dataset_names = ['Measured_full', 'Naturalised_full']
+    datasets = [measured_climate_df, nat_climate_df]
+    dataset_names = ['Measured_climate', 'Naturalised_climate']
     #colors = get_colors(datasets)
     plot_barcharts(datasets, dataset_names)
     plot_histograms(datasets, dataset_names)

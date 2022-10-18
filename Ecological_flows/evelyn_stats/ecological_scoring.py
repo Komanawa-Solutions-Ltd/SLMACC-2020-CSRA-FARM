@@ -14,6 +14,10 @@ from Climate_Shocks.get_past_record import get_vcsn_record, get_restriction_reco
 from water_temp_monthly import temp_regr
 
 
+malf_full_nat = 41.63893094
+malf_baseline_nat = 42.2007397
+malf_cliamte_nat = 41.13377138
+
 def _wua_poly(x, a, b, c, d, e, f):
     """a function that reads in coefficients and returns a polynomial with the coeffs
     inserted"""
@@ -177,7 +181,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     # getting flow data
     # keynote change which function is called based on whether getting naturalised or measured flow
-    flow_df = get_flow_dataset()
+    flow_df = get_measured_flow_dataset()
 
     list_startdates = range(start_water_year, end_water_year + 1)
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
@@ -214,7 +218,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     outdata.loc[:, 'alf'] = seven_day_avg_df.min()
 
     # Getting the MALF
-    outdata.loc[:, 'malf'] = malf = outdata['alf'].mean()
+    outdata.loc[:, 'malf'] = malf = malf_cliamte_nat
 
     # putting the median in outdata
     outdata.loc[:, 'median'] = median_flow
@@ -393,12 +397,12 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 
 
-    #outdata.to_csv(outpath)
+    outdata.to_csv(outpath)
     return outdata, temperature_df
 
 
 if __name__ == '__main__':
     read_and_stats(
-        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/naturalised_climate_stats.csv'), 1972,
+        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/measured_climate_stats.csv'), 2000,
         2019, 50)
-    pass
+
