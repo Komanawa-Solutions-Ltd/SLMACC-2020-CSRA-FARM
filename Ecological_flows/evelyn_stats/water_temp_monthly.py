@@ -50,7 +50,7 @@ x = regression_df.loc[:,'daily_mean_air_temp'].values.reshape(-1, 1)
 y = regression_df.loc[:,'daily_mean_water_temp'].values.reshape(-1, 1)
 temp_regr = LinearRegression()
 temp_regr.fit(x, y)
-#print(temp_regr.score(x,y))
+print(temp_regr.score(x,y))
 
 #sns.regplot(x='daily_mean_air_temp', y='daily_mean_water_temp', data=regression_df)
 #plt.show()
@@ -62,3 +62,4 @@ def regression_predictor():
     temp_regr = LinearRegression()
     temp_regr.fit(x, y)
 
+pass
