@@ -16,7 +16,7 @@ from water_temp_monthly import temp_regr
 
 malf_full_nat = 41.63893094
 malf_baseline_nat = 42.2007397
-malf_cliamte_nat = 41.13377138
+malf_climate_nat = 41.13377138
 
 def _wua_poly(x, a, b, c, d, e, f):
     """a function that reads in coefficients and returns a polynomial with the coeffs
@@ -218,7 +218,8 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     outdata.loc[:, 'alf'] = seven_day_avg_df.min()
 
     # Getting the MALF
-    outdata.loc[:, 'malf'] = malf = malf_cliamte_nat
+    outdata.loc[:, 'malf'] = malf = malf_climate_nat
+    outdata.loc[:, 'measured_malf'] = calculated_malf = outdata['alf'].mean()
 
     # putting the median in outdata
     outdata.loc[:, 'median'] = median_flow
@@ -403,6 +404,6 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 if __name__ == '__main__':
     read_and_stats(
-        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/measured_climate_stats.csv'), 2000,
+        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/measured_full_stats.csv'), 1972,
         2019, 50)
 
