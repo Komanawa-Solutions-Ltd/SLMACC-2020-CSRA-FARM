@@ -32,9 +32,8 @@ def get_avg_score(filename, out_filename):
     df['rounded_timeseries_avg_score'] = round((df['timeseries_avg_score'] * 2.0)) / 2.0
 
     outpath = kslcore.KslEnv.shared_gdrive.joinpath(f'Z2003_SLMACC/eco_modelling/stats_info/V3/{out_filename}.csv')
-
+    df.to_csv(outpath)
     return df
 
 if __name__ == '__main__':
-    get_avg_score('measured_baseline_stats', 'measured_baseline_scores')
-pass
+    get_avg_score('naturalised_full_stats', 'naturalised_full_scores')
