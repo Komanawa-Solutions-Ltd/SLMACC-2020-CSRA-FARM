@@ -13,7 +13,7 @@ def get_avg_score(filename, out_filename):
     """a function that reads in the original spreadsheets and creates an average yearly
     score and then timeseries score based on all the variable scores"""
 
-    pathway = kslcore.KslEnv.shared_gdrive.joinpath(f'Z2003_SLMACC/eco_modelling/stats_info/V3/{filename}.csv')
+    pathway = kslcore.KslEnv.shared_gdrive.joinpath(f'Z2003_SLMACC/eco_modelling/stats_info/storyline_data/{filename}.csv')
     df = pd.read_csv(pathway)
     df = df[['water_year', 'longfin_eel_score', "shortfin_eel_score", 'torrent_fish_score', 'common_bully_score',
              'upland_bully_score',	'bluegill_bully_score',	'food_production_score',
@@ -31,9 +31,9 @@ def get_avg_score(filename, out_filename):
     df['timeseries_avg_score'] = df['yearly_avg_score'].mean()
     df['rounded_timeseries_avg_score'] = round((df['timeseries_avg_score'] * 2.0)) / 2.0
 
-    outpath = kslcore.KslEnv.shared_gdrive.joinpath(f'Z2003_SLMACC/eco_modelling/stats_info/V3/{out_filename}.csv')
+    outpath = kslcore.KslEnv.shared_gdrive.joinpath(f'Z2003_SLMACC/eco_modelling/stats_info/storyline_data/{out_filename}.csv')
     df.to_csv(outpath)
     return df
 
 if __name__ == '__main__':
-    get_avg_score('naturalised_full_stats', 'naturalised_full_scores')
+    get_avg_score('naturalised_severe_drought_stats_temp', 'naturalised_severe_drought_stats_temp_scores')
