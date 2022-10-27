@@ -16,9 +16,10 @@ from kslcore import KslEnv
 from Climate_Shocks.get_past_record import get_vcsn_record, get_restriction_record
 from water_temp_monthly import temp_regr
 
-#fixme fill in this once naturalised is run
-malf_storyline_nat = 36.91016731
-malf_severe_drought_nat = 34.2982155
+#malf_storyline_nat = 36.91016731
+#malf_severe_drought_nat = 34.2982155
+#malf_2_bad_nat = 33.95495179
+malf_baseline_nat = 42.2007397
 
 temp_storyline_data = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
         'Z2003_SLMACC/eco_modelling/stats_info/storyline_data/temperature_data_storylines.csv'))
@@ -33,6 +34,11 @@ measured_severe_drought = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
         'Z2003_SLMACC/eco_modelling/stats_info/storyline_data/measured_flow_data_storyline_data_severe_drought.csv'))
 temp_severe_drought = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
         'Z2003_SLMACC/eco_modelling/stats_info/storyline_data/temperature_data_storylines_severe_drought.csv'))
+
+naturalised_2_bad = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
+        'Z2003_SLMACC/eco_modelling/stats_info/storyline_data/naturalised_flow_data_storylines_2bad.csv'))
+measured_2_bad = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
+        'Z2003_SLMACC/eco_modelling/stats_info/storyline_data/measured_flow_data_storyline_data_2bad.csv'))
 
 # getting the temperature data into a csv
 def get_temp_dataset():
@@ -195,12 +201,12 @@ def read_and_stats(outpath, flow_limits=None):
 
     # getting flow data
     # keynote change which function is called based on whether getting naturalised or measured flow
-    flow_df = naturalised_severe_drought
+    flow_df = measured_2_bad
 
     list_startdates = [2001, 2006, 2007, 2008, 2010, 2013, 2014, 2015, 2016, 2019]
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
     # getting temperature data
-    temperature_df = temp_severe_drought
+    temperature_df = temp_storyline_data
     temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
 
     # Calculating stats
@@ -217,9 +223,9 @@ def read_and_stats(outpath, flow_limits=None):
 
     temperature_wide_df = pd.DataFrame(index=range(1, 367), columns=list_startdates)
     for x in list_startdates:
-        length = range(1, len(temperature_df.loc[temperature_df.water_year == x, 'mean_daily_water_temp_perturbed']) + 1)
+        length = range(1, len(temperature_df.loc[temperature_df.water_year == x, 'mean_daily_water_temp']) + 1)
         temperature_wide_df.loc[length, x] = temperature_df.loc[
-            temperature_df.water_year == x, 'mean_daily_water_temp_perturbed'].values
+            temperature_df.water_year == x, 'mean_daily_water_temp'].values
 
     seven_day_avg_df = get_seven_day_avg(all_hydro_years_df)
 
@@ -230,8 +236,8 @@ def read_and_stats(outpath, flow_limits=None):
     outdata.loc[:, 'alf'] = seven_day_avg_df.min()
 
     # Getting the MALF
-    #outdata.loc[:, 'naturalised_malf'] = malf = malf_severe_drought_nat
-    outdata.loc[:, 'naturalised_malf'] = malf = outdata['alf'].mean()
+    outdata.loc[:, 'naturalised_baseline_malf'] = malf = malf_baseline_nat
+    outdata.loc[:, 'current_malf'] = calculated_malf = outdata['alf'].mean()
 
     # putting the median in outdata
     outdata.loc[:, 'median'] = median_flow
@@ -418,4 +424,4 @@ if __name__ == '__main__':
     #get_temp_dataset()
     #get_flow_dataset()
     read_and_stats(
-        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/storyline_data/nautralised_severe_drought_stats_temp.csv'), 50)
+        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/storyline_data/measured_2_bad_stats.csv'), 50)
