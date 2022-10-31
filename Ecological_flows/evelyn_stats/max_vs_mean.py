@@ -63,6 +63,7 @@ for month, num in month_list.items():
     # concatenating the dataframes together so that at the end we have all the months
     # each month is predicted by its individual relationship
     predicted_waimak_df = pd.concat(frames)
+    #print(predicted_waimak_df)
     print(max_mean_temp_regr.score(x,y))
     #plt.scatter(x, y)
     #plt.show()
