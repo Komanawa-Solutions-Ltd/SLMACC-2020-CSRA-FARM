@@ -38,5 +38,9 @@ x = regression_df.loc[:,'daily_mean_air_temp'].values.reshape(-1, 1)
 y = regression_df.loc[:,'daily_max_water_temp'].values.reshape(-1, 1)
 temp_regr = LinearRegression()
 temp_regr.fit(x, y)
-print(temp_regr.score(x,y))
+#print(temp_regr.score(x,y))
+
+
+daily_mean_water_df = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/Waiau_daily_mean.csv"))
+
 pass

@@ -14,8 +14,8 @@ from kslcore import KslEnv
 from sklearn.linear_model import LinearRegression
 
 
-#base_path = kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/Waiau_Uwha_tidied.csv")
-#data = pd.read_csv(base_path)
+base_path = kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/Waiau_Uwha_tidied.csv")
+data = pd.read_csv(base_path)
 ## converting into PeriodIndex and then getting the mean
 #
 #monthly_mean_df = data.groupby(pd.PeriodIndex(data["Date & Time"], freq="M"))['Water Temp (degC)'].mean()

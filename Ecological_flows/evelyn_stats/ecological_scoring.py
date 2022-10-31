@@ -108,6 +108,8 @@ def get_temp_dataset():
     x = data.loc[:, 'mean_daily_air_temp'].values.reshape(-1, 1)
     data.loc[:, 'mean_daily_water_temp'] = temp_regr.predict(x)
     data = data.loc[:, ['date', 'water_year', 'mean_daily_air_temp', 'mean_daily_water_temp']]
+    data.to_csv(kslcore.KslEnv.shared_gdrive.joinpath(
+        'Z2003_SLMACC/eco_modelling/temp_data/waimak_mean_temp.csv'))
     return data
 
 
@@ -398,7 +400,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 
 
-    outdata.to_csv(outpath)
+    #outdata.to_csv(outpath)
     return outdata, temperature_df
 
 
