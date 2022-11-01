@@ -16,6 +16,7 @@ from water_temp_monthly import temp_regr
 
 
 malf_baseline_nat = 42.2007397
+maf_baseline_nat = 991.5673849310346
 
 def _wua_poly(x, a, b, c, d, e, f):
     """a function that reads in coefficients and returns a polynomial with the coeffs
@@ -53,7 +54,7 @@ species_baseline_max_wua = {
     "longfin_eel_<300": 426, "torrent_fish": 395, "brown_trout_adult": 25, "diatoms": 0.38,"long_filamentous": 0.39}
 
 
-def get_flow_dataset():
+def get_naturalised_flow_dataset():
     base_path = kslcore.KslEnv.shared_gdrive.joinpath(
         'Z2003_SLMACC/eco_modelling/stats_info/66401_Naturalised_flow.csv')
     data = pd.read_csv(base_path)
@@ -133,7 +134,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     # getting flow data
     # keynote change which function is called based on whether getting naturalised or measured flow
-    flow_df = get_flow_dataset()
+    flow_df = get_measured_flow_dataset()
 
     list_startdates = range(start_water_year, end_water_year + 1)
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
@@ -143,6 +144,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     # NB temp data starts at 1972 as earliest date
     temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
 
+    #KEYNOTE STATS START HERE
     # Calculating stats
 
     # Calculating the median flow for all years
@@ -161,8 +163,6 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         temperature_wide_df.loc[length, x] = temperature_df.loc[
             temperature_df.water_year == x, 'predicted_daily_max_water_temp'].values
 
-
-    #KEYNOTE STATISTICS START HERE
     seven_day_avg_df = get_seven_day_avg(all_hydro_years_df)
 
     # Calculating the ALFs using a nested function
@@ -186,7 +186,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     outdata.loc[:, 'temp_days_above_21'] = (temperature_wide_df > 21).sum()
     outdata.loc[:, 'temp_days_above_24'] = (temperature_wide_df > 24).sum()
 
-    # consecutive days for malf
+    # consecutive days below malf
     for y in list_startdates:
         t = all_hydro_years_df.loc[:, y]
         t2 = (t <= malf)
@@ -259,7 +259,6 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
                 outdata.loc[d, 'flow_events_greater_21'] = (outperiods1_df >= 21).sum()
                 outdata.loc[d, 'flow_events_greater_28'] = (outperiods1_df >= 28).sum()
 
-    # fixme change this to be MALF reference - ALF
 
     # getting malf - alf for each year
     for i, a in outdata.loc[:, 'alf'].items():
@@ -275,7 +274,10 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     # find the maximum (single) flow per year
     outdata.loc[:, 'max_flow'] = all_hydro_years_df.max()
     # find the MAF
-    outdata.loc[:, 'maf'] = maf = outdata.loc[:, 'max_flow'].mean()
+    # stats are always referenced to the naturalised baseline maf
+    maf = maf_baseline_nat
+    outdata.loc[:, 'reference_maf'] = maf
+    outdata.loc[:, 'period_maf'] = outdata.loc[:, 'max_flow'].mean()
 
     # find the flood anomaly
     for i, m in outdata.loc[:, 'max_flow'].items():
@@ -357,9 +359,8 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     # flooding scores
 
-    baseline_alf = {'min': 26.04872458428568, 'max': 60.39753014714286}
-    baseline_af = {'min': 559.9717407, 'max': 1968.605347}
-    baseline_maf = 991.5673849310346
+    #baseline_alf = {'min': 26.04872458428568, 'max': 60.39753014714286}
+    #baseline_af = {'min': 559.9717407, 'max': 1968.605347}
     baseline_flood_anomaly = {'min': -977.0379620689654, 'max': 431.5956442310345}
     baseline_days_above_maf = {'min': 0, 'max': 3}
     baseline_maf_and_malf_days = {'min': 0, 'max': 180}
@@ -382,12 +383,12 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         score = higher_is_worse(min_v, max_v, value8)
         outdata.loc[idx8, 'malf_times_maf_score'] = score
 
-    #outdata.to_csv(outpath)
+    outdata.to_csv(outpath)
     return outdata, temperature_df
 
 
 if __name__ == '__main__':
     read_and_stats(
-        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/measured_full_stats.csv'), 1972,
-        2000, 50)
+        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/V4/measured_full_stats.csv'), 1972,
+        2019, 50)
 
