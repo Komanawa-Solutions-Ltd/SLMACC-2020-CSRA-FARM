@@ -15,9 +15,7 @@ from Climate_Shocks.get_past_record import get_vcsn_record, get_restriction_reco
 from water_temp_monthly import temp_regr
 
 
-malf_full_nat = 41.63893094
 malf_baseline_nat = 42.2007397
-malf_climate_nat = 41.13377138
 
 def _wua_poly(x, a, b, c, d, e, f):
     """a function that reads in coefficients and returns a polynomial with the coeffs
@@ -174,8 +172,8 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     outdata.loc[:, 'alf'] = seven_day_avg_df.min()
 
     # Getting the MALF
-    outdata.loc[:, 'malf'] = malf = malf_climate_nat
-    outdata.loc[:, 'measured_malf'] = calculated_malf = outdata['alf'].mean()
+    outdata.loc[:, 'reference_malf'] = malf = malf_baseline_nat
+    outdata.loc[:, 'period_malf'] = outdata['alf'].mean()
 
     # putting the median in outdata
     outdata.loc[:, 'median'] = median_flow
@@ -344,7 +342,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
             outdata.loc[idx4, f'{c}_score'] = event_score_output
 
     # getting days above 19, 21, 24 temperature score
-    baseline_temperature_days = {'min_temp_days_above_19': 0, 'max_temp_days_above_19': 22,
+    baseline_temperature_days = {'min_temp_days_above_19': 0, 'max_temp_days_above_19': 23,
                                  'min_temp_days_above_21': 0, 'max_temp_days_above_21': 3,
                                  'min_temp_days_above_24': 0, 'max_temp_days_above_24': 1}
     temp_col_names = ['temp_days_above_19', 'temp_days_above_21', 'temp_days_above_24']
@@ -366,16 +364,23 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     baseline_days_above_maf = {'min': 0, 'max': 3}
     baseline_maf_and_malf_days = {'min': 0, 'max': 180}
 
-    # days above maf
-    for idx1, value in outdata.loc[:, 'days_below_malf'].items():
-        min_v, max_v = baseline_days_below_malf['min'], baseline_days_below_malf['max']
-        days_score = higher_is_worse(min_v, max_v, value)
-        outdata.loc[idx1, 'days_below_malf_score'] = days_score
+    # days above maf score
+    for idx6, value6 in outdata.loc[:, 'days_above_maf'].items():
+        min_v, max_v = baseline_days_above_maf['min'], baseline_days_above_maf['max']
+        days_score = higher_is_worse(min_v, max_v, value6)
+        outdata.loc[idx6, 'days_above_maf_score'] = days_score
 
+    # flood anomaly score
+    for idx7, value7 in outdata.loc[:, 'flood_anomalies'].items():
+        min_v, max_v = baseline_flood_anomaly['min'], baseline_flood_anomaly['max']
+        anomalies_score = higher_is_better(min_v, max_v, value7)
+        outdata.loc[idx7, 'flood_anomalies_score'] = anomalies_score
 
-
-
-
+    # malf days * maf days score
+    for idx8, value8 in outdata.loc[:, 'maf_times_malf'].items():
+        min_v, max_v = baseline_maf_and_malf_days['min'], baseline_maf_and_malf_days['max']
+        score = higher_is_worse(min_v, max_v, value8)
+        outdata.loc[idx8, 'malf_times_maf_score'] = score
 
     #outdata.to_csv(outpath)
     return outdata, temperature_df
