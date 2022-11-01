@@ -367,23 +367,23 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     # days above maf score
     for idx6, value6 in outdata.loc[:, 'days_above_maf'].items():
-        min_v, max_v = baseline_days_above_maf['min'], baseline_days_above_maf['max']
-        days_score = higher_is_worse(min_v, max_v, value6)
+        min_v5, max_v5 = baseline_days_above_maf['min'], baseline_days_above_maf['max']
+        days_score = higher_is_worse(min_v5, max_v5, value6)
         outdata.loc[idx6, 'days_above_maf_score'] = days_score
 
     # flood anomaly score
     for idx7, value7 in outdata.loc[:, 'flood_anomalies'].items():
-        min_v, max_v = baseline_flood_anomaly['min'], baseline_flood_anomaly['max']
-        anomalies_score = higher_is_better(min_v, max_v, value7)
+        min_v6, max_v6 = baseline_flood_anomaly['min'], baseline_flood_anomaly['max']
+        anomalies_score = higher_is_better(min_v6, max_v6, value7)
         outdata.loc[idx7, 'flood_anomalies_score'] = anomalies_score
 
     # malf days * maf days score
     for idx8, value8 in outdata.loc[:, 'maf_times_malf'].items():
-        min_v, max_v = baseline_maf_and_malf_days['min'], baseline_maf_and_malf_days['max']
-        score = higher_is_worse(min_v, max_v, value8)
+        min_v7, max_v7 = baseline_maf_and_malf_days['min'], baseline_maf_and_malf_days['max']
+        score = higher_is_worse(min_v7, max_v7, value8)
         outdata.loc[idx8, 'malf_times_maf_score'] = score
 
-    outdata.to_csv(outpath)
+    #outdata.to_csv(outpath)
     return outdata, temperature_df
 
 

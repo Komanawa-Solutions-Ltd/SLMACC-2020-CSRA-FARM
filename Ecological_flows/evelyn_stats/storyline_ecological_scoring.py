@@ -405,7 +405,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         score = higher_is_worse(min_v, max_v, value8)
         outdata.loc[idx8, 'malf_times_maf_score'] = score
 
-    outdata.to_csv(outpath)
+    #outdata.to_csv(outpath)
     return outdata, temperature_df
 
 

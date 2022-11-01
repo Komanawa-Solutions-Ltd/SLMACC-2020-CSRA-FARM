@@ -31,7 +31,7 @@ def get_avg_score(filename, out_filename):
     df['rounded_timeseries_avg_score'] = round((df['timeseries_avg_score'] * 2.0)) / 2.0
 
     outpath = kslcore.KslEnv.shared_gdrive.joinpath(f'Z2003_SLMACC/eco_modelling/stats_info/V4/{out_filename}.csv')
-    df.to_csv(outpath)
+    #df.to_csv(outpath)
     return df
 
 if __name__ == '__main__':
