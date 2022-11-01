@@ -24,7 +24,6 @@ def _wua_poly(x, a, b, c, d, e, f):
     inserted"""
     return a * x ** 5 + b * x ** 4 + c * x ** 3 + d * x ** 2 + e * x + f
 
-
 species_coeffs = {
     "longfin_eel_<300": (-9.045618237519400E-09, 3.658952327544510E-06,
                     5.653574369241410E-04, 3.858556802202370E-02,
@@ -35,24 +34,25 @@ species_coeffs = {
     "brown_trout_adult": (4.716969949537670E-09, - 2.076496120868080E-06,
                           + 3.361640291880770E-04, - 2.557607121249140E-02,
                           + 1.060052581008110E+00, + 3.627596900757210E+0),
+    "diatoms": (7.415806641571640E-11, - 3.448627575182280E-08,
+                + 6.298888857172090E-06, - 5.672527158325650E-04,
+                + 2.595917911761800E-02, - 1.041530354852930E-01),
     "long_filamentous": (-2.146620894005660E-10, + 8.915219136657130E-08,
                          - 1.409667339556760E-05, + 1.057153790947640E-03,
                          - 3.874332961128240E-02, + 8.884973169426100E-01),
-    "short_filamentous": (1.411793860210670E-10, - 5.468836816918290E-08,
-                          + 7.736645471349440E-06, - 4.767919019192250E-04,
-                          + 1.082051321324740E-02, + 3.578139911667070E-01),
+
     }
 species_limits = {
     "longfin_eel_<300": (18, 130), "torrent_fish": (18, 130),
-    "brown_trout_adult": (18, 130), "long_filamentous": (18, 130), "short_filamentous": (18, 130)}
+    "brown_trout_adult": (18, 130), "diatoms": (18, 130), "long_filamentous": (18, 130)}
 
 species_baseline_min_wua = {
-    "longfin_eel_<300": 146, "torrent_fish": 71, "brown_trout_adult": 19,
-     "long_filamentous": 0.31, "short_filamentous": 0.36}
+    "longfin_eel_<300": 146, "torrent_fish": 71, "brown_trout_adult": 19, "diatoms": 0.28,
+     "long_filamentous": 0.31}
 
 # max wua = with the median flow
 species_baseline_max_wua = {
-    "longfin_eel_<300": 426, "torrent_fish": 395, "long_filamentous": 0.39, "short_filamentous": 0.43}
+    "longfin_eel_<300": 426, "torrent_fish": 395, "brown_trout_adult": 25, "diatoms": 0.38,"long_filamentous": 0.39}
 
 
 def get_flow_dataset():
@@ -64,22 +64,6 @@ def get_flow_dataset():
     data = data.rename(columns={'Datetime': 'date', 'M3PerSecond': 'flow'})
     data = data.loc[:, ['date', 'flow', 'water_year']]
     return data
-
-
-def get_temp_dataset():
-    """a function that gets the daily water temperature dataset"""
-    data = get_vcsn_record(version='trended', site='eyrewell')
-    data = data.reset_index()
-    for d, t in data.loc[:, 'tmin'].items():
-        mean_temp = (t + data.loc[d, 'tmax']) / 2
-        data.loc[d, 'mean_daily_air_temp'] = mean_temp
-    data['date'] = pd.to_datetime(data['date'])
-    data.loc[:, 'water_year'] = [e.year for e in (data.loc[:, 'date'].dt.to_pydatetime() + relativedelta(months=6))]
-    x = data.loc[:, 'mean_daily_air_temp'].values.reshape(-1, 1)
-    data.loc[:, 'mean_daily_water_temp'] = temp_regr.predict(x)
-    data = data.loc[:, ['date', 'water_year', 'mean_daily_air_temp', 'mean_daily_water_temp']]
-    return data
-
 
 def get_measured_flow_dataset():
     record = get_restriction_record('trended')
@@ -151,13 +135,13 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     # getting flow data
     # keynote change which function is called based on whether getting naturalised or measured flow
-    flow_df = get_measured_flow_dataset()
+    flow_df = get_flow_dataset()
 
     list_startdates = range(start_water_year, end_water_year + 1)
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
 
     # getting temperature data
-    temperature_df = get_temp_dataset()
+    temperature_df = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/waimak_daily_max_temp_predicted.csv"))
     # NB temp data starts at 1972 as earliest date
     temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
 
@@ -175,10 +159,12 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     temperature_wide_df = pd.DataFrame(index=range(1, 367), columns=list_startdates)
     for x in list_startdates:
-        length = range(1, len(temperature_df.loc[temperature_df.water_year == x, 'mean_daily_water_temp']) + 1)
+        length = range(1, len(temperature_df.loc[temperature_df.water_year == x, 'predicted_daily_max_water_temp']) + 1)
         temperature_wide_df.loc[length, x] = temperature_df.loc[
-            temperature_df.water_year == x, 'mean_daily_water_temp'].values
+            temperature_df.water_year == x, 'predicted_daily_max_water_temp'].values
 
+
+    #KEYNOTE STATISTICS START HERE
     seven_day_avg_df = get_seven_day_avg(all_hydro_years_df)
 
     # Calculating the ALFs using a nested function
@@ -275,19 +261,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
                 outdata.loc[d, 'flow_events_greater_21'] = (outperiods1_df >= 21).sum()
                 outdata.loc[d, 'flow_events_greater_28'] = (outperiods1_df >= 28).sum()
 
-    # fixme might not need this code anymore
-    # Finding the ALF anomaly for the worst 1, 2 and 3 yrs
-    # The worst ALF year is min of the alf df
-    worst_alf = outdata.loc[:, 'alf'].min()
-    # Calculating the anomaly of malf - alf for the worst alf year
-    outdata.loc[:, 'anomaly_1'] = anomaly_1 = median_flow - worst_alf
-
-    # getting the worst 2yr consecutive ALf and worst 3yr
-    consecutive_alfs = [2, 3]
-    for cy in consecutive_alfs:
-        outdata.loc[:, f'rolling_alf_{cy}'] = t = outdata.loc[:, 'alf'].rolling(cy).mean()
-        outdata.loc[:, f'worst_rolling_{cy}_alf'] = t.min()
-        outdata.loc[:, f'malf_worst_{cy}_anom'] = median_flow - t.min()
+    # fixme change this to be MALF reference - ALF
 
     # getting malf - alf for each year
     for i, a in outdata.loc[:, 'alf'].items():
@@ -299,6 +273,23 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
             wua = flow_to_wua(v, sp)
             outdata.loc[k, f'{sp}_wua'] = wua
 
+    # flooding statistics
+    # find the maximum (single) flow per year
+    outdata.loc[:, 'max_flow'] = all_hydro_years_df.max()
+    # find the MAF
+    outdata.loc[:, 'maf'] = maf = outdata.loc[:, 'max_flow'].mean()
+
+    # find the flood anomaly
+    for i, m in outdata.loc[:, 'max_flow'].items():
+        outdata.loc[i, 'flood_anomalies'] = maf - m
+
+    # find the number of days > MAF
+    outdata.loc[:, 'days_above_maf'] = (all_hydro_years_df > maf).sum()
+
+    # combination MAF vs MALF stats
+    outdata.loc[:, 'maf_times_malf'] = outdata.loc[:, 'days_above_maf'] * outdata.loc[:, 'days_below_malf']
+
+    # KEYNOTE SCORING STARTS HERE
     # getting the wua score for each species
     for species in species_limits:
         min_wua = species_baseline_min_wua[species]
@@ -366,14 +357,32 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
             temp_score = higher_is_worse(min_v4, max_v4, daily_temp)
             outdata.loc[idx5, f'{col}_score'] = temp_score
 
+    # flooding scores
+
+    baseline_alf = {'min': 26.04872458428568, 'max': 60.39753014714286}
+    baseline_af = {'min': 559.9717407, 'max': 1968.605347}
+    baseline_maf = 991.5673849310346
+    baseline_flood_anomaly = {'min': -977.0379620689654, 'max': 431.5956442310345}
+    baseline_days_above_maf = {'min': 0, 'max': 3}
+    baseline_maf_and_malf_days = {'min': 0, 'max': 180}
+
+    # days above maf
+    for idx1, value in outdata.loc[:, 'days_below_malf'].items():
+        min_v, max_v = baseline_days_below_malf['min'], baseline_days_below_malf['max']
+        days_score = higher_is_worse(min_v, max_v, value)
+        outdata.loc[idx1, 'days_below_malf_score'] = days_score
 
 
-    outdata.to_csv(outpath)
+
+
+
+
+    #outdata.to_csv(outpath)
     return outdata, temperature_df
 
 
 if __name__ == '__main__':
     read_and_stats(
         kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/measured_full_stats.csv'), 1972,
-        2019, 50)
+        2000, 50)
 
