@@ -13,7 +13,7 @@ def get_avg_score(filename, out_filename):
     """a function that reads in the original spreadsheets and creates an average yearly
     score and then timeseries score based on all the variable scores"""
 
-    pathway = kslcore.KslEnv.shared_gdrive.joinpath(f'Z2003_SLMACC/eco_modelling/stats_info/V4/{filename}.csv')
+    pathway = kslcore.KslEnv.shared_gdrive.joinpath(f'Z2003_SLMACC/eco_modelling/workshop_material/test_scenario_scores/{filename}.csv')
     df = pd.read_csv(pathway)
     df = df[['water_year', 'longfin_eel_<300_score', 'torrent_fish_score',
              'brown_trout_adult_score',	'diatoms_score',
@@ -30,8 +30,8 @@ def get_avg_score(filename, out_filename):
     df['timeseries_avg_score'] = df['yearly_avg_score'].mean()
     df['rounded_timeseries_avg_score'] = round((df['timeseries_avg_score'] * 2.0)) / 2.0
 
-    outpath = kslcore.KslEnv.shared_gdrive.joinpath(f'Z2003_SLMACC/eco_modelling/stats_info/V4/{out_filename}.csv')
-    #df.to_csv(outpath)
+    outpath = kslcore.KslEnv.shared_gdrive.joinpath(f'Z2003_SLMACC/eco_modelling/workshop_material/test_scenario_scores/{out_filename}.csv')
+    df.to_csv(outpath)
     return df
 
 if __name__ == '__main__':

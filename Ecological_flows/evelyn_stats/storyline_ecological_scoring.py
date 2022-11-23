@@ -427,12 +427,12 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         score = higher_is_worse(min_v, max_v, value8, maf_time_malf_weighting)
         outdata.loc[idx8, 'malf_times_maf_score'] = score
 
-    #outdata.to_csv(outpath)
+    outdata.to_csv(outpath)
     return outdata, temperature_df
 
 
 if __name__ == '__main__':
     read_and_stats(
-        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/V4/measured_2_bad_stats.csv'), 2001,
+        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/workshop_material/test_scenario_scores/measured_2_bad_stats.csv'), 2001,
         2019, 50)
 
