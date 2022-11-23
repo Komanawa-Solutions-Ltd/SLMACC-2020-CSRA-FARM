@@ -75,6 +75,9 @@ species_baseline_min_wua = {
 species_baseline_max_wua = {
     "longfin_eel_<300": 426, "torrent_fish": 395, "brown_trout_adult": 25, "diatoms": 0.38,"long_filamentous": 0.39}
 
+# adding in the average median weightings here
+species_average_weights = {"longfin_eel_<300": 2,"torrent_fish": 3.125, "brown_trout_adult": 2.125, "diatoms": 2.875,"long_filamentous": 0.125}
+
 
 def get_naturalised_flow_dataset():
     base_path = kslcore.KslEnv.shared_gdrive.joinpath(
@@ -120,7 +123,7 @@ def flow_to_wua(alf, species):
     return wua
 
 
-def higher_is_better(min_value, max_value, input_value):
+def higher_is_better(min_value, max_value, input_value, weighting):
     """A function for all the parameters where a larger value means a higher score e.g +++"""
 
     # keynote NEW scoring system, mult by -1 to switch directions
@@ -129,18 +132,24 @@ def higher_is_better(min_value, max_value, input_value):
     score = (score * 2) - 1  # shift score to -1 to 1
 
     # have adjusted the score based on wanting to score from -3 to 3
+    score = score*3
+    # weighting the score
+    score = score * weighting
     # rounding to the nearest 0.5
-    return round((score * 3) * 2.0) / 2.0
+    return round((score * 2.0) / 2.0)
 
 
-def higher_is_worse(min_value, max_value, input_value):
+def higher_is_worse(min_value, max_value, input_value, weighting):
     """"A function where a larger value means a worse score e.g ---- """
 
     score1 = ((input_value - min_value) / (max_value - min_value))
     score1 = (score1 * 2) - 1 # shift score to -1 to 1
     # have adjusted the score based on wanting to score from -3 to 3
-    # rounding
-    return round((score1 * -3) * 2.0) / 2.0
+    score1 = score1 * -3
+    # weighting the score
+    score1 = score1 * weighting
+    # rounding to the nearest 0.5
+    return round((score1 * 2.0) / 2.0)
 
 
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
@@ -316,32 +325,35 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     for species in species_limits:
         min_wua = species_baseline_min_wua[species]
         max_wua = species_baseline_max_wua[species]
+        weighting = species_average_weights[species]
         for idx, v in outdata.loc[:, f'{species}_wua'].items():
             alf_wua = v
-            score = higher_is_better(min_wua, max_wua, alf_wua)
+            score = higher_is_better(min_wua, max_wua, alf_wua, weighting)
             outdata.loc[idx, f'{species}_score'] = score
 
     baseline_days_below_malf = {'min': 0, 'max': 70}
+    days_below_malf_weighting = 3.5
     baseline_days_below_flow_lims = {'min': 0, 'max': 108}
-
+    days_below_flow_lims_weighting = 3.375
     # getting the days below malf score
     for idx1, value in outdata.loc[:, 'days_below_malf'].items():
         min_v, max_v = baseline_days_below_malf['min'], baseline_days_below_malf['max']
-        days_score = higher_is_worse(min_v, max_v, value)
+        days_score = higher_is_worse(min_v, max_v, value, days_below_malf_weighting)
         outdata.loc[idx1, 'days_below_malf_score'] = days_score
 
 
     # getting the days below flow lim score
     for idx2, value2 in outdata.loc[:, 'days_below_50'].items():
         min_v1, max_v1 = baseline_days_below_flow_lims['min'], baseline_days_below_flow_lims['max']
-        days_score1 = higher_is_worse(min_v1, max_v1, value2)
+        days_score1 = higher_is_worse(min_v1, max_v1, value2, days_below_flow_lims_weighting)
         outdata.loc[idx2, 'days_below_flow_lim_score'] = days_score1
 
     # getting the anomalies score
+    anomalies_weighting = 2.5
     baseline_anomalies = {'min': -18.20, 'max': 16.15}
     for idx3, value3 in outdata.loc[:, 'anomalies'].items():
         min_v2, max_v2 = baseline_anomalies['min'], baseline_anomalies['max']
-        anomalies_score = higher_is_worse(min_v2, max_v2, value3)
+        anomalies_score = higher_is_worse(min_v2, max_v2, value3, anomalies_weighting)
         outdata.loc[idx3, 'anomalies_score'] = anomalies_score
 
     # getting the event length score
@@ -353,6 +365,9 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
                              'min_flow_events_greater_14': 0, 'max_flow_events_greater_14': 4,
                              'min_flow_events_greater_21': 0, 'max_flow_events_greater_21': 2,
                              'min_flow_events_greater_28': 0, 'max_flow_events_greater_28': 1}
+    event_length_weighting = {'malf_events_greater_7': 3, 'malf_events_greater_14': 3.25 , 'malf_events_greater_21' : 3.75, 'malf_events_greater_28':4,
+                 'flow_events_greater_7' : 2.8125, 'flow_events_greater_14' : 2.6875, 'flow_events_greater_21': 3.0625, 'flow_events_greater_28': 3.125}
+
 
     col_names = ['malf_events_greater_7', 'malf_events_greater_14', 'malf_events_greater_21', 'malf_events_greater_28',
                  'flow_events_greater_7', 'flow_events_greater_14', 'flow_events_greater_21', 'flow_events_greater_28']
@@ -361,22 +376,26 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         for idx4, value4 in outdata.loc[:, c].items():
             min_v3 = baseline_event_length[f'min_{c}']
             max_v3 = baseline_event_length[f'max_{c}']
+            weighting = event_length_weighting[c]
             event_length = value4
-            event_score_output = higher_is_worse(min_v3, max_v3, event_length)
+            event_score_output = higher_is_worse(min_v3, max_v3, event_length, weighting)
             outdata.loc[idx4, f'{c}_score'] = event_score_output
 
     # getting days above 19, 21, 24 temperature score
     baseline_temperature_days = {'min_temp_days_above_19': 0, 'max_temp_days_above_19': 23,
                                  'min_temp_days_above_21': 0, 'max_temp_days_above_21': 3,
                                  'min_temp_days_above_24': 0, 'max_temp_days_above_24': 1}
+
+    temp_weighting = {'temp_days_above_19': 2.75, 'temp_days_above_21': 3.5625, 'temp_days_above_24': 3.9375}
     temp_col_names = ['temp_days_above_19', 'temp_days_above_21', 'temp_days_above_24']
 
     for col in temp_col_names:
         for idx5, value5 in outdata.loc[:, col].items():
             min_v4 = baseline_temperature_days[f'min_{col}']
             max_v4 = baseline_temperature_days[f'max_{col}']
+            weighting = temp_weighting[col]
             daily_temp = value5
-            temp_score = higher_is_worse(min_v4, max_v4, daily_temp)
+            temp_score = higher_is_worse(min_v4, max_v4, daily_temp, weighting)
             outdata.loc[idx5, f'{col}_score'] = temp_score
 
     # flooding scores
@@ -384,25 +403,28 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     #baseline_alf = {'min': 26.04872458428568, 'max': 60.39753014714286}
     #baseline_af = {'min': 559.9717407, 'max': 1968.605347}
     baseline_flood_anomaly = {'min': -977.0379620689654, 'max': 431.5956442310345}
+    flood_anomaly_weighting = 2.5
     baseline_days_above_maf = {'min': 0, 'max': 3}
+    days_above_maf_weighting = 3
     baseline_maf_and_malf_days = {'min': 0, 'max': 180}
+    maf_time_malf_weighting = 2.25
 
     # days above maf score
     for idx6, value6 in outdata.loc[:, 'days_above_maf'].items():
         min_v, max_v = baseline_days_above_maf['min'], baseline_days_above_maf['max']
-        days_score = higher_is_worse(min_v, max_v, value6)
+        days_score = higher_is_worse(min_v, max_v, value6, days_above_maf_weighting)
         outdata.loc[idx6, 'days_above_maf_score'] = days_score
 
     # flood anomaly score
     for idx7, value7 in outdata.loc[:, 'flood_anomalies'].items():
         min_v, max_v = baseline_flood_anomaly['min'], baseline_flood_anomaly['max']
-        anomalies_score = higher_is_better(min_v, max_v, value7)
+        anomalies_score = higher_is_better(min_v, max_v, value7, flood_anomaly_weighting)
         outdata.loc[idx7, 'flood_anomalies_score'] = anomalies_score
 
     # malf days * maf days score
     for idx8, value8 in outdata.loc[:, 'maf_times_malf'].items():
         min_v, max_v = baseline_maf_and_malf_days['min'], baseline_maf_and_malf_days['max']
-        score = higher_is_worse(min_v, max_v, value8)
+        score = higher_is_worse(min_v, max_v, value8, maf_time_malf_weighting)
         outdata.loc[idx8, 'malf_times_maf_score'] = score
 
     #outdata.to_csv(outpath)
