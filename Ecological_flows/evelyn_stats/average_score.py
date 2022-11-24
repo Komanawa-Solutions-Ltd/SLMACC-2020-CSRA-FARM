@@ -35,4 +35,4 @@ def get_avg_score(filename, out_filename):
     return df
 
 if __name__ == '__main__':
-    get_avg_score('measured_2_bad_stats', 'measured_2_bad_scores')
+    get_avg_score('measured_2_bad_stats_test', 'measured_2_bad_scores_test')

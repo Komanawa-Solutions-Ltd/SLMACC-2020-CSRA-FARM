@@ -165,13 +165,13 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     # getting flow data
     # keynote change which function is called based on whether getting naturalised or measured flow
-    flow_df = measured_2_bad
+    flow_df = measured_severe_drought
 
     list_startdates = [2001, 2006, 2007, 2008, 2010, 2013, 2014, 2015, 2016, 2019]
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
 
     # getting temperature data
-    temperature_df = temp_storyline_data
+    temperature_df = temp_severe_drought
     # NB temp data starts at 1972 as earliest date
     temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
 
@@ -433,6 +433,6 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 if __name__ == '__main__':
     read_and_stats(
-        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/workshop_material/test_scenario_scores/measured_2_bad_stats.csv'), 2001,
+        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/workshop_material/test_scenario_scores/measured_2_bad_stats_test.csv'), 2001,
         2019, 50)
 
