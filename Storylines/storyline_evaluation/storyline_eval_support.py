@@ -79,6 +79,11 @@ def get_pgr_prob_baseline_stiched(nyears, site, mode):  # using historical basel
 
 
 def calc_impact_prob(pgr, prob, stepsize=0.1, normalize=True):
+    # todo since the storylines are selected by markov chain this
+    #  is not the correct way to calculate the probability of impact
+    #  it double counts the probability of impact.  instead simply use the frequency of the data in our sample.
+    #  (our sample is representitive), this needs to be fixed!!
+
     """
     chunk and sum probability based on the pgr, in steps
     :param pgr:
