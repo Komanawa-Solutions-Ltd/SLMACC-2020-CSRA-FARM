@@ -2,6 +2,8 @@
 created matt_dumont 
 on: 26/06/23
 """
+import datetime
+
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -9,6 +11,7 @@ from copy import deepcopy
 import netCDF4 as nc
 import warnings
 import matplotlib.pyplot as plt
+from matplotlib.cm import get_cmap
 
 
 class BaseSimpleFarmModel(object):
@@ -48,96 +51,89 @@ class BaseSimpleFarmModel(object):
     inpath = None
 
     states = None  # dummy value, must be set in child class
-    calculate_feed_needed = None  # dummy value, must be set in child class
-    calculate_production = None  # dummy value, must be set in child class
     month_reset = None  # dummy value, must be set in child class
-    calculate_next_state = None  # dummy value, must be set in child class
-    calculate_sup_feed = None  # dummy value, must be set in child class
-    reset_state = None  # dummy value, must be set in child class
-    calculate_running_cost = None  # dummy value, must be set in child class
-    calculate_debt_servicing = None  # dummy value, must be set in child class
 
-    def __init__(self, all_months, istate, pg, ifeed, imoney, sup_feed_cost, product_price):
+    def __init__(self, all_months, istate, pg, ifeed, imoney, sup_feed_cost, product_price, monthly_input=True):
         """
 
-        :param all_months: integer months, defines time_len
+        :param all_months: integer months, defines mon_len and time_len
         :param istate: initial state number or np.ndarray shape (nsims,) defines number of simulations
-        :param pg: pasture growth kgDM/ha/day np.ndarray shape (time_len,) or (time_len, nsims)
+        :param pg: pasture growth kgDM/ha/day np.ndarray shape (mon_len,) or (mon_len, nsims)
         :param ifeed: initial feed number or np.ndarray shape (nsims,)
         :param imoney: initial money number or np.ndarray shape (nsims,)
-        :param sup_feed_cost: cost of supplementary feed $/kgDM or np.ndarray shape (nsims,) or (time_len, nsims)
-        :param prod_price: income price $/kg product or np.ndarray shape (nsims,) or (time_len, nsims)
+        :param sup_feed_cost: cost of supplementary feed $/kgDM or np.ndarray shape (nsims,) or (mon_len, nsims)
+        :param prod_price: income price $/kg product or np.ndarray shape (nsims,) or (mon_len, nsims)
+        :param monthly_input: if True, monthly input, if False, daily input
         """
         # define model shape
         assert set(all_months).issubset(set(range(1, 13))), f'months must be in range 1-12'
-        self.time_len = len(all_months)
+        self.month_len = len(all_months)
+        all_month_org = deepcopy(all_months)
+        self.time_len = np.sum([month_len[m] for m in all_months])
         self.nsims = len(istate)
         self.model_shape = (self.time_len + 1, self.nsims)
         self._run = False
 
         assert all(len(e) == self.nsims for e in (ifeed, imoney))
-        all_months = np.atleast_1d(all_months)
+        if monthly_input:
+            all_months = np.concatenate([np.repeat(m, month_len[m]) for m in all_month_org])
+        if monthly_input:
+            all_days = np.concatenate([np.arange(1, month_len[m] + 1) for m in all_month_org])
+        else:
+            all_days = pd.Series(all_months == np.concatenate(([all_months[0]], all_months[:-1])))
+            all_days[0] = False
+            all_days = all_days.cumsum() - (all_days.cumsum().where(~all_days).ffill().fillna(0).astype(int))
+            all_days = all_days.values + 1
+        all_year = np.cumsum(all_months == 1)
         ifeed = np.atleast_1d(ifeed)
         imoney = np.atleast_1d(imoney)
 
         # handle pg input options
         pg = np.atleast_1d(pg)
         if pg.ndim == 1:
-            assert len(pg) == self.time_len, f'pg must be length time: {self.time_len=}, got: {len(pg)=}'
+            assert len(pg) == self.month_len, f'pg must be length time: {self.month_len=}, got: {len(pg)=}'
+            if monthly_input:
+                pg = np.concatenate([np.repeat(p, month_len[m]) for p, m in zip(pg, all_month_org)])
             pg = np.repeat(pg[:, np.newaxis], self.nsims, axis=1)
-        assert pg.shape == self.model_shape, f'pg shape must be: {self.model_shape=}, got: {pg.shape=}'
+        elif monthly_input:
+            pg = np.concatenate([np.repeat(p[np.newaxis], month_len[m], axis=0) for p, m in zip(pg, all_month_org)])
         self.pg = np.concatenate([pg[[0]], pg])
+        assert self.pg.shape == self.model_shape, f'pg shape must be: {self.model_shape=}, got: {pg.shape=}'
 
         # handle sup_feed_cost input options
         if pd.api.types.is_number(sup_feed_cost):
             sup_feed_cost = np.full(self.model_shape, sup_feed_cost)
         elif sup_feed_cost.ndim == 1:
-            assert len(
-                sup_feed_cost) == self.time_len, f'sup_feed_cost must be length time: {self.time_len=}, got: {len(sup_feed_cost)=}'
+            assert len(sup_feed_cost) == self.month_len, (f'sup_feed_cost must be length time: {self.month_len=}, '
+                                                          f'got: {len(sup_feed_cost)=}')
+            if monthly_input:
+                sup_feed_cost = np.concatenate(
+                    [np.repeat(e, month_len[m]) for e, m in zip(sup_feed_cost, all_month_org)])
             sup_feed_cost = np.repeat(sup_feed_cost[:, np.newaxis], self.nsims, axis=1)
-        else:
-            assert sup_feed_cost.shape == self.model_shape, f'sup_feed_cost shape must be: {self.model_shape=}, got: {sup_feed_cost.shape=}'
-
+        elif monthly_input:
+            sup_feed_cost = np.concatenate(
+                [np.repeat(e[np.newaxis], month_len[m], axis=0) for e, m in zip(sup_feed_cost, all_month_org)])
         self.sup_feed_cost = np.concatenate([sup_feed_cost[[0]], sup_feed_cost], axis=0)
+        assert self.sup_feed_cost.shape == self.model_shape, (f'sup_feed_cost shape must be: {self.model_shape=}, '
+                                                              f'got: {sup_feed_cost.shape=}')
 
         # manage product price options
         if pd.api.types.is_number(product_price):
             product_price = np.full(self.model_shape, product_price)
         elif product_price.ndim == 1:
-            assert len(
-                product_price) == self.time_len, f'product_price must be length time: {self.time_len=}, got: {len(product_price)=}'
+            assert len(product_price) == self.month_len, (f'product_price must be length time: {self.time_len=}, '
+                                                          f'got: {len(product_price)=}')
+            if monthly_input:
+                product_price = np.concatenate(
+                    [np.repeat(e, month_len[m]) for e, m in zip(product_price, all_month_org)])
             product_price = np.repeat(product_price[:, np.newaxis], self.nsims, axis=1)
-        else:
-            assert product_price.shape == self.model_shape, f'product_price shape must be: {self.model_shape=}, got: {product_price.shape=}'
+        elif monthly_input:
+            product_price = np.concatenate(
+                [np.repeat(e[np.newaxis], month_len[m], axis=0) for e, m in zip(product_price, all_month_org)])
 
         self.product_price = np.concatenate([product_price[[0]], product_price], axis=0)
-
-        # assertion errors for system specific values
-        assert not any([e is None for e in [
-            self.states,
-            self.month_reset,
-            self.calculate_feed_needed,
-            self.calculate_production,
-            self.calculate_next_state,
-            self.calculate_sup_feed,
-            self.calculate_running_cost,
-            self.calculate_debt_servicing,
-            self.reset_state,
-        ]]), 'must set all system specific values in child class'
-
-        # todo check the following are methods and have correct kwargs
-        check_funcs = (
-            # kwargs of month, current_state
-            self.calculate_feed_needed,
-            self.calculate_production,
-            self.calculate_next_state,
-            self.calculate_sup_feed,
-            self.calculate_running_cost,
-            self.calculate_debt_servicing,
-
-            # no kwargs
-            self.reset_state,
-        )
+        assert self.product_price.shape == self.model_shape, (f'product_price shape must be: {self.model_shape=}, '
+                                                              f'got: {product_price.shape=}')
 
         assert set(istate).issubset(
             set(self.states.keys())), f'unknown istate: {set(istate)} must be one of {self.states}'
@@ -161,11 +157,16 @@ class BaseSimpleFarmModel(object):
         self.model_feed[0, :] = ifeed
         self.model_money[0, :] = imoney
         self.all_months = np.concatenate([[0], all_months])
+        self.all_days = np.concatenate([[0], all_days])
+        self.all_year = np.concatenate([[0], all_year])
 
-        # # todo internal check of shapes
+        # internal check of shapes
+        for v in self.obj_dict.values():
+            assert v.shape == self.model_shape, f'bad shape for {v} {v.shape=} must be {self.model_shape=}'
         # ntime shapes
-
-        raise NotImplementedError
+        for v in [self.all_months, self.all_days, self.all_year]:
+            assert v.shape == (
+                self.model_shape[0],), f'bad shape for {v} {v.shape=} must be {(self.model_shape[0],)}'
 
     def run_model(self):
         """
@@ -175,6 +176,7 @@ class BaseSimpleFarmModel(object):
         assert not self._run, f'model has already been run'
         for i_month in range(1, self.time_len + 1):
             month = self.all_months[i_month]
+            day = self.all_days[i_month]
 
             # set start of day values
             current_money = deepcopy(self.model_money[i_month - 1, :])
@@ -219,7 +221,7 @@ class BaseSimpleFarmModel(object):
             current_money -= debt_servicing
 
             # new year? reset state
-            if month == self.month_reset:
+            if month == self.month_reset and day == 1:
                 next_state = self.reset_state()
 
             # set key values
@@ -245,16 +247,21 @@ class BaseSimpleFarmModel(object):
             ds.createDimension('time', self.time_len + 1)
             ds.createDimension('nsims', self.nsims)
 
-            ds.createVariable('month', 'i4', ('time',))
             ds.createVariable('sim', 'i4', ('nsims',))
-            ds.variables['month'][:] = self.all_months
-            ds.variables['month'].setncattr('long_name', 'month of the year')
-            ds.createVariable('year', 'i4', ('nsims',))
-            ds.variables['year'].setncattr('long_name', 'year')
-            ds.variables['year'][:] = np.cumsum(self.all_months == self.month_reset) + 1,
-
             ds.variables['sims'][:] = range(self.nsims)
             ds.variables['sims'].setncattr('long_name', 'simulation number')
+
+            ds.createVariable('month', 'i4', ('time',))
+            ds.variables['month'][:] = self.all_months
+            ds.variables['month'].setncattr('long_name', 'month of the year')
+
+            ds.createVariable('year', 'i4', ('nsims',))
+            ds.variables['year'].setncattr('long_name', 'year')
+            ds.variables['year'][:] = self.all_year
+
+            ds.createVariable('day', 'i4', ('nsims',))
+            ds.variables['day'].setncattr('long_name', 'day of the month')
+            ds.variables['day'][:] = self.all_days
 
             ds.createVariable('state', 'i4', ('time', 'nsims'))
             ds.variables['state'].setncattrs({'long_name': 'farm state', 'units': 'none'})
@@ -334,7 +341,7 @@ class BaseSimpleFarmModel(object):
 
             out = self(all_months=all_months, istate=model_state[0], pg=pg[1:],
                        ifeed=model_feed[0], imoney=model_money[0], sup_feed_cost=sup_feed_cost[1:],
-                       product_price=product_price[1:])
+                       product_price=product_price[1:], monthly_input=False)
             out.model_state = model_state
             out.model_feed = model_feed
             out.model_money = model_money
@@ -389,7 +396,8 @@ class BaseSimpleFarmModel(object):
             })
             outdata.to_csv(outdir.joinpath(f'sim_{sim}.csv'), index=False)
 
-    def plot_results(self, *ys, x='time', sims=None, mult_as_lines=True, twin_axs=False, figsize=(10, 8)):  # todo
+    def plot_results(self, *ys, x='time', sims=None, mult_as_lines=True, twin_axs=False, figsize=(10, 8),
+                     start_year=2000):
         """
         plot results
         :param ys: one or more of:
@@ -411,6 +419,8 @@ class BaseSimpleFarmModel(object):
         :param mult_as_lines: bool if True, plot multiple sims as lines,
                                    if False, plot multiple sims boxplot style pdf
         :param twin_axs: bool if True, plot each y on twin axis, if False, plot on subplots
+        :param start_year: the year to start plotting from (default 2000) only affects the transition from
+                           year 1, year2, etc. to datetime
         :return:
         """
         ys = np.atleast_1d(ys)
@@ -434,6 +444,11 @@ class BaseSimpleFarmModel(object):
 
         if len(sims) > 20 and mult_as_lines:
             warnings.warn('more than 20 sims to plot, colors will be reused')
+        base_xtime = None
+        if x == 'time':
+            base_xtime = np.array([datetime.date(
+                year=start_year + yr, month=m, day=d
+            ) for yr, m, d in zip(self.all_year, self.all_months, self.all_days)])
 
         # setup plots
         if twin_axs:
@@ -448,24 +463,25 @@ class BaseSimpleFarmModel(object):
             fig, axs = plt.subplots(len(ys), 1, sharex=True, figsize=figsize)
             linestyles = ['solid'] * len(ys)
 
-        ycolors = None # todo
-        # todo plot data
+        ycolors = get_colors(ys)
+
+        # plot data
         for y, ax, ls, yc in zip(ys, axs, linestyles, ycolors):
 
             if mult_as_lines:
-                sim_colors = None # todo
+                sim_colors = get_colors(sims)
                 for sim, c in zip(sims, sim_colors):
-                    if x == 'time':  # todo how to mange time
-                        # todo repeat teh time
-                        raise NotImplementedError
+                    if x == 'time':
+                        use_x = base_xtime
+                        assert use_x is not None, 'base_xtime must be set'
                     else:
                         use_x = getattr(self, self.obj_dict[x])[sim]
                         idx = np.argsort(use_x)
                     ax.plot(use_x, getattr(self, self.obj_dict[y])[:, sim][idx], label=f'sim {sim}')
             else:
                 usey = getattr(self, self.obj_dict[y])[:, sims]
-                if x =='time':
-                    use_x = None #todo
+                if x == 'time':
+                    use_x = base_xtime
                     ax.plot(use_x, np.nanmedian(usey, axis=1), label='median', color=yc)
                     ax.fill_between(use_x, np.nanpercentile(usey, 25, axis=1), np.nanpercentile(usey, 75, axis=1),
                                     label='25-75%', color=yc, alpha=0.25)
@@ -473,18 +489,162 @@ class BaseSimpleFarmModel(object):
                                     label='5-95%', color=yc, alpha=0.25)
 
                 else:
-                    raise NotImplementedError # todo need to bin x and y
+                    raise NotImplementedError  # todo need to bin x and y
 
-                # todo sort!
-                ax.plot
-
-                raise NotImplementedError
-
-            ax.set_ylabel(y)
-
+            ax.set_ylabel(self.attr_dict[y])
+        ax = axs[-1]
         ax.set_xlabel(x)
         ax.legend()
+        return fig, axs
 
-        raise NotImplementedError('plotting not implemented yet')
+    def calculate_feed_needed(self, month, current_state):
+        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
+        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
+    def calculate_production(self, month, current_state):
+        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
+        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
+    def calculate_next_state(self, month, current_state):
+        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
+        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
+    def calculate_sup_feed(self, month, current_state):
+        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
+        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
+    def calculate_running_cost(self, month, current_state):
+        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
+        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
+    def calculate_debt_servicing(self, month, current_state):
+        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
+        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
+    def reset_state(self):
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
+
+class DummySimpleFarm(BaseSimpleFarmModel):
+    states = {  # i value: (nmiking, stock levels)
+        1: ('2aday', 'low'),
+        2: ('2aday', 'norm'),
+        3: ('1aday', 'low'),
+        4: ('1aday', 'norm'),
+    }
+
+    month_reset = 7  # trigger farm reset on day 1 in July
+
+    def calculate_feed_needed(self, month, current_state):
+        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
+        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
+    def calculate_production(self, month, current_state):
+        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
+        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
+    def calculate_next_state(self, month, current_state):
+        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
+        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
+    def calculate_sup_feed(self, month, current_state):
+        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
+        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
+    def calculate_running_cost(self, month, current_state):
+        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
+        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
+    def calculate_debt_servicing(self, month, current_state):
+        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
+        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
+    def reset_state(self):
+        out = np.zeros(self.model_shape[1])
+        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
+        raise NotImplementedError('must be set in a child class')
+
 
 # todo make child class for dairy, dairy support, beef & sheep
+
+def get_colors(vals, cmap_name='tab20'):
+    n_scens = len(vals)
+    if n_scens < 20:
+        cmap = get_cmap(cmap_name)
+        colors = [cmap(e / (n_scens + 1)) for e in range(n_scens)]
+    else:
+        colors = []
+        i = 0
+        cmap = get_cmap(cmap_name)
+        for v in vals:
+            colors.append(cmap(i / 20))
+            i += 1
+            if i == 20:
+                i = 0
+    return colors
+
+
+month_len = {
+    1: 31,
+    2: 28,
+    3: 31,
+    4: 30,
+    5: 31,
+    6: 30,
+    7: 31,
+    8: 31,
+    9: 30,
+    10: 31,
+    11: 30,
+    12: 31,
+}
