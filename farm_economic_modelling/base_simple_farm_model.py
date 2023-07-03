@@ -200,7 +200,6 @@ class BaseSimpleFarmModel(object):
             self.model_prod_money[i_month, :] = prod_money
             current_money += prod_money
 
-            next_state = self.calculate_next_state(month, current_state)
 
             sup_feed = self.calculate_sup_feed(month, current_state)
             self.model_feed_imported[i_month, :] = sup_feed
@@ -220,6 +219,8 @@ class BaseSimpleFarmModel(object):
             self.model_debt_service[i_month, :] = debt_servicing
             current_money -= debt_servicing
 
+            # calculate next state
+            next_state = self.calculate_next_state(month, current_state)
             # new year? reset state
             if month == self.month_reset and day == 1:
                 next_state = self.reset_state()
