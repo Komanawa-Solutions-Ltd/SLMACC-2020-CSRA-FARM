@@ -7,10 +7,11 @@ import pandas as pd
 from pathlib import Path
 from copy import deepcopy
 import netCDF4 as nc
+import warnings
+import matplotlib.pyplot as plt
 
 
 class BaseSimpleFarmModel(object):
-
     # create dictionary of attribute name to attribute long name (unit)
     attr_dict = {
         'state': 'farm state (none)',
@@ -388,8 +389,102 @@ class BaseSimpleFarmModel(object):
             })
             outdata.to_csv(outdir.joinpath(f'sim_{sim}.csv'), index=False)
 
-    def plot_results(self):  # todo
-        raise NotImplementedError('plotting not implemented yet')
+    def plot_results(self, *ys, x='time', sims=None, mult_as_lines=True, twin_axs=False, figsize=(10, 8)):  # todo
+        """
+        plot results
+        :param ys: one or more of:
+            - 'state' (state of the system)
+            - 'feed' (feed on farm)
+            - 'money' (money on farm)
+            - 'feed_demand' (feed demand)
+            - 'prod' (production)
+            - 'prod_money' (production money)
+            - 'feed_imported' (feed imported)
+            - 'feed_cost' (feed cost)
+            - 'running_cost' (running cost)
+            - 'debt_service' (debt servicing)
+            - 'pg' (pasture growth)
+            - 'product_price' (product price)
+            - 'sup_feed_cost' (supplementary feed cost)
+        :param x: x axis to plot against 'time' or a ys variable
+        :param sims: sim numbers to plot
+        :param mult_as_lines: bool if True, plot multiple sims as lines,
+                                   if False, plot multiple sims boxplot style pdf
+        :param twin_axs: bool if True, plot each y on twin axis, if False, plot on subplots
+        :return:
+        """
+        ys = np.atleast_1d(ys)
+        assert set(ys).issubset(self.attr_dict.keys()), (f'ys must be one or more of: {self.attr_dict.keys()}, got'
+                                                         f'{set(ys) - set(self.attr_dict.keys())}')
+        assert x in self.attr_dict.keys() or x == 'time', f'x must be "time" or one of: {self.attr_dict.keys()}, got {x}'
+        assert isinstance(mult_as_lines, bool), f'mult_as_lines must be bool, got {type(mult_as_lines)}'
+        assert isinstance(twin_axs, bool), f'twin_axs must be bool, got {type(twin_axs)}'
+        if twin_axs and len(ys) > 2:
+            raise NotImplementedError('twin_axs only implemented for 1 or 2 ys, it gets super messy otherwise')
 
+        if sims is None:
+            sims = range(self.nsims)
+
+        sims = np.atleast_1d(sims)
+        assert set(sims).issubset(range(self.nsims)), f'sims must be in range({self.nsims}), got {sims}'
+
+        if not mult_as_lines and len(sims) == 1:
+            mult_as_lines = True
+            warnings.warn('only one sim to plot, setting mult_as_lines=True')
+
+        if len(sims) > 20 and mult_as_lines:
+            warnings.warn('more than 20 sims to plot, colors will be reused')
+
+        # setup plots
+        if twin_axs:
+            axs = []
+            linestyles = ['solid', 'dashed']
+            fig, ax = plt.subplots(1, 1, sharex=True, figsize=figsize)
+            axs.append(ax)
+            if len(ys) > 1:
+                for y in ys[1:]:
+                    axs.append(ax.twinx())
+        else:
+            fig, axs = plt.subplots(len(ys), 1, sharex=True, figsize=figsize)
+            linestyles = ['solid'] * len(ys)
+
+        ycolors = None # todo
+        # todo plot data
+        for y, ax, ls, yc in zip(ys, axs, linestyles, ycolors):
+
+            if mult_as_lines:
+                sim_colors = None # todo
+                for sim, c in zip(sims, sim_colors):
+                    if x == 'time':  # todo how to mange time
+                        # todo repeat teh time
+                        raise NotImplementedError
+                    else:
+                        use_x = getattr(self, self.obj_dict[x])[sim]
+                        idx = np.argsort(use_x)
+                    ax.plot(use_x, getattr(self, self.obj_dict[y])[:, sim][idx], label=f'sim {sim}')
+            else:
+                usey = getattr(self, self.obj_dict[y])[:, sims]
+                if x =='time':
+                    use_x = None #todo
+                    ax.plot(use_x, np.nanmedian(usey, axis=1), label='median', color=yc)
+                    ax.fill_between(use_x, np.nanpercentile(usey, 25, axis=1), np.nanpercentile(usey, 75, axis=1),
+                                    label='25-75%', color=yc, alpha=0.25)
+                    ax.fill_between(use_x, np.nanpercentile(usey, 5, axis=1), np.nanpercentile(usey, 95, axis=1),
+                                    label='5-95%', color=yc, alpha=0.25)
+
+                else:
+                    raise NotImplementedError # todo need to bin x and y
+
+                # todo sort!
+                ax.plot
+
+                raise NotImplementedError
+
+            ax.set_ylabel(y)
+
+        ax.set_xlabel(x)
+        ax.legend()
+
+        raise NotImplementedError('plotting not implemented yet')
 
 # todo make child class for dairy, dairy support, beef & sheep
