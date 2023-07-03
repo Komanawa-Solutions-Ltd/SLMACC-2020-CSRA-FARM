@@ -187,12 +187,12 @@ class BaseSimpleFarmModel(object):
             current_feed += self.pg[i_month, :]
 
             # feed cattle
-            feed_needed = self.calculate_feed_needed(month, current_state)
+            feed_needed = self.calculate_feed_needed(i_month, month, current_state)
             current_feed = current_feed - feed_needed
             self.model_feed_demand[i_month, :] = feed_needed
 
             # produce product
-            produced_product = self.calculate_production(month, current_state)
+            produced_product = self.calculate_production(i_month, month, current_state)
             self.model_prod[i_month, :] = produced_product
 
             # sell product
@@ -200,8 +200,7 @@ class BaseSimpleFarmModel(object):
             self.model_prod_money[i_month, :] = prod_money
             current_money += prod_money
 
-
-            sup_feed = self.calculate_sup_feed(month, current_state)
+            sup_feed = self.calculate_sup_feed(i_month, month, current_state)
             self.model_feed_imported[i_month, :] = sup_feed
             current_feed += sup_feed
 
@@ -210,20 +209,20 @@ class BaseSimpleFarmModel(object):
             current_money -= sup_feed_cost
 
             # add running_cost
-            run_costs = self.calculate_running_cost(month, current_state)
+            run_costs = self.calculate_running_cost(i_month, month, current_state)
             self.model_running_cost[i_month, :] = run_costs
             current_money -= run_costs
 
             # add debt servicing
-            debt_servicing = self.calculate_debt_servicing(month, current_state)
+            debt_servicing = self.calculate_debt_servicing(i_month, month, current_state)
             self.model_debt_service[i_month, :] = debt_servicing
             current_money -= debt_servicing
 
             # calculate next state
-            next_state = self.calculate_next_state(month, current_state)
+            next_state = self.calculate_next_state(i_month, month, current_state)
             # new year? reset state
             if month == self.month_reset and day == 1:
-                next_state = self.reset_state()
+                next_state = self.reset_state(i_month)
 
             # set key values
             self.model_state[i_month, :] = next_state
@@ -498,55 +497,61 @@ class BaseSimpleFarmModel(object):
         ax.legend()
         return fig, axs
 
-    def calculate_feed_needed(self, month, current_state):
+    def calculate_feed_needed(self, i_month, month, current_state):
         assert isinstance(month, int), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        assert current_state.shape == (
+        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
-    def calculate_production(self, month, current_state):
+    def calculate_production(self, i_month, month, current_state):
         assert isinstance(month, int), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        assert current_state.shape == (
+        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
-    def calculate_next_state(self, month, current_state):
+    def calculate_next_state(self, i_month, month, current_state):
         assert isinstance(month, int), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        assert current_state.shape == (
+        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
-    def calculate_sup_feed(self, month, current_state):
+    def calculate_sup_feed(self, i_month, month, current_state):
         assert isinstance(month, int), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        assert current_state.shape == (
+        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
-    def calculate_running_cost(self, month, current_state):
+    def calculate_running_cost(self, i_month, month, current_state):
         assert isinstance(month, int), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        assert current_state.shape == (
+        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
-    def calculate_debt_servicing(self, month, current_state):
+    def calculate_debt_servicing(self, i_month, month, current_state):
         assert isinstance(month, int), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        assert current_state.shape == (
+        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
-    def reset_state(self):
+    def reset_state(self, i_month, ):
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
@@ -562,55 +567,61 @@ class DummySimpleFarm(BaseSimpleFarmModel):
 
     month_reset = 7  # trigger farm reset on day 1 in July
 
-    def calculate_feed_needed(self, month, current_state):
+    def calculate_feed_needed(self, i_month, month, current_state):
         assert isinstance(month, int), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        assert current_state.shape == (
+        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
-    def calculate_production(self, month, current_state):
+    def calculate_production(self, i_month, month, current_state):
         assert isinstance(month, int), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        assert current_state.shape == (
+        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
-    def calculate_next_state(self, month, current_state):
+    def calculate_next_state(self, i_month, month, current_state):
         assert isinstance(month, int), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        assert current_state.shape == (
+        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
-    def calculate_sup_feed(self, month, current_state):
+    def calculate_sup_feed(self, i_month, month, current_state):
         assert isinstance(month, int), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        assert current_state.shape == (
+        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
-    def calculate_running_cost(self, month, current_state):
+    def calculate_running_cost(self, i_month, month, current_state):
         assert isinstance(month, int), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        assert current_state.shape == (
+        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
-    def calculate_debt_servicing(self, month, current_state):
+    def calculate_debt_servicing(self, i_month, month, current_state):
         assert isinstance(month, int), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+        assert current_state.shape == (
+        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
-    def reset_state(self):
+    def reset_state(self, i_month, ):
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
