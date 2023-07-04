@@ -86,7 +86,7 @@ class SimpleDairyFarm(BaseSimpleFarmModel):
         4: 0.78,  # ('1aday', 'norm'),
     }
 
-    base_running_cost = 4.11 * 469 * 3.5 / 365  # $/ha  # todo confirm
+    base_running_cost = 4.11 * 469 * 3.5 / 365  # $/ha
     state_running_cost_modifier = {  # i value: (nmiking, stock levels)
         1: 0.99,  # ('2aday', 'low'),
         2: 1.00,  # ('2aday', 'norm'),
@@ -94,7 +94,7 @@ class SimpleDairyFarm(BaseSimpleFarmModel):
         4: 0.99,  # ('1aday', 'norm'),
     }
 
-    debt_servicing = 34968.32421875  # $/ha/yr   # todo confirm units
+    debt_servicing = 34968.32421875  # $/ha/yr   # todo confirm units, NOPE THIS IS DEBT LEVELS, how are we managing debt servicing?
 
     def calculate_feed_needed(self, i_month, month, current_state):
         assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
@@ -150,14 +150,6 @@ class SimpleDairyFarm(BaseSimpleFarmModel):
         idx = self.model_feed_imported[i_month] > 0
         running_cost[idx] *= 1.01  # running cost increase by 1% if feed is imported
         out = running_cost
-        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
-        return out
-
-    def calculate_debt_servicing(self, i_month, month, current_state):
-
-        debt_servicing = self.debt_servicing / 365.
-
-        out = np.zeros(self.model_shape[1]) + debt_servicing
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         return out
 

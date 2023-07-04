@@ -29,7 +29,8 @@ class BaseSimpleFarmModel(object):
         'debt_servicing': 'debt servicing (NZD)',
         'pg': 'pasture growth (kgDM/ha)',
         'product_price': 'product price (NZD/kg)',
-        'feed_price': 'cost of feed imported (NZD)'
+        'feed_price': 'cost of feed imported (NZD)',
+        'interest_rate': 'interest rate (%/yr)'
 
     }
     # create dictionary of attribute name to object name
@@ -47,13 +48,15 @@ class BaseSimpleFarmModel(object):
         'pg': 'pg',
         'product_price': 'product_price',
         'feed_price': 'sup_feed_cost',
+        'interest_rate': 'interest_rate'
     }
     inpath = None
 
     states = None  # dummy value, must be set in child class
     month_reset = None  # dummy value, must be set in child class
 
-    def __init__(self, all_months, istate, pg, ifeed, imoney, sup_feed_cost, product_price, monthly_input=True):
+    def __init__(self, all_months, istate, pg, ifeed, imoney, sup_feed_cost, product_price, interest_rate,
+                 monthly_input=True):
         """
 
         :param all_months: integer months, defines mon_len and time_len
@@ -62,7 +65,8 @@ class BaseSimpleFarmModel(object):
         :param ifeed: initial feed number or np.ndarray shape (nsims,)
         :param imoney: initial money number or np.ndarray shape (nsims,)
         :param sup_feed_cost: cost of supplementary feed $/kgDM or np.ndarray shape (nsims,) or (mon_len, nsims)
-        :param prod_price: income price $/kg product or np.ndarray shape (nsims,) or (mon_len, nsims)
+        :param product_price: income price $/kg product or np.ndarray shape (nsims,) or (mon_len, nsims)
+        :param interest_rate: interest rate %/year or np.ndarray shape (nsims,) or (mon_len, nsims)
         :param monthly_input: if True, monthly input, if False, daily input
         """
         # define model shape
@@ -107,46 +111,18 @@ class BaseSimpleFarmModel(object):
         assert self.pg.shape == self.model_shape, f'pg shape must be: {self.model_shape=}, got: {pg.shape=}'
 
         # handle sup_feed_cost input options
-        if pd.api.types.is_number(sup_feed_cost):
-            sup_feed_cost = np.full(self._model_input_shape, sup_feed_cost)
-        elif sup_feed_cost.ndim == 1:
-            if monthly_input:
-                assert len(sup_feed_cost) == org_month_len, (f'sup_feed_cost must be length time: {org_month_len=}, '
-                                                             f'got: {len(sup_feed_cost)=}')
-                sup_feed_cost = np.concatenate(
-                    [np.repeat(e, month_len[m]) for e, m in zip(sup_feed_cost, all_month_org)])
-            else:
-                assert len(sup_feed_cost) == self.time_len, (f'sup_feed_cost must be length time: {self.time_len=}, '
-                                                             f'got: {len(sup_feed_cost)=}')
-            sup_feed_cost = np.repeat(sup_feed_cost[:, np.newaxis], self.nsims, axis=1)
-        elif monthly_input:
-            sup_feed_cost = np.concatenate(
-                [np.repeat(e[np.newaxis], month_len[m], axis=0) for e, m in zip(sup_feed_cost, all_month_org)])
-        self.sup_feed_cost = np.concatenate([sup_feed_cost[[0]], sup_feed_cost], axis=0)
-        assert self.sup_feed_cost.shape == self.model_shape, (f'sup_feed_cost shape must be: {self.model_shape=}, '
-                                                              f'got: {self.sup_feed_cost.shape=}')
+        self.sup_feed_cost = self._manage_input_shape('sup_feed_cost', sup_feed_cost, monthly_input,
+                                                      org_month_len, all_month_org)
 
         # manage product price options
-        if pd.api.types.is_number(product_price):
-            product_price = np.full(self._model_input_shape, product_price)
-        elif product_price.ndim == 1:
-            if monthly_input:
-                assert len(product_price) == org_month_len, (f'product_price must be length time: {org_month_len=}, '
-                                                             f'got: {len(product_price)=}')
-                product_price = np.concatenate(
-                    [np.repeat(e, month_len[m]) for e, m in zip(product_price, all_month_org)])
-            else:
-                assert len(product_price) == self.time_len, (f'product_price must be length time: {self.time_len=}, '
-                                                             f'got: {len(product_price)=}')
+        self.product_price = self._manage_input_shape('product_price', product_price, monthly_input,
+                                                        org_month_len, all_month_org)
 
-            product_price = np.repeat(product_price[:, np.newaxis], self.nsims, axis=1)
-        elif monthly_input:
-            product_price = np.concatenate(
-                [np.repeat(e[np.newaxis], month_len[m], axis=0) for e, m in zip(product_price, all_month_org)])
-
-        self.product_price = np.concatenate([product_price[[0]], product_price], axis=0)
-        assert self.product_price.shape == self.model_shape, (f'product_price shape must be: {self.model_shape=}, '
-                                                              f'got: {self.product_price.shape=}')
+        self.interest_rate = self._manage_input_shape('interest_rate', interest_rate, monthly_input,
+                                                        org_month_len, all_month_org) # todo propage through
+        if np.nanmax(self.interest_rate) < 1:
+            raise ValueError(f'interest_rate must be in %/year, got: {np.nanmax(self.interest_rate)=} '
+                             f'which is less than 1 suggesting it is in fraction/year')
 
         assert set(istate).issubset(
             set(self.states.keys())), f'unknown istate: {set(istate)} must be one of {self.states}'
@@ -228,9 +204,17 @@ class BaseSimpleFarmModel(object):
             current_money -= run_costs
 
             # add debt servicing
-            debt_servicing = self.calculate_debt_servicing(i_month, month, current_state)
+            debt_servicing = self.model_money[i_month - 1, :] * (1 + self.interest_rate[i_month, :]/100)
             self.model_debt_service[i_month, :] = debt_servicing
             current_money -= debt_servicing
+
+            # todo debt service ratio servicing G:\Shared drives\Z20002SLM_SLMACC\farm_model\farm health index.xlsx
+            #  over what period?, here it is cumulative for the model run
+            # todo include (capital spend/depreciation,tax, mangment wage) or is this in the run costs
+            # todo still need to save the data.
+            opt_surplus = self.model_prod_money - (self.model_feed_cost + self.model_running_cost)
+            debt_service_ratio = (np.nansum(opt_surplus[:i_month, :], axis=0)
+                                  / np.nansum(self.model_debt_service[:i_month+1,:], axis=0))
 
             # calculate next state
             next_state = self.calculate_next_state(i_month, month, current_state)
@@ -244,6 +228,37 @@ class BaseSimpleFarmModel(object):
             self.model_money[i_month, :] = current_money
 
         self._run = True
+
+    def _manage_input_shape(self, input_key, input_val, monthly_input, org_month_len, all_month_org):
+        """
+        manage the shape of input that can be a scalar, a vector or a matrix
+        :param input_key: input key (for error messages)
+        :param input_val: input value (number or np.array)
+        :param monthly_input: pass through variables
+        :param org_month_len: pass through variables
+        :param all_month_org:  pass through variables
+        :return:
+        """
+
+        if pd.api.types.is_number(input_val):
+            input_val = np.full(self._model_input_shape, input_val)
+        elif input_val.ndim == 1:
+            if monthly_input:
+                assert len(input_val) == org_month_len, (f'{input_key} must be length time: {org_month_len=}, '
+                                                         f'got: {len(input_val)=}')
+                input_val = np.concatenate(
+                    [np.repeat(e, month_len[m]) for e, m in zip(input_val, all_month_org)])
+            else:
+                assert len(input_val) == self.time_len, (f'{input_key} must be length time: {self.time_len=}, '
+                                                         f'got: {len(input_val)=}')
+            input_val = np.repeat(input_val[:, np.newaxis], self.nsims, axis=1)
+        elif monthly_input:
+            input_val = np.concatenate(
+                [np.repeat(e[np.newaxis], month_len[m], axis=0) for e, m in zip(input_val, all_month_org)])
+        out = np.concatenate([input_val[[0]], input_val], axis=0)
+        assert out.shape == self.model_shape, (f'{input_key} shape must be: {self.model_shape=}, '
+                                               f'got: {out.shape=}')
+        return out
 
     def save_results_nc(self, outpath):
         """
@@ -331,6 +346,10 @@ class BaseSimpleFarmModel(object):
             ds.variables['feed_price'].setncatts({'long_name': 'feed price', 'units': 'NZD/kg'})
             ds.variables['feed_price'][:] = self.sup_feed_cost
 
+            ds.createVariable('interest_rate', 'f8', ('time', 'nsims'))
+            ds.variables['interest_rate'].setncatts({'long_name': 'interest rate', 'units': 'percent/yr'})
+            ds.variables['interest_rate'][:] = self.interest_rate
+
     @classmethod
     def from_input_file(self, inpath):
         """
@@ -352,10 +371,11 @@ class BaseSimpleFarmModel(object):
             model_feed = np.array(ds.variables['feed'][:])
             model_money = np.array(ds.variables['money'][:])
             sup_feed_cost = np.array(ds.variables['feed_price'][:])
+            interest_rate = np.array(ds.variables['interest_rate'][:])
 
             out = self(all_months=all_months[1:], istate=model_state[0], pg=pg[1:],
                        ifeed=model_feed[0], imoney=model_money[0], sup_feed_cost=sup_feed_cost[1:],
-                       product_price=product_price[1:], monthly_input=False)
+                       product_price=product_price[1:], interest_rate=interest_rate[1:], monthly_input=False)
             out.model_state = model_state
             out.model_feed = model_feed
             out.model_money = model_money
@@ -408,6 +428,7 @@ class BaseSimpleFarmModel(object):
                 'pg': self.pg[:, sim],
                 'product_price': self.product_price[:, sim],
                 'sup_feed_cost': self.sup_feed_cost[:, sim],
+                'interest_rate': self.interest_rate[:, sim]
             })
             outdata.to_csv(outdir.joinpath(f'sim_{sim}.csv'), index=False)
 
@@ -595,15 +616,6 @@ class BaseSimpleFarmModel(object):
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
-    def calculate_debt_servicing(self, i_month, month, current_state):
-        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
-        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (
-            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
-        out = np.zeros(self.model_shape[1])
-        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
-        raise NotImplementedError('must be set in a child class')
-
     def reset_state(self, i_month, ):
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
@@ -657,15 +669,6 @@ class DummySimpleFarm(BaseSimpleFarmModel):
         raise NotImplementedError('must be set in a child class')
 
     def calculate_running_cost(self, i_month, month, current_state):
-        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
-        assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
-        assert current_state.shape == (
-            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
-        out = np.zeros(self.model_shape[1])
-        assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
-        raise NotImplementedError('must be set in a child class')
-
-    def calculate_debt_servicing(self, i_month, month, current_state):
         assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
