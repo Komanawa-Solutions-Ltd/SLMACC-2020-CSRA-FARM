@@ -72,19 +72,19 @@ class BaseSimpleFarmModel(object):
         self.time_len = np.sum([month_len[m] for m in all_months])
         self.nsims = len(istate)
         self.model_shape = (self.time_len + 1, self.nsims)
+        self._model_input_shape = (self.time_len, self.nsims)
         self._run = False
 
         assert all(len(e) == self.nsims for e in (ifeed, imoney))
         if monthly_input:
             all_months = np.concatenate([np.repeat(m, month_len[m]) for m in all_month_org])
-        if monthly_input:
             all_days = np.concatenate([np.arange(1, month_len[m] + 1) for m in all_month_org])
         else:
             all_days = pd.Series(all_months == np.concatenate(([all_months[0]], all_months[:-1])))
             all_days[0] = False
             all_days = all_days.cumsum() - (all_days.cumsum().where(~all_days).ffill().fillna(0).astype(int))
             all_days = all_days.values + 1
-        all_year = np.cumsum(all_months == 1)
+        all_year = np.cumsum((all_days == 1) & (all_months == 1))
         ifeed = np.atleast_1d(ifeed)
         imoney = np.atleast_1d(imoney)
 
@@ -102,7 +102,7 @@ class BaseSimpleFarmModel(object):
 
         # handle sup_feed_cost input options
         if pd.api.types.is_number(sup_feed_cost):
-            sup_feed_cost = np.full(self.model_shape, sup_feed_cost)
+            sup_feed_cost = np.full(self._model_input_shape, sup_feed_cost)
         elif sup_feed_cost.ndim == 1:
             assert len(sup_feed_cost) == self.month_len, (f'sup_feed_cost must be length time: {self.month_len=}, '
                                                           f'got: {len(sup_feed_cost)=}')
@@ -115,11 +115,11 @@ class BaseSimpleFarmModel(object):
                 [np.repeat(e[np.newaxis], month_len[m], axis=0) for e, m in zip(sup_feed_cost, all_month_org)])
         self.sup_feed_cost = np.concatenate([sup_feed_cost[[0]], sup_feed_cost], axis=0)
         assert self.sup_feed_cost.shape == self.model_shape, (f'sup_feed_cost shape must be: {self.model_shape=}, '
-                                                              f'got: {sup_feed_cost.shape=}')
+                                                              f'got: {self.sup_feed_cost.shape=}')
 
         # manage product price options
         if pd.api.types.is_number(product_price):
-            product_price = np.full(self.model_shape, product_price)
+            product_price = np.full(self._model_input_shape, product_price)
         elif product_price.ndim == 1:
             assert len(product_price) == self.month_len, (f'product_price must be length time: {self.time_len=}, '
                                                           f'got: {len(product_price)=}')
@@ -133,7 +133,7 @@ class BaseSimpleFarmModel(object):
 
         self.product_price = np.concatenate([product_price[[0]], product_price], axis=0)
         assert self.product_price.shape == self.model_shape, (f'product_price shape must be: {self.model_shape=}, '
-                                                              f'got: {product_price.shape=}')
+                                                              f'got: {self.product_price.shape=}')
 
         assert set(istate).issubset(
             set(self.states.keys())), f'unknown istate: {set(istate)} must be one of {self.states}'
@@ -162,7 +162,8 @@ class BaseSimpleFarmModel(object):
 
         # internal check of shapes
         for v in self.obj_dict.values():
-            assert v.shape == self.model_shape, f'bad shape for {v} {v.shape=} must be {self.model_shape=}'
+            assert getattr(self, v).shape == self.model_shape, (f'bad shape for {v} {getattr(self, v).shape=} '
+                                                                f'must be {self.model_shape=}')
         # ntime shapes
         for v in [self.all_months, self.all_days, self.all_year]:
             assert v.shape == (
@@ -448,7 +449,8 @@ class BaseSimpleFarmModel(object):
         if x == 'time':
             base_xtime = np.array([datetime.date(
                 year=start_year + yr, month=m, day=d
-            ) for yr, m, d in zip(self.all_year, self.all_months, self.all_days)])
+            ) for yr, m, d in zip(self.all_year[1:], self.all_months[1:], self.all_days[1:])])
+            base_xtime = np.concatenate([[base_xtime[0] - datetime.timedelta(days=1)], base_xtime])
 
         # setup plots
         if twin_axs:
@@ -474,10 +476,15 @@ class BaseSimpleFarmModel(object):
                     if x == 'time':
                         use_x = base_xtime
                         assert use_x is not None, 'base_xtime must be set'
+                        idx = np.ones(use_x.shape).astype(bool)
                     else:
                         use_x = getattr(self, self.obj_dict[x])[sim]
                         idx = np.argsort(use_x)
-                    ax.plot(use_x, getattr(self, self.obj_dict[y])[:, sim][idx], label=f'sim {sim}')
+                    if twin_axs:
+                        label = f'sim: {sim}, {y}'
+                    else:
+                        label = f'sim {sim}'
+                    ax.plot(use_x[idx], getattr(self, self.obj_dict[y])[:, sim][idx], label=label, ls=ls, c=c)
             else:
                 usey = getattr(self, self.obj_dict[y])[:, sims]
                 if x == 'time':
@@ -492,61 +499,72 @@ class BaseSimpleFarmModel(object):
                     raise NotImplementedError  # todo need to bin x and y
 
             ax.set_ylabel(self.attr_dict[y])
-        ax = axs[-1]
+        if twin_axs:
+            ax = axs[0]
+        else:
+            ax = axs[-1]
         ax.set_xlabel(x)
-        ax.legend()
+        if twin_axs:
+            handles, labels = axs[0].get_legend_handles_labels()
+            for ax in axs[1:]:
+                h, l = ax.get_legend_handles_labels()
+                handles += h
+                labels += l
+            ax.legend(handles, labels)
+        else:
+            ax.legend()
         return fig, axs
 
     def calculate_feed_needed(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
-        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
     def calculate_production(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
-        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
     def calculate_next_state(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
-        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
     def calculate_sup_feed(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
-        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
     def calculate_running_cost(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
-        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
     def calculate_debt_servicing(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
-        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
@@ -568,55 +586,55 @@ class DummySimpleFarm(BaseSimpleFarmModel):
     month_reset = 7  # trigger farm reset on day 1 in July
 
     def calculate_feed_needed(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
-        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
     def calculate_production(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
-        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
     def calculate_next_state(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
-        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
     def calculate_sup_feed(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
-        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
     def calculate_running_cost(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
-        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')
 
     def calculate_debt_servicing(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
-        self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
+            self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
         out = np.zeros(self.model_shape[1])
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         raise NotImplementedError('must be set in a child class')

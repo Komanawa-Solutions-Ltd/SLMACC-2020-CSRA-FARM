@@ -4,7 +4,7 @@ on: 3/07/23
 """
 import numpy as np
 from farm_economic_modelling.base_simple_farm_model import BaseSimpleFarmModel
-
+import pandas as pd
 
 class SimpleDairyFarm(BaseSimpleFarmModel):
     states = {  # i value: (nmiking, stock levels)
@@ -97,7 +97,7 @@ class SimpleDairyFarm(BaseSimpleFarmModel):
     debt_servicing = 34968.32421875  # $/ha/yr   # todo confirm units
 
     def calculate_feed_needed(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
             self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
@@ -115,7 +115,7 @@ class SimpleDairyFarm(BaseSimpleFarmModel):
         return out
 
     def calculate_production(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
             self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
@@ -132,7 +132,7 @@ class SimpleDairyFarm(BaseSimpleFarmModel):
         return out
 
     def calculate_sup_feed(self, i_month, month, current_state):  # todo need feedback from Paul on trigger levels
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
             self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
@@ -141,7 +141,7 @@ class SimpleDairyFarm(BaseSimpleFarmModel):
         raise NotImplementedError('must be set in a child class')  # todo
 
     def calculate_running_cost(self, i_month, month, current_state):
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
             self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
@@ -162,7 +162,7 @@ class SimpleDairyFarm(BaseSimpleFarmModel):
         return out
 
     def calculate_next_state(self, i_month, month, current_state): # todo need Paul's feedback on this (for tigger levels)
-        assert isinstance(month, int), f'month must be int, got {type(month)}'
+        assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
             self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
