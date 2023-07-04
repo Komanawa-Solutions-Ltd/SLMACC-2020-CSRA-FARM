@@ -16,7 +16,7 @@ from matplotlib.cm import get_cmap
 
 class BaseSimpleFarmModel(object):
     # create dictionary of attribute name to attribute long name (unit)
-    attr_dict = {
+    long_name_dict = {
         'state': 'farm state (none)',
         'feed': 'feed on farm (kgDM/ha)',
         'money': 'profit/loss (NZD)',
@@ -67,9 +67,13 @@ class BaseSimpleFarmModel(object):
         """
         # define model shape
         assert set(all_months).issubset(set(range(1, 13))), f'months must be in range 1-12'
-        self.month_len = len(all_months)
         all_month_org = deepcopy(all_months)
-        self.time_len = np.sum([month_len[m] for m in all_months])
+        if monthly_input:
+            org_month_len = len(all_months)
+            self.time_len = np.sum([month_len[m] for m in all_months])
+        else:
+            org_month_len = None  # should not ever access
+            self.time_len = len(all_months)
         self.nsims = len(istate)
         self.model_shape = (self.time_len + 1, self.nsims)
         self._model_input_shape = (self.time_len, self.nsims)
@@ -91,24 +95,29 @@ class BaseSimpleFarmModel(object):
         # handle pg input options
         pg = np.atleast_1d(pg)
         if pg.ndim == 1:
-            assert len(pg) == self.month_len, f'pg must be length time: {self.month_len=}, got: {len(pg)=}'
             if monthly_input:
+                assert len(pg) == org_month_len, f'pg must be length time: {org_month_len=}, got: {len(pg)=}'
                 pg = np.concatenate([np.repeat(p, month_len[m]) for p, m in zip(pg, all_month_org)])
+            else:
+                assert len(pg) == self.time_len, f'pg must be length time: {self.time_len=}, got: {len(pg)=}'
             pg = np.repeat(pg[:, np.newaxis], self.nsims, axis=1)
         elif monthly_input:
             pg = np.concatenate([np.repeat(p[np.newaxis], month_len[m], axis=0) for p, m in zip(pg, all_month_org)])
-        self.pg = np.concatenate([pg[[0]], pg])
+        self.pg = np.concatenate([pg[[0]], pg], axis=0)
         assert self.pg.shape == self.model_shape, f'pg shape must be: {self.model_shape=}, got: {pg.shape=}'
 
         # handle sup_feed_cost input options
         if pd.api.types.is_number(sup_feed_cost):
             sup_feed_cost = np.full(self._model_input_shape, sup_feed_cost)
         elif sup_feed_cost.ndim == 1:
-            assert len(sup_feed_cost) == self.month_len, (f'sup_feed_cost must be length time: {self.month_len=}, '
-                                                          f'got: {len(sup_feed_cost)=}')
             if monthly_input:
+                assert len(sup_feed_cost) == org_month_len, (f'sup_feed_cost must be length time: {org_month_len=}, '
+                                                             f'got: {len(sup_feed_cost)=}')
                 sup_feed_cost = np.concatenate(
                     [np.repeat(e, month_len[m]) for e, m in zip(sup_feed_cost, all_month_org)])
+            else:
+                assert len(sup_feed_cost) == self.time_len, (f'sup_feed_cost must be length time: {self.time_len=}, '
+                                                             f'got: {len(sup_feed_cost)=}')
             sup_feed_cost = np.repeat(sup_feed_cost[:, np.newaxis], self.nsims, axis=1)
         elif monthly_input:
             sup_feed_cost = np.concatenate(
@@ -121,11 +130,15 @@ class BaseSimpleFarmModel(object):
         if pd.api.types.is_number(product_price):
             product_price = np.full(self._model_input_shape, product_price)
         elif product_price.ndim == 1:
-            assert len(product_price) == self.month_len, (f'product_price must be length time: {self.time_len=}, '
-                                                          f'got: {len(product_price)=}')
             if monthly_input:
+                assert len(product_price) == org_month_len, (f'product_price must be length time: {org_month_len=}, '
+                                                             f'got: {len(product_price)=}')
                 product_price = np.concatenate(
                     [np.repeat(e, month_len[m]) for e, m in zip(product_price, all_month_org)])
+            else:
+                assert len(product_price) == self.time_len, (f'product_price must be length time: {self.time_len=}, '
+                                                             f'got: {len(product_price)=}')
+
             product_price = np.repeat(product_price[:, np.newaxis], self.nsims, axis=1)
         elif monthly_input:
             product_price = np.concatenate(
@@ -248,7 +261,7 @@ class BaseSimpleFarmModel(object):
             ds.createDimension('time', self.time_len + 1)
             ds.createDimension('nsims', self.nsims)
 
-            ds.createVariable('sim', 'i4', ('nsims',))
+            ds.createVariable('sims', 'i4', ('nsims',))
             ds.variables['sims'][:] = range(self.nsims)
             ds.variables['sims'].setncattr('long_name', 'simulation number')
 
@@ -256,66 +269,66 @@ class BaseSimpleFarmModel(object):
             ds.variables['month'][:] = self.all_months
             ds.variables['month'].setncattr('long_name', 'month of the year')
 
-            ds.createVariable('year', 'i4', ('nsims',))
+            ds.createVariable('year', 'i4', ('time',))
             ds.variables['year'].setncattr('long_name', 'year')
             ds.variables['year'][:] = self.all_year
 
-            ds.createVariable('day', 'i4', ('nsims',))
+            ds.createVariable('day', 'i4', ('time',))
             ds.variables['day'].setncattr('long_name', 'day of the month')
             ds.variables['day'][:] = self.all_days
 
             ds.createVariable('state', 'i4', ('time', 'nsims'))
-            ds.variables['state'].setncattrs({'long_name': 'farm state', 'units': 'none'})
+            ds.variables['state'].setncatts({'long_name': 'farm state', 'units': 'none'})
             ds.variables['state'][:] = self.model_state
 
             ds.createVariable('feed', 'f8', ('time', 'nsims'))
-            ds.variables['feed'].setncattrs({'long_name': 'feed on farm', 'units': 'kgDM/ha'})
+            ds.variables['feed'].setncatts({'long_name': 'feed on farm', 'units': 'kgDM/ha'})
             ds.variables['feed'][:] = self.model_feed
 
             ds.createVariable('money', 'f8', ('time', 'nsims'))
-            ds.variables['money'].setncattrs({'long_name': 'profit/loss', 'units': 'NZD'})
+            ds.variables['money'].setncatts({'long_name': 'profit/loss', 'units': 'NZD'})
             ds.variables['money'][:] = self.model_money
 
             ds.createVariable('feed_demand', 'f8', ('time', 'nsims'))
-            ds.variables['feed_demand'].setncattrs({'long_name': 'feed demand', 'units': 'kgDM/ha'})
+            ds.variables['feed_demand'].setncatts({'long_name': 'feed demand', 'units': 'kgDM/ha'})
             ds.variables['feed_demand'][:] = self.model_feed_demand
 
             ds.createVariable('prod', 'f8', ('time', 'nsims'))
-            ds.variables['prod'].setncattrs({'long_name': 'product produced', 'units': 'kg/ha'})
+            ds.variables['prod'].setncatts({'long_name': 'product produced', 'units': 'kg/ha'})
             ds.variables['prod'][:] = self.model_prod
 
             ds.createVariable('prod_money', 'f8', ('time', 'nsims'))
-            ds.variables['prod_money'].setncattrs({'long_name': 'profit from product', 'units': 'NZD'})
+            ds.variables['prod_money'].setncatts({'long_name': 'profit from product', 'units': 'NZD'})
             ds.variables['prod_money'][:] = self.model_prod_money
 
             ds.createVariable('feed_imported', 'f8', ('time', 'nsims'))
-            ds.variables['feed_imported'].setncattrs({'long_name': 'supplemental feed imported', 'units': 'kgDM/ha'})
+            ds.variables['feed_imported'].setncatts({'long_name': 'supplemental feed imported', 'units': 'kgDM/ha'})
             ds.variables['feed_imported'][:] = self.model_feed_imported
 
             ds.createVariable('feed_cost', 'f8', ('time', 'nsims'))
-            ds.variables['feed_cost'].setncattrs({'long_name': 'cost of feed imported', 'units': 'NZD'})
+            ds.variables['feed_cost'].setncatts({'long_name': 'cost of feed imported', 'units': 'NZD'})
             ds.variables['feed_cost'][:] = self.model_feed_cost
 
             ds.createVariable('running_cost', 'f8', ('time', 'nsims'))
-            ds.variables['running_cost'].setncattrs(
+            ds.variables['running_cost'].setncatts(
                 {'long_name': 'general farm running cost (ex. feed beyond expected feed)', 'units': 'NZD'})
             ds.variables['running_cost'][:] = self.model_running_cost
 
             ds.createVariable('debt_servicing', 'f8', ('time', 'nsims'))
-            ds.variables['debt_servicing'].setncattrs(
+            ds.variables['debt_servicing'].setncatts(
                 {'long_name': 'debt servicing', 'units': 'NZD'})
             ds.variables['debt_servicing'][:] = self.model_debt_service
 
             ds.createVariable('pg', 'f8', ('time', 'nsims'))
-            ds.variables['pg'].setncattrs({'long_name': 'pasture growth', 'units': 'kgDM/ha'})
+            ds.variables['pg'].setncatts({'long_name': 'pasture growth', 'units': 'kgDM/ha'})
             ds.variables['pg'][:] = self.pg
 
             ds.createVariable('product_price', 'f8', ('time', 'nsims'))
-            ds.variables['product_price'].setncattrs({'long_name': 'product price', 'units': 'NZD/kg'})
+            ds.variables['product_price'].setncatts({'long_name': 'product price', 'units': 'NZD/kg'})
             ds.variables['product_price'][:] = self.product_price
 
             ds.createVariable('feed_price', 'f8', ('time', 'nsims'))
-            ds.variables['feed_price'].setncattrs({'long_name': 'feed price', 'units': 'NZD/kg'})
+            ds.variables['feed_price'].setncatts({'long_name': 'feed price', 'units': 'NZD/kg'})
             ds.variables['feed_price'][:] = self.sup_feed_cost
 
     @classmethod
@@ -340,7 +353,7 @@ class BaseSimpleFarmModel(object):
             model_money = np.array(ds.variables['money'][:])
             sup_feed_cost = np.array(ds.variables['feed_price'][:])
 
-            out = self(all_months=all_months, istate=model_state[0], pg=pg[1:],
+            out = self(all_months=all_months[1:], istate=model_state[0], pg=pg[1:],
                        ifeed=model_feed[0], imoney=model_money[0], sup_feed_cost=sup_feed_cost[1:],
                        product_price=product_price[1:], monthly_input=False)
             out.model_state = model_state
@@ -379,8 +392,9 @@ class BaseSimpleFarmModel(object):
 
         for sim in sims:
             outdata = pd.DataFrame({
-                'year': np.cumsum(self.all_months == self.month_reset) + 1,
+                'year': self.all_year,
                 'month': self.all_months,
+                'day': self.all_days,
                 'state': self.model_state[:, sim],
                 'feed': self.model_feed[:, sim],
                 'money': self.model_money[:, sim],
@@ -398,7 +412,7 @@ class BaseSimpleFarmModel(object):
             outdata.to_csv(outdir.joinpath(f'sim_{sim}.csv'), index=False)
 
     def plot_results(self, *ys, x='time', sims=None, mult_as_lines=True, twin_axs=False, figsize=(10, 8),
-                     start_year=2000):
+                     start_year=2000, bins=20):
         """
         plot results
         :param ys: one or more of:
@@ -422,12 +436,14 @@ class BaseSimpleFarmModel(object):
         :param twin_axs: bool if True, plot each y on twin axis, if False, plot on subplots
         :param start_year: the year to start plotting from (default 2000) only affects the transition from
                            year 1, year2, etc. to datetime
+        :param bins: number of bins for mult_as_lines=False and x!='time'
         :return:
         """
         ys = np.atleast_1d(ys)
-        assert set(ys).issubset(self.attr_dict.keys()), (f'ys must be one or more of: {self.attr_dict.keys()}, got'
-                                                         f'{set(ys) - set(self.attr_dict.keys())}')
-        assert x in self.attr_dict.keys() or x == 'time', f'x must be "time" or one of: {self.attr_dict.keys()}, got {x}'
+        assert set(ys).issubset(self.long_name_dict.keys()), (
+            f'ys must be one or more of: {self.long_name_dict.keys()}, got'
+            f'{set(ys) - set(self.long_name_dict.keys())}')
+        assert x in self.long_name_dict.keys() or x == 'time', f'x must be "time" or one of: {self.long_name_dict.keys()}, got {x}'
         assert isinstance(mult_as_lines, bool), f'mult_as_lines must be bool, got {type(mult_as_lines)}'
         assert isinstance(twin_axs, bool), f'twin_axs must be bool, got {type(twin_axs)}'
         if twin_axs and len(ys) > 2:
@@ -447,10 +463,13 @@ class BaseSimpleFarmModel(object):
             warnings.warn('more than 20 sims to plot, colors will be reused')
         base_xtime = None
         if x == 'time':
+            xlabel = 'time'
             base_xtime = np.array([datetime.date(
                 year=start_year + yr, month=m, day=d
             ) for yr, m, d in zip(self.all_year[1:], self.all_months[1:], self.all_days[1:])])
             base_xtime = np.concatenate([[base_xtime[0] - datetime.timedelta(days=1)], base_xtime])
+        else:
+            xlabel = self.long_name_dict[x]
 
         # setup plots
         if twin_axs:
@@ -463,6 +482,8 @@ class BaseSimpleFarmModel(object):
                     axs.append(ax.twinx())
         else:
             fig, axs = plt.subplots(len(ys), 1, sharex=True, figsize=figsize)
+            if isinstance(axs, plt.Axes):
+                axs = [axs]
             linestyles = ['solid'] * len(ys)
 
         ycolors = get_colors(ys)
@@ -478,7 +499,7 @@ class BaseSimpleFarmModel(object):
                         assert use_x is not None, 'base_xtime must be set'
                         idx = np.ones(use_x.shape).astype(bool)
                     else:
-                        use_x = getattr(self, self.obj_dict[x])[sim]
+                        use_x = getattr(self, self.obj_dict[x])[:, sim]
                         idx = np.argsort(use_x)
                     if twin_axs:
                         label = f'sim: {sim}, {y}'
@@ -489,21 +510,35 @@ class BaseSimpleFarmModel(object):
                 usey = getattr(self, self.obj_dict[y])[:, sims]
                 if x == 'time':
                     use_x = base_xtime
-                    ax.plot(use_x, np.nanmedian(usey, axis=1), label='median', color=yc)
-                    ax.fill_between(use_x, np.nanpercentile(usey, 25, axis=1), np.nanpercentile(usey, 75, axis=1),
-                                    label='25-75%', color=yc, alpha=0.25)
-                    ax.fill_between(use_x, np.nanpercentile(usey, 5, axis=1), np.nanpercentile(usey, 95, axis=1),
-                                    label='5-95%', color=yc, alpha=0.25)
+                    marker = None
 
                 else:
-                    raise NotImplementedError  # todo need to bin x and y
+                    marker = 'o'
+                    all_x = getattr(self, self.obj_dict[x])[:, sims]
+                    bin_limits = np.histogram_bin_edges(all_x.flatten(), bins=bins)
+                    use_x = np.mean(np.stack([bin_limits[:-1], bin_limits[1:]]), axis=0)
+                    tempy = [usey[(all_x >= bin_limits[i]) & (all_x < bin_limits[i + 1])] for i in
+                             range(len(bin_limits) - 1)]
+                    maxy = np.max([len(t) for t in tempy])
+                    tempy = [np.pad(t, (0, maxy - len(t)), mode='constant', constant_values=np.nan) for t in tempy]
+                    usey = np.stack(tempy, axis=0)
 
-            ax.set_ylabel(self.attr_dict[y])
+                ax.plot(use_x, np.nanmedian(usey, axis=1), label='median', color=yc, marker=marker)
+                ax.fill_between(use_x, np.nanpercentile(usey, 25, axis=1), np.nanpercentile(usey, 75, axis=1),
+                                color=yc, alpha=0.25)
+                # just to provide correct label
+                ax.fill_between(use_x[0:1], np.nanpercentile(usey, 25, axis=1)[0:1],
+                                np.nanpercentile(usey, 25, axis=1)[0:1],
+                                color=yc, alpha=0.50, label='25-75%')
+                ax.fill_between(use_x, np.nanpercentile(usey, 5, axis=1), np.nanpercentile(usey, 95, axis=1),
+                                label='5-95%', color=yc, alpha=0.25)
+
+            ax.set_ylabel(self.long_name_dict[y])
         if twin_axs:
             ax = axs[0]
         else:
             ax = axs[-1]
-        ax.set_xlabel(x)
+        ax.set_xlabel(xlabel)
         if twin_axs:
             handles, labels = axs[0].get_legend_handles_labels()
             for ax in axs[1:]:

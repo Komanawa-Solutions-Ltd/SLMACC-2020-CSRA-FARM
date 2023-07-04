@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from farm_economic_modelling.base_simple_farm_model import BaseSimpleFarmModel
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 class DummySimpleFarm(BaseSimpleFarmModel):
     states = {  # i value: (nmiking, stock levels)
@@ -23,7 +24,7 @@ class DummySimpleFarm(BaseSimpleFarmModel):
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
             self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
-        out = np.zeros(self.model_shape[1]) + 5
+        out = np.zeros(self.model_shape[1]) + 8
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         return out
 
@@ -50,7 +51,7 @@ class DummySimpleFarm(BaseSimpleFarmModel):
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (
             self.model_shape[1],), f'current_state must be shape {self.model_shape[1]}, got {current_state.shape}'
-        out = np.zeros(self.model_shape[1]) + 5
+        out = np.zeros(self.model_shape[1]) + 2
         assert out.shape == (self.model_shape[1],), f'out must be shape {self.model_shape[1]}, got {out.shape}'
         return out
 
@@ -84,21 +85,41 @@ def test_basic_farm_model():
     farm = DummySimpleFarm(all_months, istate=np.ones(5), pg=all_months, ifeed=np.arange(5)*200,
                            imoney=np.arange(5)*200, sup_feed_cost=0.4, product_price=3.5,
                            monthly_input=True)
+    print('farm model shape=', farm.model_shape)
     farm.run_model()
     farm.plot_results('state', 'feed', 'money')
     farm.plot_results('state', 'feed', 'money', sims=None, mult_as_lines=False, twin_axs=False)
     farm.plot_results('feed', 'money', sims=None, mult_as_lines=True, twin_axs=True)
     farm.plot_results('feed', 'money', sims=[1,2], mult_as_lines=True, twin_axs=True)
 
-    # todo test different x in plots
+    # test different x in plots, check
+    farm.plot_results('feed', x='money', sims=None, mult_as_lines=True, twin_axs=True)
 
-    # todo when done test different x in non line plots
+    # test different x in non line plots
+    farm.plot_results('feed', x='money', sims=None, mult_as_lines=False, twin_axs=False)
 
-    # todo test save to nc
+    # test save to nc
+    farm.save_results_nc(Path.home().joinpath('Downloads/testfarm_outputs.nc'))
 
-    # todo test save to csv
+    # test save to csv
+    farm.save_results_csv(Path.home().joinpath('Downloads/testfarm_outputs'))
 
-    # todo test load from nc
+    # test load from nc
+    farm2 = DummySimpleFarm.from_input_file(Path.home().joinpath('Downloads/testfarm_outputs.nc'))
+
+    # confirm that farm and farm2 are the same
+    bad = []
+    for k,v in farm.__dict__.items():
+        if k in []:
+            continue
+        if isinstance(v, np.ndarray):
+            if not np.all(np.isclose(v, getattr(farm2, k),equal_nan=True)):
+                bad.append(k)
+        else:
+            if v != getattr(farm2, k):
+                bad.append(k)
+    assert len(bad) == 0, f'farm and farm2 are not the same, bad keys={bad}'
+
 
 
     plt.show()
