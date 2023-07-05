@@ -48,7 +48,9 @@ class SimpleDairyFarm(BaseSimpleFarmModel):
         4: .90,  # ('1aday', 'norm'),
     }
 
-    feed_per_cow_monthly = {  # excludes expected typical supplimnations which are included in base costs:
+    feed_per_cow_monthly = {
+        # excludes expected typical supplimnations which are included in base costs:
+        # todo I need to fix the above, bad assumption
         8: 13.855,
         9: 14.67,
         10: 14.67,
@@ -95,8 +97,11 @@ class SimpleDairyFarm(BaseSimpleFarmModel):
     }
 
     debt_servicing = 34968.32421875  # $/ha/yr   # todo confirm units, NOPE THIS IS DEBT LEVELS, how are we managing debt servicing?
-
+# todo need 3 buckets on pasture , on farm sup, external,  PAUL NEEDS TO TAKE OU
+#  cost to move from pasture to farm sup,
+#  no cost to use on farm sup
     def calculate_feed_needed(self, i_month, month, current_state):
+        # todo
         assert pd.api.types.is_integer(month), f'month must be int, got {type(month)}'
         assert isinstance(current_state, np.ndarray), f'current_state must be np.ndarray, got {type(current_state)}'
         assert current_state.shape == (

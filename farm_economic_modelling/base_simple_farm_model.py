@@ -210,8 +210,9 @@ class BaseSimpleFarmModel(object):
 
             # todo debt service ratio servicing G:\Shared drives\Z20002SLM_SLMACC\farm_model\farm health index.xlsx
             #  over what period?, here it is cumulative for the model run
-            # todo include (capital spend/depreciation,tax, mangment wage) or is this in the run costs
+            # todo include (capital spend/depreciation,tax, mangment wage) or is this in the run costs (NOT IN RUN COSTS)
             # todo still need to save the data.
+            # todo used for each year, typically from 1 aug from reset to reset.
             opt_surplus = self.model_prod_money - (self.model_feed_cost + self.model_running_cost)
             debt_service_ratio = (np.nansum(opt_surplus[:i_month, :], axis=0)
                                   / np.nansum(self.model_debt_service[:i_month+1,:], axis=0))
