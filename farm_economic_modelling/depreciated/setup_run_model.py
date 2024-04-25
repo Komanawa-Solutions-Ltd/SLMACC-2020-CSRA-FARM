@@ -2,7 +2,7 @@ import os
 import shutil
 import pandas as pd
 from openpyxl import load_workbook
-from farm_economic_modelling.model_managment import run_macro, extract_data, local_model_path
+from farm_economic_modelling.depreciated.model_managment import run_macro, local_model_path
 from ksl_env import slmmac_dir_unbacked
 
 farm_model_run_dir = os.path.join(slmmac_dir_unbacked, 'farm_model', 'runs')

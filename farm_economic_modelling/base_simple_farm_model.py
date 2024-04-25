@@ -1,9 +1,21 @@
 """
 created matt_dumont 
 on: 26/06/23
+
+This module contains the BaseSimpleFarmModel class and its child class DummySimpleFarm. These classes are used to
+simulate a simple farm economic model.
+
+The BaseSimpleFarmModel class is an abstract base class that provides the basic structure and methods for the farm
+economic model. It includes methods for running the model, saving results to a netCDF file, reading in a model from a
+netCDF file, saving results to CSV files, and plotting results.
+
+The DummySimpleFarm class is a child class of BaseSimpleFarmModel. It is a placeholder class that needs to be
+implemented with specific farm model logic.
+
+The module also includes a helper function get_colors() for generating a list of colors for plotting, and a dictionary
+month_len that provides the number of days in each month.
 """
 import datetime
-
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -15,6 +27,85 @@ from matplotlib.cm import get_cmap
 
 
 class BaseSimpleFarmModel(object):
+    """
+    Abstract base class for a simple farm economic model.
+
+    This class provides the basic structure and methods for the farm economic model. It includes methods for running
+    the model, saving results to a netCDF file, reading in a model from a netCDF file, saving results to CSV files,
+    and plotting results.
+
+    The class needs to be subclassed and the following methods need to be implemented in the subclass:
+
+    - calculate_feed_needed()
+    - calculate_production()
+    - calculate_next_state()
+    - calculate_sup_feed()
+    - calculate_running_cost()
+    - reset_state()
+
+    Class Attributes:
+
+       - :cvar long_name_dict: (dict) Dictionary of attribute name to attribute long name (unit) for display and metadata.
+       - :cvar obj_dict: (dict) Dictionary of attribute name to object name. used to
+
+    Subclass Attributes that must be set in the subclass:
+
+        :cvar states: (dict): Dictionary of state numbers to state descriptions.
+        :cvar month_reset: (int or None): Month number when the farm state is reset. If None then the farm state is not reset.
+
+    Instance Attributes:
+
+        - Descriptor attributes
+            - :ivar nsims: (int): Number of simulations.
+            - :ivar time_len: (int): Number of time steps in the model.
+            - :ivar model_shape: (tuple): Shape of the model arrays (time_len + 1, nsims).
+            - :ivar _model_input_shape: (tuple): Shape of the model input arrays (time_len, nsims).
+            - :ivar inpath: (Path or None) Path to the input file, if the model was read in from a file.
+            - :ivar all_days: (np.ndarray): Array of day numbers for each time step in the model.
+            - :ivar all_months: (np.ndarray): Array of month numbers for each time step in the model.
+            - :ivar all_year: (np.ndarray): Array of year numbers for each time step in the model.
+            - :ivar _run: (bool): Flag indicating if the model has been run.
+
+        - Model input attributes (all transition to model_shape (time, nsims))
+            - :ivar interest_rate: (np.ndarray): Array of interest rates for each time step in the model.
+            - :ivar pg: (np.ndarray): Array of pasture growth amounts for each time step in the model.
+            - :ivar product_price: (np.ndarray): Array of product prices for each time step in the model.
+            - :ivar sup_feed_cost: (np.ndarray): Array of supplementary feed costs for each time step in the model.
+
+        - Model calculation attributes
+            - :ivar model_debt_service: (np.ndarray): Array of debt service amounts for each time step in the model.
+            - :ivar model_feed: (np.ndarray): Array of feed amounts for each time step in the model.
+            - :ivar model_feed_cost: (np.ndarray): Array of feed cost amounts for each time step in the model.
+            - :ivar model_feed_demand: (np.ndarray): Array of feed demand amounts for each time step in the model.
+            - :ivar model_feed_imported: (np.ndarray): Array of imported feed amounts for each time step in the model.
+            - :ivar model_money: (np.ndarray): Array of money amounts for each time step in the model.
+            - :ivar model_prod: (np.ndarray): Array of product amounts for each time step in the model.
+            - :ivar model_prod_money: (np.ndarray): Array of product money amounts for each time step in the model.
+            - :ivar model_running_cost: (np.ndarray): Array of running cost amounts for each time step in the model.
+            - :ivar model_state: (np.ndarray): Array of state numbers for each time step in the model.
+
+    Process:
+
+        The run_model method in the BaseSimpleFarmModel class is responsible for running the farm economic model. Here's a step-by-step description of the process:
+
+        #. The method first checks if the model has already been run. If it has, it raises an assertion error.
+        #. It then enters a loop that iterates over each month in the model's timeline. For each month, it performs the following steps:
+            #. It sets the start of day values for current money, current feed, and current state.
+            #. It calculates the pasture growth and adds it to the current feed.
+            #. It calculates the feed needed for the cattle and subtracts it from the current feed. The feed demand is also stored.
+            #. It calculates the product produced and stores it.
+            #. It calculates the profit from selling the product and adds it to the current money.
+            #. It calculates the supplementary feed needed, adds it to the current feed, and stores it.
+            #. It calculates the cost of the supplementary feed and subtracts it from the current money. The feed cost is also stored.
+            #. It calculates the running costs and subtracts them from the current money. The running costs are also stored.
+            #. It calculates the debt servicing costs and subtracts them from the current money. The debt servicing costs are also stored.
+            #. It calculates the next state of the farm. If it's the start of a new year, it resets the state.
+            #. Finally, it sets the key values for the current state, feed, and money.
+        #. After the loop, it sets the _run attribute to True, indicating that the model has been run.
+
+        This method essentially simulates the operation of the farm over time, taking into account various factors such as feed demand, product production, costs, and state transitions.
+
+    """
     # create dictionary of attribute name to attribute long name (unit)
     long_name_dict = {
         'state': 'farm state (none)',
@@ -54,6 +145,26 @@ class BaseSimpleFarmModel(object):
 
     states = None  # dummy value, must be set in child class
     month_reset = None  # dummy value, must be set in child class
+    all_days = None
+    all_months = None
+    all_year = None
+    interest_rate = None
+    model_debt_service = None
+    model_feed = None
+    model_feed_cost = None
+    model_feed_demand = None
+    model_feed_imported = None
+    model_money = None
+    model_prod = None
+    model_prod_money = None
+    model_running_cost = None
+    model_shape = None
+    model_state = None
+    nsims = None
+    pg = None
+    product_price = None
+    sup_feed_cost = None
+    time_len = None
 
     def __init__(self, all_months, istate, pg, ifeed, imoney, sup_feed_cost, product_price, interest_rate,
                  monthly_input=True):
@@ -116,10 +227,10 @@ class BaseSimpleFarmModel(object):
 
         # manage product price options
         self.product_price = self._manage_input_shape('product_price', product_price, monthly_input,
-                                                        org_month_len, all_month_org)
+                                                      org_month_len, all_month_org)
 
         self.interest_rate = self._manage_input_shape('interest_rate', interest_rate, monthly_input,
-                                                        org_month_len, all_month_org) # todo propage through
+                                                      org_month_len, all_month_org)  # todo propage through
         if np.nanmax(self.interest_rate) < 1:
             raise ValueError(f'interest_rate must be in %/year, got: {np.nanmax(self.interest_rate)=} '
                              f'which is less than 1 suggesting it is in fraction/year')
@@ -160,7 +271,7 @@ class BaseSimpleFarmModel(object):
 
     def run_model(self):
         """
-        run the model
+        run the model see docstring for process
         :return:
         """
         assert not self._run, f'model has already been run'
@@ -204,18 +315,18 @@ class BaseSimpleFarmModel(object):
             current_money -= run_costs
 
             # add debt servicing
-            debt_servicing = self.model_money[i_month - 1, :] * (1 + self.interest_rate[i_month, :]/100)
+            debt_servicing = self.model_money[i_month - 1, :] * (1 + self.interest_rate[i_month, :] / 100)
             self.model_debt_service[i_month, :] = debt_servicing
             current_money -= debt_servicing
 
             # todo debt service ratio servicing G:\Shared drives\Z20002SLM_SLMACC\farm_model\farm health index.xlsx
             #  over what period?, here it is cumulative for the model run
             # todo include (capital spend/depreciation,tax, mangment wage) or is this in the run costs (NOT IN RUN COSTS)
-            # todo still need to save the data.
+            # todo still need to save the data., add to attribute description
             # todo used for each year, typically from 1 aug from reset to reset.
             opt_surplus = self.model_prod_money - (self.model_feed_cost + self.model_running_cost)
             debt_service_ratio = (np.nansum(opt_surplus[:i_month, :], axis=0)
-                                  / np.nansum(self.model_debt_service[:i_month+1,:], axis=0))
+                                  / np.nansum(self.model_debt_service[:i_month + 1, :], axis=0))
 
             # calculate next state
             next_state = self.calculate_next_state(i_month, month, current_state)
@@ -232,7 +343,8 @@ class BaseSimpleFarmModel(object):
 
     def _manage_input_shape(self, input_key, input_val, monthly_input, org_month_len, all_month_org):
         """
-        manage the shape of input that can be a scalar, a vector or a matrix
+        manage the shape of input that can be a scalar, a vector or a matrix all end up as np.ndarray shape (time, nsims)
+
         :param input_key: input key (for error messages)
         :param input_val: input value (number or np.array)
         :param monthly_input: pass through variables
@@ -264,6 +376,7 @@ class BaseSimpleFarmModel(object):
     def save_results_nc(self, outpath):
         """
         save results to netcdf file
+
         :param outpath: path to save file
         :return:
         """
@@ -355,6 +468,7 @@ class BaseSimpleFarmModel(object):
     def from_input_file(self, inpath):
         """
         read in a model from a netcdf file
+
         :param inpath:
         :return:
         """
@@ -397,6 +511,7 @@ class BaseSimpleFarmModel(object):
     def save_results_csv(self, outdir, sims=None):
         """
         save results to csv in outdir with name sim_{sim}.csv
+
         :param outdir: output directory
         :param sims: sim numbers to save, if None, save all
         :return:
@@ -437,7 +552,9 @@ class BaseSimpleFarmModel(object):
                      start_year=2000, bins=20):
         """
         plot results
+
         :param ys: one or more of:
+
             - 'state' (state of the system)
             - 'feed' (feed on farm)
             - 'money' (money on farm)
@@ -451,13 +568,12 @@ class BaseSimpleFarmModel(object):
             - 'pg' (pasture growth)
             - 'product_price' (product price)
             - 'sup_feed_cost' (supplementary feed cost)
+
         :param x: x axis to plot against 'time' or a ys variable
         :param sims: sim numbers to plot
-        :param mult_as_lines: bool if True, plot multiple sims as lines,
-                                   if False, plot multiple sims boxplot style pdf
+        :param mult_as_lines: bool if True, plot multiple sims as lines, if False, plot multiple sims boxplot style pdf
         :param twin_axs: bool if True, plot each y on twin axis, if False, plot on subplots
-        :param start_year: the year to start plotting from (default 2000) only affects the transition from
-                           year 1, year2, etc. to datetime
+        :param start_year: the year to start plotting from (default 2000) only affects the transition from year 1, year2, etc. to datetime
         :param bins: number of bins for mult_as_lines=False and x!='time'
         :return:
         """
