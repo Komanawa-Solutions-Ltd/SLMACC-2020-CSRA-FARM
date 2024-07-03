@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
     if export:
         export_all_in_pattern(base_outdir=os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'Baseline'),
-                              patterns=os.path.join(ksl_env.slmmac_dir_unbacked,
+                              patterns=os.path.join(ksl_env.unbacked_dir,
                                                     "pasture_growth_sims/baseline_sim_no_pad/*.nc"),
                               )
 

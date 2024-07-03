@@ -124,7 +124,7 @@ if __name__ == '__main__':
     run_old = False
     run_detrend_test = True
     if run_old:
-        event_def_dir = ksl_env.shared_drives("Z2003_SLMACC\event_definition/v5")
+        event_def_dir = ksl_env.slmmac_dir.joinpath("event_definition/v5")
         out = make_prob_impact_data()
 
         t = pd.Series([' '.join(e) for e in out.columns])
@@ -135,16 +135,16 @@ if __name__ == '__main__':
                                 'event_historical_prob_impact.csv'), float_format='%.1f%%')
         make_data(get_org_data(), save=True)
     if run_detrend_test:
-        temp = make_data(get_org_data(ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/v6_detrend")), save=True,
+        temp = make_data(get_org_data(ksl_env.slmmac_dir.joinpath(r"event_definition/v6_detrend")), save=True,
                          save_paths=[
-                             ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/v6_detrend/detrend_event_data.csv")])
-        old = pd.read_csv(ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\v5_detrend\detrend_event_data.csv"),
+                             ksl_env.slmmac_dir.joinpath(r"event_definition/v6_detrend/detrend_event_data.csv")])
+        old = pd.read_csv(ksl_env.slmmac_dir.joinpath(r"event_definition\v5_detrend\detrend_event_data.csv"),
                           skiprows=1,
                           index_col=0, )
         temp.loc[:, 'old_temp'] = old.loc[:, 'temp'].values
         temp.loc[:, 'old_precip'] = old.loc[:, 'precip'].values
         temp.loc[:, 'change_temp'] = ~(temp.temp == temp.old_temp)
         temp.loc[:, 'change_precip'] = ~(temp.precip == temp.old_precip)
-        temp.to_csv(ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/v6_detrend/event_data_with_old.csv"))
+        temp.to_csv(ksl_env.slmmac_dir.joinpath("event_definition/v6_detrend/event_data_with_old.csv"))
         temp.loc[:, ['month', 'change_temp', 'change_precip']].groupby('month').sum().to_csv(
-            ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/v6_detrend/event_data_sum_changes.csv"))
+            ksl_env.slmmac_dir.joinpath("event_definition/v6_detrend/event_data_sum_changes.csv"))

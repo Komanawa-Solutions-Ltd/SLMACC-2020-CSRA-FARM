@@ -44,7 +44,7 @@ def run_frequent_harvest(freq, trig, targ):
 
 
 if __name__ == '__main__':
-    outdir = ksl_env.shared_drives(r"Z2003_SLMACC\pasture_growth_modelling\basgra_harvest_tuning\irr_harv_testing")
+    outdir = ksl_env.slmmac_dir.joinpath(r"pasture_growth_modelling/basgra_harvest_tuning/irr_harv_testing")
     data = {
         'Woodward_model': run_old_basgra(),
     }

@@ -37,8 +37,8 @@ def yr1_cumulative_probability(correct=False):
 
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    data = pd.read_csv(os.path.join(
-        ksl_env.mh_unbacked("SLMACC_2020_norm\pasture_growth_sims\historical_quantified_1yr_detrend\IID_probs_pg.csv")))
+    data = pd.read_csv(ksl_env.unbacked_dir.joinpath("pasture_growth_sims/historical_quantified_1yr_detrend",
+                                                     "IID_probs_pg.csv"))
     if correct:
         data = corr_pg(data)
 
@@ -61,7 +61,7 @@ def nyr_cumulative_prob(nyr, correct=False,
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     data = pd.read_csv(os.path.join(
-        ksl_env.mh_unbacked("SLMACC_2020_norm\pasture_growth_sims\historical_quantified_1yr_detrend\IID_probs_pg.csv")))
+        ksl_env.unbacked_dir.joinpath("pasture_growth_sims/historical_quantified_1yr_detrend/IID_probs_pg.csv")))
     if correct:
         data = corr_pg(data)
 
@@ -70,14 +70,16 @@ def nyr_cumulative_prob(nyr, correct=False,
         for mode, site in default_mode_sites:
             pgr = data.loc[:, f'{site}-{mode}_pg_yr1'].dropna().values / 1000
             prob = np.zeros(pgr.shape) + 1
-            fig = _plot_cum(pgr=pgr, prob=prob, step_size=0.1, site=site, mode=mode, nyr=nyr, outdir=outdir, correct=correct)
+            fig = _plot_cum(pgr=pgr, prob=prob, step_size=0.1, site=site, mode=mode, nyr=nyr, outdir=outdir,
+                            correct=correct)
     else:
         idxs = np.random.randint(0, len(data), 10000)
         data = data.iloc[idxs].rolling(nyr).sum()
         for mode, site in default_mode_sites:
             pgr = data.loc[:, f'{site}-{mode}_pg_yr1'].dropna().values / 1000
             prob = np.zeros(pgr.shape) + 1
-            fig = _plot_cum(pgr=pgr, prob=prob, step_size=0.1, site=site, mode=mode, nyr=nyr, outdir=outdir, correct=correct)
+            fig = _plot_cum(pgr=pgr, prob=prob, step_size=0.1, site=site, mode=mode, nyr=nyr, outdir=outdir,
+                            correct=correct)
 
 
 def _plot_cum(pgr, prob, step_size, site, mode, nyr, outdir, correct=False):
@@ -92,7 +94,7 @@ def _plot_cum(pgr, prob, step_size, site, mode, nyr, outdir, correct=False):
     else:
         ax1.set_xlabel('Pasture growth tons DM/Ha/year')
         ax1.axvline(get_pgr_prob_baseline_stiched(nyr, site, mode) / 1000,
-                c=base_color, lw=base_lw, ls=base_ls, label='baseline pasture growth')
+                    c=base_color, lw=base_lw, ls=base_ls, label='baseline pasture growth')
         ax1.legend()
 
     cum_pgr, cum_prob = calc_cumulative_impact_prob(pgr=pgr,
@@ -108,7 +110,7 @@ def _plot_cum(pgr, prob, step_size, site, mode, nyr, outdir, correct=False):
     else:
         ax2.set_xlabel('Pasture growth tons DM/Ha/year')
         ax2.axvline(get_pgr_prob_baseline_stiched(nyr, site, mode) / 1000,
-                c=base_color, lw=base_lw, ls=base_ls, label='baseline pasture growth')
+                    c=base_color, lw=base_lw, ls=base_ls, label='baseline pasture growth')
         ax2.legend()
     ax2.set_ylabel('Probability of an event with \nequal or less Pasture growth')
 
@@ -117,8 +119,6 @@ def _plot_cum(pgr, prob, step_size, site, mode, nyr, outdir, correct=False):
     fig.tight_layout()
     fig.savefig(os.path.join(outdir, f'{site}-{mode}_{nyr}yr_cumulative_exceed_prob.png'))
     return fig
-
-
 
 
 if __name__ == '__main__':

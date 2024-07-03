@@ -20,7 +20,7 @@ from Storylines.storyline_runs.run_random_suite import generate_random_suite
 from pathlib import Path
 
 base_outdir = os.path.join(ksl_env.slmmac_dir, 'eco_modelling', 'random')
-base_outdir_unbacked = os.path.join(ksl_env.slmmac_dir_unbacked, 'eco_modelling', 'random')
+base_outdir_unbacked = os.path.join(ksl_env.unbacked_dir, 'eco_modelling', 'random')
 fig_size = (10, 8)  # todo
 os.makedirs(base_outdir, exist_ok=True)
 os.makedirs(base_outdir_unbacked, exist_ok=True)

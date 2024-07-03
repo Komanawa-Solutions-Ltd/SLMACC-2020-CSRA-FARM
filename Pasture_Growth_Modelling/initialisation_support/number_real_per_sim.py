@@ -118,12 +118,12 @@ if __name__ == '__main__':
 
     plot_resampled_sims(all_paths,
                         [1, 10, 100, 200, 300, 400, 500, 750, 1000, 2500, 5000, 7500], 1000,
-                        save_dir=os.path.join(ksl_env.slmmac_dir_unbacked,
+                        save_dir=os.path.join(ksl_env.unbacked_dir,
                                               'pasture_growth_sims', 'n_comp_plots_per'),
                         show=False, real=False)
     plot_resampled_sims(all_paths,
                         [1, 10, 100, 200, 300, 400, 500, 750, 1000, 2500, 5000, 7500], 1000,
-                        save_dir=os.path.join(ksl_env.slmmac_dir_unbacked,
+                        save_dir=os.path.join(ksl_env.unbacked_dir,
                                               'pasture_growth_sims', 'n_comp_plots_real'),
                         show=False, real=True)
     # decided to use 100 reals for random sims and 1000 for farmer sims

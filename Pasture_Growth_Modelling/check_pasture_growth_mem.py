@@ -10,7 +10,7 @@ import os
 
 #@profile
 def test_mem():
-    run_pasture_growth(storyline_key='test100', outdir=os.path.join(ksl_env.slmmac_dir_unbacked, 'test_full_model'),
+    run_pasture_growth(storyline_key='test100', outdir=os.path.join(ksl_env.unbacked_dir, 'test_full_model'),
                        nsims='all', padock_rest=True, mode_sites=[('irrigated', 'eyrewell'),
                                                                   ('irrigated', 'oxford'), ],
                        save_daily=False, description='to test functinality')

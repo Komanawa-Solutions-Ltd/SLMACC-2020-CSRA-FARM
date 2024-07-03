@@ -232,9 +232,9 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None,
 
 
 def get_storyline_data(pca=False):
-    out_path_sl = os.path.join(ksl_env.mh_unbacked(r'Z2003_SLMACC\outputs_for_ws\norm'), 'random_storylines',
+    out_path_sl = ksl_env.unbacked_dir.joinpath(r'outputs_for_ws/norm', 'random_storylines',
                                'random_pd.p')
-    out_path_pca = os.path.join(ksl_env.mh_unbacked(r'Z2003_SLMACC\outputs_for_ws\norm'), 'random_storylines',
+    out_path_pca = ksl_env.unbacked_dir.joinpath('outputs_for_ws/norm', 'random_storylines',
                                 'random_pca.npy')
     if pca:
         return np.load(out_path_pca)
@@ -243,9 +243,9 @@ def get_storyline_data(pca=False):
 
 
 def make_all_storyline_data(calc_raw=False):
-    out_path_sl = os.path.join(ksl_env.mh_unbacked(r'Z2003_SLMACC\outputs_for_ws\norm'), 'random_storylines',
+    out_path_sl = ksl_env.unbacked_dir.joinpath(r'outputs_for_ws/norm', 'random_storylines',
                                'random_pd.p')
-    out_path_pca = os.path.join(ksl_env.mh_unbacked(r'Z2003_SLMACC\outputs_for_ws\norm'), 'random_storylines',
+    out_path_pca = ksl_env.unbacked_dir.joinpath(r'outputs_for_ws\norm', 'random_storylines',
                                 'random_pca.npy')
     if not os.path.exists(os.path.dirname(out_path_pca)):
         os.makedirs(os.path.dirname(out_path_pca))

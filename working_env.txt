@@ -17,3 +17,4 @@ conda create  --channel conda-forge --name slmacc python
 conda activate slmacc
 pip install numpy pandas matplotlib netcdf4 scipy tables psutil xlrd geopandas pyyaml openpyxl scikit-learn
 pip install git+https://github.com/Komanawa-Solutions-Ltd/komanawa-basgra-nz-py.git
+pip install git+https://$kslgittoken@github.com/KSLCORE/komanawa-kslcore.git

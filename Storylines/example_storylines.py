@@ -12,7 +12,7 @@ import os
 def build_example_storylines_for_greg(outdir):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    data = pd.read_excel(ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\example_story_lines.xlsx"),
+    data = pd.read_excel(ksl_env.slmmac_dir.joinpath(r"event_definition/example_story_lines.xlsx"),
                          header=[0, 1],
                          skiprows=1
                          )
@@ -63,4 +63,4 @@ def build_example_storylines_for_greg(outdir):
 
 if __name__ == '__main__':
     # these will no longer run as they do not have the correct index
-    build_example_storylines_for_greg(ksl_env.shared_drives(r"Z2003_SLMACC\event_definition\example_storys_for_greg"))
+    build_example_storylines_for_greg(ksl_env.slmmac_dir.joinpath(r"event_definition/example_storys_for_greg"))

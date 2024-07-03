@@ -36,8 +36,8 @@ def yr1_cumulative_probability(correct=False):
     outdir = os.path.join(base_outdir, f'1yr{cor}')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    data = pd.read_csv(os.path.join(
-        ksl_env.mh_unbacked("SLMACC_2020_norm\pasture_growth_sims\historical_quantified_1yr_trend\IID_probs_pg.csv")))
+    data = pd.read_csv(
+        ksl_env.unbacked_dir.joinpath("pasture_growth_sims/historical_quantified_1yr_trend/IID_probs_pg.csv"))
     if correct:
         data = corr_pg(data)
 
@@ -58,8 +58,8 @@ def nyr_cumulative_prob(nyr, correct=False, sequential=True):
     outdir = os.path.join(base_outdir, f'{nyr}yr-{seq}{cor}')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    data = pd.read_csv(os.path.join(
-        ksl_env.mh_unbacked("SLMACC_2020_norm\pasture_growth_sims\historical_quantified_1yr_trend\IID_probs_pg.csv")))
+    data = pd.read_csv(ksl_env.unbacked_dir.joinpath("pasture_growth_sims/historical_quantified_1yr_trend",
+                                                     "IID_probs_pg.csv"))
     if correct:
         data = corr_pg(data)
 

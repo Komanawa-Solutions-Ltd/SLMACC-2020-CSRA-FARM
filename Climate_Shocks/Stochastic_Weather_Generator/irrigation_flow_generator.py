@@ -18,7 +18,7 @@ from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_smd_
 from Climate_Shocks import climate_shocks_env
 from BS_work.SWG.SWG_wrapper import get_monthly_smd_mean_detrended
 
-baseoutdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'gen_vfinal_flow')
+baseoutdir = os.path.join(ksl_env.unbacked_dir, 'gen_vfinal_flow')
 
 month_len = {
     1: 31,

@@ -104,7 +104,7 @@ def create_irrigation_abandomnet_data(base_name, params, reseed_trig=-1, reseed_
 if __name__ == '__main__':
     save = False
     params, doy = get_params_doy_irr(mode)
-    outdir = ksl_env.shared_drives(r"Z2003_SLMACC\pasture_growth_modelling\irrigation_tuning")
+    outdir = ksl_env.slmmac_dir.joinpath("pasture_growth_modelling/irrigation_tuning")
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     out, paddock_values = create_irrigation_abandomnet_data('b', params, reseed_trig=0.691, reseed_basal=0.722,

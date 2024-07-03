@@ -10,7 +10,7 @@ import ksl_env
 
 if __name__ == '__main__':
     numbers = [1, 10, 100, 1000, 10000]
-    base_dir = ksl_env.mh_unbacked('test_swg')
+    base_dir = ksl_env.unbacked_dir.joinpath('test_swg')
     outdata = pd.DataFrame(columns=['remove_npz',
                                     'number',
                                     'time_per_sim',
