@@ -7,20 +7,15 @@ import ksl_env
 import pandas as pd
 import numpy as np
 import os
-
-
-# add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from check_basgra_python.support_for_tests import get_lincoln_broadfield, get_woodward_weather, _clean_harvest
-from basgra_python import run_basgra_nz
-from check_basgra_python.support_for_tests import establish_org_input
-from supporting_functions.plotting import plot_multiple_results
+from komanawa.basgra_nz_py.example_data import get_lincoln_broadfield, get_woodward_weather, clean_harvest, establish_org_input
+from komanawa.basgra_nz_py.basgra_python import run_basgra_nz
+from komanawa.basgra_nz_py.supporting_functions.plotting import plot_multiple_results
 
 
 def run_old_basgra():
     params, matrix_weather, days_harvest, doy_irr = establish_org_input('lincoln')
 
-    days_harvest = _clean_harvest(days_harvest, matrix_weather)
+    days_harvest = clean_harvest(days_harvest, matrix_weather)
 
     out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
     return out

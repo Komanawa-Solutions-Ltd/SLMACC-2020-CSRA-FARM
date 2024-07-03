@@ -8,7 +8,7 @@ from scipy.stats import pearsonr, truncnorm
 import netCDF4 as nc
 from copy import deepcopy
 import matplotlib.pyplot as plt
-from matplotlib.cm import get_cmap
+from matplotlib.pyplot import get_cmap
 from warnings import warn
 import datetime
 

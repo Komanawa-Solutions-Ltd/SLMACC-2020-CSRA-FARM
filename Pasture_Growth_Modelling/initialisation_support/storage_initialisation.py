@@ -19,12 +19,11 @@ from Pasture_Growth_Modelling.historical_average_baseline import run_past_basgra
 from Pasture_Growth_Modelling.storage_parameter_sets import site_mode_dep_params
 
 # add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from basgra_python import run_basgra_nz
-from supporting_functions.plotting import plot_multiple_results, plot_multiple_monthly_results, \
+from komanawa.basgra_nz_py.basgra_python import run_basgra_nz
+from komanawa.basgra_nz_py.supporting_functions.plotting import plot_multiple_results, plot_multiple_monthly_results, \
     plot_multiple_monthly_violin_box, plot_multiple_date_range
-from supporting_functions.cumulative_annual_data import make_cumuliative_annual
-from supporting_functions.output_metadata import get_output_metadata
+from komanawa.basgra_nz_py.supporting_functions.cumulative_annual_data import make_cumuliative_annual
+from komanawa.basgra_nz_py.supporting_functions.output_metadata import get_output_metadata
 
 out_variables = (
     'BASAL',  # should some of these be amalgamated to sum, no you can multiply against # of days in the month.

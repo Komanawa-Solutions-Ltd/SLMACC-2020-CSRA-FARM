@@ -16,8 +16,7 @@ from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growt
 from Pasture_Growth_Modelling.basgra_parameter_sets import default_mode_sites
 
 # add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from basgra_python import run_basgra_nz
+from komanawa.basgra_nz_py import run_basgra_nz
 
 
 def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True, version='trended', mode='irrigated'):

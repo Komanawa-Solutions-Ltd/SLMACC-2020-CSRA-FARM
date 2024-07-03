@@ -41,6 +41,7 @@ def get_irr_by_quantile(recalc=False, outdir=default_rest_dir, rest_path=default
         return out
 
     rest_data = pd.read_csv(rest_path)
+    rest_data.drop(columns='date', inplace=True)
     rest_data = rest_data.groupby(['year', 'month']).mean()
     event_data = pd.read_csv(climate_shocks_env.event_def_path, skiprows=1)
     event_data = event_data.set_index(['year', 'month'])

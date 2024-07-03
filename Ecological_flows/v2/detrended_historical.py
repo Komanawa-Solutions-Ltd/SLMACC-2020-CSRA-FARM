@@ -16,10 +16,7 @@ from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growt
 from Pasture_Growth_Modelling.basgra_parameter_sets import default_mode_sites
 from Ecological_flows.v2.alternate_restrictions import new_flows, get_new_flow_rest_record
 from Storylines.storyline_evaluation.storyline_eval_support import calc_cumulative_impact_prob
-
-# add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from basgra_python import run_basgra_nz
+from komanawa.basgra_nz_py.basgra_python import run_basgra_nz
 
 base_outdir = Path(ksl_env.slmmac_dir).joinpath('eco_modelling', 'historical_detrended')
 base_outdir.mkdir(exist_ok=True, parents=True)

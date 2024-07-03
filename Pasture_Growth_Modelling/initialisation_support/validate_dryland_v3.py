@@ -11,9 +11,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
 # add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from basgra_python import run_basgra_nz
-from supporting_functions.plotting import plot_multiple_results, plot_multiple_monthly_results
+from komanawa.basgra_nz_py.basgra_python import run_basgra_nz
+from komanawa.basgra_nz_py.supporting_functions.plotting import plot_multiple_results, plot_multiple_monthly_results
 from Climate_Shocks.get_past_record import get_restriction_record, get_vcsn_record
 from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, create_days_harvest, \
     create_matrix_weather

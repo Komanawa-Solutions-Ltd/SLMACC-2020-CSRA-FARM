@@ -21,9 +21,8 @@ from Climate_Shocks import climate_shocks_env
 from Pasture_Growth_Modelling.historical_average_baseline import get_historical_average_baseline
 
 # add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from basgra_python import run_basgra_nz, get_month_day_to_nonleap_doy
-from supporting_functions.output_metadata import get_output_metadata
+from komanawa.basgra_nz_py.basgra_python import run_basgra_nz, get_month_day_to_nonleap_doy
+from komanawa.basgra_nz_py.supporting_functions.output_metadata import get_output_metadata
 
 # consider multiprocessing here???? no up a level (e.g. at teh storyline level)
 default_pasture_growth_dir = os.path.join(os.path.join(ksl_env.slmmac_dir_unbacked, 'pasture_growth_sims'))

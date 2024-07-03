@@ -14,11 +14,10 @@ import os
 from Climate_Shocks.vcsn_pull import vcsn_pull_single_site
 
 # add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from basgra_python import run_basgra_nz
-from supporting_functions.plotting import plot_multiple_results
-from supporting_functions.woodward_2020_params import get_woodward_mean_full_params
-from input_output_keys import matrix_weather_keys_pet
+from komanawa.basgra_nz_py.basgra_python import run_basgra_nz
+from komanawa.basgra_nz_py.supporting_functions.plotting import plot_multiple_results
+from komanawa.basgra_nz_py.supporting_functions.woodward_2020_params import get_woodward_mean_full_params
+from komanawa.basgra_nz_py.input_output_keys import matrix_weather_keys_pet
 
 backed_dir = ksl_env.shared_drives("Z2003_SLMACC\pasture_growth_modelling\dryland tuning")
 unbacked_dir = ksl_env.mh_unbacked("Z2003_SLMACC\pasture_growth_modelling\dryland tuning")
