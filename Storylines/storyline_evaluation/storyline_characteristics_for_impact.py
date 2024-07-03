@@ -16,7 +16,7 @@ from Storylines.storyline_runs.run_random_suite import get_1yr_data, default_mod
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
-from matplotlib.cm import get_cmap
+from matplotlib.pyplot import get_cmap
 from scipy.interpolate import interp1d
 from Storylines.storyline_params import month_len
 from Storylines.storyline_evaluation.transition_to_fraction import get_most_probabile
@@ -63,7 +63,7 @@ def get_month_limits_from_most_probable(eyrewell_irr, oxford_irr, oxford_dry, co
 def get_exceedence(site, mode, correct):
     if correct:
         exceedence = pd.read_csv(
-            os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
+            os.path.join(project_base.slmmac_dir, r"outputs_for_ws\norm",
                          r"random_scen_plots\1yr_correct",
                          f"{site}-{mode}_1yr_cumulative_exceed_prob.csv"))
 
@@ -71,7 +71,7 @@ def get_exceedence(site, mode, correct):
         impacts = exceedence.pg.values * 1000
     else:
         exceedence = pd.read_csv(
-            os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
+            os.path.join(project_base.slmmac_dir, r"outputs_for_ws\norm",
                          r"random_scen_plots\1yr",
                          f"{site}-{mode}_1yr_cumulative_exceed_prob.csv"))
 
@@ -92,7 +92,7 @@ def add_exceedence_prob(impact_data, correct,
     for mode, site in default_mode_sites:
         if correct:
             exceedence = pd.read_csv(
-                os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
+                os.path.join(project_base.slmmac_dir, r"outputs_for_ws\norm",
                              r"random_scen_plots\1yr_correct",
                              f"{site}-{mode}_1yr_cumulative_exceed_prob.csv"))
 
@@ -100,7 +100,7 @@ def add_exceedence_prob(impact_data, correct,
             impacts = exceedence.pg.values * 1000
         else:
             exceedence = pd.read_csv(
-                os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
+                os.path.join(project_base.slmmac_dir, r"outputs_for_ws\norm",
                              r"random_scen_plots\1yr",
                              f"{site}-{mode}_1yr_cumulative_exceed_prob.csv"))
 
@@ -232,9 +232,9 @@ def get_suite(lower_bound, upper_bound, return_for_pca=False, state_limits=None,
 
 
 def get_storyline_data(pca=False):
-    out_path_sl = ksl_env.unbacked_dir.joinpath(r'outputs_for_ws/norm', 'random_storylines',
+    out_path_sl = project_base.unbacked_dir.joinpath(r'outputs_for_ws/norm', 'random_storylines',
                                'random_pd.p')
-    out_path_pca = ksl_env.unbacked_dir.joinpath('outputs_for_ws/norm', 'random_storylines',
+    out_path_pca = project_base.unbacked_dir.joinpath('outputs_for_ws/norm', 'random_storylines',
                                 'random_pca.npy')
     if pca:
         return np.load(out_path_pca)
@@ -243,9 +243,9 @@ def get_storyline_data(pca=False):
 
 
 def make_all_storyline_data(calc_raw=False):
-    out_path_sl = ksl_env.unbacked_dir.joinpath(r'outputs_for_ws/norm', 'random_storylines',
+    out_path_sl = project_base.unbacked_dir.joinpath(r'outputs_for_ws/norm', 'random_storylines',
                                'random_pd.p')
-    out_path_pca = ksl_env.unbacked_dir.joinpath(r'outputs_for_ws\norm', 'random_storylines',
+    out_path_pca = project_base.unbacked_dir.joinpath(r'outputs_for_ws\norm', 'random_storylines',
                                 'random_pca.npy')
     if not os.path.exists(os.path.dirname(out_path_pca)):
         os.makedirs(os.path.dirname(out_path_pca))
@@ -517,7 +517,7 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
     for mode, site in default_mode_sites:
         if correct:
             exceedence[f'{site}-{mode}'] = pd.read_csv(
-                os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
+                os.path.join(project_base.slmmac_dir, r"outputs_for_ws\norm",
                              r"random_scen_plots\1yr_correct", f"{site}-{mode}_1yr_cumulative_exceed_prob.csv"))
 
             impact = impact_data.loc[:, f'{site}-{mode}_pg_yr1'].median() / 1000
@@ -525,7 +525,7 @@ def storyline_subclusters(outdir, lower_bound, upper_bound, state_limits=None, n
             impacts = exceedence[f'{site}-{mode}'].pg.values
         else:
             exceedence[f'{site}-{mode}'] = pd.read_csv(
-                os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
+                os.path.join(project_base.slmmac_dir, r"outputs_for_ws\norm",
                              r"random_scen_plots\1yr", f"{site}-{mode}_1yr_cumulative_exceed_prob.csv"))
 
             impact = impact_data.loc[:, f'{site}-{mode}_pg_yr1'].mean() / 1000

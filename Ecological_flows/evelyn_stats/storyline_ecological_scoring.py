@@ -5,14 +5,14 @@ on: 27/10/2022
 """A python script that takes in the perturbed storyline data and creates scores etc. accordingly.
 Similar as ecological_scoring but just takes in different sets of data"""
 
-import kslcore
+from komanawa import kslcore
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import datetime
 from dateutil.relativedelta import relativedelta
 from itertools import groupby
-from kslcore import KslEnv
+from komanawa.kslcore import KslEnv
 from Climate_Shocks.get_past_record import get_vcsn_record, get_restriction_record
 from water_temp_monthly import temp_regr
 

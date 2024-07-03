@@ -8,7 +8,7 @@ import glob
 import netCDF4 as nc
 import os
 import matplotlib.pyplot as plt
-from matplotlib.cm import get_cmap
+from matplotlib.pyplot import get_cmap
 from Storylines.storyline_params import month_len
 from matplotlib.patches import Patch
 import pandas as pd

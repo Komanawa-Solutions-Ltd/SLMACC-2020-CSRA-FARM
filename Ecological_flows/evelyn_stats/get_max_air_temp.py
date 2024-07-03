@@ -5,7 +5,7 @@ on: 25/10/2022
 """Getting the max air temp data from Cliflo into easier columns to read"""
 
 import pandas as pd
-import kslcore
+from komanawa import kslcore
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression

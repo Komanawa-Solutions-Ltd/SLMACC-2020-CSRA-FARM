@@ -133,7 +133,7 @@ def final_plots():
     fig_size = (10, 8)
     fun = 'mean'
     from pathlib import Path
-    outdir = Path(ksl_env.slmmac_dir).joinpath("0_Y2_and_Final_Reporting/final_plots/dryland_validation")
+    outdir = Path(project_base.slmmac_dir).joinpath("0_Y2_and_Final_Reporting/final_plots/dryland_validation")
     outdir.mkdir(exist_ok=True, parents=True)
 
     weed_dict_1 = {

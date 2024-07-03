@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 def plot_all_site_v_site(nyrs):
     data = {}
     for y in nyrs:
-        outdir = os.path.join(ksl_env.slmmac_dir, f"outputs_for_ws/norm/random_scen_plots/{y}yr")
+        outdir = os.path.join(project_base.slmmac_dir, f"outputs_for_ws/norm/random_scen_plots/{y}yr")
         if not os.path.exists(outdir):
             os.makedirs(outdir)
         if y == 1:

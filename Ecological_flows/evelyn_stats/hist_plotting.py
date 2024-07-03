@@ -5,7 +5,7 @@ on: 12/10/2022
 
 # plotting histograms of the variables of outdata for various sets of data
 
-import kslcore
+from komanawa import kslcore
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

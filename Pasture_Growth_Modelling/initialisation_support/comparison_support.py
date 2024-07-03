@@ -59,7 +59,7 @@ def make_total_suite(out):
 
 def get_horarata_data():
     out = pd.read_csv(
-        ksl_env.slmmac_dir.joinpath(r"pasture_growth_modelling/dryland tuning/hororata_dryland.csv"))
+        project_base.slmmac_dir.joinpath(r"pasture_growth_modelling/dryland tuning/hororata_dryland.csv"))
     out.loc[:, 'date'] = pd.to_datetime(out.loc[:, 'date'])
     out.loc[:, 'doy'] = out.loc[:, 'date'].dt.dayofyear
     out.set_index('doy', inplace=True)
@@ -97,7 +97,7 @@ def get_witchmore_mean():
 
 def get_winchmore_boxplot():
     data = pd.read_csv(
-        os.path.join(ksl_env.slmmac_dir, 'pasture_growth_modelling/dryland tuning/Winchmore_boxplot.csv'),
+        os.path.join(project_base.slmmac_dir, 'pasture_growth_modelling/dryland tuning/Winchmore_boxplot.csv'),
         names=['x', 'y'])
     data.loc[:, 'x'] = (data.x / 100 * 12).round().astype(int)
     mapper = {
@@ -152,7 +152,7 @@ def get_winchmore_boxplot():
 
 def get_horarata_data_old():
     out = pd.read_csv(
-        ksl_env.slmmac_dir.joinpath(r"pasture_growth_modelling/dryland tuning/hororata_dryland.csv"))
+        project_base.slmmac_dir.joinpath(r"pasture_growth_modelling/dryland tuning/hororata_dryland.csv"))
     out.loc[:, 'date'] = pd.to_datetime(out.loc[:, 'date'])
     out.loc[:, 'month'] = out.loc[:, 'date'].dt.month
     out.set_index('date', inplace=True)
@@ -170,7 +170,7 @@ def get_horarata_data_old():
 
 
 def get_indicative_irrigated():
-    data = pd.read_csv(ksl_env.slmmac_dir.joinpath(r"pasture_growth_modelling/SamSBPastureGrowth_irrigated.csv"),
+    data = pd.read_csv(project_base.slmmac_dir.joinpath(r"pasture_growth_modelling/SamSBPastureGrowth_irrigated.csv"),
                        index_col=0).to_dict()
     out_sum = pd.DataFrame(index=pd.date_range('2011-01-01', '2011-12-31', name='date'), columns=['pg'], dtype=int)
     out_sum.loc[:, 'pg'] = pd.to_numeric(out_sum.index.month)

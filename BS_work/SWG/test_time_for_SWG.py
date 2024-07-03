@@ -10,7 +10,7 @@ import project_base
 
 if __name__ == '__main__':
     numbers = [1, 10, 100, 1000, 10000]
-    base_dir = ksl_env.unbacked_dir.joinpath('test_swg')
+    base_dir = project_base.unbacked_dir.joinpath('test_swg')
     outdata = pd.DataFrame(columns=['remove_npz',
                                     'number',
                                     'time_per_sim',
@@ -36,4 +36,4 @@ if __name__ == '__main__':
         outdata.loc[i, 'time_per_sim'] = (time.time() - t) / n
         outdata.loc[i, 'total_time'] = (time.time() - t)
 
-    outdata.to_csv(os.path.join(ksl_env.slmmac_dir, 'time_test_SWG.csv'))
+    outdata.to_csv(os.path.join(project_base.slmmac_dir, 'time_test_SWG.csv'))

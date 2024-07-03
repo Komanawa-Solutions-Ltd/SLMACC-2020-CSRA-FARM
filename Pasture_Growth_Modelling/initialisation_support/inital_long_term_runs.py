@@ -17,7 +17,7 @@ from Pasture_Growth_Modelling.historical_average_baseline import run_past_basgra
 
 
 if __name__ == '__main__':
-    outdir = ksl_env.slmmac_dir.joinpath(r"pasture_growth_modelling/historical_runs_v2")
+    outdir = project_base.slmmac_dir.joinpath(r"pasture_growth_modelling/historical_runs_v2")
     save = False
     data = {
         'irrigated_eyrewell': run_past_basgra_irrigated(),

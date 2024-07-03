@@ -16,9 +16,9 @@ from matplotlib.markers import MarkerStyle
 from Ecological_flows.v2.random_suite import get_colors
 from Pasture_Growth_Modelling.basgra_parameter_sets import default_mode_sites
 
-outdir_base = Path(ksl_env.slmmac_dir).joinpath('0_Y2_and_Final_Reporting/final_plots/unique_events')
+outdir_base = Path(project_base.slmmac_dir).joinpath('0_Y2_and_Final_Reporting/final_plots/unique_events')
 outdir_base.mkdir(exist_ok=True)
-data_dir = Path(ksl_env.slmmac_dir).joinpath('outputs_for_ws', 'norm', 'unique_events_v2')
+data_dir = Path(project_base.slmmac_dir).joinpath('outputs_for_ws', 'norm', 'unique_events_v2')
 figsize = (16.5, 9.25)
 
 month_to_month = {

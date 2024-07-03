@@ -23,7 +23,7 @@ from Storylines.storyline_evaluation.transition_to_fraction import corr_pg, corr
 name = 'random'
 random_pg_dir = os.path.join(default_pasture_growth_dir, name)
 random_sl_dir = os.path.join(temp_storyline_dir, name)
-gdrive_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', name)
+gdrive_outdir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', name)
 
 for d, tnm in itertools.product([random_pg_dir, random_sl_dir], ['_bad_irr', '_good_irr']):
     if not os.path.exists(f'{d}{tnm}'):

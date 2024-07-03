@@ -30,7 +30,7 @@ def change_vcsn_units(data):
             continue
 
 
-def vcsn_pull_single_site(lat, lon, year_min, year_max, use_vars='all', vcsn_dir=ksl_env.get_vscn_dir()):
+def vcsn_pull_single_site(lat, lon, year_min, year_max, use_vars='all', vcsn_dir=project_base.get_vscn_dir()):
     """
     pull vcsn data where all vars in each file, but each file is 1 year  return pandas dataframe
     :param vcsn_dir: where .nc files are

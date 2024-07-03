@@ -18,7 +18,7 @@ from Ecological_flows.v2.alternate_restrictions import new_flows, get_new_flow_r
 from Storylines.storyline_evaluation.storyline_eval_support import calc_cumulative_impact_prob
 from komanawa.basgra_nz_py.basgra_python import run_basgra_nz
 
-base_outdir = Path(ksl_env.slmmac_dir).joinpath('eco_modelling', 'historical_detrended')
+base_outdir = Path(project_base.slmmac_dir).joinpath('eco_modelling', 'historical_detrended')
 base_outdir.mkdir(exist_ok=True, parents=True)
 figsize = (16.5, 9.25)
 
@@ -179,7 +179,7 @@ def export_water_year_data(version):
     ]
     all_data = get_run_basgra_for_historical_new_flows(version, False)
     irr_months = [9, 10, 11, 12, 1, 2, 3, 4]
-    outdir = Path(ksl_env.slmmac_dir).joinpath('0_Y2_and_Final_Reporting/ecological_flows and cultural',
+    outdir = Path(project_base.slmmac_dir).joinpath('0_Y2_and_Final_Reporting/ecological_flows and cultural',
                                                'histoical_pg_rest_inc_base')
     outdir.mkdir(exist_ok=True)
     for k in keys:

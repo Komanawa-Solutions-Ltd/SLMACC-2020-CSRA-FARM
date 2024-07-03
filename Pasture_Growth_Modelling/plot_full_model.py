@@ -8,7 +8,7 @@ import netCDF4 as nc
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.cm import get_cmap
+from matplotlib.pyplot import get_cmap
 from Pasture_Growth_Modelling.full_model_implementation import out_variables, out_metadata, month_len
 from Pasture_Growth_Modelling.historical_average_baseline import get_historical_average_baseline, \
     get_historical_median_baseline

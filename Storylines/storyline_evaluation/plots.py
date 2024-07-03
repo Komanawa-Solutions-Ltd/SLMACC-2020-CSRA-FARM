@@ -8,7 +8,7 @@ from Storylines.storyline_runs.lauras_autum_drought_1yr import get_laura_autumn_
 import project_base
 from Storylines.storyline_building_support import default_mode_sites
 
-base_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'random_scen_plots')
+base_outdir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'random_scen_plots')
 
 correct_stepsize = 0.1
 

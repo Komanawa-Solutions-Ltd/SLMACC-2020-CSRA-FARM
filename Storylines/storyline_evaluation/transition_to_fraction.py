@@ -127,7 +127,7 @@ target_ranges = {
 
 def get_most_probabile(site, mode, correct=False):
     out = {}  # keys integer months and '1yr'
-    gdrive_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'random')
+    gdrive_outdir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'random')
     bad = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_bad_irr.hdf'), 'prob')
 
     good = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_good_irr.hdf'), 'prob')
@@ -150,7 +150,7 @@ def get_most_probabile(site, mode, correct=False):
 
 def save_most_probable_storylines(outdir):
     os.makedirs(outdir, exist_ok=True)
-    gdrive_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'random')
+    gdrive_outdir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'random')
     bad = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_bad_irr.hdf'), 'prob')
 
     good = pd.read_hdf(os.path.join(gdrive_outdir, f'IID_probs_pg_1y_good_irr.hdf'), 'prob')
@@ -188,7 +188,7 @@ if __name__ == '__main__':
         5,
         6,
     ]
-    outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'most_probable')
+    outdir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'most_probable')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     outdata = pd.DataFrame(index=plot_months)

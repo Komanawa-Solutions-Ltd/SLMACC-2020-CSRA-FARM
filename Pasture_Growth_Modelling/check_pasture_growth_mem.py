@@ -10,7 +10,7 @@ import os
 
 #@profile
 def test_mem():
-    run_pasture_growth(storyline_key='test100', outdir=os.path.join(ksl_env.unbacked_dir, 'test_full_model'),
+    run_pasture_growth(storyline_key='test100', outdir=os.path.join(project_base.unbacked_dir, 'test_full_model'),
                        nsims='all', padock_rest=True, mode_sites=[('irrigated', 'eyrewell'),
                                                                   ('irrigated', 'oxford'), ],
                        save_daily=False, description='to test functinality')
@@ -23,7 +23,7 @@ def test_mem():
 #     11                                         def test_mem():
 #     12                                             # plot and compair multiple paddock vs non paddock!
 #     13                                             # test against storyline with non zero restriction data
-#     14    118.6 MiB      0.0 MiB           1       run_pasture_growth(storyline_key='test100', outdir=os.path.join(ksl_env.slmmac_dir_unbacked, 'test_full_model'),
+#     14    118.6 MiB      0.0 MiB           1       run_pasture_growth(storyline_key='test100', outdir=os.path.join(project_base.slmmac_dir_unbacked, 'test_full_model'),
 #     15    118.6 MiB      0.0 MiB           1                          nsims='all', padock_rest=True, mode_sites=[('irrigated', 'eyrewell'),
 #     16    118.6 MiB      0.0 MiB           1                                                                     ('irrigated', 'oxford'), ],
 #     17    140.3 MiB     21.7 MiB           1                          save_daily=False, description='to test functinality')

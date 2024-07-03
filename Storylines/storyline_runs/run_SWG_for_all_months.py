@@ -14,7 +14,7 @@ from Storylines.storyline_building_support import make_sampling_options
 from BS_work.SWG.SWG_multiprocessing import run_swg_mp
 
 individual_dir = os.path.join(climate_shocks_env.temp_storyline_dir, 'individual_runs')
-log_dir = os.path.join(ksl_env.unbacked_dir, "SWG_runs/logs")
+log_dir = os.path.join(project_base.unbacked_dir, "SWG_runs/logs")
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
@@ -46,7 +46,7 @@ def generate_SWG_output_support(vcfs=default_vcf, base_dirs=default_base_dir):
     outdirs = []
     for p in os.listdir(individual_dir):
         storylines.append(os.path.join(individual_dir, p))
-        outdir = os.path.join(ksl_env.unbacked_dir, 'SWG_runs', 'populate_outputs', p.split('.')[0])
+        outdir = os.path.join(project_base.unbacked_dir, 'SWG_runs', 'populate_outputs', p.split('.')[0])
         outdirs.append(outdir)
     run_id = datetime.datetime.now().isoformat().replace(':', '-').split('.')[0]
     run_swg_mp(storyline_paths=storylines, outdirs=outdirs, ns=1,
@@ -112,6 +112,6 @@ if __name__ == '__main__':
     run = False  # to prevent accidental re-run
     if run:
         generate_SWG_output_support()
-        full_dir = os.path.join(ksl_env.unbacked_dir, 'SWG_runs', 'full_SWG')
+        full_dir = os.path.join(project_base.unbacked_dir, 'SWG_runs', 'full_SWG')
         generate_all_swg(10000, True, full_dir)
         clean_individual(full_dir)

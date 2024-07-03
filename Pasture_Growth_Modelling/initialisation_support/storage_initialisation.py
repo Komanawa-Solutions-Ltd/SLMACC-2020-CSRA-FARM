@@ -170,6 +170,6 @@ def test_storage_initialisation_and_checks(outdir):
 
 
 if __name__ == '__main__':
-    produce_storage_initialisation_and_checks(os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm",
+    produce_storage_initialisation_and_checks(os.path.join(project_base.slmmac_dir, r"outputs_for_ws\norm",
                                                            'storage_initalisation_to_WS'),
                                               plot=True)

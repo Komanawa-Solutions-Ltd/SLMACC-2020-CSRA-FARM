@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 from Climate_Shocks.climate_shocks_env import event_def_path
 
-baseoutdir = os.path.join(ksl_env.unbacked_dir, 'gen_vfinal')
+baseoutdir = os.path.join(project_base.unbacked_dir, 'gen_vfinal')
 
 month_len = {
     1: 31,

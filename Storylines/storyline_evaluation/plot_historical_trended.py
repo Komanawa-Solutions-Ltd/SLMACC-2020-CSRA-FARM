@@ -24,7 +24,7 @@ figsize = (16.5, 9.25)
 base_color = 'limegreen'
 base_ls = 'dashdot'
 base_lw = 2
-base_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'cumulative_historical_trend')
+base_outdir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'cumulative_historical_trend')
 if not os.path.exists(base_outdir):
     os.makedirs(base_outdir)
 
@@ -37,7 +37,7 @@ def yr1_cumulative_probability(correct=False):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     data = pd.read_csv(
-        ksl_env.unbacked_dir.joinpath("pasture_growth_sims/historical_quantified_1yr_trend/IID_probs_pg.csv"))
+        project_base.unbacked_dir.joinpath("pasture_growth_sims/historical_quantified_1yr_trend/IID_probs_pg.csv"))
     if correct:
         data = corr_pg(data)
 
@@ -58,7 +58,7 @@ def nyr_cumulative_prob(nyr, correct=False, sequential=True):
     outdir = os.path.join(base_outdir, f'{nyr}yr-{seq}{cor}')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    data = pd.read_csv(ksl_env.unbacked_dir.joinpath("pasture_growth_sims/historical_quantified_1yr_trend",
+    data = pd.read_csv(project_base.unbacked_dir.joinpath("pasture_growth_sims/historical_quantified_1yr_trend",
                                                      "IID_probs_pg.csv"))
     if correct:
         data = corr_pg(data)

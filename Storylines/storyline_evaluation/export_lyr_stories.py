@@ -79,6 +79,6 @@ def export_1yr_stories(output_dir, n, anamoly, site, mode, tolerance):
 
 
 if __name__ == '__main__':
-    output_dir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'top_prob_1yr_sl')
+    output_dir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'top_prob_1yr_sl')
     for mode, site in default_mode_sites:
         export_1yr_stories(output_dir, 100, -2500, site, mode, 500)

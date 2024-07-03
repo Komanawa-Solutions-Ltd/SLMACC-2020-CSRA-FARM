@@ -12,7 +12,7 @@ from Climate_Shocks.climate_shocks_env import event_def_path, supporting_data_di
 from Storylines.irrigation_mapper import get_irr_by_quantile
 from Climate_Shocks.get_past_record import get_restriction_record
 
-alternate_rest_dir = os.path.join(ksl_env.proj_root, 'Ecological_flows/v2/alternate_restrictions')
+alternate_rest_dir = os.path.join(project_base.proj_root, 'Ecological_flows/v2/alternate_restrictions')
 
 new_flows = {
     # 'name': (min flow start, min flow stop)
@@ -93,8 +93,8 @@ def make_new_rest_data(name):
     # detrend the new restriction record
     print('detrending making detrended restriction record')
     detrend_rest = os.path.join(alternate_rest_dir, f'{name}-detrend_restriction_record.csv')
-    fun = os.path.join(ksl_env.proj_root, r'BS_work\f_rest_detrend.py')
-    shtemps = os.path.join(ksl_env.proj_root, r'BS_work\SWG\SHTemps.dat')
+    fun = os.path.join(project_base.proj_root, r'BS_work\f_rest_detrend.py')
+    shtemps = os.path.join(project_base.proj_root, r'BS_work\SWG\SHTemps.dat')
 
     result = subprocess.run([sys.executable, fun, rest_data, shtemps, detrend_rest],
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)

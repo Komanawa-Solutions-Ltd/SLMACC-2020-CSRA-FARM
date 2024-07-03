@@ -7,7 +7,7 @@ import pandas as pd
 from pathlib import Path
 from project_base import proj_root
 import matplotlib.pyplot as plt
-from matplotlib.cm import get_cmap
+from matplotlib.pyplot import get_cmap
 from Storylines.storyline_evaluation.storyline_characteristics_for_impact import get_suite
 from Storylines.storyline_runs.run_random_suite import get_1yr_data
 

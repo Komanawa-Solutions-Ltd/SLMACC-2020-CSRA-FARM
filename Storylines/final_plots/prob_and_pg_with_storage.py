@@ -9,7 +9,7 @@ import numpy as np
 from Storylines.storyline_runs.run_random_suite import get_1yr_data
 from Storylines.storyline_evaluation.storyline_characteristics_for_impact import get_exceedence, month_len
 
-base_outdir = os.path.join(ksl_env.slmmac_dir, 'final_plots')
+base_outdir = os.path.join(project_base.slmmac_dir, 'final_plots')
 os.makedirs(base_outdir, exist_ok=True)
 
 plt_modes = [

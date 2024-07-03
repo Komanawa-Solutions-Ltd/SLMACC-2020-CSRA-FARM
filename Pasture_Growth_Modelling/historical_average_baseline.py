@@ -191,7 +191,7 @@ def get_historical_median_baseline(site, mode, years, key='PGR', recalc=False, v
 
 
 def export_true_historical():
-    outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'true_historical_average_trended')
+    outdir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'true_historical_average_trended')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]

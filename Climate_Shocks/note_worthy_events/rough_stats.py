@@ -10,7 +10,7 @@ from Climate_Shocks.get_past_record import get_restriction_record
 from Climate_Shocks.climate_shocks_env import event_def_path
 
 
-outdir = ksl_env.slmmac_dir.joinpath("event_definition/mutual_info")
+outdir = project_base.slmmac_dir.joinpath("event_definition/mutual_info")
 if not os.path.exists(outdir):
     os.makedirs(outdir)
 

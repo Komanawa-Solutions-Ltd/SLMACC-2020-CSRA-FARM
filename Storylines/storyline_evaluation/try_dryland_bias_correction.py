@@ -12,7 +12,7 @@ from Pasture_Growth_Modelling.historical_average_baseline import get_historical_
 
 
 def try_bias_correction():
-    outdir = os.path.join(ksl_env.slmmac_dir,'outputs_for_ws', 'norm','historical_trended v historical plots')
+    outdir = os.path.join(project_base.slmmac_dir,'outputs_for_ws', 'norm','historical_trended v historical plots')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
@@ -21,7 +21,7 @@ def try_bias_correction():
     historical = historical.groupby(['year', 'month']).mean()
 
     quantified = pd.read_csv(os.path.join(
-        ksl_env.slmmac_dir,
+        project_base.slmmac_dir,
         r"outputs_for_ws\norm\historical_quantified_1yr_trend\oxford-dryland\m_PGR.csv"),
         skiprows=1
     )
@@ -51,7 +51,7 @@ def try_bias_correction():
     fig.tight_layout()
     fig.savefig(os.path.join(outdir,'time_series.png'))
     baseline = \
-    pd.read_csv(os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm\Baseline\oxford-dryland\m_PGR.csv"),
+    pd.read_csv(os.path.join(project_base.slmmac_dir, r"outputs_for_ws\norm\Baseline\oxford-dryland\m_PGR.csv"),
                 skiprows=1).loc[0].iloc[1:13]
     baseline.index = baseline.index.values.astype(int)
     plt_data = use_data.groupby('month').mean().drop(columns='year')

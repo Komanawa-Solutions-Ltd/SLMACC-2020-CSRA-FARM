@@ -52,7 +52,7 @@ def make_event_prob(base_dir, outpath=os.path.join(climate_shocks_env.supporting
 
 
 if __name__ == '__main__':
-    base_dir = os.path.join(ksl_env.unbacked_dir, 'SWG_runs', 'try_individual_nPrecip')
+    base_dir = os.path.join(project_base.unbacked_dir, 'SWG_runs', 'try_individual_nPrecip')
     out_dict = {}
     for d in os.listdir(base_dir):
         if '.csv' in d:

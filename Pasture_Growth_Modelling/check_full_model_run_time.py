@@ -15,7 +15,7 @@ def check_full_model_run_time():
     t = time.time()
 
     run_pasture_growth(storyline_path=os.path.join(storyline_dir,'0-baseline.csv'),
-                       outdir=os.path.join(ksl_env.unbacked_dir, 'test_full_modelbase_10000'),
+                       outdir=os.path.join(project_base.unbacked_dir, 'test_full_modelbase_10000'),
                        nsims=10000, padock_rest=False, mode_sites=[('irrigated', 'eyrewell')],
                        save_daily=True, description='to test functinality')
 
@@ -36,7 +36,7 @@ def check_full_model_run_time():
         else:
             dval = 'monthly'
         run_pasture_growth(storyline_path=os.path.join(storyline_dir,'0-baseline.csv'),
-                           outdir=os.path.join(ksl_env.unbacked_dir,
+                           outdir=os.path.join(project_base.unbacked_dir,
                                                'test_full_model0-base{}_{}_{}'.format(num, val, dval)),
                            nsims=num, padock_rest=pad, mode_sites=[('irrigated', 'eyrewell')],
                            save_daily=daily, description='to test functinality')
@@ -46,7 +46,7 @@ def check_full_model_run_time():
         out.loc[i + 1, 'paddock_res'] = pad
         out.loc[i + 1, 'save_daily'] = daily
 
-    out.to_csv(os.path.join(ksl_env.slmmac_dir, 'time_test_basgra_.csv'))
+    out.to_csv(os.path.join(project_base.slmmac_dir, 'time_test_basgra_.csv'))
 
 if __name__ == '__main__':
     check_full_model_run_time()

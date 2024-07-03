@@ -6,7 +6,7 @@ on: 25/10/2022
 compare max daily with mean daily air temp through regression"""
 
 import pandas as pd
-import kslcore
+from komanawa import kslcore
 from sklearn.linear_model import LinearRegression
 
 #base_path = kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/Waiau_Uwha_tidied.csv")

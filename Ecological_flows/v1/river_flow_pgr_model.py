@@ -44,7 +44,7 @@ out_variables_flow = (
 
 irr_flow_gen = get_irrigation_generator()
 
-default_riv_pasture_growth_dir = os.path.join(os.path.join(ksl_env.unbacked_dir, 'river_pgr_sims'))
+default_riv_pasture_growth_dir = os.path.join(os.path.join(project_base.unbacked_dir, 'river_pgr_sims'))
 os.makedirs(default_riv_pasture_growth_dir, exist_ok=True)
 
 

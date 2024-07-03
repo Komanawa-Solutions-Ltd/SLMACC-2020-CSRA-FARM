@@ -9,7 +9,7 @@ from Storylines.storyline_evaluation.storyline_characteristics_for_impact import
 import os
 import project_base
 
-base_dir = os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm\possible_final_stories")
+base_dir = os.path.join(project_base.slmmac_dir, r"outputs_for_ws\norm\possible_final_stories")
 
 # bounds are in fraction of new year.
 eyrewell_irr_l = 12.050 * 1000

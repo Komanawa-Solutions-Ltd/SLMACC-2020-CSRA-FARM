@@ -86,7 +86,7 @@ def print_baseline_limits():
 
 
 def plot_storage():
-    outdir = Path(ksl_env.slmmac_dir).joinpath('0_Y2_and_Final_Reporting', 'final_plots', 'storage_scens')
+    outdir = Path(project_base.slmmac_dir).joinpath('0_Y2_and_Final_Reporting', 'final_plots', 'storage_scens')
     outdir.mkdir(exist_ok=True)
     scen_data = get_scenario_data()
     scens = [
@@ -128,7 +128,7 @@ def plot_storage():
 
 
 def plot_base():
-    outdir = Path(ksl_env.slmmac_dir).joinpath('0_Y2_and_Final_Reporting', 'final_plots', 'base_scens')
+    outdir = Path(project_base.slmmac_dir).joinpath('0_Y2_and_Final_Reporting', 'final_plots', 'base_scens')
     outdir.mkdir(exist_ok=True)
     sms = [
         'eyrewell-irrigated',
