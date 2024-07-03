@@ -8,7 +8,7 @@ import numpy as np
 import os
 import psutil
 import netCDF4 as nc
-import ksl_env
+import project_base
 import datetime
 import time
 from BS_work.SWG.SWG_wrapper import measures_cor

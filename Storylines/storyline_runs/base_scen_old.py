@@ -6,7 +6,7 @@
 import itertools
 import pandas as pd
 import time
-import ksl_env
+import project_base
 import os
 from Climate_Shocks.climate_shocks_env import storyline_dir
 from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growth, default_pasture_growth_dir
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         ]
         for p in path_list:
             site, mode = p.split('-')[-2], p.split('-')[-1].replace('.nc', '')
-            base_dir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'Baseline', f'{site}-{mode}', 'plots')
+            base_dir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'Baseline', f'{site}-{mode}', 'plots')
             if not os.path.exists(base_dir):
                 os.makedirs(base_dir)
             plot_sims(data_paths=[p], plot_ind=True, nindv=50, save_dir=base_dir, show=False, figsize=(11, 8),
@@ -56,12 +56,12 @@ if __name__ == '__main__':
                       )
 
     if export:
-        export_all_in_pattern(base_outdir=os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'Baseline'),
-                              patterns=os.path.join(ksl_env.unbacked_dir,
+        export_all_in_pattern(base_outdir=os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'Baseline'),
+                              patterns=os.path.join(project_base.unbacked_dir,
                                                     "pasture_growth_sims/baseline_sim_no_pad/*.nc"),
                               )
 
     if prob_pg:
         data = extract_additional_sims(storyline_dir,
                                        os.path.join(default_pasture_growth_dir, 'baseline_sim_no_pad'), 1)
-        data.to_csv(os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'Baseline', 'prob_iid_pg.csv'))
+        data.to_csv(os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'Baseline', 'prob_iid_pg.csv'))

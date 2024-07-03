@@ -2,7 +2,7 @@
  Author: Matt Hanson
  Created: 2/07/2021 8:49 AM
  """
-import ksl_env
+import project_base
 from Pasture_Growth_Modelling.full_pgr_model_mp import run_full_model_mp, default_pasture_growth_dir, pgm_log_dir, \
     default_mode_sites
 from Storylines.storyline_evaluation.storyline_eval_support import calc_cumulative_impact_prob

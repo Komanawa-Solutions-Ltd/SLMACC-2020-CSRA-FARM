@@ -10,7 +10,7 @@ from Ecological_flows.v2.alternate_restrictions import naturalise_historical_flo
 import matplotlib.pyplot as plt
 from matplotlib.cm import get_cmap
 import pandas as pd
-import ksl_env
+import project_base
 
 figsize = (11, 8)
 

@@ -2,7 +2,7 @@
  Author: Matt Hanson
  Created: 21/04/2021 1:20 PM
  """
-import ksl_env
+import project_base
 import numpy as np
 import pandas as pd
 from Pasture_Growth_Modelling.full_model_implementation import _gen_input, default_swg_dir, month_len, abs_max_irr, \

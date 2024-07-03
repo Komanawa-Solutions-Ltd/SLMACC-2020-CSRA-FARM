@@ -3,7 +3,7 @@
  Created: 15/02/2021 10:34 AM
  """
 from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growth
-import ksl_env
+import project_base
 import os
 #from memory_profiler import profile
 

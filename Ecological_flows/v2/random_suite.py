@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 import os
 from scipy.interpolate import interp1d
-import ksl_env
+import project_base
 from Storylines.storyline_building_support import default_mode_sites
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, get_nyr_suite, get_nyr_idxs
 from Storylines.irrigation_mapper import get_irr_by_quantile

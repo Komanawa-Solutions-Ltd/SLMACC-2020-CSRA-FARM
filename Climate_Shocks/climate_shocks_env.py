@@ -2,7 +2,7 @@
  Author: Matt Hanson
  Created: 4/01/2021 9:19 AM
  """
-import ksl_env
+import project_base
 import os
 
 event_def_path = os.path.join(os.path.dirname(__file__), 'supporting_data', 'event_definition_data.csv')  # in git repo

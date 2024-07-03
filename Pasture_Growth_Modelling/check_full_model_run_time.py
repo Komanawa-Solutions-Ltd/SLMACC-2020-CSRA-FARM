@@ -4,7 +4,7 @@
  """
 import time
 from Pasture_Growth_Modelling.full_model_implementation import run_pasture_growth
-import ksl_env
+import project_base
 import os
 import pandas as pd
 import itertools

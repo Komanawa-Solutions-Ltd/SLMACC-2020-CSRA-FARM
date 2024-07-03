@@ -6,7 +6,7 @@
 import pandas as pd
 import numpy as np
 import os
-import ksl_env
+import project_base
 from Pasture_Growth_Modelling.storage_parameter_sets import set_store_parameters, get_store_reseed_trig_basal
 
 # add basgra nz functions

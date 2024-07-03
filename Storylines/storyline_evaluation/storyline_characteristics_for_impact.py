@@ -11,7 +11,7 @@ import os
 from sklearn.cluster import KMeans, AgglomerativeClustering, MeanShift
 from Storylines.storyline_evaluation.plot_storylines import plot_1_yr_storylines
 from Storylines.storyline_evaluation.plot_nyr_suite import plot_impact_for_sites
-import ksl_env
+import project_base
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, default_mode_sites
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
 from sklearn.decomposition import PCA

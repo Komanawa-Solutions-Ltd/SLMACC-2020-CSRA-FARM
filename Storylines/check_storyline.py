@@ -7,7 +7,7 @@ import numpy as np
 import os
 from Climate_Shocks.climate_shocks_env import event_def_path
 import itertools
-import ksl_env
+import project_base
 import glob
 
 

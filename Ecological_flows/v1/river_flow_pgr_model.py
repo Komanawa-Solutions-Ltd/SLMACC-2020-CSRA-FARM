@@ -3,7 +3,7 @@
  Created: 12/10/2021 9:24 AM
  """
 import pandas as pd
-import ksl_env
+import project_base
 from Climate_Shocks.Stochastic_Weather_Generator.irrigation_flow_generator import get_irrigation_generator, \
     make_current_restrictions
 from Pasture_Growth_Modelling.full_model_implementation import default_mode_sites, default_swg_dir, month_len, \

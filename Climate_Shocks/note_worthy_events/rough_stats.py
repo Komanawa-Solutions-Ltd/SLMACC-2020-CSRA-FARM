@@ -5,7 +5,7 @@
 import pandas as pd
 import numpy as np
 import os
-import ksl_env
+import project_base
 from Climate_Shocks.get_past_record import get_restriction_record
 from Climate_Shocks.climate_shocks_env import event_def_path
 

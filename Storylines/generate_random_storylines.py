@@ -8,7 +8,7 @@ import numpy as np
 import os
 from copy import deepcopy
 
-import ksl_env
+import project_base
 from Storylines.check_storyline import get_past_event_frequency
 from Storylines.storyline_building_support import map_storyline_rest, prev_month, month_fchange
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir

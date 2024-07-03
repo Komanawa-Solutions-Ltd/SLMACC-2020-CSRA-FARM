@@ -4,7 +4,7 @@
  """
 import pandas as pd
 from Storylines.check_storyline import ensure_no_impossible_events
-import ksl_env
+import project_base
 import os
 
 # old and depreciated

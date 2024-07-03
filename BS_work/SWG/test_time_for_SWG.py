@@ -6,7 +6,7 @@ from BS_work.SWG.SWG_wrapper import *
 import itertools
 import pandas as pd
 import time
-import ksl_env
+import project_base
 
 if __name__ == '__main__':
     numbers = [1, 10, 100, 1000, 10000]

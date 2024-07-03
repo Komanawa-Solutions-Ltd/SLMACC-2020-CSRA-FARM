@@ -1,7 +1,7 @@
 import pandas as pd
 from copy import deepcopy
 import os
-import ksl_env
+import project_base
 from Storylines.storage_runs.run_hurt_scare_mostprob import change_to_daily_pg, default_mode_sites
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch

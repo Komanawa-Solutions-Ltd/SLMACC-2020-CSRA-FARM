@@ -5,7 +5,7 @@
 import pandas as pd
 import numpy as np
 import os
-import ksl_env
+import project_base
 
 # add basgra nz functions
 from komanawa.basgra_nz_py.basgra_python import run_basgra_nz

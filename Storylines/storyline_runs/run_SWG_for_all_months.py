@@ -6,7 +6,7 @@
 import os
 import datetime
 import shutil
-import ksl_env
+import project_base
 import pandas as pd
 from Climate_Shocks import climate_shocks_env
 from BS_work.SWG.SWG_wrapper import default_vcf, default_base_dir, clean_swg

@@ -5,7 +5,7 @@ on: 27/05/22
 import pandas as pd
 import numpy as np
 import os
-import ksl_env
+import project_base
 import subprocess
 import sys
 from Climate_Shocks.climate_shocks_env import event_def_path, supporting_data_dir

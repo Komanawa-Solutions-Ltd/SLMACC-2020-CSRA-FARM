@@ -4,7 +4,7 @@
  """
 import os.path
 
-import ksl_env
+import project_base
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, get_nyr_suite, default_mode_sites
 from Storylines.storyline_evaluation.plot_nyr_suite import plot_impact_for_sites
 import matplotlib.pyplot as plt
