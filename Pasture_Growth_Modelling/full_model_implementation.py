@@ -24,6 +24,8 @@ from Pasture_Growth_Modelling.historical_average_baseline import get_historical_
 from komanawa.basgra_nz_py.basgra_python import run_basgra_nz, get_month_day_to_nonleap_doy
 from komanawa.basgra_nz_py.supporting_functions.output_metadata import get_output_metadata
 
+default_swg_dir = project_base.get_stocastic_weather_gen_dir()
+
 # consider multiprocessing here???? no up a level (e.g. at teh storyline level)
 default_pasture_growth_dir = os.path.join(os.path.join(project_base.unbacked_dir, 'pasture_growth_sims'))
 if not os.path.exists(default_pasture_growth_dir):
@@ -96,7 +98,7 @@ month_len = {
     12: 31,
 }
 
-default_swg_dir = os.path.join(project_base.unbacked_dir, 'SWG_runs', 'full_SWG')
+
 
 
 def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_sites, padock_rest=False,

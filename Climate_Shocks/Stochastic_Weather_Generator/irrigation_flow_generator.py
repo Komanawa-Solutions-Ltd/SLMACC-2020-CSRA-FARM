@@ -18,7 +18,7 @@ from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_smd_
 from Climate_Shocks import climate_shocks_env
 from BS_work.SWG.SWG_wrapper import get_monthly_smd_mean_detrended
 
-baseoutdir = os.path.join(project_base.unbacked_dir, 'gen_vfinal_flow')
+baseoutdir = project_base.get_irrigation_gen_vfinal()
 
 month_len = {
     1: 31,
@@ -180,14 +180,9 @@ def examine_means(ext='png'):
 
 
 def get_irrigation_generator(recalc=False):
-    from socket import gethostname
-    host = gethostname()
-    if host !='wanganui':
-        nsims = 1e7
-        raise ValueError('#todo use the detrened flow data and set the seeed!!!!')
-    else:
-        nsims = 1e5
-
+    if recalc:
+        raise InterruptedError('should not need to recalc, should pull from large_working')
+    nsims = 1e7
     nsims = int(nsims)
     input_data, block, sim_len, nmonths_comments = make_input_data_1month()
     comments = '''generator created by get irrigation generator {} to provide daily 

@@ -99,6 +99,7 @@ if __name__ == '__main__':
     get_monthly_smd_mean_detrended(False, True)
 
     if re_run_SWG:
+        raise InterruptedError('re-run SWG should not be necessary, as the data has not changed, ')
         # make probality of creating an event with SWG
         prob_dir = os.path.join(project_base.unbacked_dir, 'SWG_runs', 'id_prob')
         generate_SWG_output_support()  # this will run one of each which makes things faster, but requires a pool of 1
@@ -107,7 +108,7 @@ if __name__ == '__main__':
 
         make_event_prob(prob_dir)
         # run SWG
-        full_dir = os.path.join(ksl_env.unbacked_dir, 'SWG_runs', 'full_SWG')
+        full_dir = os.path.join(project_base.unbacked_dir, 'SWG_runs', 'full_SWG')
         generate_all_swg(10000, True, full_dir)
         clean_individual(full_dir, duplicate=False)
 

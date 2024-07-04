@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 from Climate_Shocks.climate_shocks_env import event_def_path
 
-baseoutdir = os.path.join(project_base.unbacked_dir, 'gen_vfinal')
+baseoutdir = project_base.get_gen_vfinal()
 
 month_len = {
     1: 31,
@@ -165,6 +165,8 @@ def examine_means():
 
 
 def get_irrigation_generator(recalc=False):
+    if recalc:
+        raise InterruptedError('should not need to recalc, should pull from large_working')
     nsims = 1e7
     nsims = int(nsims)
     input_data, block, sim_len, nmonths_comments = make_input_data_1month()
