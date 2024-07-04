@@ -76,12 +76,7 @@ out_variables = (
 
 )
 
-from socket import gethostname
-
-if gethostname() == 'wanganui':
-    irr_gen = None
-else:
-    irr_gen = get_irrigation_generator()
+irr_gen = get_irrigation_generator()
 
 month_len = {
     1: 31,
@@ -97,8 +92,6 @@ month_len = {
     11: 30,
     12: 31,
 }
-
-
 
 
 def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_sites, padock_rest=False,

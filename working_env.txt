@@ -15,6 +15,6 @@ conda install -c conda-forge scikit-learn for the pca and clustering
 ####  2024 update ####
 conda create  --channel conda-forge --name slmacc python
 conda activate slmacc
-pip install numpy pandas matplotlib netcdf4 scipy tables psutil xlrd geopandas pyyaml openpyxl scikit-learn
+pip install numpy==1.26.4 pandas matplotlib netcdf4 scipy tables psutil xlrd geopandas pyyaml openpyxl scikit-learn
 pip install git+https://github.com/Komanawa-Solutions-Ltd/komanawa-basgra-nz-py.git
 pip install git+https://$kslgittoken@github.com/KSLCORE/komanawa-kslcore.git

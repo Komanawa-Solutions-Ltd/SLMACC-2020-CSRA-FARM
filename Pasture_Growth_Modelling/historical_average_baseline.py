@@ -110,7 +110,7 @@ def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False, 
 
     out.loc[:, 'PER_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
     if key == 'PGR':
-        all_data = out.groupby('month').mean()['pg'].to_dict()
+        all_data = out.groupby('month')['pg'].mean().to_dict()
     elif key in ['PGRA', 'PGRA_cum', 'F_REST']:
         all_data = None
     else:
