@@ -78,12 +78,7 @@ def get_pgr_prob_baseline_stiched(nyears, site, mode):  # using historical basel
     return outpgr
 
 
-def calc_impact_prob(pgr, prob, stepsize=0.1, normalize=True):
-    # todo since the storylines are selected by markov chain this
-    #  is not the correct way to calculate the probability of impact
-    #  it double counts the probability of impact.  instead simply use the frequency of the data in our sample.
-    #  (our sample is representitive), this needs to be fixed!!
-
+def calc_impact_prob(pgr, stepsize=0.1):
     """
     chunk and sum probability based on the pgr, in steps
     :param pgr:
@@ -93,7 +88,6 @@ def calc_impact_prob(pgr, prob, stepsize=0.1, normalize=True):
     :return:
     """
     pgr = np.atleast_1d(pgr)
-    prob = np.atleast_1d(prob)
 
     step_decimals = len(str(stepsize).split('.')[-1])
     min_val = np.round(np.min(pgr) - stepsize, step_decimals)
@@ -101,20 +95,14 @@ def calc_impact_prob(pgr, prob, stepsize=0.1, normalize=True):
     steps = np.arange(min_val, max_val + stepsize / 2, stepsize / 2)
     out_prob = np.zeros(len(steps) - 1)
     out_pgr = np.zeros(len(steps) - 1)
-    mx_prob = np.ceil(prob).max()
     for i, (l, u) in enumerate(zip(steps[0:-1], steps[1:])):
         out_pgr[i] = np.nanmean([l, u])
         idx = (pgr >= l) & (pgr < u)
-        if normalize:
-            out_prob[i] = np.nansum(10 ** (prob[idx]-mx_prob))
-        else:
-            out_prob[i] = np.nansum(10 ** (prob[idx]))
-    if normalize:
-        out_prob *= 1 / out_prob.sum()
+        out_prob[i] = idx.sum()/len(pgr)
     return out_pgr, out_prob
 
 
-def calc_cumulative_impact_prob(pgr, prob, stepsize=0.1, more_production_than=True):
+def calc_cumulative_impact_prob(pgr, prob, stepsize=0.1, more_production_than=True): # todo this needs to be fixed...
     """
     calc the exceedence probaility
     :param pgr:

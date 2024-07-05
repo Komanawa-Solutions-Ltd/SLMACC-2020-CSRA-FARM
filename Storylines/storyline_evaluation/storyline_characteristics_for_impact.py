@@ -60,7 +60,7 @@ def get_month_limits_from_most_probable(eyrewell_irr, oxford_irr, oxford_dry, co
     return monthly_limits
 
 
-def get_exceedence(site, mode, correct):
+def get_exceedence(site, mode, correct): # todo anything using this must be re-run
     if correct:
         exceedence = pd.read_csv(
             os.path.join(project_base.slmmac_dir, r"outputs_for_ws\norm",
@@ -80,7 +80,7 @@ def get_exceedence(site, mode, correct):
     return exceedence
 
 
-def add_exceedence_prob(impact_data, correct,
+def add_exceedence_prob(impact_data, correct,  # todo anything using this must be re-run
                         impact_in_tons=False):  # todo how to handle for new mode-sites, this is the hard one.... ?? don't understand
     """
 
