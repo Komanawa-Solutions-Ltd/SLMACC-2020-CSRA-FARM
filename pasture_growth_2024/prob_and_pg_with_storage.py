@@ -50,17 +50,17 @@ def prob_non_exceed(figsize=(10, 8), suffix='.png'):
         for c, mode in zip(colors, plt_mode):
             exceed = pd.DataFrame(get_1yr_non_exceedence_prob(site, mode, None)).reset_index()
             exceed = exceed.sort_values('pg')
-            x = np.concatenate(([0], exceed.pg, [20000]))
+            x = np.concatenate(([0], exceed.pg, [20000]))/1000
             y = np.concatenate(([0], exceed.prob, [100]))
 
             ax.plot(x, y, c=c, label=f'{site} {mode}'.title())
             ax.fill_between(x, 0, y, color=c, alpha=0.5)
         ax.set_title(f'{site.capitalize()} Non-exceedance probability')
-        ax.set_xlim(0, 19000)
+        ax.set_xlim(0, 19000/1000)
         legax.legend(*ax.get_legend_handles_labels(), loc='center left')
 
-    fig.supxlabel('Pasture growth (kg dm/ha/year)')
-    fig.supylabel('Cumulative probability')
+    fig.supxlabel('Pasture growth (tons DM / ha / year)')
+    fig.supylabel('Cumulative probability (%)')
     fig.tight_layout()
     fig.savefig(os.path.join(outdir, f'prob_non_exceed{suffix}'))
 
