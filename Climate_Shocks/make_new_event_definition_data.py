@@ -5,7 +5,7 @@
 import pandas as pd
 import numpy as np
 import os
-import ksl_env
+import project_base
 import subprocess
 import sys
 import glob
@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     re_run_SWG = False
 
-    event_def_dir = ksl_env.shared_drives(r"Z2003_SLMACC\event_definition/norm")
+    event_def_dir = project_base.slmmac_dir.joinpath(r"event_definition/norm")
     if not os.path.exists(event_def_dir):
         os.makedirs(event_def_dir)
     vcsn_version = 'detrended2'
@@ -99,15 +99,16 @@ if __name__ == '__main__':
     get_monthly_smd_mean_detrended(False, True)
 
     if re_run_SWG:
+        raise InterruptedError('re-run SWG should not be necessary, as the data has not changed, ')
         # make probality of creating an event with SWG
-        prob_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'id_prob')
+        prob_dir = os.path.join(project_base.unbacked_dir, 'SWG_runs', 'id_prob')
         generate_SWG_output_support()  # this will run one of each which makes things faster, but requires a pool of 1
         generate_all_swg(1000, False, outdir=prob_dir)
         from BS_work.SWG.check_1_month_runs import make_event_prob
 
         make_event_prob(prob_dir)
         # run SWG
-        full_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SWG')
+        full_dir = os.path.join(project_base.unbacked_dir, 'SWG_runs', 'full_SWG')
         generate_all_swg(10000, True, full_dir)
         clean_individual(full_dir, duplicate=False)
 

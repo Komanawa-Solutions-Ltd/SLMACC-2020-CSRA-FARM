@@ -1,14 +1,13 @@
-import ksl_env
+import project_base
 import os
 import pandas as pd
 from Climate_Shocks.get_past_record import get_vcsn_record, event_def_path
 import matplotlib.pyplot as plt
 
-ksl_env.add_basgra_nz_path()
-from basgra_python import run_basgra_nz
-from supporting_functions.plotting import plot_multiple_results
-from supporting_functions.woodward_2020_params import get_woodward_mean_full_params
-from input_output_keys import matrix_weather_keys_pet
+from komanawa.basgra_nz_py.basgra_python import run_basgra_nz
+from komanawa.basgra_nz_py.supporting_functions.plotting import plot_multiple_results
+from komanawa.basgra_nz_py.supporting_functions.woodward_2020_params import get_woodward_mean_full_params
+from komanawa.basgra_nz_py.input_output_keys import matrix_weather_keys_pet
 
 if __name__ == '__main__':
     detrend = pd.read_csv(os.path.join(os.path.dirname(event_def_path), 'daily_percentiles_detrended_v2.csv'))

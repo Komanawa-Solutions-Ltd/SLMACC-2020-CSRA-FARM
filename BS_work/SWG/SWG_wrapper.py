@@ -3,7 +3,7 @@
  Created: 10/02/2021 9:30 AM
  """
 import os
-import ksl_env
+import project_base
 import numpy as np
 import datetime
 import subprocess
@@ -22,7 +22,7 @@ from Storylines.check_storyline import get_acceptable_events
 oxford_lat, oxford_lon = -43.296, 172.192
 swg = os.path.join(os.path.dirname(__file__), 'SWG_Final.py')
 default_vcf = os.path.join(climate_shocks_env.supporting_data_dir, 'event_definition_data_fixed.csv')
-default_base_dir = os.path.dirname(ksl_env.get_vscn_dir())
+default_base_dir = os.path.dirname(project_base.get_vscn_dir())
 
 
 # note that each sim takes c. 0.12 mb of storage space.

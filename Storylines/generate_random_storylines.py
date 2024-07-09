@@ -8,7 +8,7 @@ import numpy as np
 import os
 from copy import deepcopy
 
-import ksl_env
+import project_base
 from Storylines.check_storyline import get_past_event_frequency
 from Storylines.storyline_building_support import map_storyline_rest, prev_month, month_fchange
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
@@ -32,7 +32,7 @@ def generate_random_weather_mcmc(n, use_default_seed=True, nmaxiterations=10000,
     :return:
     """
     assert isinstance(n, int)
-    base_dir = os.path.join(ksl_env.slmmac_dir, 'random_weather')
+    base_dir = os.path.join(project_base.slmmac_dir, 'random_weather')
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
     save_path = os.path.join(base_dir, f'random_weather_size_{n}.npy')
@@ -58,7 +58,7 @@ def generate_random_weather_mcmc(n, use_default_seed=True, nmaxiterations=10000,
     }
 
     for m in range(1, 13):
-        temp = pd.read_csv(os.path.join(ksl_env.proj_root,
+        temp = pd.read_csv(os.path.join(project_base.proj_root,
                                         f'BS_work/IID/TransitionProbabilities/{month_fchange[m]}_transitions.csv'),
                            comment='#', index_col=0)
         temp.index = [mapper[e] for e in temp.index]

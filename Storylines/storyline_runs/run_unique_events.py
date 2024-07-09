@@ -9,7 +9,7 @@ import netCDF4 as nc
 import itertools
 import glob
 from copy import deepcopy
-import ksl_env
+import project_base
 from Storylines.storyline_building_support import make_sampling_options, base_events, default_storyline_time, \
     map_storyline_rest, irrig_season, month_len, default_mode_sites
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
@@ -122,4 +122,4 @@ if __name__ == '__main__':
     if run_pgr:
         run_pasture_growth()
     if extract:
-        extract_data(os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'unique_events_v2'))
+        extract_data(os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'unique_events_v2'))

@@ -3,7 +3,7 @@
  Created: 12/10/2021 9:24 AM
  """
 import pandas as pd
-import ksl_env
+import project_base
 from Climate_Shocks.Stochastic_Weather_Generator.irrigation_flow_generator import get_irrigation_generator, \
     make_current_restrictions
 from Pasture_Growth_Modelling.full_model_implementation import default_mode_sites, default_swg_dir, month_len, \
@@ -44,7 +44,7 @@ out_variables_flow = (
 
 irr_flow_gen = get_irrigation_generator()
 
-default_riv_pasture_growth_dir = os.path.join(os.path.join(ksl_env.slmmac_dir_unbacked, 'river_pgr_sims'))
+default_riv_pasture_growth_dir = os.path.join(os.path.join(project_base.unbacked_dir, 'river_pgr_sims'))
 os.makedirs(default_riv_pasture_growth_dir, exist_ok=True)
 
 

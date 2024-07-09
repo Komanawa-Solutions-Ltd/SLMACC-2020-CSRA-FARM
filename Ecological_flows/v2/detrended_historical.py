@@ -4,7 +4,7 @@ on: 27/05/22
 """
 import itertools
 from dateutil.relativedelta import relativedelta
-import ksl_env
+import project_base
 from pathlib import Path
 import pickle
 import pandas as pd
@@ -16,12 +16,9 @@ from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growt
 from Pasture_Growth_Modelling.basgra_parameter_sets import default_mode_sites
 from Ecological_flows.v2.alternate_restrictions import new_flows, get_new_flow_rest_record
 from Storylines.storyline_evaluation.storyline_eval_support import calc_cumulative_impact_prob
+from komanawa.basgra_nz_py.basgra_python import run_basgra_nz
 
-# add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from basgra_python import run_basgra_nz
-
-base_outdir = Path(ksl_env.slmmac_dir).joinpath('eco_modelling', 'historical_detrended')
+base_outdir = Path(project_base.slmmac_dir).joinpath('eco_modelling', 'historical_detrended')
 base_outdir.mkdir(exist_ok=True, parents=True)
 figsize = (16.5, 9.25)
 
@@ -182,7 +179,7 @@ def export_water_year_data(version):
     ]
     all_data = get_run_basgra_for_historical_new_flows(version, False)
     irr_months = [9, 10, 11, 12, 1, 2, 3, 4]
-    outdir = Path(ksl_env.slmmac_dir).joinpath('0_Y2_and_Final_Reporting/ecological_flows and cultural',
+    outdir = Path(project_base.slmmac_dir).joinpath('0_Y2_and_Final_Reporting/ecological_flows and cultural',
                                                'histoical_pg_rest_inc_base')
     outdir.mkdir(exist_ok=True)
     for k in keys:

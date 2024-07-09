@@ -6,11 +6,9 @@
 import pandas as pd
 import numpy as np
 import os
-import ksl_env
+import project_base
 
-# add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from supporting_functions.plotting import plot_multiple_results, plot_multiple_monthly_results
+from komanawa.basgra_nz_py.supporting_functions.plotting import plot_multiple_results, plot_multiple_monthly_results
 from Pasture_Growth_Modelling.initialisation_support.comparison_support import make_mean_comparison, \
     get_horarata_data_old, get_indicative_irrigated
 from Pasture_Growth_Modelling.historical_average_baseline import run_past_basgra_dryland, run_past_basgra_irrigated
@@ -19,7 +17,7 @@ from Pasture_Growth_Modelling.historical_average_baseline import run_past_basgra
 
 
 if __name__ == '__main__':
-    outdir = ksl_env.shared_drives(r"Z2003_SLMACC\pasture_growth_modelling\historical_runs_v2")
+    outdir = project_base.slmmac_dir.joinpath(r"pasture_growth_modelling/historical_runs_v2")
     save = False
     data = {
         'irrigated_eyrewell': run_past_basgra_irrigated(),

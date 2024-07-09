@@ -2,8 +2,11 @@
  Author: Matt Hanson
  Created: 14/04/2021 2:44 PM
  """
+
 from Storylines.storyline_runs.run_random_suite import create_nyr_suite
 import time
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 if __name__ == '__main__':
     t = time.time()

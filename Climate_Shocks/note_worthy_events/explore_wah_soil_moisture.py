@@ -7,7 +7,7 @@ import netCDF4 as nc
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.cm import get_cmap
+from matplotlib.pyplot import get_cmap
 import glob
 import os
 

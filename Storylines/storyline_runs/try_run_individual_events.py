@@ -60,7 +60,7 @@ if __name__ == '__main__':
         outdirs = []
         for p in os.listdir(individual_dir):
             storylines.append(os.path.join(individual_dir, p))
-            outdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'try_individual_nPrecip', p.split('.')[0])
+            outdir = os.path.join(project_base.unbacked_dir, 'SWG_runs', 'try_individual_nPrecip', p.split('.')[0])
             outdirs.append(outdir)
         run_swg_mp(storyline_paths=storylines, outdirs=outdirs, ns=n, base_dirs=r"D:\SLMMAC_SWG_detrend_test_nPrecip",
                    vcfs=detrended_vcf,

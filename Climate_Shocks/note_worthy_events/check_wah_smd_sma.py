@@ -5,7 +5,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.cm import get_cmap
+from matplotlib.pyplot import get_cmap
 import glob
 from Climate_Shocks.note_worthy_events.simple_soil_moisture_pet import calc_smd_sma_wah_monthly
 from Climate_Shocks.note_worthy_events.explore_wah_soil_moisture import get_sim

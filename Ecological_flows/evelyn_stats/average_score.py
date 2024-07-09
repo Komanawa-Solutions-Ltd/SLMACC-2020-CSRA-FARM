@@ -5,7 +5,7 @@ on: 25/10/2022
 """a script that allows the yearly scores created in ecological_scoring.py to be turned into yearly and then
 period average scores"""
 
-import kslcore
+from komanawa import kslcore
 import pandas as pd
 import numpy as np
 

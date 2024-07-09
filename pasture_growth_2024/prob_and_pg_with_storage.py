@@ -2,12 +2,11 @@ import pandas as pd
 from copy import deepcopy
 import os
 import project_base
-from Storylines.storage_runs.run_hurt_scare_mostprob import change_to_daily_pg, default_mode_sites
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import numpy as np
 from Storylines.storyline_evaluation.storyline_characteristics_for_impact import month_len
-from komanawa.slmacc_csra import get_1yr_non_exceedence_prob, get_1yr_data
+from komanawa.slmacc_csra import get_1yr_non_exceedence_prob, get_1yr_suite
 
 base_outdir = os.path.join(project_base.slmmac_dir, '0_Y2_and_Final_Reporting', 'final_plots')
 os.makedirs(base_outdir, exist_ok=True)
@@ -50,17 +49,17 @@ def prob_non_exceed(figsize=(10, 8), suffix='.png'):
         for c, mode in zip(colors, plt_mode):
             exceed = pd.DataFrame(get_1yr_non_exceedence_prob(site, mode, None)).reset_index()
             exceed = exceed.sort_values('pg')
-            x = np.concatenate(([0], exceed.pg, [20000]))
+            x = np.concatenate(([0], exceed.pg, [20000]))/1000
             y = np.concatenate(([0], exceed.prob, [100]))
 
             ax.plot(x, y, c=c, label=f'{site} {mode}'.title())
             ax.fill_between(x, 0, y, color=c, alpha=0.5)
         ax.set_title(f'{site.capitalize()} Non-exceedance probability')
-        ax.set_xlim(0, 19000)
+        ax.set_xlim(0, 19000/1000)
         legax.legend(*ax.get_legend_handles_labels(), loc='center left')
 
-    fig.supxlabel('Pasture growth (kg dm/ha/year)')
-    fig.supylabel('Cumulative probability')
+    fig.supxlabel('Pasture growth (tons DM / ha / year)')
+    fig.supylabel('Cumulative probability (%)')
     fig.tight_layout()
     fig.savefig(os.path.join(outdir, f'prob_non_exceed{suffix}'))
 
@@ -83,7 +82,7 @@ def pg_boxplots(site, figsize=(10, 8), suffix='.png'):
     handles = []
     for i, (c, mode) in enumerate(zip(colors, plt_mode)):
         print(site, mode)
-        data = get_1yr_data(site=site, mode=mode).dropna()
+        data = get_1yr_suite(site=site, mode=mode).dropna()
         labels.append(f'{site}-{mode}')
         handles.append(Patch(facecolor=c))
 

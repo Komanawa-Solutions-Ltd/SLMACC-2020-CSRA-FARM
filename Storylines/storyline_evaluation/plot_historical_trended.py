@@ -2,7 +2,7 @@
  Author: Matt Hanson
  Created: 2/07/2021 8:49 AM
  """
-import ksl_env
+import project_base
 from Pasture_Growth_Modelling.full_pgr_model_mp import run_full_model_mp, default_pasture_growth_dir, pgm_log_dir, \
     default_mode_sites
 from Storylines.storyline_evaluation.storyline_eval_support import calc_cumulative_impact_prob
@@ -24,7 +24,7 @@ figsize = (16.5, 9.25)
 base_color = 'limegreen'
 base_ls = 'dashdot'
 base_lw = 2
-base_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'cumulative_historical_trend')
+base_outdir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'cumulative_historical_trend')
 if not os.path.exists(base_outdir):
     os.makedirs(base_outdir)
 
@@ -36,8 +36,8 @@ def yr1_cumulative_probability(correct=False):
     outdir = os.path.join(base_outdir, f'1yr{cor}')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    data = pd.read_csv(os.path.join(
-        ksl_env.mh_unbacked("SLMACC_2020_norm\pasture_growth_sims\historical_quantified_1yr_trend\IID_probs_pg.csv")))
+    data = pd.read_csv(
+        project_base.unbacked_dir.joinpath("pasture_growth_sims/historical_quantified_1yr_trend/IID_probs_pg.csv"))
     if correct:
         data = corr_pg(data)
 
@@ -58,8 +58,8 @@ def nyr_cumulative_prob(nyr, correct=False, sequential=True):
     outdir = os.path.join(base_outdir, f'{nyr}yr-{seq}{cor}')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    data = pd.read_csv(os.path.join(
-        ksl_env.mh_unbacked("SLMACC_2020_norm\pasture_growth_sims\historical_quantified_1yr_trend\IID_probs_pg.csv")))
+    data = pd.read_csv(project_base.unbacked_dir.joinpath("pasture_growth_sims/historical_quantified_1yr_trend",
+                                                     "IID_probs_pg.csv"))
     if correct:
         data = corr_pg(data)
 

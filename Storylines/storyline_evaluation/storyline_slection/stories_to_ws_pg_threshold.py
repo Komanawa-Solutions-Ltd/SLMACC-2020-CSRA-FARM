@@ -7,9 +7,9 @@ import pandas as pd
 from Storylines.storyline_evaluation.storyline_characteristics_for_impact import storyline_subclusters, \
     get_month_limits_from_most_probable, default_mode_sites
 import os
-import ksl_env
+import project_base
 
-base_dir = os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\norm\possible_final_stories")
+base_dir = os.path.join(project_base.slmmac_dir, r"outputs_for_ws\norm\possible_final_stories")
 
 # bounds are in fraction of new year.
 eyrewell_irr_l = 12.050 * 1000

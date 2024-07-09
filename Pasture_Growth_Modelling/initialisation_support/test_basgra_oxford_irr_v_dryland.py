@@ -2,7 +2,7 @@
  Author: Matt Hanson
  Created: 21/04/2021 1:20 PM
  """
-import ksl_env
+import project_base
 import numpy as np
 import pandas as pd
 from Pasture_Growth_Modelling.full_model_implementation import _gen_input, default_swg_dir, month_len, abs_max_irr, \
@@ -11,10 +11,8 @@ from Storylines.base_storylines_old import get_baseline_storyline
 from Pasture_Growth_Modelling.initialisation_support.validate_dryland_v3 import make_mean_comparison, \
     get_horarata_data_old, plot_multiple_monthly_results
 
-# add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from basgra_python import run_basgra_nz, get_month_day_to_nonleap_doy
-from supporting_functions.output_metadata import get_output_metadata
+from komanawa.basgra_nz_py.basgra_python import run_basgra_nz, get_month_day_to_nonleap_doy
+from komanawa.basgra_nz_py.supporting_functions.output_metadata import get_output_metadata
 
 weed_dict_2 = {
     1: 0.42,

@@ -3,7 +3,9 @@
  Created: 24/02/2021 10:46 AM
  """
 import os
-import ksl_env
+import warnings
+
+import project_base
 import glob
 import numpy as np
 import pandas as pd
@@ -20,10 +22,12 @@ from Pasture_Growth_Modelling.full_model_implementation import add_pasture_growt
 from Storylines.storyline_evaluation.storyline_eval_support import get_pgr_prob_baseline_stiched
 from Storylines.storyline_evaluation.transition_to_fraction import corr_pg, corr_pg_raw
 
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
+
 name = 'random'
 random_pg_dir = os.path.join(default_pasture_growth_dir, name)
 random_sl_dir = os.path.join(temp_storyline_dir, name)
-gdrive_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', name)
+gdrive_outdir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', name)
 
 for d, tnm in itertools.product([random_pg_dir, random_sl_dir], ['_bad_irr', '_good_irr']):
     if not os.path.exists(f'{d}{tnm}'):

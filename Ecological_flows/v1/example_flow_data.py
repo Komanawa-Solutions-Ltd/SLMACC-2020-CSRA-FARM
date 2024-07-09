@@ -4,21 +4,21 @@
  """
 import pandas as pd
 
-import ksl_env
+import project_base
 from Ecological_flows.v1.river_flow_pgr_model import get_rest_river_output_from_storyline_path, make_current_restrictions
 import glob
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from matplotlib.cm import get_cmap
+from matplotlib.pyplot import get_cmap
 from matplotlib import ticker
 
-outdir = os.path.join(ksl_env.slmmac_dir, 'ecological_flows', 'example_bad_river')
+outdir = os.path.join(project_base.slmmac_dir, 'ecological_flows', 'example_bad_river')
 os.makedirs(outdir, exist_ok=True)
 
 
 def make_example_data(num, seed=1154):
-    storylines_paths = glob.glob(os.path.join(ksl_env.slmmac_dir,
+    storylines_paths = glob.glob(os.path.join(project_base.slmmac_dir,
                                               r"outputs_for_ws\norm\possible_final_stories\bad_stories_eyrewell",
                                               "storylines_cluster_*",
                                               "rsl*.csv"))

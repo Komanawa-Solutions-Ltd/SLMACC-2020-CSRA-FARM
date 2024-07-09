@@ -3,13 +3,15 @@
  Created: 19/04/2021 9:00 AM
  """
 import shutil
-import ksl_env
+import project_base
 import os
 import pandas as pd
 import glob
 import numpy as np
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, default_mode_sites, random_sl_dir
 
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 def export_1yr_stories(output_dir, n, anamoly, site, mode, tolerance):
     """
@@ -79,6 +81,6 @@ def export_1yr_stories(output_dir, n, anamoly, site, mode, tolerance):
 
 
 if __name__ == '__main__':
-    output_dir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'top_prob_1yr_sl')
+    output_dir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'top_prob_1yr_sl')
     for mode, site in default_mode_sites:
         export_1yr_stories(output_dir, 100, -2500, site, mode, 500)

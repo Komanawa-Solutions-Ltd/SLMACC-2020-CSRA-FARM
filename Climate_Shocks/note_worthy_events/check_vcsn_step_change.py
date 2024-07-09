@@ -6,7 +6,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.cm import get_cmap
+from matplotlib.pyplot import get_cmap
 from Climate_Shocks.get_past_record import get_vcsn_record, get_restriction_record, sites
 
 weather_keys = [

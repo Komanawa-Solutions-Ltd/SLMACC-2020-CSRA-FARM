@@ -5,7 +5,7 @@
 
 import pandas as pd
 import numpy as np
-import ksl_env
+import project_base
 import os
 import itertools
 import glob
@@ -30,7 +30,7 @@ if not os.path.exists(story_dir):
     os.makedirs(story_dir)
 
 base_pg_outdir = os.path.join(default_pasture_growth_dir, name)
-outputs_dir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', name)
+outputs_dir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', name)
 
 for d in [story_dir, base_pg_outdir, outputs_dir]:
     if not os.path.exists(d):

@@ -7,7 +7,7 @@ on: 1/11/2022
 
 import pandas as pd
 import numpy as np
-import kslcore
+from komanawa import kslcore
 import datetime
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt

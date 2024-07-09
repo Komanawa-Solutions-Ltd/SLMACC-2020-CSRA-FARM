@@ -3,12 +3,12 @@ created matt_dumont
 on: 27/05/22
 """
 import matplotlib.pyplot as plt
-from matplotlib.cm import get_cmap
+from matplotlib.pyplot import get_cmap
 import pandas as pd
 import numpy as np
 import os
 from scipy.interpolate import interp1d
-import ksl_env
+import project_base
 from Storylines.storyline_building_support import default_mode_sites
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, get_nyr_suite, get_nyr_idxs
 from Storylines.irrigation_mapper import get_irr_by_quantile
@@ -19,8 +19,8 @@ from Ecological_flows.v2.alternate_restrictions import new_flows, make_new_rest_
 from Storylines.storyline_runs.run_random_suite import generate_random_suite
 from pathlib import Path
 
-base_outdir = os.path.join(ksl_env.slmmac_dir, 'eco_modelling', 'random')
-base_outdir_unbacked = os.path.join(ksl_env.slmmac_dir_unbacked, 'eco_modelling', 'random')
+base_outdir = os.path.join(project_base.slmmac_dir, 'eco_modelling', 'random')
+base_outdir_unbacked = os.path.join(project_base.unbacked_dir, 'eco_modelling', 'random')
 fig_size = (10, 8)  # todo
 os.makedirs(base_outdir, exist_ok=True)
 os.makedirs(base_outdir_unbacked, exist_ok=True)

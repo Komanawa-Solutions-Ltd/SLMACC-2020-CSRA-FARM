@@ -14,6 +14,8 @@ from Storylines.storyline_evaluation.storyline_eval_support import get_pgr_prob_
     calc_cumulative_impact_prob
 import time
 from copy import deepcopy
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 
 def make_density_xy(x, y, nbins=300):

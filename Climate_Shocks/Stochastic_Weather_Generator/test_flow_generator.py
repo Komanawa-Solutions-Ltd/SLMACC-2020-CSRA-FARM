@@ -10,13 +10,13 @@ from Climate_Shocks.get_past_record import get_restriction_record
 import matplotlib.pyplot as plt
 from matplotlib.cm import get_cmap
 import os
-import ksl_env
+import project_base
 import itertools
 import pandas as pd
 import numpy as np
 from Climate_Shocks.climate_shocks_env import event_def_path
 
-baseoutdir = os.path.join(ksl_env.slmmac_dir_unbacked, 'gen_flow_test')
+baseoutdir = os.path.join(project_base.unbacked_dir, 'gen_flow_test')
 
 month_len = {
     1: 31,

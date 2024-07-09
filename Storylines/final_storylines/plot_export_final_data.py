@@ -7,10 +7,10 @@ from pathlib import Path
 import zipfile
 import matplotlib.pyplot as plt
 import pandas as pd
-
-import ksl_env
+from komanawa.slmacc_csra import get_1yr_data as get_1yr_data_new
+import project_base
 from Storylines.storyline_building_support import month_len
-from Storylines.storyline_runs.run_random_suite import get_1yr_data, get_nyr_suite
+from Storylines.storyline_runs.run_random_suite import get_mean_1yr_data, get_nyr_suite
 
 
 def get_storyline_ids(nm):
@@ -38,8 +38,8 @@ def get_storyline_ids(nm):
 
 def get_scenario_data():
     out = {}
-    cor_data = get_1yr_data(correct=True)
-    raw_data = get_1yr_data(correct=False)
+    cor_data = get_mean_1yr_data(correct=True)
+    raw_data = get_mean_1yr_data(correct=False)
     for nm, correct in itertools.product(['baseline', 'scare', 'hurt'], [True, False]):
         if correct:
             corn = 'mod'
@@ -86,7 +86,7 @@ def print_baseline_limits():
 
 
 def plot_storage():
-    outdir = Path(ksl_env.slmmac_dir).joinpath('0_Y2_and_Final_Reporting', 'final_plots', 'storage_scens')
+    outdir = Path(project_base.slmmac_dir).joinpath('0_Y2_and_Final_Reporting', 'final_plots', 'storage_scens')
     outdir.mkdir(exist_ok=True)
     scen_data = get_scenario_data()
     scens = [
@@ -128,7 +128,7 @@ def plot_storage():
 
 
 def plot_base():
-    outdir = Path(ksl_env.slmmac_dir).joinpath('0_Y2_and_Final_Reporting', 'final_plots', 'base_scens')
+    outdir = Path(project_base.slmmac_dir).joinpath('0_Y2_and_Final_Reporting', 'final_plots', 'base_scens')
     outdir.mkdir(exist_ok=True)
     sms = [
         'eyrewell-irrigated',
@@ -140,8 +140,8 @@ def plot_base():
     for sm, ax in zip(sms, axs):
         pass
         # make datasets
-        raw_data = get_nyr_suite(1, sm.split('-')[0], sm.split('-')[1], monthly_data=True)
-        plot_months, pdata = _prep_data(raw_data, sm, resampled=True)
+        raw_data = get_1yr_data_new(site=sm.split('-')[0], mode=sm.split('-')[1])
+        plot_months, pdata = _prep_data(raw_data, None, resampled=False)
         vparts = ax.violinplot(pdata, widths=0.5, showextrema=False)
         for p in vparts['bodies']:
             p.set_color('grey')
@@ -164,6 +164,7 @@ def plot_base():
         ax.set_ylim(0, 100)
     fig.supylabel('Pasture Growth kg DM/ha/day')
     fig.tight_layout()
+    plt.show()
     fig.savefig(outdir.joinpath('base_scenarios.png'))
 
 
@@ -171,13 +172,17 @@ def _prep_data(data, sm, take_mean=False, resampled=False):
     plot_months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]
     outdata = []
     extra = ''
+    if sm is None:
+        smx = ''
+    else:
+        smx = f'{sm}_'
     if resampled:
         extra = 'yr0_'
     for m in plot_months:
         if take_mean:
-            outdata.append(data.loc[:, f'{sm}_pg_{extra}m{m:02d}'].dropna().values.mean() / month_len[m])
+            outdata.append(data.loc[:, f'{smx}pg_{extra}m{m:02d}'].dropna().values.mean() / month_len[m])
         else:
-            outdata.append(data.loc[:, f'{sm}_pg_{extra}m{m:02d}'].dropna().values / month_len[m])
+            outdata.append(data.loc[:, f'{smx}pg_{extra}m{m:02d}'].dropna().values / month_len[m])
 
     return plot_months, outdata
 

@@ -6,11 +6,11 @@ import shutil
 import zipfile
 
 import matplotlib.pyplot as plt
-from matplotlib.cm import get_cmap
+from matplotlib.pyplot import get_cmap
 from matplotlib.patches import Patch
 import pandas as pd
 import numpy as np
-import ksl_env
+import project_base
 import os
 import itertools
 import glob
@@ -108,7 +108,7 @@ def run_zipped_storylines(name, description_mult, zfile_path, number, choice_see
                                    use_out_variables=out_variables, mode_sites=mode_sites
                                    )
     if run_export:
-        outputs_dir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', name)
+        outputs_dir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', name)
         os.makedirs(outputs_dir, exist_ok=True)
 
         export_all_in_pattern(base_outdir=os.path.join(outputs_dir, 'raw'),
@@ -148,7 +148,7 @@ def run_zipped_storylines(name, description_mult, zfile_path, number, choice_see
 
 def plot_normalize_storyline(name, norm, plot):
     print(name)
-    outputs_dir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', name)
+    outputs_dir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', name)
     if norm:
         corrected_data = pd.read_csv(os.path.join(outputs_dir, 'corrected_data.csv'), index_col=0)
         corrected_data.index.name = 'ID'
@@ -377,7 +377,7 @@ def most_probabable(run_pgr, run_export):
     nsims = 100
     name = 'storage_most_probable'
     description_mult = 'the most probable/baseline for the storage runs'
-    zip_path = os.path.join(ksl_env.proj_root, 'Storylines/final_storylines/Final_most_probable.zip')
+    zip_path = os.path.join(project_base.proj_root, 'Storylines/final_storylines/Final_most_probable.zip')
 
     run_zipped_storylines(
         name=name,
@@ -403,7 +403,7 @@ def scare(run_pgr, run_export):
     nsims = 100
     name = 'storage_scare'
     description_mult = 'scare scenarios with all storage systems'
-    zip_path = os.path.join(ksl_env.proj_root,
+    zip_path = os.path.join(project_base.proj_root,
                             'Storylines/final_storylines/Final_scare_autumn_drought2_mon_thresh_all.zip')
 
     run_zipped_storylines(
@@ -430,7 +430,7 @@ def hurt(run_pgr, run_export):
     nsims = 100
     name = 'storage_hurt'
     description_mult = 'hurt scenarios with all storage systems'
-    zip_path = os.path.join(ksl_env.proj_root,
+    zip_path = os.path.join(project_base.proj_root,
                             'Storylines/final_storylines/Final_hurt_hurt_v1_storylines_cluster_004.zip')
 
     run_zipped_storylines(

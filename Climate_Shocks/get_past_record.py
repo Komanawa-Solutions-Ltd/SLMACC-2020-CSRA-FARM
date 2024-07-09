@@ -3,7 +3,7 @@
  Created: 26/11/2020 1:05 PM
  """
 from Climate_Shocks.vcsn_pull import vcsn_pull_single_site, change_vcsn_units
-import ksl_env
+import project_base
 import os
 import pandas as pd
 import numpy as np
@@ -60,7 +60,7 @@ def get_vcsn_record(version='trended', site='eyrewell', recalc=False):
     else:
         raise NotImplementedError('site: {} not implemented'.format(site))
     key = 'weather_data'
-    data_path = ksl_env.shared_drives(r"Z2003_SLMACC\weather_date\{}.hdf".format(site))
+    data_path = ksl_env.slmmac_dir.joinpath(r"weather_date\{}.hdf".format(site))
     if not os.path.exists(os.path.dirname(data_path)):
         os.makedirs(os.path.dirname(data_path))
 
@@ -85,7 +85,7 @@ def get_restriction_record(version='trended', recalc=False):
     if version == 'trended':
         data_path = os.path.join(os.path.dirname(event_def_path), 'restriction_record.csv')
         dt_format = '%Y-%m-%d'
-        raw_data_path = ksl_env.shared_drives(r"Z2003_SLMACC\WIL data\OSHB_WaimakRiverData_withRestrictionInfo.xlsx")
+        raw_data_path = ksl_env.slmmac_dir.joinpath("WIL data/OSHB_WaimakRiverData_withRestrictionInfo.xlsx")
     elif version == 'detrended' or version == 'detrended2':
         dt_format = '%Y-%m-%d'
         data_path = os.path.join(os.path.dirname(event_def_path), 'restriction_record_detrend.csv')

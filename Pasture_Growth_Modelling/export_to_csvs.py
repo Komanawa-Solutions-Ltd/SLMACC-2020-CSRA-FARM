@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import netCDF4 as nc
 import glob
-import ksl_env
+import project_base
 from Storylines.storyline_building_support import default_storyline_time
 from Pasture_Growth_Modelling.full_model_implementation import out_variables
 from Pasture_Growth_Modelling.basgra_parameter_sets import default_mode_sites
@@ -66,7 +66,7 @@ restrictions are identical to 1 day of full restrictions).  The individual time 
 derived from a moving block boot strapping of de-trended historical restriction data. Note restrictions are
 not applied to dryland simulations.
 
-Pasture growth modelling conducted with BASGRA_NZ_PY {ksl_env.basgra_version}, (https://github.com/Komanawa-Solutions-Ltd/BASGRA_NZ_PY)
+Pasture growth modelling conducted with BASGRA_NZ_PY {project_base.basgra_version}, (https://github.com/Komanawa-Solutions-Ltd/BASGRA_NZ_PY)
 
 # variable descriptions
 {var_str}

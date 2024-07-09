@@ -3,24 +3,19 @@
  Created: 23/11/2020 11:02 AM
  """
 
-import ksl_env
+import project_base
 import pandas as pd
 import numpy as np
 import os
-
-
-# add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from check_basgra_python.support_for_tests import get_lincoln_broadfield, get_woodward_weather, _clean_harvest
-from basgra_python import run_basgra_nz
-from check_basgra_python.support_for_tests import establish_org_input
-from supporting_functions.plotting import plot_multiple_results
+from komanawa.basgra_nz_py.example_data import get_lincoln_broadfield, get_woodward_weather, clean_harvest, establish_org_input
+from komanawa.basgra_nz_py.basgra_python import run_basgra_nz
+from komanawa.basgra_nz_py.supporting_functions.plotting import plot_multiple_results
 
 
 def run_old_basgra():
     params, matrix_weather, days_harvest, doy_irr = establish_org_input('lincoln')
 
-    days_harvest = _clean_harvest(days_harvest, matrix_weather)
+    days_harvest = clean_harvest(days_harvest, matrix_weather)
 
     out = run_basgra_nz(params, matrix_weather, days_harvest, doy_irr, verbose=False)
     return out
@@ -49,7 +44,7 @@ def run_frequent_harvest(freq, trig, targ):
 
 
 if __name__ == '__main__':
-    outdir = ksl_env.shared_drives(r"Z2003_SLMACC\pasture_growth_modelling\basgra_harvest_tuning\irr_harv_testing")
+    outdir = project_base.slmmac_dir.joinpath(r"pasture_growth_modelling/basgra_harvest_tuning/irr_harv_testing")
     data = {
         'Woodward_model': run_old_basgra(),
     }

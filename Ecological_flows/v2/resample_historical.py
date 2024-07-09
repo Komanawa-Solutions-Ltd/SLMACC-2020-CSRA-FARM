@@ -10,11 +10,11 @@ from Ecological_flows.v2.visualise_alternate_alf import get_colors
 import pandas as pd
 import numpy as np
 from pathlib import Path
-import ksl_env
+import project_base
 import pickle
 from Ecological_flows.v2.flow_duration_curve import fdc, fdcmatch
 
-base_outdir = Path(ksl_env.slmmac_dir).joinpath('eco_modelling', 'historical_detrended')
+base_outdir = Path(project_base.slmmac_dir).joinpath('eco_modelling', 'historical_detrended')
 base_outdir.mkdir(exist_ok=True, parents=True)
 figsize = (16.5, 9.25)
 

@@ -2,7 +2,7 @@
 created matt_dumont 
 on: 13/10/22
 """
-from matplotlib.cm import get_cmap
+from matplotlib.pyplot import get_cmap
 
 def get_colors(vals, cmap_name='tab20'):
     n_scens = len(vals)

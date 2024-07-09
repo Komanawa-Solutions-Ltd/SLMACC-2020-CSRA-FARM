@@ -2,7 +2,7 @@
  Author: Matt Hanson
  Created: 2/07/2021 11:50 AM
  """
-import ksl_env
+import project_base
 import os
 import pandas as pd
 import numpy as np
@@ -15,18 +15,20 @@ figsize = (16.5, 9.25)
 base_color = 'limegreen'
 base_ls = 'dashdot'
 base_lw = 2
-base_trend = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'cumulative_historical_trend')
-base_detrend = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'cumulative_historical_detrend')
-base_model = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'random_scen_plots')
+base_trend = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'cumulative_historical_trend')
+base_detrend = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'cumulative_historical_detrend')
+base_model = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'random_scen_plots')
 
 # data developed by Storylines/storyline_evaluation/plot_historical_detrended.py and
 # Storylines/storyline_evaluation/plot_historical_trended.py
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 def plot_all_comps(correct=False):
     cor = ''
     if correct:
         cor = '_correct'
-    outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', f'cumulative_hist_v_mod{cor}')
+    outdir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', f'cumulative_hist_v_mod{cor}')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     for mode, site in default_mode_sites:

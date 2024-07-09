@@ -5,13 +5,15 @@
 from Storylines.storyline_evaluation.plot_nyr_suite import *
 from Storylines.storyline_runs.lauras_v2_1yr import get_laura_v2_1yr_pg_prob, get_laura_v2_1yr_2yr_pg_prob
 from Storylines.storyline_runs.lauras_autum_drought_1yr import get_laura_autumn_1yr_pg_prob
-import ksl_env
+import project_base
 from Storylines.storyline_building_support import default_mode_sites
 
-base_outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'norm', 'random_scen_plots')
+base_outdir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'random_scen_plots')
 
 correct_stepsize = 0.1
 
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 def plot_1yr(save=False, close=True):
     for mode, site in default_mode_sites:

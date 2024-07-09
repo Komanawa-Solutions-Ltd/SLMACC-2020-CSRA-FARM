@@ -5,11 +5,13 @@
 import pandas as pd
 import numpy as np
 import os
-import ksl_env
+import project_base
 from Storylines.storyline_building_support import default_mode_sites
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, get_nyr_suite
 from Storylines.storyline_evaluation.storyline_eval_support import calc_cumulative_impact_prob
 from scipy.interpolate import interp1d
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 
 def export_cum_percentile(nyr, outdir, step_size=0.1):
@@ -48,8 +50,8 @@ def export_cum_percentile(nyr, outdir, step_size=0.1):
 
 
 if __name__ == '__main__':
-    export_cum_percentile(1, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'1yr'))
-    export_cum_percentile(2, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'2yr'))
-    export_cum_percentile(3, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'3yr'))
-    export_cum_percentile(5, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'5yr'))
-    export_cum_percentile(10, outdir=os.path.join(ksl_env.slmmac_dir, 'random_scen_plots', f'10yr'))
+    export_cum_percentile(1, outdir=os.path.join(project_base.slmmac_dir, 'random_scen_plots', f'1yr'))
+    export_cum_percentile(2, outdir=os.path.join(project_base.slmmac_dir, 'random_scen_plots', f'2yr'))
+    export_cum_percentile(3, outdir=os.path.join(project_base.slmmac_dir, 'random_scen_plots', f'3yr'))
+    export_cum_percentile(5, outdir=os.path.join(project_base.slmmac_dir, 'random_scen_plots', f'5yr'))
+    export_cum_percentile(10, outdir=os.path.join(project_base.slmmac_dir, 'random_scen_plots', f'10yr'))

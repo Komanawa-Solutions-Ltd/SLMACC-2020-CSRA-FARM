@@ -7,6 +7,7 @@ import numpy as np
 from pathlib import Path
 import zipfile
 from Storylines.storyline_runs.run_random_suite import get_mean_1yr_data, default_mode_sites
+raise NotImplementedError('This code is not up to date with the current data, see package_random_1year_v2.py for the most recent version')
 
 month_len = {
     1: 31,

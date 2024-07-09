@@ -2,7 +2,7 @@
  Author: Matt Hanson
  Created: 23/04/2021 1:37 PM
  """
-import ksl_env
+import project_base
 import numpy as np
 import datetime
 import pandas as pd
@@ -16,8 +16,7 @@ from Pasture_Growth_Modelling.calculate_pasture_growth import calc_pasture_growt
 from Pasture_Growth_Modelling.basgra_parameter_sets import default_mode_sites
 
 # add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from basgra_python import run_basgra_nz
+from komanawa.basgra_nz_py import run_basgra_nz
 
 
 def run_past_basgra_irrigated(return_inputs=False, site='eyrewell', reseed=True, version='trended', mode='irrigated'):
@@ -111,7 +110,7 @@ def get_historical_average_baseline(site, mode, years, key='PGR', recalc=False, 
 
     out.loc[:, 'PER_PAW'] = out.loc[:, 'PAW'] / out.loc[:, 'MXPAW']
     if key == 'PGR':
-        all_data = out.groupby('month').mean()['pg'].to_dict()
+        all_data = out.groupby('month')['pg'].mean().to_dict()
     elif key in ['PGRA', 'PGRA_cum', 'F_REST']:
         all_data = None
     else:
@@ -192,7 +191,7 @@ def get_historical_median_baseline(site, mode, years, key='PGR', recalc=False, v
 
 
 def export_true_historical():
-    outdir = os.path.join(ksl_env.slmmac_dir, 'outputs_for_ws', 'true_historical_average_trended')
+    outdir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'true_historical_average_trended')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     months = [7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6]

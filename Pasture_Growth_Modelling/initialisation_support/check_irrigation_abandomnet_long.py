@@ -5,12 +5,11 @@
 import pandas as pd
 import numpy as np
 import os
-import ksl_env
+import project_base
 
 # add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from basgra_python import run_basgra_nz
-from supporting_functions.plotting import plot_multiple_results
+from komanawa.basgra_nz_py.basgra_python import run_basgra_nz
+from komanawa.basgra_nz_py.supporting_functions.plotting import plot_multiple_results
 from Climate_Shocks.get_past_record import get_restriction_record, get_vcsn_record
 from Pasture_Growth_Modelling.basgra_parameter_sets import get_params_doy_irr, create_days_harvest, \
     create_matrix_weather
@@ -105,7 +104,7 @@ def create_irrigation_abandomnet_data(base_name, params, reseed_trig=-1, reseed_
 if __name__ == '__main__':
     save = False
     params, doy = get_params_doy_irr(mode)
-    outdir = ksl_env.shared_drives(r"Z2003_SLMACC\pasture_growth_modelling\irrigation_tuning")
+    outdir = project_base.slmmac_dir.joinpath("pasture_growth_modelling/irrigation_tuning")
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     out, paddock_values = create_irrigation_abandomnet_data('b', params, reseed_trig=0.691, reseed_basal=0.722,

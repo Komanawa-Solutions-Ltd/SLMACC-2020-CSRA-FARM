@@ -3,7 +3,7 @@
  Created: 23/12/2020 10:52 AM
  """
 import pandas as pd
-import ksl_env
+import project_base
 import os
 import matplotlib.pyplot as plt
 from Climate_Shocks.note_worthy_events.inital_event_recurance import joint_hot_dry, calc_hot_recurance_variable, \

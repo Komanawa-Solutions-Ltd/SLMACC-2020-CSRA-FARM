@@ -8,9 +8,9 @@ import numpy as np
 
 from Ecological_flows.v2.alternate_restrictions import naturalise_historical_flow, make_new_rest_record, new_flows
 import matplotlib.pyplot as plt
-from matplotlib.cm import get_cmap
+from matplotlib.pyplot import get_cmap
 import pandas as pd
-import ksl_env
+import project_base
 
 figsize = (11, 8)
 
@@ -74,7 +74,7 @@ def malfs():
     ax2.set_title('Total take for different restrictions')
 
     fig.tight_layout()
-    fig.savefig(os.path.join(ksl_env.slmmac_dir, "eco_modelling/exloration_figures/historical_malfs.png"))
+    fig.savefig(os.path.join(project_base.slmmac_dir, "eco_modelling/exloration_figures/historical_malfs.png"))
     # todo plot everything
 
 
@@ -93,7 +93,7 @@ def varity_of_malfs():
     ax.set_xlabel('number of years data to determine MALF')
     ax.set_ylabel('MALF')
     fig.tight_layout()
-    fig.savefig(os.path.join(ksl_env.slmmac_dir, "eco_modelling/exloration_figures/resample_malfs.png"))
+    fig.savefig(os.path.join(project_base.slmmac_dir, "eco_modelling/exloration_figures/resample_malfs.png"))
 
 
 if __name__ == '__main__':

@@ -4,16 +4,18 @@
  """
 import os.path
 
-import ksl_env
+import project_base
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, get_nyr_suite, default_mode_sites
 from Storylines.storyline_evaluation.plot_nyr_suite import plot_impact_for_sites
 import matplotlib.pyplot as plt
 
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 def plot_all_site_v_site(nyrs):
     data = {}
     for y in nyrs:
-        outdir = os.path.join(ksl_env.slmmac_dir, f"outputs_for_ws/norm/random_scen_plots/{y}yr")
+        outdir = os.path.join(project_base.slmmac_dir, f"outputs_for_ws/norm/random_scen_plots/{y}yr")
         if not os.path.exists(outdir):
             os.makedirs(outdir)
         if y == 1:

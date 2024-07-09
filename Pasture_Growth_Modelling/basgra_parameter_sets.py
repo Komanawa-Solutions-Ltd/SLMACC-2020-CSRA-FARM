@@ -6,12 +6,11 @@
 import pandas as pd
 import numpy as np
 import os
-import ksl_env
+import project_base
 from Pasture_Growth_Modelling.storage_parameter_sets import set_store_parameters, get_store_reseed_trig_basal
 
 # add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from supporting_functions.woodward_2020_params import get_woodward_mean_full_params
+from komanawa.basgra_nz_py.supporting_functions.woodward_2020_params import get_woodward_mean_full_params
 
 default_mode_sites = (
     ('dryland', 'oxford'),

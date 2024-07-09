@@ -4,7 +4,7 @@ one off testing script not a part of the processs!
  Created: 22/02/2021 9:42 AM
  """
 import os
-import ksl_env
+import project_base
 import yaml
 import pandas as pd
 from Climate_Shocks import climate_shocks_env
@@ -52,7 +52,7 @@ def make_event_prob(base_dir, outpath=os.path.join(climate_shocks_env.supporting
 
 
 if __name__ == '__main__':
-    base_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'try_individual_nPrecip')
+    base_dir = os.path.join(project_base.unbacked_dir, 'SWG_runs', 'try_individual_nPrecip')
     out_dict = {}
     for d in os.listdir(base_dir):
         if '.csv' in d:

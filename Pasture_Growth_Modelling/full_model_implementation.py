@@ -8,7 +8,7 @@ import numpy as np
 import os
 import psutil
 import netCDF4 as nc
-import ksl_env
+import project_base
 import datetime
 import time
 from BS_work.SWG.SWG_wrapper import measures_cor
@@ -21,12 +21,13 @@ from Climate_Shocks import climate_shocks_env
 from Pasture_Growth_Modelling.historical_average_baseline import get_historical_average_baseline
 
 # add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from basgra_python import run_basgra_nz, get_month_day_to_nonleap_doy
-from supporting_functions.output_metadata import get_output_metadata
+from komanawa.basgra_nz_py.basgra_python import run_basgra_nz, get_month_day_to_nonleap_doy
+from komanawa.basgra_nz_py.supporting_functions.output_metadata import get_output_metadata
+
+default_swg_dir = project_base.get_stocastic_weather_gen_dir()
 
 # consider multiprocessing here???? no up a level (e.g. at teh storyline level)
-default_pasture_growth_dir = os.path.join(os.path.join(ksl_env.slmmac_dir_unbacked, 'pasture_growth_sims'))
+default_pasture_growth_dir = os.path.join(os.path.join(project_base.unbacked_dir, 'pasture_growth_sims'))
 if not os.path.exists(default_pasture_growth_dir):
     os.makedirs(default_pasture_growth_dir)
 
@@ -75,12 +76,7 @@ out_variables = (
 
 )
 
-from socket import gethostname
-
-if gethostname() == 'wanganui':
-    irr_gen = None
-else:
-    irr_gen = get_irrigation_generator()
+irr_gen = get_irrigation_generator()
 
 month_len = {
     1: 31,
@@ -96,8 +92,6 @@ month_len = {
     11: 30,
     12: 31,
 }
-
-default_swg_dir = os.path.join(ksl_env.slmmac_dir_unbacked, 'SWG_runs', 'full_SWG')
 
 
 def run_pasture_growth(storyline_path, outdir, nsims, mode_sites=default_mode_sites, padock_rest=False,
@@ -582,7 +576,7 @@ def _create_nc_file(outpath, number_run, month, doy, year, storyline_text, use_o
                    'description: {}'.format(description)
                    )
     nc_file.basgra = ('version: {}, ' +
-                      'https://github.com/Komanawa-Solutions-Ltd/BASGRA_NZ_PY').format(ksl_env.basgra_version)
+                      'https://github.com/Komanawa-Solutions-Ltd/BASGRA_NZ_PY').format(project_base.basgra_version)
     nc_file.description = description
     nc_file.history = 'created {}'.format(datetime.datetime.now().isoformat())
     nc_file.source = 'script: {}'.format(__file__)

@@ -7,14 +7,11 @@
 import pandas as pd
 import numpy as np
 import os
-import ksl_env
-
-# add basgra nz functions
-ksl_env.add_basgra_nz_path()
-from check_basgra_python.support_for_tests import get_lincoln_broadfield
-from basgra_python import run_basgra_nz
-from supporting_functions.plotting import plot_multiple_results
-from supporting_functions.woodward_2020_params import get_woodward_mean_full_params
+import project_base
+from komanawa.basgra_nz_py.example_data import get_lincoln_broadfield
+from komanawa.basgra_nz_py.basgra_python import run_basgra_nz
+from komanawa.basgra_nz_py.supporting_functions.plotting import plot_multiple_results
+from komanawa.basgra_nz_py.supporting_functions.woodward_2020_params import get_woodward_mean_full_params
 
 
 def irrigation_restrictions(duration, restrict, rest, outdir, ttl_str):

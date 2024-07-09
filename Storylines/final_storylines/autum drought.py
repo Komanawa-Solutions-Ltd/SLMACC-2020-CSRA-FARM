@@ -3,7 +3,7 @@
  Created: 20/04/2021 11:08 AM
  """
 
-import ksl_env
+import project_base
 import pandas as pd
 import os
 import glob
@@ -12,10 +12,10 @@ from Storylines.storyline_building_support import default_mode_sites
 
 if __name__ == '__main__':
     key = '2-yr1-Autumn Drough hot dry feb-March 50rest'
-    output_dir = os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\Final_Storylines\Autumn_Drought")
+    output_dir = os.path.join(project_base.slmmac_dir, r"outputs_for_ws\Final_Storylines\Autumn_Drought")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    base_dir = os.path.join(ksl_env.slmmac_dir, r"outputs_for_ws\lauras_autum_drought_1yr")
+    base_dir = os.path.join(project_base.slmmac_dir, r"outputs_for_ws\lauras_autum_drought_1yr")
 
     t = pd.read_csv(os.path.join(base_dir, 'IID_probs_pg.csv')).set_index('ID')
     mapper = {'prob': 'log10_prob_irrigated', 'pgr': 'oxford-irrigated_pg', 'pgra': 'oxford-irrigated_pgra'}
