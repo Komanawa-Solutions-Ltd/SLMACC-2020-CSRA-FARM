@@ -9,6 +9,8 @@ from Storylines.storyline_runs.run_random_suite import get_1yr_data, get_nyr_sui
 from Storylines.storyline_evaluation.plot_nyr_suite import plot_impact_for_sites
 import matplotlib.pyplot as plt
 
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 def plot_all_site_v_site(nyrs):
     data = {}

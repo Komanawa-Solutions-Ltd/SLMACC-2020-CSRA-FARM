@@ -21,6 +21,8 @@ base_model = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'ra
 
 # data developed by Storylines/storyline_evaluation/plot_historical_detrended.py and
 # Storylines/storyline_evaluation/plot_historical_trended.py
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 def plot_all_comps(correct=False):
     cor = ''

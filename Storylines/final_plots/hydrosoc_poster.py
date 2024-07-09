@@ -16,7 +16,7 @@ from Storylines.storyline_evaluation.storyline_characteristics_for_impact import
 base_outdir = os.path.join(project_base.slmmac_dir, 'hydrosoc_plots')
 os.makedirs(base_outdir, exist_ok=True)
 
-
+raise NotImplementedError('This code is not up to date with the current data, see prop_and_pg_with_storage.py for the most recent version')
 def plot_normalize_storyline(name, figsize=(10, 8), suffix='.png'):
     print(name)
     outputs_dir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', name)

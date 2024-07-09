@@ -25,6 +25,8 @@ name = 'random_'
 base_story_dir = os.path.join(temp_storyline_dir, name)
 cols = ['date', 'precip_class', 'temp_class', 'rest', 'rest_per', 'year',
         'month', 'precip_class_prev']
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 
 def get_month_limits_from_most_probable(eyrewell_irr, oxford_irr, oxford_dry, correct):

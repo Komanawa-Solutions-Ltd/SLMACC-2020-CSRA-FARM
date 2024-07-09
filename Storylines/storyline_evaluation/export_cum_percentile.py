@@ -10,6 +10,8 @@ from Storylines.storyline_building_support import default_mode_sites
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, get_nyr_suite
 from Storylines.storyline_evaluation.storyline_eval_support import calc_cumulative_impact_prob
 from scipy.interpolate import interp1d
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 
 def export_cum_percentile(nyr, outdir, step_size=0.1):

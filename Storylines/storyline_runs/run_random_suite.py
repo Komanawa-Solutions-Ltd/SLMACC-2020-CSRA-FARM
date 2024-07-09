@@ -3,6 +3,8 @@
  Created: 24/02/2021 10:46 AM
  """
 import os
+import warnings
+
 import project_base
 import glob
 import numpy as np
@@ -19,6 +21,8 @@ from Pasture_Growth_Modelling.full_pgr_model_mp import run_full_model_mp, defaul
 from Pasture_Growth_Modelling.full_model_implementation import add_pasture_growth_anaomoly_to_nc
 from Storylines.storyline_evaluation.storyline_eval_support import get_pgr_prob_baseline_stiched
 from Storylines.storyline_evaluation.transition_to_fraction import corr_pg, corr_pg_raw
+
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 name = 'random'
 random_pg_dir = os.path.join(default_pasture_growth_dir, name)

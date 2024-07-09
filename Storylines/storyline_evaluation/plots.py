@@ -12,6 +12,8 @@ base_outdir = os.path.join(project_base.slmmac_dir, 'outputs_for_ws', 'norm', 'r
 
 correct_stepsize = 0.1
 
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 def plot_1yr(save=False, close=True):
     for mode, site in default_mode_sites:

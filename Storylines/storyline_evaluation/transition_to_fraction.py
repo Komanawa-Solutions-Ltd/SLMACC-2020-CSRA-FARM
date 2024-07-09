@@ -11,6 +11,8 @@ from Storylines.storyline_building_support import month_len, default_mode_sites
 from copy import deepcopy
 import numpy as np
 from Climate_Shocks.climate_shocks_env import temp_storyline_dir
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 dnz_values = {
     # oxford site : https://www.dairynz.co.nz/media/5793235/average-pasture-growth-data-south-island-2020-v1.pdf

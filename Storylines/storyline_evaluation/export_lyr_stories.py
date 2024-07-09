@@ -10,6 +10,8 @@ import glob
 import numpy as np
 from Storylines.storyline_runs.run_random_suite import get_1yr_data, default_mode_sites, random_sl_dir
 
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 def export_1yr_stories(output_dir, n, anamoly, site, mode, tolerance):
     """

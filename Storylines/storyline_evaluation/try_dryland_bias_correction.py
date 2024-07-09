@@ -10,6 +10,8 @@ import pandas as pd
 from Pasture_Growth_Modelling.historical_average_baseline import get_historical_average_baseline, \
     run_past_basgra_dryland
 
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 def try_bias_correction():
     outdir = os.path.join(project_base.slmmac_dir,'outputs_for_ws', 'norm','historical_trended v historical plots')

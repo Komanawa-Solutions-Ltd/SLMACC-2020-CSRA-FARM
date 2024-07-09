@@ -12,6 +12,8 @@ from Pasture_Growth_Modelling.full_model_implementation import default_mode_site
 from BS_work.IID.IID import run_IID
 from Pasture_Growth_Modelling.historical_average_baseline import get_historical_average_baseline
 
+import warnings
+warnings.warn('this code is not up to date with the current data, see komanawa-slmacc-csra for the most recent version')
 
 def get_pgr_prob_baseline_stiched_old(nyears, site, mode, irr_prop_from_zero, recalc=False):
     """
@@ -87,6 +89,7 @@ def calc_impact_prob(pgr, stepsize=0.1):
     :param normalize: bool if True then make sum of out_prob = 1
     :return:
     """
+    raise NotImplementedError('this is not working correctly')
     pgr = np.atleast_1d(pgr)
 
     step_decimals = len(str(stepsize).split('.')[-1])
