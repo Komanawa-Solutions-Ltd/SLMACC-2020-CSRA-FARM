@@ -2,12 +2,11 @@ import pandas as pd
 from copy import deepcopy
 import os
 import project_base
-from Storylines.storage_runs.run_hurt_scare_mostprob import change_to_daily_pg, default_mode_sites
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import numpy as np
 from Storylines.storyline_evaluation.storyline_characteristics_for_impact import month_len
-from komanawa.slmacc_csra import get_1yr_non_exceedence_prob, get_1yr_data
+from komanawa.slmacc_csra import get_1yr_non_exceedence_prob, get_1yr_suite
 
 base_outdir = os.path.join(project_base.slmmac_dir, '0_Y2_and_Final_Reporting', 'final_plots')
 os.makedirs(base_outdir, exist_ok=True)
@@ -83,7 +82,7 @@ def pg_boxplots(site, figsize=(10, 8), suffix='.png'):
     handles = []
     for i, (c, mode) in enumerate(zip(colors, plt_mode)):
         print(site, mode)
-        data = get_1yr_data(site=site, mode=mode).dropna()
+        data = get_1yr_suite(site=site, mode=mode).dropna()
         labels.append(f'{site}-{mode}')
         handles.append(Patch(facecolor=c))
 

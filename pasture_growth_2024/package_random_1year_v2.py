@@ -4,7 +4,6 @@ on: 7/5/24
 """
 import netCDF4 as nc
 import numpy as np
-from pathlib import Path
 import zipfile
 import datetime
 from project_base import proj_root
