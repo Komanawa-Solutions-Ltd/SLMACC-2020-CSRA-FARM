@@ -3,17 +3,11 @@ created Evelyn_Charlesworth
 on: 1/11/2022
 """
 
-from komanawa import kslcore
+from komanawa.kslcore import KslEnv
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import datetime
 from dateutil.relativedelta import relativedelta
-from itertools import groupby
-from komanawa.kslcore import KslEnv
-from Climate_Shocks.get_past_record import get_vcsn_record, get_restriction_record
-from water_temp_monthly import temp_regr
-
+from Climate_Shocks.get_past_record import get_restriction_record
 
 malf_baseline_nat = 42.2007397
 maf_baseline_nat = 991.5673849310346
@@ -55,8 +49,9 @@ species_baseline_max_wua = {
 
 
 def get_naturalised_flow_dataset():
-    base_path = kslcore.KslEnv.shared_gdrive.joinpath(
-        'Z2003_SLMACC/eco_modelling/stats_info/66401_Naturalised_flow.csv')
+
+    base_path = KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info',
+                                                                '66401_Naturalised_flow.csv')
     data = pd.read_csv(base_path)
     data.loc[:, 'Datetime'] = pd.to_datetime(data.loc[:, 'Datetime'], format='%d/%m/%Y')
     data.loc[:, 'water_year'] = [e.year for e in (data.loc[:, 'Datetime'].dt.to_pydatetime() + relativedelta(months=6))]
@@ -140,7 +135,9 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
 
     # getting temperature data
-    temperature_df = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/waimak_daily_max_temp_predicted.csv"))
+    temperature_df = pd.read_csv(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'temp_data',
+                                                               'waimak_daily_max_temp_predicted.csv'))
+
     # NB temp data starts at 1972 as earliest date
     temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
 
@@ -383,12 +380,43 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         score = higher_is_worse(min_v7, max_v7, value8)
         outdata.loc[idx8, 'malf_times_maf_score'] = score
 
-    #outdata.to_csv(outpath)
-    return outdata, temperature_df
+    outdata.to_csv(outpath)
+    return outdata
+
+
+def get_avg_score(data, out_filename):
+    """a function that reads in the original spreadsheets and creates an average yearly
+    score and then timeseries score based on all the variable scores"""
+
+    data = data[['water_year', 'longfin_eel_<300_score', 'torrent_fish_score',
+             'brown_trout_adult_score',	'diatoms_score',
+             'long_filamentous_score', 'days_below_malf_score',
+             'days_below_flow_lim_score', 'anomalies_score', 'malf_events_greater_7_score',
+             'malf_events_greater_14_score', 'malf_events_greater_21_score', 'malf_events_greater_28_score',
+             'flow_events_greater_7_score',	'flow_events_greater_14_score',	'flow_events_greater_21_score',
+             'flow_events_greater_28_score', 'temp_days_above_19_score','temp_days_above_21_score',
+             'temp_days_above_24_score', 'days_above_maf_score', 'flood_anomalies_score', 'malf_times_maf_score']]
+
+    data = data.set_index('water_year')
+    data['yearly_avg_score'] = data.mean(axis=1)
+    data['yearly_avg_score'] = round((data['yearly_avg_score'] * 2.0))/ 2.0
+    data['timeseries_avg_score'] = data['yearly_avg_score'].mean()
+    data['rounded_timeseries_avg_score'] = round((data['timeseries_avg_score'] * 2.0)) / 2.0
+
+    outpath = KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'workshop_material',
+                                                               'test_scenario_scores', f'{out_filename}.csv')
+    data.to_csv(outpath)
+    return data
+
+
+def get_weighted_score(data, weighting):
+
+    weighted_scores = data * weighting
+
+    return weighted_scores
 
 
 if __name__ == '__main__':
-    read_and_stats(
-        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/V4/measured_full_stats.csv'), 1972,
-        2019, 50)
-
+    read_and_stats(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info', 'V4',
+                                                                    'measured_full_stats.csv'), 1972,
+                   2019, 50)

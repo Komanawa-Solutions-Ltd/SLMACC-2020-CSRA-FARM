@@ -1,91 +1,79 @@
 """
-created Evelyn_Charlesworth
-on: 25/08/2022
+created Evelyn_Charlesworth 
+on: 27/10/2022
 """
+"""A python script that takes in the perturbed storyline data and creates scores etc. accordingly.
+Similar as ecological_scoring but just takes in different sets of data"""
+
 from komanawa import kslcore
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import datetime
 from dateutil.relativedelta import relativedelta
-from itertools import groupby
-from komanawa.kslcore import KslEnv
-from Climate_Shocks.get_past_record import get_vcsn_record, get_restriction_record
-from water_temp_monthly import temp_regr
+from Climate_Shocks.get_past_record import get_restriction_record
+
+temp_storyline_data = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
+        'Z2003_SLMACC/eco_modelling/stats_info/V3/storyline_data/waimak_daily_max_temp_predicted_storyline.csv'))
+measured_10_worst_data = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
+        'Z2003_SLMACC/eco_modelling/stats_info/V3/storyline_data/measured_flow_data_storyline_data.csv'))
+naturalised_10_worst_data = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
+        'Z2003_SLMACC/eco_modelling/stats_info/V3/storyline_data/naturalised_flow_data_storylines.csv'))
+
+naturalised_severe_drought = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
+        'Z2003_SLMACC/eco_modelling/stats_info/V3/storyline_data/naturalised_flow_data_storylines_severe_drought.csv'))
+measured_severe_drought = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
+        'Z2003_SLMACC/eco_modelling/stats_info/V3/storyline_data/measured_flow_data_storyline_data_severe_drought.csv'))
+temp_severe_drought = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
+        'Z2003_SLMACC/eco_modelling/stats_info/V3/storyline_data/waimak_daily_max_temp_predicted_smyd_storyline.csv'))
+
+naturalised_2_bad = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
+        'Z2003_SLMACC/eco_modelling/stats_info/V3/storyline_data/naturalised_flow_data_storylines_2bad.csv'))
+measured_2_bad = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
+        'Z2003_SLMACC/eco_modelling/stats_info/V3/storyline_data/measured_flow_data_storyline_data_2bad.csv'))
 
 
-malf_full_nat = 41.63893094
 malf_baseline_nat = 42.2007397
-malf_climate_nat = 41.13377138
+maf_baseline_nat = 991.5673849310346
 
 def _wua_poly(x, a, b, c, d, e, f):
     """a function that reads in coefficients and returns a polynomial with the coeffs
     inserted"""
     return a * x ** 5 + b * x ** 4 + c * x ** 3 + d * x ** 2 + e * x + f
 
-
 species_coeffs = {
-    "longfin_eel": (-9.045618237519400E-09, 3.658952327544510E-06,
+    "longfin_eel_<300": (-9.045618237519400E-09, 3.658952327544510E-06,
                     5.653574369241410E-04, 3.858556802202370E-02,
                     3.239955996233250E-01, 9.987638834796250E+01),
-    "shortfin_eel": (-5.964114493071940E-09, + 2.359764378654360E-06,
-                     - 3.693579872009160E-04, + 2.683927613703320E-02,
-                     - 3.681012446881110E-01, + 8.593725263391190E+01),
     "torrent_fish": (2.896163694304270E-08, 1.167620629575640E-05,
                      + 1.801041895279500E-03, - 1.329402534268910E-01,
                      + 5.277167341236740E+00, - 1.408366189647840E+01),
-    "common_bully": (3.679138046845140E-09, 1.938607130429040E-07,
-                     - 1.923502238925680E-04, + 2.961375443166340E-02,
-                     - 1.112066360882710E+00, + 7.329526111040610E+01),
-    "upland_bully": (-1.670386190380080E-08, + 7.480690123013630E-06,
-                     - 1.257177384401630E-03, + 9.648051249735090E-02,
-                     - 3.077836962111130E+00, + 8.675954558492810E+01),
-    "bluegill_bully": (-6.471586231748120E-09, + 1.973356622447410E-06,
-                       - 1.949914099179170E-04, + 5.570337619808730E-03,
-                       + 3.944431105242500E-01, + 3.459956435653860E+01),
-    "food_production": (2.130431975429750E-08, - 9.085807849474580E-06,
-                        + 1.464737145368640E-03, - 1.125512066047600E-01,
-                        + 4.823875351509410E+00, + 1.115625470423880E+01),
     "brown_trout_adult": (4.716969949537670E-09, - 2.076496120868080E-06,
                           + 3.361640291880770E-04, - 2.557607121249140E-02,
                           + 1.060052581008110E+00, + 3.627596900757210E+0),
-    "chinook_salmon_junior": (6.430228856812380E-09, - 1.901413063448040E-06,
-                              + 1.779162094752800E-04, - 5.287064285669480E-03,
-                              + 6.690264788207550E-02, + 2.160739430906840E+01),
     "diatoms": (7.415806641571640E-11, - 3.448627575182280E-08,
                 + 6.298888857172090E-06, - 5.672527158325650E-04,
                 + 2.595917911761800E-02, - 1.041530354852930E-01),
     "long_filamentous": (-2.146620894005660E-10, + 8.915219136657130E-08,
                          - 1.409667339556760E-05, + 1.057153790947640E-03,
                          - 3.874332961128240E-02, + 8.884973169426100E-01),
-    "short_filamentous": (1.411793860210670E-10, - 5.468836816918290E-08,
-                          + 7.736645471349440E-06, - 4.767919019192250E-04,
-                          + 1.082051321324740E-02, + 3.578139911667070E-01),
+
     }
 species_limits = {
-    "longfin_eel": (18, 130), "shortfin_eel": (18, 130), "torrent_fish": (18, 130),
-    "common_bully": (18, 130), "upland_bully": (18, 130), "bluegill_bully": (18, 130),
-    "food_production": (18, 130), "brown_trout_adult": (18, 130), "chinook_salmon_junior": (18, 130),
-    "diatoms": (18, 130), "long_filamentous": (18, 130), "short_filamentous": (18, 130)}
-
-#species_baseline_malf_wua = {
-#    "longfin_eel": 228, "shortfin_eel": 97, "torrent_fish": 141, "common_bully": 65,
-#    "upland_bully": 55, "bluegill_bully": 52, "food_production": 98, "brown_trout_adult": 22,
-#    "chinook_salmon_junior": 23, "diatoms": 0.35, "long_filamentous": 0.33, "short_filamentous": 0.39,
-#    "black_fronted_tern": 66.24, "wrybill_plover": 202}
+    "longfin_eel_<300": (18, 130), "torrent_fish": (18, 130),
+    "brown_trout_adult": (18, 130), "diatoms": (18, 130), "long_filamentous": (18, 130)}
 
 species_baseline_min_wua = {
-    "longfin_eel": 146, "shortfin_eel": 89, "torrent_fish": 71, "common_bully": 61,
-    "upland_bully": 53, "bluegill_bully": 46, "food_production": 82, "brown_trout_adult": 19,
-    "chinook_salmon_junior": 22, "diatoms": 0.28, "long_filamentous": 0.31, "short_filamentous": 0.36}
+    "longfin_eel_<300": 146, "torrent_fish": 71, "brown_trout_adult": 19, "diatoms": 0.28,
+     "long_filamentous": 0.31}
 
+# max wua = with the median flow
 species_baseline_max_wua = {
-    "longfin_eel": 426, "shortfin_eel": 107, "torrent_fish": 395, "common_bully": 77,
-    "upland_bully": 62, "bluegill_bully": 57, "food_production": 111, "brown_trout_adult": 25,
-    "chinook_salmon_junior": 25.5, "diatoms": 0.38, "long_filamentous": 0.39, "short_filamentous": 0.43}
+    "longfin_eel_<300": 426, "torrent_fish": 395, "brown_trout_adult": 25, "diatoms": 0.38,"long_filamentous": 0.39}
+
+# adding in the average median weightings here
+species_average_weights = {"longfin_eel_<300": 2,"torrent_fish": 3.125, "brown_trout_adult": 2.125, "diatoms": 2.875,"long_filamentous": 0.125}
 
 
-def get_flow_dataset():
+def get_naturalised_flow_dataset():
     base_path = kslcore.KslEnv.shared_gdrive.joinpath(
         'Z2003_SLMACC/eco_modelling/stats_info/66401_Naturalised_flow.csv')
     data = pd.read_csv(base_path)
@@ -94,24 +82,6 @@ def get_flow_dataset():
     data = data.rename(columns={'Datetime': 'date', 'M3PerSecond': 'flow'})
     data = data.loc[:, ['date', 'flow', 'water_year']]
     return data
-
-
-def get_temp_dataset():
-    """a function that gets the daily water temperature dataset"""
-    data = get_vcsn_record(version='trended', site='eyrewell')
-    data = data.reset_index()
-    for d, t in data.loc[:, 'tmin'].items():
-        mean_temp = (t + data.loc[d, 'tmax']) / 2
-        data.loc[d, 'mean_daily_air_temp'] = mean_temp
-    data['date'] = pd.to_datetime(data['date'])
-    data.loc[:, 'water_year'] = [e.year for e in (data.loc[:, 'date'].dt.to_pydatetime() + relativedelta(months=6))]
-    x = data.loc[:, 'mean_daily_air_temp'].values.reshape(-1, 1)
-    data.loc[:, 'mean_daily_water_temp'] = temp_regr.predict(x)
-    data = data.loc[:, ['date', 'water_year', 'mean_daily_air_temp', 'mean_daily_water_temp']]
-    data.to_csv(kslcore.KslEnv.shared_gdrive.joinpath(
-        'Z2003_SLMACC/eco_modelling/temp_data/waimak_mean_temp.csv'))
-    return data
-
 
 def get_measured_flow_dataset():
     record = get_restriction_record('trended')
@@ -147,7 +117,7 @@ def flow_to_wua(alf, species):
     return wua
 
 
-def higher_is_better(min_value, max_value, input_value):
+def higher_is_better(min_value, max_value, input_value, weighting):
     """A function for all the parameters where a larger value means a higher score e.g +++"""
 
     # keynote NEW scoring system, mult by -1 to switch directions
@@ -156,18 +126,24 @@ def higher_is_better(min_value, max_value, input_value):
     score = (score * 2) - 1  # shift score to -1 to 1
 
     # have adjusted the score based on wanting to score from -3 to 3
+    score = score*3
+    # weighting the score
+    score = score * weighting
     # rounding to the nearest 0.5
-    return round((score * 3) * 2.0) / 2.0
+    return round((score * 2.0) / 2.0)
 
 
-def higher_is_worse(min_value, max_value, input_value):
+def higher_is_worse(min_value, max_value, input_value, weighting):
     """"A function where a larger value means a worse score e.g ---- """
 
     score1 = ((input_value - min_value) / (max_value - min_value))
     score1 = (score1 * 2) - 1 # shift score to -1 to 1
     # have adjusted the score based on wanting to score from -3 to 3
-    # rounding
-    return round((score1 * -3) * 2.0) / 2.0
+    score1 = score1 * -3
+    # weighting the score
+    score1 = score1 * weighting
+    # rounding to the nearest 0.5
+    return round((score1 * 2.0) / 2.0)
 
 
 def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
@@ -183,33 +159,34 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     # getting flow data
     # keynote change which function is called based on whether getting naturalised or measured flow
-    flow_df = get_measured_flow_dataset()
+    flow_df = measured_severe_drought
 
-    list_startdates = range(start_water_year, end_water_year + 1)
+    list_startdates = [2001, 2006, 2007, 2008, 2010, 2013, 2014, 2015, 2016, 2019]
     flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
 
     # getting temperature data
-    temperature_df = get_temp_dataset()
+    temperature_df = temp_severe_drought
     # NB temp data starts at 1972 as earliest date
     temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
 
+    #KEYNOTE STATS START HERE
     # Calculating stats
 
     # Calculating the median flow for all years
     # One value for the entire dataset
-    median_flow = flow_df['flow'].median()
+    median_flow = flow_df['perturbed_flow'].median()
 
     # First, long to wide by hydrological years
     all_hydro_years_df = pd.DataFrame(index=range(1, 367), columns=list_startdates)
     for y in list_startdates:
-        l = range(1, len(flow_df.loc[flow_df.water_year == y, 'flow']) + 1)
-        all_hydro_years_df.loc[l, y] = flow_df.loc[flow_df.water_year == y, 'flow'].values
+        l = range(1, len(flow_df.loc[flow_df.water_year == y, 'perturbed_flow']) + 1)
+        all_hydro_years_df.loc[l, y] = flow_df.loc[flow_df.water_year == y, 'perturbed_flow'].values
 
     temperature_wide_df = pd.DataFrame(index=range(1, 367), columns=list_startdates)
     for x in list_startdates:
-        length = range(1, len(temperature_df.loc[temperature_df.water_year == x, 'mean_daily_water_temp']) + 1)
+        length = range(1, len(temperature_df.loc[temperature_df.water_year == x, 'predicted_daily_max_water_temp']) + 1)
         temperature_wide_df.loc[length, x] = temperature_df.loc[
-            temperature_df.water_year == x, 'mean_daily_water_temp'].values
+            temperature_df.water_year == x, 'predicted_daily_max_water_temp'].values
 
     seven_day_avg_df = get_seven_day_avg(all_hydro_years_df)
 
@@ -220,8 +197,8 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     outdata.loc[:, 'alf'] = seven_day_avg_df.min()
 
     # Getting the MALF
-    outdata.loc[:, 'malf'] = malf = malf_climate_nat
-    outdata.loc[:, 'measured_malf'] = calculated_malf = outdata['alf'].mean()
+    outdata.loc[:, 'reference_malf'] = malf = malf_baseline_nat
+    outdata.loc[:, 'period_malf'] = outdata['alf'].mean()
 
     # putting the median in outdata
     outdata.loc[:, 'median'] = median_flow
@@ -234,7 +211,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
     outdata.loc[:, 'temp_days_above_21'] = (temperature_wide_df > 21).sum()
     outdata.loc[:, 'temp_days_above_24'] = (temperature_wide_df > 24).sum()
 
-    # consecutive days for malf
+    # consecutive days below malf
     for y in list_startdates:
         t = all_hydro_years_df.loc[:, y]
         t2 = (t <= malf)
@@ -307,19 +284,6 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
                 outdata.loc[d, 'flow_events_greater_21'] = (outperiods1_df >= 21).sum()
                 outdata.loc[d, 'flow_events_greater_28'] = (outperiods1_df >= 28).sum()
 
-    # fixme might not need this code anymore
-    # Finding the ALF anomaly for the worst 1, 2 and 3 yrs
-    # The worst ALF year is min of the alf df
-    worst_alf = outdata.loc[:, 'alf'].min()
-    # Calculating the anomaly of malf - alf for the worst alf year
-    outdata.loc[:, 'anomaly_1'] = anomaly_1 = median_flow - worst_alf
-
-    # getting the worst 2yr consecutive ALf and worst 3yr
-    consecutive_alfs = [2, 3]
-    for cy in consecutive_alfs:
-        outdata.loc[:, f'rolling_alf_{cy}'] = t = outdata.loc[:, 'alf'].rolling(cy).mean()
-        outdata.loc[:, f'worst_rolling_{cy}_alf'] = t.min()
-        outdata.loc[:, f'malf_worst_{cy}_anom'] = median_flow - t.min()
 
     # getting malf - alf for each year
     for i, a in outdata.loc[:, 'alf'].items():
@@ -331,36 +295,59 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
             wua = flow_to_wua(v, sp)
             outdata.loc[k, f'{sp}_wua'] = wua
 
+    # flooding statistics
+    # find the maximum (single) flow per year
+    outdata.loc[:, 'max_flow'] = all_hydro_years_df.max()
+    # find the MAF
+    # stats are always referenced to the naturalised baseline maf
+    maf = maf_baseline_nat
+    outdata.loc[:, 'reference_maf'] = maf
+    outdata.loc[:, 'period_maf'] = outdata.loc[:, 'max_flow'].mean()
+
+    # find the flood anomaly
+    for i, m in outdata.loc[:, 'max_flow'].items():
+        outdata.loc[i, 'flood_anomalies'] = maf - m
+
+    # find the number of days > MAF
+    outdata.loc[:, 'days_above_maf'] = (all_hydro_years_df > maf).sum()
+
+    # combination MAF vs MALF stats
+    outdata.loc[:, 'maf_times_malf'] = outdata.loc[:, 'days_above_maf'] * outdata.loc[:, 'days_below_malf']
+
+    # KEYNOTE SCORING STARTS HERE
     # getting the wua score for each species
     for species in species_limits:
         min_wua = species_baseline_min_wua[species]
         max_wua = species_baseline_max_wua[species]
+        weighting = species_average_weights[species]
         for idx, v in outdata.loc[:, f'{species}_wua'].items():
             alf_wua = v
-            score = higher_is_better(min_wua, max_wua, alf_wua)
+            score = higher_is_better(min_wua, max_wua, alf_wua, weighting)
             outdata.loc[idx, f'{species}_score'] = score
 
     baseline_days_below_malf = {'min': 0, 'max': 70}
+    days_below_malf_weighting = 3.5
     baseline_days_below_flow_lims = {'min': 0, 'max': 108}
-
+    days_below_flow_lims_weighting = 3.375
     # getting the days below malf score
     for idx1, value in outdata.loc[:, 'days_below_malf'].items():
         min_v, max_v = baseline_days_below_malf['min'], baseline_days_below_malf['max']
-        days_score = higher_is_worse(min_v, max_v, value)
+        days_score = higher_is_worse(min_v, max_v, value, days_below_malf_weighting)
         outdata.loc[idx1, 'days_below_malf_score'] = days_score
 
 
     # getting the days below flow lim score
     for idx2, value2 in outdata.loc[:, 'days_below_50'].items():
         min_v1, max_v1 = baseline_days_below_flow_lims['min'], baseline_days_below_flow_lims['max']
-        days_score1 = higher_is_worse(min_v1, max_v1, value2)
+        days_score1 = higher_is_worse(min_v1, max_v1, value2, days_below_flow_lims_weighting)
         outdata.loc[idx2, 'days_below_flow_lim_score'] = days_score1
 
     # getting the anomalies score
+    anomalies_weighting = 2.5
     baseline_anomalies = {'min': -18.20, 'max': 16.15}
     for idx3, value3 in outdata.loc[:, 'anomalies'].items():
         min_v2, max_v2 = baseline_anomalies['min'], baseline_anomalies['max']
-        anomalies_score = higher_is_worse(min_v2, max_v2, value3)
+        anomalies_score = higher_is_worse(min_v2, max_v2, value3, anomalies_weighting)
         outdata.loc[idx3, 'anomalies_score'] = anomalies_score
 
     # getting the event length score
@@ -372,6 +359,9 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
                              'min_flow_events_greater_14': 0, 'max_flow_events_greater_14': 4,
                              'min_flow_events_greater_21': 0, 'max_flow_events_greater_21': 2,
                              'min_flow_events_greater_28': 0, 'max_flow_events_greater_28': 1}
+    event_length_weighting = {'malf_events_greater_7': 3, 'malf_events_greater_14': 3.25 , 'malf_events_greater_21' : 3.75, 'malf_events_greater_28':4,
+                 'flow_events_greater_7' : 2.8125, 'flow_events_greater_14' : 2.6875, 'flow_events_greater_21': 3.0625, 'flow_events_greater_28': 3.125}
+
 
     col_names = ['malf_events_greater_7', 'malf_events_greater_14', 'malf_events_greater_21', 'malf_events_greater_28',
                  'flow_events_greater_7', 'flow_events_greater_14', 'flow_events_greater_21', 'flow_events_greater_28']
@@ -380,32 +370,63 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         for idx4, value4 in outdata.loc[:, c].items():
             min_v3 = baseline_event_length[f'min_{c}']
             max_v3 = baseline_event_length[f'max_{c}']
+            weighting = event_length_weighting[c]
             event_length = value4
-            event_score_output = higher_is_worse(min_v3, max_v3, event_length)
+            event_score_output = higher_is_worse(min_v3, max_v3, event_length, weighting)
             outdata.loc[idx4, f'{c}_score'] = event_score_output
 
     # getting days above 19, 21, 24 temperature score
-    baseline_temperature_days = {'min_temp_days_above_19': 0, 'max_temp_days_above_19': 22,
+    baseline_temperature_days = {'min_temp_days_above_19': 0, 'max_temp_days_above_19': 23,
                                  'min_temp_days_above_21': 0, 'max_temp_days_above_21': 3,
                                  'min_temp_days_above_24': 0, 'max_temp_days_above_24': 1}
+
+    temp_weighting = {'temp_days_above_19': 2.75, 'temp_days_above_21': 3.5625, 'temp_days_above_24': 3.9375}
     temp_col_names = ['temp_days_above_19', 'temp_days_above_21', 'temp_days_above_24']
 
     for col in temp_col_names:
         for idx5, value5 in outdata.loc[:, col].items():
             min_v4 = baseline_temperature_days[f'min_{col}']
             max_v4 = baseline_temperature_days[f'max_{col}']
+            weighting = temp_weighting[col]
             daily_temp = value5
-            temp_score = higher_is_worse(min_v4, max_v4, daily_temp)
+            temp_score = higher_is_worse(min_v4, max_v4, daily_temp, weighting)
             outdata.loc[idx5, f'{col}_score'] = temp_score
 
+    # flooding scores
 
+    #baseline_alf = {'min': 26.04872458428568, 'max': 60.39753014714286}
+    #baseline_af = {'min': 559.9717407, 'max': 1968.605347}
+    baseline_flood_anomaly = {'min': -977.0379620689654, 'max': 431.5956442310345}
+    flood_anomaly_weighting = 2.5
+    baseline_days_above_maf = {'min': 0, 'max': 3}
+    days_above_maf_weighting = 3
+    baseline_maf_and_malf_days = {'min': 0, 'max': 180}
+    maf_time_malf_weighting = 2.25
 
-    #outdata.to_csv(outpath)
+    # days above maf score
+    for idx6, value6 in outdata.loc[:, 'days_above_maf'].items():
+        min_v, max_v = baseline_days_above_maf['min'], baseline_days_above_maf['max']
+        days_score = higher_is_worse(min_v, max_v, value6, days_above_maf_weighting)
+        outdata.loc[idx6, 'days_above_maf_score'] = days_score
+
+    # flood anomaly score
+    for idx7, value7 in outdata.loc[:, 'flood_anomalies'].items():
+        min_v, max_v = baseline_flood_anomaly['min'], baseline_flood_anomaly['max']
+        anomalies_score = higher_is_better(min_v, max_v, value7, flood_anomaly_weighting)
+        outdata.loc[idx7, 'flood_anomalies_score'] = anomalies_score
+
+    # malf days * maf days score
+    for idx8, value8 in outdata.loc[:, 'maf_times_malf'].items():
+        min_v, max_v = baseline_maf_and_malf_days['min'], baseline_maf_and_malf_days['max']
+        score = higher_is_worse(min_v, max_v, value8, maf_time_malf_weighting)
+        outdata.loc[idx8, 'malf_times_maf_score'] = score
+
+    outdata.to_csv(outpath)
     return outdata, temperature_df
 
 
 if __name__ == '__main__':
     read_and_stats(
-        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/stats_info/measured_full_stats.csv'), 1972,
+        kslcore.KslEnv.shared_gdrive.joinpath('Z2003_SLMACC/eco_modelling/workshop_material/test_scenario_scores/measured_2_bad_stats_test.csv'), 2001,
         2019, 50)
 
