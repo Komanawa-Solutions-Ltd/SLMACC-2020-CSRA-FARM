@@ -5,17 +5,17 @@ on: 25/10/2022
 """a script that allows the yearly scores created in ecological_scoring.py to be turned into yearly and then
 period average scores"""
 
-# todo change kslcore import
-from komanawa import kslcore
+
+from komanawa.kslcore import KslEnv
 import pandas as pd
-# todo remove unused
-import numpy as np
+
 
 def get_avg_score(filename, out_filename):
     """a function that reads in the original spreadsheets and creates an average yearly
     score and then timeseries score based on all the variable scores"""
 
-    pathway = kslcore.KslEnv.shared_gdrive.joinpath(f'Z2003_SLMACC/eco_modelling/workshop_material/test_scenario_scores/{filename}.csv')
+    pathway = KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'workshop_material',
+                                                               'test_scenario_scores', f'{filename}.csv')
     df = pd.read_csv(pathway)
     df = df[['water_year', 'longfin_eel_<300_score', 'torrent_fish_score',
              'brown_trout_adult_score',	'diatoms_score',
@@ -32,11 +32,11 @@ def get_avg_score(filename, out_filename):
     df['timeseries_avg_score'] = df['yearly_avg_score'].mean()
     df['rounded_timeseries_avg_score'] = round((df['timeseries_avg_score'] * 2.0)) / 2.0
 
-    outpath = kslcore.KslEnv.shared_gdrive.joinpath(f'Z2003_SLMACC/eco_modelling/workshop_material/test_scenario_scores/{out_filename}.csv')
+    outpath = KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'workshop_material',
+                                                               'test_scenario_scores', f'{out_filename}.csv')
     df.to_csv(outpath)
     return df
 
-# todo this could be a function in the updated stats script
 
 if __name__ == '__main__':
     get_avg_score('measured_2_bad_stats_test', 'measured_2_bad_scores_test')

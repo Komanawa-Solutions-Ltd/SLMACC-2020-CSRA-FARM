@@ -2,6 +2,7 @@
 created Evelyn_Charlesworth 
 on: 25/08/2022
 """
+#todo ignore all todos, superseded code
 
 # taking what was done in the original code and optimising it for the specific time period
 import pandas as pd
