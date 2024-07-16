@@ -2,14 +2,16 @@
 created Evelyn_Charlesworth
 on: 25/08/2022
 """
-from komanawa import kslcore
+# todo update kslcore import
+# todo remove unused
+import kslcore
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import datetime
 from dateutil.relativedelta import relativedelta
 from itertools import groupby
-from komanawa.kslcore import KslEnv
+from kslcore import KslEnv
 from Climate_Shocks.get_past_record import get_vcsn_record, get_restriction_record
 from water_temp_monthly import temp_regr
 
@@ -154,6 +156,7 @@ def higher_is_better(min_value, max_value, input_value):
     # shift to 0-1
     score = (input_value - min_value) / (max_value - min_value)
     score = (score * 2) - 1  # shift score to -1 to 1
+    # todo remove comment re -1 to 1 if it has actually been shifted from -3 to 3
 
     # have adjusted the score based on wanting to score from -3 to 3
     # rounding to the nearest 0.5
@@ -400,7 +403,7 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
 
 
-    #outdata.to_csv(outpath)
+    outdata.to_csv(outpath)
     return outdata, temperature_df
 
 

@@ -8,14 +8,8 @@ Similar as ecological_scoring but just takes in different sets of data"""
 from komanawa import kslcore
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import datetime
 from dateutil.relativedelta import relativedelta
-from itertools import groupby
-from komanawa.kslcore import KslEnv
-from Climate_Shocks.get_past_record import get_vcsn_record, get_restriction_record
-from water_temp_monthly import temp_regr
-
+from Climate_Shocks.get_past_record import get_restriction_record
 
 temp_storyline_data = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath(
         'Z2003_SLMACC/eco_modelling/stats_info/V3/storyline_data/waimak_daily_max_temp_predicted_storyline.csv'))

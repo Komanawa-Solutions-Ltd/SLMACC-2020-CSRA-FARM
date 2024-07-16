@@ -5,8 +5,10 @@ on: 25/10/2022
 """a script that allows the yearly scores created in ecological_scoring.py to be turned into yearly and then
 period average scores"""
 
+# todo change kslcore import
 from komanawa import kslcore
 import pandas as pd
+# todo remove unused
 import numpy as np
 
 def get_avg_score(filename, out_filename):
@@ -33,6 +35,8 @@ def get_avg_score(filename, out_filename):
     outpath = kslcore.KslEnv.shared_gdrive.joinpath(f'Z2003_SLMACC/eco_modelling/workshop_material/test_scenario_scores/{out_filename}.csv')
     df.to_csv(outpath)
     return df
+
+# todo this could be a function in the updated stats script
 
 if __name__ == '__main__':
     get_avg_score('measured_2_bad_stats_test', 'measured_2_bad_scores_test')

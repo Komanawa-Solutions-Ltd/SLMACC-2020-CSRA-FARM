@@ -6,6 +6,7 @@ on: 25/08/2022
 # taking what was done in the original code and optimising it for the specific time period
 import pandas as pd
 import numpy as np
+# todo remove unused
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
@@ -13,6 +14,7 @@ from itertools import groupby
 
 # Reading in the files
 
+# todo update filepath with new project code/ kslcore
 def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\"):
     """A function that reads in a file of flows (associated w/ dates) and performs stats on them,
     allowing the outputs to be input into other eqs"""
@@ -30,14 +32,15 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     # Calculating the median flow for all years
     # One value for the entire dataset
     median_flow = flow_df['flow'].median()
+    # todo can be removed
     print(f"this is the median flow {median_flow}")
 
-    # Calculating the ALF
-    # One ALF per year
-
     # First, splitting the dataset into hydrological years using a nested function
+    # todo could probably unnest?
     def get_hydrological_year(dataframe, startyear):
         """A function that can get the hydrological year, where you input a year and a dataframe"""
+
+        # todo this definitely could be more efficient, not sure how
 
         # Getting the hydrological year from the dataset
 
@@ -54,8 +57,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
         return storage_df
 
     # A list of all the years in the dataset, 1970-2000 in this case
-    # help I want this to be more easily chanageble, rather than having two separate pieces of code for different
-    # help years
+    # help I want this to be more easily chanageble, rather than having two separate pieces of code for different years
     list_startdates = [1970, 1971,
                        1972, 1973, 1974, 1975, 1976, 1977,
                        1978, 1979, 1980, 1981, 1982, 1983,1984, 1985,
@@ -70,6 +72,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
         all_hydro_years_df[year] = x
 
     # Creating a nested function to get a 7-day rolling average in order to get the ALF
+    # todo as with hydrological year, could unnest, put at the top of the file, and then call within read and stats rather than be nested
     def get_seven_day_avg(dataframe):
         """ A function that creates the 7-day rolling avg of flow for each year"""
 
@@ -78,6 +81,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
         # Creating a column name that will increase for each hydrological year
         col_name = 0
         # Need to iterate through the columns and create a 7-day rolling avg for each yr
+        # todo could potentially do without iterating?
         for col in dataframe:
             col_name += 1
             # Turning the dataframe into a series in order to do the rolling avg
@@ -95,6 +99,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
         e.g the minimum 7day avg per year"""
 
         # Creating an empty list to store all the ALFs
+        # todo could be done more efficiently, would need to think about how
         alf_list = []
         for col in dataframe:
             alf = dataframe[col].min()
@@ -109,6 +114,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
 
     # Getting the MALF
     malf = alf['ALF'].mean()
+    # todo remove this
     print(f"This is the malf {malf}")
 
     # Calculating the days per year spent below MALF
@@ -122,6 +128,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     days_per_year_below_malf_df = pd.DataFrame(days_per_year_below_malf, list_startdates,
                                                columns=['Days below MALF per Year'])
 
+    # todo is this required?
     days_per_year_below_malf_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\days_below_malf_1970_pert.csv")
 
     # Getting the low flow stress days - days below x per year
@@ -136,6 +143,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
         days_per_year_stress.append(total_days_2)
     days_per_year_stress_df = pd.DataFrame(days_per_year_stress, list_startdates,
                                            columns=['Low Flow Stress Accrual Days'])
+    # todo is this required?
     days_per_year_stress_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\low_flow_stress_days_1970_pert.csv")
 
     # Finding the ALF anomaly for the worst 1, 2 and 3 yrs
@@ -143,9 +151,8 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     worst_alf = alf['ALF'].min()
     # Calculating the anomaly of malf - alf for the worst alf year
     anomaly_1 = malf - worst_alf
+    # todo can remove
     print(f"this is anomaly 1{anomaly_1}")
-    # Calculating the worst 2 & 3 consecutive years
-    # Using a nested function that uses the rolling method
 
     def get_worst_years(dataframe, no_years):
         """ A function that sums the ALF for each year, depending on the period
@@ -165,7 +172,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
             all_summed[col_name_1] = summed_flow
         return all_summed
 
-    # Using the function to get the worst 2yr consecutive ALf and worst 3yr
+    # Using the function to get the worst 2yr consecutive ALf and worst 3yr consecutive ALF
     worst_2_df = get_worst_years(alf, 2)
     worst_3_df = get_worst_years(alf, 3)
 
@@ -179,6 +186,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     # dividing by the no. consecutive yrs so the anomaly is not negative
     anomaly_2 = malf - (worst_2/2)
     anomaly_3 = malf - (worst_3/3)
+    # todo can remove
     print(f"this is anomaly 2{anomaly_2}")
     print(f"this is anomaly 3{anomaly_3}")
 
@@ -392,6 +400,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     flow_to_wua(alf_WUA_scores_df, "wrybill_plover")
 
     alf_WUA_scores_df.to_csv("V:\\Shared drives\\Z2003_SLMACC\\eco_modelling\\stats_info\\WUA_scores_1970.csv")
+    # todo this definitely needs to change
     # help I have to manually change this spreadsheet and read it back in
     # help would ideally like to not have to do this
 
@@ -402,6 +411,7 @@ def read_and_stats(file, pathway="V:\\Shared drives\\Z2003_SLMACC\\eco_modelling
     WUA_percen_df = WUA_percen_df.astype(dtype=float)
 
     col_title = 0
+    # todo figure out what these scores are related to
     for col in WUA_percen_df.iloc[:,1:]:
         list_scores = []
         range = WUA_percen_df[col].max() - WUA_percen_df[col].min()

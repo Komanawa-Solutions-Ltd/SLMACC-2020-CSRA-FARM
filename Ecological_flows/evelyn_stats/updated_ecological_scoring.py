@@ -6,14 +6,8 @@ on: 1/11/2022
 from komanawa import kslcore
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import datetime
 from dateutil.relativedelta import relativedelta
-from itertools import groupby
-from komanawa.kslcore import KslEnv
-from Climate_Shocks.get_past_record import get_vcsn_record, get_restriction_record
-from water_temp_monthly import temp_regr
-
+from Climate_Shocks.get_past_record import get_restriction_record
 
 malf_baseline_nat = 42.2007397
 maf_baseline_nat = 991.5673849310346
