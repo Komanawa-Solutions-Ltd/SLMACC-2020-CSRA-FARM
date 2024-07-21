@@ -59,3 +59,6 @@ def get_expert_weightings(expert_name):
 
 
 
+def run_eco_model(air_temp, r_flow, weightings=None):
+
+    return None
