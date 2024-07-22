@@ -57,7 +57,7 @@ def run_eco_model_vectorised(datetime, air_temp, r_flow, weightings=None):
     if weightings is None:
         weightings = {'thing':1} # todo
     else:
-        # check weiting strugure
+        # check weighting structure
         raise NotImplementedError
 
     # run model

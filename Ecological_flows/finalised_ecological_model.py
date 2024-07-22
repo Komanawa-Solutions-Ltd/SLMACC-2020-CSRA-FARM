@@ -58,7 +58,35 @@ def get_expert_weightings(expert_name):
         raise ValueError(f'invalid expert name {expert_name}')
 
 
-
 def run_eco_model(air_temp, r_flow, weightings=None):
+    """
+    :param air_temp: air temperature timeseries in degrees C, daily data
+    :param r_flow: river flow timseries in m3/s, daily data
+    :param weightings: dict of weightings for each ecological flow component
+    :return: ts_score, annual_scores, detailed_scores
+    """
+    if weightings is None:
+        weightings = {'longfin_eel': 1, 'torrent_fish': 1, 'brown_trout': 1, 'diatoms': 1, 'long_filamentous': 1,
+                      'days_below_malf': 1, 'days_below_flow_limit': 1, 'anomaly': 1,
+                      'malf_events_greater_7': 1, 'malf_events_greater_14': 1,
+                      'malf_events_greater_21': 1, 'malf_events_greater_28': 1,
+                      'flow_events_greater_7': 1, 'flow_events_greater_14': 1,
+                      'flow_events_greater_21': 1, 'flow_events_greater_28': 1,
+                      'temp_days_above_19': 1, 'temp_days_above_21': 1, 'temp_days_above_24': 1,
+                      'days_above_maf': 1, 'flood_anomalies': 1, 'malf_times_maf': 1}
+    else:
+        raise NotImplementedError
 
-    return None
+    detailed_scores = generate_scores(air_temp, r_flow, weightings)
+    # todo apply weightings within the detailed scores function, or return scores and then weight them??
+    # todo I think want to do as here, where the weighting is input into the run_eco_model function, but the weighting
+    # todo calculation is done within the generate_scores function
+
+    # todo check data structure for air_temp and r_flow
+    # one column should be datetime data, other should be the flow in m3/d or the temp in degrees C
+    # todo write some assertions
+
+    annual_scores = calculate_annual_scores(detailed_scores)
+    ts_scores = calculate_ts_scores(annual_scores)
+
+    return ts_scores, annual_scores, detailed_scores
