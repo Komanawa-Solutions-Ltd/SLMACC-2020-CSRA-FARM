@@ -51,43 +51,23 @@ species_baseline_max_wua = {
     "longfin_eel_<300": 426, "torrent_fish": 395, "brown_trout_adult": 25, "diatoms": 0.38,"long_filamentous": 0.39}
 
 
-# todo this needs to be removed - data should be a variable of the read stats function
-def get_naturalised_flow_dataset():
-
-    base_path = KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info',
-                                                                '66401_Naturalised_flow.csv')
-    data = pd.read_csv(base_path)
-    data.loc[:, 'Datetime'] = pd.to_datetime(data.loc[:, 'Datetime'], format='%d/%m/%Y')
-    data.loc[:, 'water_year'] = [e.year for e in (data.loc[:, 'Datetime'].dt.to_pydatetime() + relativedelta(months=6))]
-    data = data.rename(columns={'Datetime': 'date', 'M3PerSecond': 'flow'})
-    data = data.loc[:, ['date', 'flow', 'water_year']]
-    return data
-
-# todo this needs to be removed - data should be a variable of the read stats function
-
-def get_measured_flow_dataset():
-    record = get_restriction_record('trended')
-    record = record.reset_index()
-    record.loc[:, 'date'] = pd.to_datetime(record.loc[:, 'date'], format='%d/%m/%Y')
-    record.loc[:, 'water_year'] = [e.year for e in (record.loc[:, 'date'].dt.to_pydatetime() + relativedelta(months=6))]
-    record = record.loc[:, ['date', 'flow', 'water_year']]
-    return record
-
 
 def get_seven_day_avg(dataframe):
     """ A function that creates the 7-day rolling avg of flow for each year"""
 
-    # Creating an empty dataframe to append the 7-day avg series to
-    all_seven_day_avg = pd.DataFrame()
-    # Creating a column name that will increase for each hydrological year
-    # Need to iterate through the columns and create a 7-day rolling avg for each yr
-    for col in dataframe.columns:
-        # Turning the dataframe into a series in order to do the rolling avg
-        number_series = dataframe.loc[:, col]
-        # Creating a series of moving averages in each window
-        rolling_avg = number_series.rolling(7).mean()
-        all_seven_day_avg[col] = rolling_avg
-    return all_seven_day_avg
+
+    # setting the data column as the index
+    dataframe = dataframe.set_index('date')
+
+    rolling_avg = dataframe['flow'].rolling(window=7).mean()
+
+    # create the new df with the rolling avg
+    rolling_avg_df = pd.DataFrame({
+        'date': rolling_avg.index,
+        'rolling_avg_flow': rolling_avg.values
+    })
+
+    return rolling_avg_df
 
 
 def flow_to_wua(alf, species):
@@ -124,61 +104,51 @@ def higher_is_worse(min_value, max_value, input_value):
 
 # todo this needs to be updated to have the following variables: air_temp, r_flow, weightings
 
-def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
+def generate_scores(air_temp_data, river_flow_data, weightings, flow_limits=None):
     """
     A function that reads in a file of flows (associated w/ dates) and performs stats on them,
     allowing the outputs to be input into other eqs
-    :param outpath: where to save the data
-    :param start_water_year: integer start year for the data to analyse
-    :param end_water_year:  int end year (inclusive)
+    :param air_temp_data: dataframe, the air temp data with one column datetime and the other daily air temperature in deg C
+    :param river_flow_data: dataframe, the river flow data with one column datetime and the other daily river flow in m3/d
+    :param weightings: dict, weightings for each ecological flow component
     :param flow_limits: None or float values for flow limits to calculate
     :return:
     """
 
-    # getting flow data
-    # keynote change which function is called based on whether getting naturalised or measured flow
-    # todo this will need to be changed / removed
-    flow_df = get_measured_flow_dataset()
-
-    list_startdates = range(start_water_year, end_water_year + 1)
-    flow_df = flow_df.loc[np.in1d(flow_df.water_year, list_startdates)]
-
-    # getting temperature data
-    # todo this will need to be changed / removed
-    temperature_df = pd.read_csv(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'temp_data',
-                                                               'waimak_daily_max_temp_predicted.csv'))
-
-    # NB temp data starts at 1972 as earliest date
-    temperature_df = temperature_df.loc[np.in1d(temperature_df.water_year, list_startdates)]
-
     #KEYNOTE STATS START HERE
     # Calculating stats
 
-    # Calculating the median flow for all years
-    # One value for the entire dataset
-    median_flow = flow_df['flow'].median()
+    # getting the start and end dates for the data
+    start_date = river_flow_data['date'].min()
+    end_date = river_flow_data['date'].max()
+    list_startdates = pd.date_range(start_date, end_date, freq='YS')
 
-    # First, long to wide by hydrological years
+    # Turning the df from long to wide to access by hydrological year
+    # todo is there a better way to do this?
     all_hydro_years_df = pd.DataFrame(index=range(1, 367), columns=list_startdates)
     for y in list_startdates:
-        l = range(1, len(flow_df.loc[flow_df.water_year == y, 'flow']) + 1)
-        all_hydro_years_df.loc[l, y] = flow_df.loc[flow_df.water_year == y, 'flow'].values
+        l = range(1, len(river_flow_data.loc[river_flow_data.water_year == y, 'flow']) + 1)
+        all_hydro_years_df.loc[l, y] = river_flow_data.loc[river_flow_data.water_year == y, 'flow'].values
 
     temperature_wide_df = pd.DataFrame(index=range(1, 367), columns=list_startdates)
     for x in list_startdates:
-        length = range(1, len(temperature_df.loc[temperature_df.water_year == x, 'predicted_daily_max_water_temp']) + 1)
-        temperature_wide_df.loc[length, x] = temperature_df.loc[
-            temperature_df.water_year == x, 'predicted_daily_max_water_temp'].values
+        length = range(1, len(air_temp_data.loc[air_temp_data.water_year == x, 'predicted_daily_max_water_temp']) + 1)
+        temperature_wide_df.loc[length, x] = air_temp_data.loc[
+            air_temp_data.water_year == x, 'predicted_daily_max_water_temp'].values
 
-    seven_day_avg_df = get_seven_day_avg(all_hydro_years_df)
+    # Calculating the median flow for all years
+    # One value for the entire dataset
+    median_flow = river_flow_data['flow'].median()
+
+    seven_day_avg_df = get_seven_day_avg(river_flow_data)
 
     # Calculating the ALFs using a nested function
     outdata = pd.DataFrame(index=list_startdates)
-    outdata.index.name = 'water_year'
     # calc alf
     outdata.loc[:, 'alf'] = seven_day_avg_df.min()
 
     # Getting the MALF
+    # todo needs to be discussed if the reference MALF will change, and therefore whether this needs to change
     outdata.loc[:, 'reference_malf'] = malf = malf_baseline_nat
     outdata.loc[:, 'period_malf'] = outdata['alf'].mean()
 
@@ -366,8 +336,6 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
 
     # flooding scores
 
-    #baseline_alf = {'min': 26.04872458428568, 'max': 60.39753014714286}
-    #baseline_af = {'min': 559.9717407, 'max': 1968.605347}
     baseline_flood_anomaly = {'min': -977.0379620689654, 'max': 431.5956442310345}
     baseline_days_above_maf = {'min': 0, 'max': 3}
     baseline_maf_and_malf_days = {'min': 0, 'max': 180}
@@ -390,47 +358,39 @@ def read_and_stats(outpath, start_water_year, end_water_year, flow_limits=None):
         score = higher_is_worse(min_v7, max_v7, value8)
         outdata.loc[idx8, 'malf_times_maf_score'] = score
 
-    outdata.to_csv(outpath)
+    # calculating weighted score
+    for variable, weight in weightings.item():
+        if variable in outdata.columns:
+            outdata[f'{variable}_weighted'] = outdata[variable] * weight
+
     return outdata
 
-
-def get_avg_score(data, out_filename):
-    """a function that reads in the original spreadsheets and creates an average yearly
-    score and then timeseries score based on all the variable scores"""
-
-    data = data[['water_year', 'longfin_eel_<300_score', 'torrent_fish_score',
-             'brown_trout_adult_score',	'diatoms_score',
-             'long_filamentous_score', 'days_below_malf_score',
-             'days_below_flow_lim_score', 'anomalies_score', 'malf_events_greater_7_score',
-             'malf_events_greater_14_score', 'malf_events_greater_21_score', 'malf_events_greater_28_score',
-             'flow_events_greater_7_score',	'flow_events_greater_14_score',	'flow_events_greater_21_score',
-             'flow_events_greater_28_score', 'temp_days_above_19_score','temp_days_above_21_score',
-             'temp_days_above_24_score', 'days_above_maf_score', 'flood_anomalies_score', 'malf_times_maf_score']]
-
-    data = data.set_index('water_year')
-    data['yearly_avg_score'] = data.mean(axis=1)
-    data['yearly_avg_score'] = round((data['yearly_avg_score'] * 2.0))/ 2.0
-    data['timeseries_avg_score'] = data['yearly_avg_score'].mean()
-    data['rounded_timeseries_avg_score'] = round((data['timeseries_avg_score'] * 2.0)) / 2.0
-
-    # todo split this into two functions - a generate yearly and a timeseries one
-
-    outpath = KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'workshop_material',
-                                                               'test_scenario_scores', f'{out_filename}.csv')
-    data.to_csv(outpath)
-    return data
+# todo figure out the best way to input the data for this
+def calculate_annual_scores(detailed_scores):
+    """A function that calculates the annual scores for each year by averaging all the variable scores for that year"""
 
 
+    detailed_scores = detailed_scores.set_index('water_year')
+    detailed_scores['yearly_avg_score'] = detailed_scores.mean(axis=1)
+    detailed_scores['yearly_avg_score'] = round((detailed_scores['yearly_avg_score'] * 2.0)) / 2.0
+    detailed_scores['timeseries_avg_score'] = detailed_scores['yearly_avg_score'].mean()
+    detailed_scores['rounded_timeseries_avg_score'] = round((detailed_scores['timeseries_avg_score'] * 2.0)) / 2.0
 
-def get_weighted_score(data, weighting):
-    # todo work out how to apply this and do in each function
+    return detailed_scores
 
-    weighted_scores = data * weighting
 
-    return weighted_scores
+def calculate_ts_scores(detailed_scores):
+
+    """A function that calculates the timeseries scores for the entire dataset"""
+
+    detailed_scores['timeseries_avg_score'] = detailed_scores['yearly_avg_score'].mean()
+    detailed_scores['rounded_timeseries_avg_score'] = round((detailed_scores['timeseries_avg_score'] * 2.0)) / 2.0
+
+    return detailed_scores
+
 
 
 if __name__ == '__main__':
-    read_and_stats(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info', 'V4',
+    generate_scores(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info', 'V4',
                                                                     'measured_full_stats.csv'), 1972,
                    2019, 50)
