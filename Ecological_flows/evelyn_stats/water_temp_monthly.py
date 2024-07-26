@@ -14,7 +14,8 @@ from komanawa.kslcore import KslEnv
 from sklearn.linear_model import LinearRegression
 
 
-base_path = kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/Waiau_Uwha_tidied.csv")
+base_path = KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'temp_data', 'Waiau_Uwha_tidied.csv')
+
 data = pd.read_csv(base_path)
 ## converting into PeriodIndex and then getting the mean
 #
@@ -26,7 +27,7 @@ data = pd.read_csv(base_path)
 #save_path = kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/Waiau_daily_mean.csv")
 #daily_mean_df.to_csv(save_path)
 
-base_path = kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/waiau_temp/daily_temperature_Cheviot Ews_data.csv")
+base_path = KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'temp_data', 'waiau_temp', 'daily_temperature_Cheviot Ews_data.csv')
 air_temp_df = pd.read_csv(base_path, skiprows=[0])
 
 #testing converting to period time and then getting mean

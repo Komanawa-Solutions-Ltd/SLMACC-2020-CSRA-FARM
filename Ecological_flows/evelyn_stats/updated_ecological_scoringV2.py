@@ -5,12 +5,11 @@ created Evelyn_Charlesworth
 on: 22/07/2024
 """
 
-
-from komanawa.kslcore import KslEnv
 import pandas as pd
 import numpy as np
-from dateutil.relativedelta import relativedelta
-from Climate_Shocks.get_past_record import get_restriction_record
+from water_temp_monthly import temp_regr
+from max_vs_mean import max_mean_temp_regr
+from komanawa.kslcore import KslEnv
 
 malf_baseline_nat = 42.2007397
 maf_baseline_nat = 991.5673849310346
@@ -104,7 +103,7 @@ def higher_is_worse(min_value, max_value, input_value):
 
 # todo this needs to be updated to have the following variables: air_temp, r_flow, weightings
 
-def generate_scores(air_temp_data, river_flow_data, weightings, flow_limits=None):
+def generate_scores(air_temp_data, river_flow_data, weightings=None, flow_limits=None):
     """
     A function that reads in a file of flows (associated w/ dates) and performs stats on them,
     allowing the outputs to be input into other eqs
@@ -117,6 +116,27 @@ def generate_scores(air_temp_data, river_flow_data, weightings, flow_limits=None
 
     #KEYNOTE STATS START HERE
     # Calculating stats
+
+    if weightings is None:
+        weightings = {'longfin_eel_<300_score': 1, 'torrent_fish_score': 1, 'brown_trout_adult_score': 1,
+                      'diatoms_score': 1,
+                      'long_filamentous_score': 1,
+                      'days_below_malf_score': 1, 'days_below_flow_lim_score': 1, 'anomalies_score': 1,
+                      'malf_events_greater_7_score': 1, 'malf_events_greater_14_score': 1,
+                      'malf_events_greater_21_score': 1, 'malf_events_greater_28_score': 1,
+                      'flow_events_greater_7_score': 1, 'flow_events_greater_14_score': 1,
+                      'flow_events_greater_21_score': 1, 'flow_events_greater_28_score': 1,
+                      'temp_days_above_19_score': 1, 'temp_days_above_21_score': 1, 'temp_days_above_24_score': 1,
+                      'days_above_maf': 1, 'flood_anomalies_score': 1, 'malf_times_maf_score': 1}
+    else:
+        raise NotImplementedError
+
+    # todo check this/find a better way of doing?
+
+    x = air_temp_data.loc[:, 'mean_daily_air_temp'].values.reshape(-1, 1)
+    air_temp_data.loc[:, 'mean_daily_water_temp'] = temp_regr.predict(x)
+    x2 = air_temp_data.loc[:, 'mean_daily_water_temp'].values.reshape(-1, 1)
+    air_temp_data.loc[:, 'predicted_daily_max_water_temp'] = max_mean_temp_regr.predict(x2)
 
     # getting the start and end dates for the data
     start_date = river_flow_data['date'].min()
@@ -389,8 +409,13 @@ def calculate_ts_scores(detailed_scores):
     return detailed_scores
 
 
-
 if __name__ == '__main__':
-    generate_scores(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info', 'V4',
-                                                                    'measured_full_stats.csv'), 1972,
-                   2019, 50)
+    air_temp = pd.read_csv(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info',
+                                                                            '2024_test_data.csv',
+                                                                            'test_air_temp_data.csv'))
+    river_flow = pd.read_csv(
+        KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info', '2024_test_data.csv',
+                                                         'test_river_flow_data.csv'))
+    generate_scores(air_temp, river_flow, weightings=None, flow_limits=None)
+
+pass

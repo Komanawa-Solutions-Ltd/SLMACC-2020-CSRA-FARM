@@ -75,6 +75,7 @@ def run_eco_model(air_temp, r_flow, weightings=None):
     :param weightings: dict of weightings for each ecological flow component
     :return: ts_score, annual_scores, detailed_scores
     """
+    # todo where does this go? in the run_eco_model or in the generate_scores?
     if weightings is None:
         weightings = {'longfin_eel_<300_score': 1, 'torrent_fish_score': 1, 'brown_trout_adult_score': 1,
                       'diatoms_score': 1,

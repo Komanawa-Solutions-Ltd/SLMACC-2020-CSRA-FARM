@@ -7,13 +7,9 @@ on: 25/08/2022
 import kslcore
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import datetime
 from dateutil.relativedelta import relativedelta
-from itertools import groupby
-from kslcore import KslEnv
 from Climate_Shocks.get_past_record import get_vcsn_record, get_restriction_record
-from water_temp_monthly import temp_regr
+from Ecological_flows.evelyn_stats.water_temp_monthly import temp_regr
 
 
 malf_full_nat = 41.63893094
