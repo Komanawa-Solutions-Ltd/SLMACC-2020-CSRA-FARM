@@ -132,24 +132,21 @@ def calculate_statistics(flow_data: pd.DataFrame, temp_data: pd.DataFrame) -> Di
     stats['maf_malf_product'] = mean_annual_flood * malf
 
     # implementing the WUA calculation for each species
-    # todo update so it uses the alf, so there is one score per hydrological year per species
     for species in species_coeffs.keys():
-        stats[f'{species}_wua'] = flow_data.groupby('hydro_year')['flow'].apply(
-            lambda flows: flows.apply(lambda flow: calculate_wua(flow, species, species_coeffs, species_limits))
-        )
+        stats[f'{species}_wua'] = stats['alf'].apply(
+            lambda flow: calculate_wua(flow, species, species_coeffs, species_limits))
 
-    pass
     return stats
 
-def score_variable(value: float, baseline: float, is_higher_better: bool) -> float:
-    # This function calculates the score for a single variable
-    # todo check this gives the same scores as the old function, otherwise update with old function
-    if is_higher_better:
-        score = (value - baseline) / baseline
-    else:
-        score = (baseline - value) / baseline
 
-    return max(min(score, 3) -3)
+def score_variable(value: float, min_value: float, max_value: float, is_higher_better: bool) -> float:
+    # This function calculates the score for a single variable
+    if is_higher_better:
+        score = (value - min_value) / (max_value - min_value)
+        return round((score * 3) * 2.0) / 2.0
+    else:
+        score = (value - min_value) / (max_value - min_value)
+        return round((score * -3) * 2.0) / 2.0
 
 
 def calculate_scores(stats: Dict[str, pd.DataFrame], baseline_stats: Dict[str, pd.DataFrame],
@@ -214,6 +211,28 @@ if __name__ == '__main__':
                                                                              '2024_test_data',
                                                                              'test_air_temp_data.csv'))
     stats = calculate_statistics(flow_data, temp_data)
+    calculate_scores(stats)
+
+    baseline_stats = {'malf': 42.2007397, 'maf': 991.5673849310346, "longfin_eel_<300_max": 146, "torrent_fish_max": 71,
+                      "brown_trout_adult_max": 19, "diatoms_max": 0.28,
+                      "long_filamentous_max": 0.31, "longfin_eel_<300_min": 426, "torrent_fish_min": 395,
+                      "brown_trout_adult_min": 25, "diatoms": 0.38, "long_filamentous_min": 0.39,
+                      'days_below_malf_min': 0, 'days_below_malf_max': 70,
+                      'days_below_flow_lim_min': 0, 'days_below_flow_lim_max': 108, 'anomaly_min': -18.20,
+                      'anomaly_max': 16.15, 'min_malf_events_greater_7': 0, 'max_malf_events_greater_7': 4,
+                      'min_malf_events_greater_14': 0, 'max_malf_events_greater_14': 2,
+                      'min_malf_events_greater_21': 0, 'max_malf_events_greater_21': 1,
+                      'min_malf_events_greater_28': 0, 'max_malf_events_greater_28': 1,
+                      'min_flow_events_greater_7': 0, 'max_flow_events_greater_7': 6,
+                      'min_flow_events_greater_14': 0, 'max_flow_events_greater_14': 4,
+                      'min_flow_events_greater_21': 0, 'max_flow_events_greater_21': 2,
+                      'min_flow_events_greater_28': 0, 'max_flow_events_greater_28': 1, 'min_temp_days_above_19': 0,
+                      'max_temp_days_above_19': 23,
+                      'min_temp_days_above_21': 0, 'max_temp_days_above_21': 3,
+                      'min_temp_days_above_24': 0, 'max_temp_days_above_24': 1, 'flood_anomaly_min': -977.0379620689654,
+                      'flood_anomaly_max': 431.5956442310345,
+                      'days_above_maf_min': 0, 'days_above_maf_max': 3, 'malf_times_maf_min': 0,
+                      'malf_times_maf_max': 180}
 
     # todo make sure the correct baselines are provided
     #baseline_flow_data = pd.read_csv('baseline_flow_data.csv', parse_dates=['datetime'])

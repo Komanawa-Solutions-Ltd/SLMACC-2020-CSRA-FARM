@@ -410,12 +410,6 @@ def calculate_ts_scores(detailed_scores):
 
 
 if __name__ == '__main__':
-    air_temp = pd.read_csv(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info',
-                                                                            '2024_test_data.csv',
-                                                                            'test_air_temp_data.csv'))
-    river_flow = pd.read_csv(
-        KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info', '2024_test_data.csv',
-                                                         'test_river_flow_data.csv'))
     generate_scores(air_temp, river_flow, weightings=None, flow_limits=None)
 
 pass
