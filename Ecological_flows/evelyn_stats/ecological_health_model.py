@@ -9,7 +9,7 @@ from komanawa.kslcore import KslEnv
 from Ecological_flows.evelyn_stats.water_temp_monthly import temp_regr
 from Ecological_flows.evelyn_stats.max_vs_mean import max_mean_temp_regr
 
-# todo after tested, ask Claude to help write assertions
+# todo after tested, help write assertions
 
 species_coeffs = {
     "longfin_eel_<300": (-9.045618237519400E-09, 3.658952327544510E-06,
@@ -52,13 +52,15 @@ def calculate_statistics(flow_data: pd.DataFrame, temp_data: pd.DataFrame) -> Di
     # This function will calculate all the required statistics
 
     # Handling datatypes
-    flow_data['datetime'] = pd.to_datetime(flow_data['datetime'])
-    temp_data['datetime'] = pd.to_datetime(temp_data['datetime'])
+    flow_data['datetime'] = pd.to_datetime(flow_data['datetime'], format='mixed')
+    temp_data['datetime'] = pd.to_datetime(temp_data['datetime'], format='mixed')
     flow_data.astype({'flow': 'float64'})
     temp_data.astype({'temp': 'float64'})
 
 
     # using the regression relationship to get the daily mean water temp from the daily air temp
+    # todo how to do this in a way that doesn't call on the original functions/from the waiau csvs
+    # help
     x = temp_data.loc[:, 'temp'].values.reshape(-1, 1)
     temp_data.loc[:, 'mean_daily_water_temp'] = temp_regr.predict(x)
     x2 = temp_data.loc[:, 'mean_daily_water_temp'].values.reshape(-1, 1)
@@ -129,12 +131,14 @@ def calculate_statistics(flow_data: pd.DataFrame, temp_data: pd.DataFrame) -> Di
     # MAF times MALF
     stats['maf_malf_product'] = mean_annual_flood * malf
 
-    # implementing the WUA calculation for ach species
+    # implementing the WUA calculation for each species
+    # todo update so it uses the alf, so there is one score per hydrological year per species
     for species in species_coeffs.keys():
         stats[f'{species}_wua'] = flow_data.groupby('hydro_year')['flow'].apply(
             lambda flows: flows.apply(lambda flow: calculate_wua(flow, species, species_coeffs, species_limits))
         )
 
+    pass
     return stats
 
 def score_variable(value: float, baseline: float, is_higher_better: bool) -> float:
@@ -171,7 +175,7 @@ def calculate_yearly_scores(scores: Dict[str, pd.DataFrame]) -> pd.DataFrame():
     return pd.DataFrame(scores).mean(axis=1)
 
 
-def calculate_timeseries_score(yearly_scores: pd.Dataframe) -> float:
+def calculate_timeseries_score(yearly_scores: pd.DataFrame) -> float:
     # This function calculates the average timeseries score
     return yearly_scores.mean()
 
@@ -204,15 +208,13 @@ def analyse_stream_health(flow_data: pd.DataFrame, temp_data: pd.DataFrame,
 if __name__ == '__main__':
     # Example usage
     flow_data = pd.read_csv(
-        KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info', '2024_test_data.csv',
-                                                         'test_river_flow_data.csv'), parse_dates=['datetime'],
-        date_parser=lambda x: pd.to_datetime(x, format='%dd/%mm/%YYYY'))
+        KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info', '2024_test_data',
+                                                         'test_river_flow_data.csv'))
     temp_data = pd.read_csv(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info',
-                                                                             '2024_test_data.csv',
-                                                                             'test_air_temp_data.csv'),
-                            parse_dates=['datetime'], date_parser=lambda x: pd.to_datetime(x, format='%dd/%mm/%YYYY'))
+                                                                             '2024_test_data',
+                                                                             'test_air_temp_data.csv'))
     stats = calculate_statistics(flow_data, temp_data)
-    pass
+
     # todo make sure the correct baselines are provided
     #baseline_flow_data = pd.read_csv('baseline_flow_data.csv', parse_dates=['datetime'])
     #baseline_temp_data = pd.read_csv('baseline_temp_data.csv', parse_dates=['datetime'])

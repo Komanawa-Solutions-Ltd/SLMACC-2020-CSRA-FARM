@@ -9,7 +9,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 from itertools import groupby
-from komanawa import kslcore
 from komanawa.kslcore import KslEnv
 from sklearn.linear_model import LinearRegression
 
@@ -37,15 +36,15 @@ air_temp_df = pd.read_csv(base_path, skiprows=[0])
 #save_path = kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/waiau_temp/daily_temperature_Cheviot Ews_data.csv")
 air_temp_df = pd.read_csv(base_path)
 air_temp_df = air_temp_df.rename(columns={'time': 'date'})
-air_temp_df['date'] = pd.to_datetime(air_temp_df['date'], format='%Y/%m/%d')
+air_temp_df['date'] = pd.to_datetime(air_temp_df['date'], format='mixed')
 
-water_base_path = kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/Waiau_daily_mean.csv")
+water_base_path = KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'temp_data', 'Waiau_daily_mean.csv')
+
 daily_water_temp = pd.read_csv(water_base_path)
-daily_water_temp['Date & Time'] = pd.to_datetime(daily_water_temp['Date & Time'], format='%Y/%m/%d')
+daily_water_temp['Date & Time'] = pd.to_datetime(daily_water_temp['Date & Time'], format='mixed')
 daily_water_temp = daily_water_temp.rename(columns={'Date & Time' : 'date', 'Water Temp (degC)': 'daily_mean_water_temp'})
 merged_df = daily_water_temp.merge(air_temp_df)
-merged_df.to_csv(kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/waiau_temp/air_water_temp_data.csv"))
-
+merged_df.to_csv(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'temp_data', 'waiau_temp', 'air_water_temp_data.csv'))
 regression_df = merged_df.dropna()
 x = regression_df.loc[:,'daily_mean_air_temp'].values.reshape(-1, 1)
 y = regression_df.loc[:,'daily_mean_water_temp'].values.reshape(-1, 1)

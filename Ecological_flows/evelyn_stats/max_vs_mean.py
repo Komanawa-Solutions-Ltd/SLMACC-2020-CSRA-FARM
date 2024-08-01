@@ -7,25 +7,27 @@ on: 1/11/2022
 
 import pandas as pd
 import numpy as np
-from komanawa import kslcore
+from komanawa.kslcore import KslEnv
 import datetime
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
+
 
 # reading in the predicted Waimakariri mean daily water temp
 # uses the eyrewell daily mean air temp data to predict daily mean water temp data based on the temperature regression created in
 # water_temp_monthly.py
 
-waimak_daily_mean_water = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/waimak_daily_mean_temp.csv"))
+waimak_daily_mean_water = pd.read_csv(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'temp_data', 'waimak_daily_mean_temp.csv'))
 # getting a month column
 waimak_daily_mean_water.loc[:, 'month'] = pd.DatetimeIndex(waimak_daily_mean_water['date']).month
 
 # reading in the daily mean water df
-daily_mean_water_df = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/Waiau_daily_mean.csv"))
+daily_mean_water_df = pd.read_csv(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'temp_data', 'Waiau_daily_mean.csv'))
+
 daily_mean_water_df = daily_mean_water_df.rename(columns={'Water Temp (degC)': 'daily_mean_water_temp'})
 
 # reading in the daily max water df
-daily_max_water_df = pd.read_csv(kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/Waiau_daily_max.csv"))
+daily_max_water_df = pd.read_csv(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'temp_data', 'Waiau_daily_max.csv'))
 daily_max_water_df = daily_max_water_df.rename(columns={'Water Temp (degC)': 'daily_max_water_temp'})
 
 # merging the two to get the same date range
@@ -68,7 +70,7 @@ for month, num in month_list.items():
     #plt.scatter(x, y)
     #plt.show()
 
-predicted_waimak_df.to_csv(kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/waimak_daily_max_temp_predicted.csv"))
+#predicted_waimak_df.to_csv(kslcore.KslEnv.shared_gdrive.joinpath("Z2003_SLMACC/eco_modelling/temp_data/waimak_daily_max_temp_predicted.csv"))
 
 
 
