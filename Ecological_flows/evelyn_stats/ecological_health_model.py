@@ -42,11 +42,19 @@ species_baseline_max_wua = {
     "longfin_eel_<300": 426, "torrent_fish": 395, "brown_trout_adult": 25, "diatoms": 0.38,"long_filamentous": 0.39}
 
 
-# todo this is wrong, maybe use old function
-def calculate_wua(flow: float, species: str, coefficients: Dict[str, list], flow_limits: Dict[str, tuple]) -> float:
-    if flow < flow_limits[species][0] or flow > flow_limits[species][1]:
-        return 0
-    return sum(coef * flow ** i for i, coef in enumerate(coefficients[species]))
+def wua_poly(x, a, b, c, d, e, f):
+    """a function that reads in coefficients and returns a polynomial with the coeffs
+    inserted"""
+    return a * x ** 5 + b * x ** 4 + c * x ** 3 + d * x ** 2 + e * x + f
+
+
+def flow_to_wua(alf, species):
+    minf, maxf = species_limits[species]
+    if alf > minf and alf < maxf:
+        wua = wua_poly(alf, *species_coeffs[species])
+    else:
+        wua = None
+    return wua
 
 
 def calculate_statistics(flow_data: pd.DataFrame, temp_data: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -81,13 +89,15 @@ def calculate_statistics(flow_data: pd.DataFrame, temp_data: pd.DataFrame) -> Di
     # Add hydrological year column
     flow_data['hydro_year'] = flow_data.index.map(get_hydro_year)
     temp_data['hydro_year'] = temp_data.index.map(get_hydro_year)
+    # Calculate 7-day rolling average
+    flow_data['flow_7day_avg'] = flow_data['flow'].rolling(window=7, center=True, min_periods=4).mean()
 
     # Calculate the statistics
     stats = {}
 
     # Annual low flow per hydrological year (ALF)
-    # todo needs to be done using a 7 day rolling average
-    stats['alf'] = flow_data.groupby('hydro_year')['flow'].min()
+    # Calculate annual low flow (ALF) using the 7-day rolling average
+    stats['alf'] = flow_data.groupby('hydro_year')['flow_7day_avg'].min()
 
     # Mean annual low flow (MALF)
     # using the baseline naturalised malf as the comparative malf (as per original scoring)
@@ -139,11 +149,9 @@ def calculate_statistics(flow_data: pd.DataFrame, temp_data: pd.DataFrame) -> Di
     # replacing any maf_malf_products that are NaN with 0
     stats['maf_malf_product'] = stats['maf_malf_product'].fillna(0)
 
-    # implementing the WUA calculation for each species
+    # implementing the WUA calculation for each species using the ALF
     for species in species_coeffs.keys():
-        stats[f'{species}_wua'] = stats['alf'].apply(
-            lambda flow: calculate_wua(flow, species, species_coeffs, species_limits))
-
+        stats[f'{species}_wua'] = stats['alf'].apply(lambda alf: flow_to_wua(alf, species))
     return stats
 
 
