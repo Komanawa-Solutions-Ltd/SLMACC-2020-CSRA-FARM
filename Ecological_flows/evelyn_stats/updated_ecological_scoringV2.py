@@ -365,7 +365,6 @@ def generate_scores(air_temp_data, river_flow_data, weightings=None, flow_limits
         min_v5, max_v5 = baseline_days_above_maf['min'], baseline_days_above_maf['max']
         days_score = higher_is_worse(min_v5, max_v5, value6)
         outdata.loc[idx6, 'days_above_maf_score'] = days_score
-
     # flood anomaly score
     for idx7, value7 in outdata.loc[:, 'flood_anomalies'].items():
         min_v6, max_v6 = baseline_flood_anomaly['min'], baseline_flood_anomaly['max']
