@@ -9,8 +9,6 @@ from komanawa.kslcore import KslEnv
 from Ecological_flows.evelyn_stats.water_temp_monthly import temp_regr
 from Ecological_flows.evelyn_stats.max_vs_mean import max_mean_temp_regr
 
-# todo after tested, help write assertions
-
 species_coeffs = {
     "longfin_eel_<300": (-9.045618237519400E-09, 3.658952327544510E-06,
                     5.653574369241410E-04, 3.858556802202370E-02,
@@ -33,14 +31,6 @@ species_limits = {
     "longfin_eel_<300": (18, 130), "torrent_fish": (18, 130),
     "brown_trout_adult": (18, 130), "diatoms": (18, 130), "long_filamentous": (18, 130)}
 
-species_baseline_min_wua = {
-    "longfin_eel_<300": 146, "torrent_fish": 71, "brown_trout_adult": 19, "diatoms": 0.28,
-     "long_filamentous": 0.31}
-
-# max wua = with the median flow
-species_baseline_max_wua = {
-    "longfin_eel_<300": 426, "torrent_fish": 395, "brown_trout_adult": 25, "diatoms": 0.38,"long_filamentous": 0.39}
-
 
 def wua_poly(x, a, b, c, d, e, f):
     """a function that reads in coefficients and returns a polynomial with the coeffs
@@ -48,23 +38,47 @@ def wua_poly(x, a, b, c, d, e, f):
     return a * x ** 5 + b * x ** 4 + c * x ** 3 + d * x ** 2 + e * x + f
 
 
-def flow_to_wua(alf, species):
-    minf, maxf = species_limits[species]
+def flow_to_wua(alf, species, input_species_coeffs, input_species_limits):
+    minf, maxf = input_species_limits[species]
     if alf > minf and alf < maxf:
-        wua = wua_poly(alf, *species_coeffs[species])
+        wua = wua_poly(alf, *input_species_coeffs[species])
     else:
-        wua = None
+        wua = 0
     return wua
 
 
 def calculate_statistics(flow_data: pd.DataFrame, temp_data: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     # This function will calculate all the required statistics
 
+    # Assert that flow_data and temp_data are pandas DataFrames
+    assert isinstance(flow_data, pd.DataFrame), "flow_data must be a pandas DataFrame"
+    assert isinstance(temp_data, pd.DataFrame), "temp_data must be a pandas DataFrame"
+
+    # Assert that flow_data has the required columns
+    assert 'datetime' in flow_data.columns, "flow_data must have a 'datetime' column"
+    assert 'flow' in flow_data.columns, "flow_data must have a 'flow' column"
+
+    # Assert that temp_data has the required columns
+    assert 'datetime' in temp_data.columns, "temp_data must have a 'datetime' column"
+    assert 'temp' in temp_data.columns, "temp_data must have a 'temp' column"
+
+    # Assert that there are no missing values
+    assert not flow_data['flow'].isnull().any(), "flow_data 'flow' column contains missing values"
+    assert not temp_data['temp'].isnull().any(), "temp_data 'temp' column contains missing values"
+
     # Handling datatypes
     flow_data['datetime'] = pd.to_datetime(flow_data['datetime'], format='%d/%m/%Y')
     temp_data['datetime'] = pd.to_datetime(temp_data['datetime'], format='%d/%m/%Y')
+    # Assert that datetime columns are of datetime type
+    assert pd.api.types.is_datetime64_any_dtype(
+        flow_data['datetime']), "flow_data 'datetime' column must be of datetime type"
+    assert pd.api.types.is_datetime64_any_dtype(
+        temp_data['datetime']), "temp_data 'datetime' column must be of datetime type"
     flow_data.astype({'flow': 'float64'})
     temp_data.astype({'temp': 'float64'})
+    # Assert that flow and temperature columns are numeric
+    assert pd.api.types.is_numeric_dtype(flow_data['flow']), "flow_data 'flow' column must be numeric"
+    assert pd.api.types.is_numeric_dtype(temp_data['temp']), "temp_data 'temp' column must be numeric"
 
     # using the regression relationship to get the daily mean water temp from the daily air temp
     # todo how to do this in a way that doesn't call on the original functions/from the waiau csvs
@@ -151,7 +165,8 @@ def calculate_statistics(flow_data: pd.DataFrame, temp_data: pd.DataFrame) -> Di
 
     # implementing the WUA calculation for each species using the ALF
     for species in species_coeffs.keys():
-        stats[f'{species}_wua'] = stats['alf'].apply(lambda alf: flow_to_wua(alf, species))
+        stats[f'{species}_wua'] = stats['alf'].apply(
+            lambda alf: flow_to_wua(alf, species, species_coeffs, species_limits))
     return stats
 
 
@@ -161,8 +176,12 @@ def score_variable(value: float, min_value: float, max_value: float, is_higher_b
         return 0
     score = (value - min_value) / (max_value - min_value)
     if not is_higher_better:
-        score = score * -1
-    return max(min(score * 6 - 3, 3), -3)
+        score = (score * 2) - 1
+        score = round((score * -3) * 2.0) / 2.0
+    else:
+        score = (score * 2) - 1
+        score = round((score * 3) * 2.0) / 2.0
+    return score
 
 
 def calculate_scores(stats: Dict[str, pd.DataFrame], baseline_min_max: Dict[str, float],
@@ -175,11 +194,13 @@ def calculate_scores(stats: Dict[str, pd.DataFrame], baseline_min_max: Dict[str,
             continue
         elif var == 'median_flow':
             continue
-        min_value = baseline_min_max[f'{var}_min']
-        max_value = baseline_min_max[f'{var}_max']
-        is_higher_better = var in ["longfin_eel_<300_wua", "torrent_fish_wua", "brown_trout_adult_wua", "diatoms_wua",
-                                   "long_filamentous_wua", "anomaly"]
-        scores[var] = data.apply(lambda x: score_variable(x, min_value, max_value, is_higher_better))
+        else:
+            min_value = baseline_min_max[f'{var}_min']
+            max_value = baseline_min_max[f'{var}_max']
+            is_higher_better = var in ["longfin_eel_<300_wua", "torrent_fish_wua", "brown_trout_adult_wua",
+                                       "diatoms_wua",
+                                       "long_filamentous_wua", "anomaly"]
+            scores[var] = data.apply(lambda x: score_variable(x, min_value, max_value, is_higher_better))
 
         if weightings is None:
             weightings = {'longfin_eel_<300_wua': 1, 'torrent_fish_wua': 1, 'brown_trout_adult_wua': 1,
@@ -193,6 +214,8 @@ def calculate_scores(stats: Dict[str, pd.DataFrame], baseline_min_max: Dict[str,
                           'days_above_19C': 1, 'days_above_21C': 1,
                           'days_above_24C': 1,
                           'days_above_maf': 1, 'flood_anomaly': 1, 'maf_malf_product': 1}
+        else:
+            weightings = weightings
         for variable, weights in weightings.items():
             if var in variable:
                 scores[f'{var}'] = scores[var] * weights
@@ -233,6 +256,7 @@ def analyse_stream_health(flow_data: pd.DataFrame, temp_data: pd.DataFrame,
         'timeseries_score': timeseries_score
     }
     return total_scores
+
 
 def get_expert_weightings(expert_name):
     """
@@ -287,42 +311,43 @@ def get_expert_weightings(expert_name):
                 'days_above_maf': 2, 'flood_anomaly': 3, 'maf_malf_product': 1.5}
     elif expert_name == 'pooled':
         return {'longfin_eel_<300_wua': 2, 'torrent_fish_wua': 3.125, 'brown_trout_adult_wua': 2.125,
-                        'diatoms_wua': 2.875,
-                        'long_filamentous_wua': 0.125,
-                        'days_below_malf': 3.5, 'days_below_flow_limit': 3.375, 'anomaly': 2.5,
-                        'malf_events_7d': 3, 'malf_events_14d': 3.25,
-                        'malf_events_21d': 3.75, 'malf_events_28d': 4,
-                        'flow_limit_events_7d': 2.8125, 'flow_limit_events_14d': 2.6875,
-                        'flow_limit_events_21d': 3.0625, 'flow_limit_events_28d': 3.125,
-                        'days_above_19C': 2.75, 'days_above_21C': 3.5625, 'days_above_24C': 3.9375,
-                        'days_above_maf': 3, 'flood_anomaly': 2.5, 'maf_malf_product': 2.25}
+                'diatoms_wua': 2.875,
+                'long_filamentous_wua': 0.125,
+                'days_below_malf': 3.5, 'days_below_flow_limit': 3.375, 'anomaly': 2.5,
+                'malf_events_7d': 3, 'malf_events_14d': 3.25,
+                'malf_events_21d': 3.75, 'malf_events_28d': 4,
+                'flow_limit_events_7d': 2.8125, 'flow_limit_events_14d': 2.6875,
+                'flow_limit_events_21d': 3.0625, 'flow_limit_events_28d': 3.125,
+                'days_above_19C': 2.75, 'days_above_21C': 3.5625, 'days_above_24C': 3.9375,
+                'days_above_maf': 3, 'flood_anomaly': 2.5, 'maf_malf_product': 2.25}
     else:
         raise ValueError(f'invalid expert name {expert_name}')
 
 
 def get_baseline_min_max():
     baseline_min_max = {'malf': 42.2007397, 'maf': 991.5673849310346, "longfin_eel_<300_wua_max": 146,
-                      "torrent_fish_wua_max": 71,
-                      "brown_trout_adult_wua_max": 19, "diatoms_wua_max": 0.28,
-                      "long_filamentous_wua_max": 0.31, "longfin_eel_<300_wua_min": 426, "torrent_fish_wua_min": 395,
-                      "brown_trout_adult_wua_min": 25, "diatoms_wua_min": 0.38, "long_filamentous_wua_min": 0.39,
-                      'days_below_malf_min': 0, 'days_below_malf_max': 70,
-                      'days_below_flow_limit_min': 0, 'days_below_flow_limit_max': 108, 'anomaly_min': -18.20,
-                      'anomaly_max': 16.15, 'malf_events_7d_min': 0, 'malf_events_7d_max': 4,
-                      'malf_events_14d_min': 0, 'malf_events_14d_max': 2,
-                      'malf_events_21d_min': 0, 'malf_events_21d_max': 1,
-                      'malf_events_28d_min': 0, 'malf_events_28d_max': 1,
-                      'flow_limit_events_7d_min': 0, 'flow_limit_events_7d_max': 6,
-                      'flow_limit_events_14d_min': 0, 'flow_limit_events_14d_max': 4,
-                      'flow_limit_events_21d_min': 0, 'flow_limit_events_21d_max': 2,
-                      'flow_limit_events_28d_min': 0, 'flow_limit_events_28d_max': 1, 'days_above_19C_min': 0,
-                      'days_above_19C_max': 23,
-                      'days_above_21C_min': 0, 'days_above_21C_max': 3,
-                      'days_above_24C_min': 0, 'days_above_24C_max': 1, 'flood_anomaly_min': -977.0379620689654,
-                      'flood_anomaly_max': 431.5956442310345,
-                      'days_above_maf_min': 0, 'days_above_maf_max': 3, 'maf_malf_product_min': 0,
-                      'maf_malf_product_max': 180}
+                        "torrent_fish_wua_max": 71,
+                        "brown_trout_adult_wua_max": 19, "diatoms_wua_max": 0.28,
+                        "long_filamentous_wua_max": 0.31, "longfin_eel_<300_wua_min": 426, "torrent_fish_wua_min": 395,
+                        "brown_trout_adult_wua_min": 25, "diatoms_wua_min": 0.38, "long_filamentous_wua_min": 0.39,
+                        'days_below_malf_min': 0, 'days_below_malf_max': 70,
+                        'days_below_flow_limit_min': 0, 'days_below_flow_limit_max': 108, 'anomaly_min': -18.20,
+                        'anomaly_max': 16.15, 'malf_events_7d_min': 0, 'malf_events_7d_max': 4,
+                        'malf_events_14d_min': 0, 'malf_events_14d_max': 2,
+                        'malf_events_21d_min': 0, 'malf_events_21d_max': 1,
+                        'malf_events_28d_min': 0, 'malf_events_28d_max': 1,
+                        'flow_limit_events_7d_min': 0, 'flow_limit_events_7d_max': 6,
+                        'flow_limit_events_14d_min': 0, 'flow_limit_events_14d_max': 4,
+                        'flow_limit_events_21d_min': 0, 'flow_limit_events_21d_max': 2,
+                        'flow_limit_events_28d_min': 0, 'flow_limit_events_28d_max': 1, 'days_above_19C_min': 0,
+                        'days_above_19C_max': 23,
+                        'days_above_21C_min': 0, 'days_above_21C_max': 3,
+                        'days_above_24C_min': 0, 'days_above_24C_max': 1, 'flood_anomaly_min': -977.0379620689654,
+                        'flood_anomaly_max': 431.5956442310345,
+                        'days_above_maf_min': 0, 'days_above_maf_max': 3, 'maf_malf_product_min': 0,
+                        'maf_malf_product_max': 180}
     return baseline_min_max
+
 
 if __name__ == '__main__':
     # Example usage
@@ -331,14 +356,9 @@ if __name__ == '__main__':
                                                          'measured_flow_data_storyline_data_2bad_2024_test.csv'))
     temp_data = pd.read_csv(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info',
                                                                              '2024_test_data',
-                                                                     'temperature_data_storylines_2024_test.csv'))
-    #stats = calculate_statistics(flow_data, temp_data)
-    #baseline_stats = get_baseline_stats()
-    #
-    #scores = calculate_scores(stats, baseline_stats, weightings=get_expert_weightings('duncan_grey'))
-    #yearly_scores = calculate_yearly_scores(scores)
-    #timeseries_score = calculate_timeseries_score(yearly_scores)
+                                                                             'temperature_data_storylines_2024_test.csv'))
 
+    # todo how do we want the data to be saved?
     test = analyse_stream_health(flow_data, temp_data, baseline_min_max=get_baseline_min_max(), weightings=get_expert_weightings('pooled'))
     pass
 
