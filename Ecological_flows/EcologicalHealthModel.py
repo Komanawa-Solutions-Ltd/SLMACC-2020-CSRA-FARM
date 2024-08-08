@@ -330,7 +330,9 @@ def _get_baseline_min_max(baseline='historical'):
     return baseline_data
 
 
-def _get_air_water_temp_reg(recalc=False):
+def _get_air_water_temp_reg(recalc=False):  # todo this is to mean water temperature, but need maximum, need to clean up regression
+    # todo a regression approach is probably not great... we also need to consider the radient forcing, and the historisis...
+    # todo lit review...
     """
     get the regression between air and water temperature
 

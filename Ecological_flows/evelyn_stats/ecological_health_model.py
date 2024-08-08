@@ -170,7 +170,7 @@ def calculate_statistics(flow_data: pd.DataFrame, temp_data: pd.DataFrame) -> Di
     for species in species_coeffs.keys():
         stats[f'{species}_wua'] = stats['alf'].apply(
             lambda alf: flow_to_wua(alf, species, species_coeffs, species_limits))
-    return stats
+    return stats, temp_data
 
 
 def score_variable(value: float, min_value: float, max_value: float, is_higher_better: bool) -> float:
@@ -241,7 +241,7 @@ def analyse_stream_health(flow_data: pd.DataFrame, temp_data: pd.DataFrame,
                           weightings: Optional[Dict[str, Dict[str, float]]] = None) -> Dict:
     # This is the wrapper function that calls all other functions
     # Calculate statistics
-    stats = calculate_statistics(flow_data, temp_data)
+    stats, temp_data = calculate_statistics(flow_data, temp_data)
 
     # Calculate scores
     scores = calculate_scores(stats, baseline_min_max, weightings)
@@ -256,7 +256,8 @@ def analyse_stream_health(flow_data: pd.DataFrame, temp_data: pd.DataFrame,
         'statistics': stats,
         'scores': scores,
         'yearly_scores': yearly_scores,
-        'timeseries_score': timeseries_score
+        'timeseries_score': timeseries_score,
+        'temp_data': temp_data
     }
     return total_scores
 
