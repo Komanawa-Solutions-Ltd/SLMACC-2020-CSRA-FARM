@@ -1,6 +1,9 @@
-"""This is the updated / rewritten version of the Ecological Health model, written on 31/07/24
+"""
+This is the updated / rewritten version of the Ecological Health model, written on 31/07/24
 It uses the ideas and code from ecological_scoring.py and updated_ecological_scoringV2.py
-but is updated to be more userfriendly"""
+but is updated to be more userfriendly
+"""
+import time
 
 import pandas as pd
 import numpy as np
@@ -150,7 +153,7 @@ def calculate_statistics(flow_data: pd.DataFrame, temp_data: pd.DataFrame) -> Di
 
     # Mean annual flood (MAF)
     annual_max_flow = flow_data.groupby('hydro_year')['flow'].max()
-    mean_annual_flood = annual_max_flow.mean()
+    mean_annual_flood = 991.5673849310346
 
     # Flood anomaly
     stats['flood_anomaly'] = annual_max_flow - mean_annual_flood
@@ -249,7 +252,7 @@ def analyse_stream_health(flow_data: pd.DataFrame, temp_data: pd.DataFrame,
     # Calculate timeseries score
     timeseries_score = calculate_timeseries_score(yearly_scores)
 
-    total_scores = {
+    total_scores = {  # todo need to discuss with EC what these outputs mean...
         'statistics': stats,
         'scores': scores,
         'yearly_scores': yearly_scores,
@@ -324,7 +327,7 @@ def get_expert_weightings(expert_name):
         raise ValueError(f'invalid expert name {expert_name}')
 
 
-def get_baseline_min_max():
+def get_baseline_min_max(): # todo ask EC what this is about, this is from the historical time period.
     baseline_min_max = {'malf': 42.2007397, 'maf': 991.5673849310346, "longfin_eel_<300_wua_max": 146,
                         "torrent_fish_wua_max": 71,
                         "brown_trout_adult_wua_max": 19, "diatoms_wua_max": 0.28,
@@ -357,9 +360,16 @@ if __name__ == '__main__':
     temp_data = pd.read_csv(KslEnv.shared_drive('Z20002SLM_SLMACC').joinpath('eco_modelling', 'stats_info',
                                                                              '2024_test_data',
                                                                              'temperature_data_storylines_2024_test.csv'))
+    temp_data['date'] = pd.to_datetime(temp_data['datetime'], format='%d/%m/%Y')
+    temp_data = temp_data.loc[temp_data['date'] >= '2018-07-01']
+    flow_data['date'] = pd.to_datetime(flow_data['datetime'], format='%d/%m/%Y')
+    flow_data = flow_data.loc[flow_data['date'] >= '2018-07-01']
 
     # todo how do we want the data to be saved?
+    t = time.time()
     test = analyse_stream_health(flow_data, temp_data, baseline_min_max=get_baseline_min_max(), weightings=get_expert_weightings('pooled'))
+    print('took',time.time() - t, 's')
+    print(test['timeseries_score'])
     pass
 
 
